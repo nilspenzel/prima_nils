@@ -1,7 +1,5 @@
 use crate::{
-    be::backend::{
-        CreateCompany, CreateVehicle, CreateVehicleAvailability, CreateZone, Data, UserData,
-    },
+    be::backend::{CreateCompany, CreateZone, Data, UserData},
     constants::{
         bautzen_split_ost::BAUTZEN_OST, bautzen_split_west::BAUTZEN_WEST, gorlitz::GORLITZ,
     },
@@ -303,238 +301,64 @@ pub async fn init(
         read_from_db_data == data
     );
 
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB1-1".to_string(),
-            company: 1,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB1-2".to_string(),
-            company: 1,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB1-3".to_string(),
-            company: 1,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB1-4".to_string(),
-            company: 1,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB1-5".to_string(),
-            company: 1,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB2-1".to_string(),
-            company: 2,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB2-2".to_string(),
-            company: 2,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB2-3".to_string(),
-            company: 2,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB3-1".to_string(),
-            company: 3,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB3-2".to_string(),
-            company: 3,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB3-3".to_string(),
-            company: 3,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB3-4".to_string(),
-            company: 3,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB4-1".to_string(),
-            company: 4,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB4-2".to_string(),
-            company: 4,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB5-1".to_string(),
-            company: 5,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB5-2".to_string(),
-            company: 5,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUB5-3".to_string(),
-            company: 5,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG1-1".to_string(),
-            company: 6,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG1-2".to_string(),
-            company: 6,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG1-3".to_string(),
-            company: 6,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG2-1".to_string(),
-            company: 7,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG2-2".to_string(),
-            company: 7,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG2-3".to_string(),
-            company: 7,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG2-4".to_string(),
-            company: 7,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG3-1".to_string(),
-            company: 8,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG3-2".to_string(),
-            company: 8,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG3-3".to_string(),
-            company: 8,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG3-4".to_string(),
-            company: 8,
-        }),
-    )
-    .await;
-    data.create_vehicle(
-        State(s.clone()),
-        axum::Json(CreateVehicle {
-            license_plate: "TUG3-5".to_string(),
-            company: 8,
-        }),
-    )
-    .await;
+    data.create_vehicle(State(s.clone()), "TUB1-1".to_string(), 1)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB1-2".to_string(), 1)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB1-3".to_string(), 1)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB1-4".to_string(), 1)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB1-5".to_string(), 1)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB2-1".to_string(), 2)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB2-2".to_string(), 2)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB2-3".to_string(), 2)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB3-1".to_string(), 3)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB3-2".to_string(), 3)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB3-3".to_string(), 3)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB3-4".to_string(), 3)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB4-1".to_string(), 4)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB4-2".to_string(), 4)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB5-1".to_string(), 5)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB5-2".to_string(), 5)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUB5-3".to_string(), 5)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG1-1".to_string(), 6)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG1-2".to_string(), 6)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG1-3".to_string(), 6)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG2-1".to_string(), 7)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG2-2".to_string(), 7)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG2-3".to_string(), 7)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG2-4".to_string(), 7)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG3-1".to_string(), 8)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG3-2".to_string(), 8)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG3-3".to_string(), 8)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG3-4".to_string(), 8)
+        .await;
+    data.create_vehicle(State(s.clone()), "TUG3-5".to_string(), 8)
+        .await;
 
     read_from_db_data.clear();
     read_from_db_data.read_data(State(s.clone())).await;
@@ -545,33 +369,29 @@ pub async fn init(
 
     data.create_availability(
         State(s.clone()),
-        axum::Json(CreateVehicleAvailability {
-            start_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(9, 10, 0)
-                .unwrap()),
-            end_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(9, 11, 0)
-                .unwrap()),
-            vehicle: 1,
-        }),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(9, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(9, 11, 0)
+            .unwrap(),
+        1,
     )
     .await;
 
     data.create_availability(
         State(s.clone()),
-        axum::Json(CreateVehicleAvailability {
-            start_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(9, 11, 0)
-                .unwrap()),
-            end_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(9, 12, 0)
-                .unwrap()),
-            vehicle: 1,
-        }),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(9, 11, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(9, 12, 0)
+            .unwrap(),
+        1,
     )
     .await;
     println!(
@@ -647,6 +467,14 @@ pub async fn init(
         read_from_db_data == data
     );
 
+    for v in data.vehicles.iter() {
+        println!(
+            "id: {}: number of assignments: {}",
+            v.id,
+            v.assignments.len()
+        );
+    }
+
     println!(
         "number of assignments for vehicle 1: {} and number of the first assignments events: {}, departure: {}, arrival: {}, company: {}, vehicle: {}, id: {}",
         data.vehicles[0].assignments.len(),
@@ -701,60 +529,62 @@ pub async fn init(
 
     data.create_availability(
         State(s.clone()),
-        axum::Json(CreateVehicleAvailability {
-            start_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(10, 10, 0)
-                .unwrap()),
-            end_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(14, 0, 0)
-                .unwrap()),
-            vehicle: 1,
-        }),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        1,
     )
     .await;
 
     data.create_availability(
         State(s.clone()),
-        axum::Json(CreateVehicleAvailability {
-            start_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(10, 10, 0)
-                .unwrap()),
-            end_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(14, 0, 0)
-                .unwrap()),
-            vehicle: 2,
-        }),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        2,
     )
     .await;
 
     data.create_availability(
         State(s.clone()),
-        axum::Json(CreateVehicleAvailability {
-            start_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(10, 10, 0)
-                .unwrap()),
-            end_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(14, 0, 0)
-                .unwrap()),
-            vehicle: 3,
-        }),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        3,
     )
     .await;
 
-    println!(
-        "vehicle 1 availability count: {}",
-        data.vehicles[0].availability.len()
-    );
-    for v in data.vehicles[0].availability.iter() {
-        println!("{}", v.interval);
+    println!("event ids of user with id 1:");
+    for ev in data.get_events_for_user(1, None, None).await.iter() {
+        println!("  event id: {}", ev.id);
     }
 
+    println!("event ids of user with id 2:");
+    for ev in data.get_events_for_user(2, None, None).await.iter() {
+        println!("  event id: {}", ev.id);
+    }
+
+    println!("event ids of user with id 3:");
+    for ev in data.get_events_for_user(3, None, None).await.iter() {
+        println!("  event id: {}", ev.id);
+    }
+
+    println!("handle routing request output:");
     data.handle_routing_request(
         State(s.clone()),
         NaiveDate::from_ymd_opt(2024, 4, 15)
@@ -774,14 +604,15 @@ pub async fn init(
 
 fn print_vehicles_of_company(
     data: &Data,
-    company_id: usize,
+    company_id: i32,
 ) {
     let vehicles_company = data.get_vehicles(company_id, None);
 
     println!("vehicles of company {}:", company_id);
-    for (_, vehicles) in vehicles_company.iter() {
+    for (vs_id, vehicles) in vehicles_company.iter() {
+        println!("vehicle specs id: {}", vs_id);
         for vehicle in vehicles.iter() {
-            println!("id: {}", vehicle.id);
+            println!("  id: {}", vehicle.id);
         }
     }
 }
