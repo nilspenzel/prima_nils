@@ -584,6 +584,16 @@ pub async fn init(
         println!("  event id: {}", ev.id);
     }
 
+    for (v, assignments) in data.get_company_conflicts_for_assignment(1, 1).await.iter() {
+        println!(
+            "assignment id conflicts for company 1 and assignment 1 and vehicle {}",
+            v
+        );
+        for assignment in assignments.iter() {
+            print!("{}", assignment.id);
+        }
+    }
+
     println!("handle routing request output:");
     data.handle_routing_request(
         State(s.clone()),

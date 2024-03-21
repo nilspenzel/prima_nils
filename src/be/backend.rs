@@ -18,7 +18,7 @@ use sea_orm::{ActiveValue, DeleteResult, EntityTrait};
 use serde::Deserialize;
 use std::collections::HashMap;
 
-fn id_to_vector_pos(id: i32) -> usize {
+fn id_to_vec_pos(id: i32) -> usize {
     (id - 1) as usize
 }
 
@@ -347,7 +347,7 @@ impl Data {
             Availability::find().all(s.db()).await.unwrap();
 
         for availability in availability_models.iter() {
-            self.vehicles[id_to_vector_pos(availability.vehicle)]
+            self.vehicles[id_to_vec_pos(availability.vehicle)]
                 .add_availability(
                     State(s.clone()),
                     &mut Interval {
@@ -361,7 +361,7 @@ impl Data {
         let assignment_models: Vec<<assignment::Entity as sea_orm::EntityTrait>::Model> =
             Assignment::find().all(s.db()).await.unwrap();
         for a in assignment_models {
-            self.vehicles[id_to_vector_pos(a.id)]
+            self.vehicles[id_to_vec_pos(a.id)]
                 .assignments
                 .push(AssignmentData {
                     arrival: a.arrival,
@@ -505,7 +505,7 @@ impl Data {
         match result {
             Ok(_) => {
                 self.vehicles.push(VehicleData {
-                    id: result.unwrap().last_insert_id - 1,
+                    id: result.unwrap().last_insert_id,
                     license_plate,
                     company,
                     specifics: specs_id,
@@ -538,7 +538,7 @@ impl Data {
         let result = Availability::insert(active_m.clone()).exec(s.db()).await;
         match result {
             Ok(_) => {
-                self.vehicles[id_to_vector_pos(vehicle)]
+                self.vehicles[id_to_vec_pos(vehicle)]
                     .add_availability(
                         State(s.clone()),
                         &mut Interval {
@@ -679,7 +679,7 @@ impl Data {
                         vehicle,
                     )
                     .await;
-                (&mut self.vehicles[id_to_vector_pos(vehicle)])
+                (&mut self.vehicles[id_to_vec_pos(vehicle)])
                     .assignments
                     .push(AssignmentData {
                         id: a_id,
@@ -742,7 +742,7 @@ impl Data {
                 company: company,
             },
         ];
-        (&mut self.vehicles[id_to_vector_pos(vehicle)])
+        (&mut self.vehicles[id_to_vec_pos(vehicle)])
             .assignments
             .iter_mut()
             .filter(|assignment| assignment.id == id)
@@ -963,10 +963,10 @@ impl Data {
 
         //Find events valid for start and target based on beeline distances:
         for vehicle in self.vehicles.iter() {
-            if !viable_companies[id_to_vector_pos(vehicle.company)]
-                || self.vehicle_specifics[id_to_vector_pos(vehicle.specifics)].seats < passengers
-                || self.vehicle_specifics[id_to_vector_pos(vehicle.specifics)].wheelchairs < 0
-                || self.vehicle_specifics[id_to_vector_pos(vehicle.specifics)].storage_space < 0
+            if !viable_companies[id_to_vec_pos(vehicle.company)]
+                || self.vehicle_specifics[id_to_vec_pos(vehicle.specifics)].seats < passengers
+                || self.vehicle_specifics[id_to_vec_pos(vehicle.specifics)].wheelchairs < 0
+                || self.vehicle_specifics[id_to_vec_pos(vehicle.specifics)].storage_space < 0
             {
                 continue;
             }
@@ -1048,8 +1048,8 @@ impl Data {
                 continue;
             }
             if !self.vehicles.iter().any(|v| {
-                id_to_vector_pos(v.company) == i
-                    && self.vehicle_specifics[id_to_vector_pos(v.specifics)].seats >= passengers
+                id_to_vec_pos(v.company) == i
+                    && self.vehicle_specifics[id_to_vec_pos(v.specifics)].seats >= passengers
                     && v.find_collisions(start_time, target_time).is_empty()
                     && v.is_available(start_time, target_time)
             }) {
@@ -1196,26 +1196,26 @@ impl Data {
                 cost: company_start_cost + company_target_cost,
             });
             for (j, e) in start_viable_events.iter().enumerate() {
-                if id_to_vector_pos(e.company) != i {
+                if id_to_vec_pos(e.company) != i {
                     continue;
                 }
                 viable_combinations.push(Comb {
                     is_start_company: false,
-                    start_pos: id_to_vector_pos(e.assignment),
+                    start_pos: id_to_vec_pos(e.assignment),
                     is_target_company: true,
                     target_pos: i,
                     cost: start_event_costs[j] + company_target_cost,
                 })
             }
             for (j, e) in target_viable_events.iter().enumerate() {
-                if id_to_vector_pos(e.company) != i {
+                if id_to_vec_pos(e.company) != i {
                     continue;
                 }
                 viable_combinations.push(Comb {
                     is_start_company: true,
                     start_pos: i,
                     is_target_company: false,
-                    target_pos: id_to_vector_pos(e.assignment),
+                    target_pos: id_to_vec_pos(e.assignment),
                     cost: company_start_cost + target_event_costs[j],
                 })
             }
@@ -1228,9 +1228,9 @@ impl Data {
                 }
                 viable_combinations.push(Comb {
                     is_start_company: false,
-                    start_pos: id_to_vector_pos(start.assignment),
+                    start_pos: id_to_vec_pos(start.assignment),
                     is_target_company: false,
-                    target_pos: id_to_vector_pos(target.assignment),
+                    target_pos: id_to_vec_pos(target.assignment),
                     cost: start_event_costs[i] + target_event_costs[j],
                 })
             }
@@ -1260,7 +1260,7 @@ impl Data {
         } else if best_combination.is_target_company {
             best_combination.target_pos
         } else {
-            id_to_vector_pos(
+            id_to_vec_pos(
                 self.vehicles
                     .iter()
                     .find(|v| {
@@ -1306,10 +1306,10 @@ impl Data {
             time_frame_start,
             time_frame_end,
         };
-        if self.vehicles.len() < id_to_vector_pos(vehicle_id) {
+        if self.vehicles.len() < id_to_vec_pos(vehicle_id) {
             return Vec::new();
         }
-        self.vehicles[id_to_vector_pos(vehicle_id)]
+        self.vehicles[id_to_vec_pos(vehicle_id)]
             .assignments
             .iter()
             .filter(|a| interval.contained_in_time_frame(a.departure, a.arrival))
@@ -1370,6 +1370,7 @@ impl Data {
         };
         let mut found = false;
         for v in self.vehicles.iter() {
+            println!("dfnlsd     {}", v.id);
             for a in v.assignments.iter() {
                 if a.id != assignment_id {
                     continue;
@@ -1427,7 +1428,7 @@ impl Data {
         if !found {
             return Vec::new();
         }
-        self.vehicles[id_to_vector_pos(vehicle_id)]
+        self.vehicles[id_to_vec_pos(vehicle_id)]
             .assignments
             .iter()
             .filter(|a| {
