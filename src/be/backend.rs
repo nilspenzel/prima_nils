@@ -70,9 +70,9 @@ pub struct UserData {
 
 struct Comb {
     is_start_company: bool,
-    start_id: usize,
+    start_pos: usize,
     is_target_company: bool,
-    target_id: usize,
+    target_pos: usize,
     cost: i32,
 }
 
@@ -84,7 +84,7 @@ struct BestCombination {
 //start data structs_______________________________________________________________________________________________________________________
 #[derive(Clone, PartialEq)]
 pub struct AssignmentData {
-    pub id: usize,
+    pub id: i32,
     pub departure: NaiveDateTime,
     pub arrival: NaiveDateTime,
     pub company: usize,
@@ -112,19 +112,13 @@ pub struct AvailabilityData {
 
 #[derive(PartialEq)]
 pub struct VehicleData {
-    pub id: usize,
+    pub id: i32,
     pub license_plate: String,
     pub company: usize,
     pub specifics: usize,
     pub active: bool,
     pub availability: Vec<AvailabilityData>,
     pub assignments: Vec<AssignmentData>,
-}
-
-impl VehicleData {
-    pub fn print(&self) {
-        println!("vehicle availability size: {}", self.availability.len());
-    }
 }
 
 impl VehicleData {
@@ -189,26 +183,26 @@ pub struct EventData {
     pub coordinates: geo::Point,
     pub scheduled_time: NaiveDateTime,
     pub communicated_time: NaiveDateTime,
-    pub customer: usize,
-    pub assignment: usize,
+    pub customer: i32,
+    pub assignment: i32,
     pub required_specs: usize,
-    pub request_id: usize,
-    pub id: usize,
+    pub request_id: i32,
+    pub id: i32,
     pub is_pickup: bool,
     pub company: usize,
 }
 impl EventData {
     fn from(
-        id: usize,
+        id: i32,
         lat: f32,
         lng: f32,
         scheduled_time: NaiveDateTime,
         communicated_time: NaiveDateTime,
         company: usize,
-        customer: usize,
-        assignment: usize,
+        customer: i32,
+        assignment: i32,
         required_specs: usize,
-        request_id: usize,
+        request_id: i32,
         is_pickup: bool,
     ) -> Self {
         Self {
@@ -255,7 +249,7 @@ struct ZoneData {
 
 #[derive(PartialEq)]
 pub struct Data {
-    users: Vec<UserData>,
+    users: HashMap<i32, UserData>,
     zones: Vec<ZoneData>,
     companies: Vec<CompanyData>,
     pub vehicles: Vec<VehicleData>,
@@ -269,7 +263,7 @@ impl Data {
             companies: Vec::<CompanyData>::new(),
             vehicles: Vec::<VehicleData>::new(),
             vehicle_specifics: Vec::<vehicle_specifics::Model>::new(),
-            users: Vec::<UserData>::new(),
+            users: HashMap::<i32, UserData>::new(),
         }
     }
 
@@ -279,13 +273,6 @@ impl Data {
         self.vehicles.clear();
         self.vehicle_specifics.clear();
         self.zones.clear();
-    }
-
-    pub fn print(&self) {
-        for vehicle in self.vehicles.iter() {
-            print!("id: {}, ", vehicle.id);
-            vehicle.print();
-        }
     }
 
     pub fn do_intervals_touch(&self) -> bool {
@@ -336,7 +323,7 @@ impl Data {
             Vehicle::find().all(s.db()).await.unwrap();
         for vehicle in vehicle_models.iter() {
             self.vehicles.push(VehicleData {
-                id: vehicle.id as usize,
+                id: vehicle.id,
                 license_plate: vehicle.license_plate.to_string(),
                 company: vehicle.company as usize,
                 specifics: vehicle.specifics as usize,
@@ -369,7 +356,7 @@ impl Data {
                 .push(AssignmentData {
                     arrival: a.arrival,
                     departure: a.departure,
-                    id: a.id as usize,
+                    id: a.id,
                     company: a.company as usize,
                     vehicle: a.vehicle as usize,
                     events: Vec::new(),
@@ -380,18 +367,18 @@ impl Data {
         for e in event_models {
             for v in self.vehicles.iter_mut() {
                 for a in v.assignments.iter_mut() {
-                    if a.id == e.chain_id as usize {
+                    if a.id == e.chain_id {
                         a.events.push(EventData::from(
-                            e.id as usize,
+                            e.id,
                             e.latitude,
                             e.longitude,
                             e.scheduled_time,
                             e.communicated_time,
                             e.company as usize,
-                            e.customer as usize,
-                            e.chain_id as usize,
+                            e.customer,
+                            e.chain_id,
                             e.required_vehicle_specifics as usize,
-                            e.request_id as usize,
+                            e.request_id,
                             e.is_pickup,
                         ));
                     }
@@ -400,17 +387,20 @@ impl Data {
         }
         let user_models = entities::prelude::User::find().all(s.db()).await.unwrap();
         for user_model in user_models {
-            self.users.push(UserData {
-                id: Some(user_model.id),
-                name: user_model.name,
-                is_driver: user_model.is_driver,
-                is_admin: user_model.is_admin,
-                email: user_model.email,
-                password: user_model.password,
-                salt: user_model.salt,
-                o_auth_id: user_model.o_auth_id,
-                o_auth_provider: user_model.o_auth_provider,
-            });
+            self.users.insert(
+                user_model.id,
+                UserData {
+                    id: Some(user_model.id),
+                    name: user_model.name,
+                    is_driver: user_model.is_driver,
+                    is_admin: user_model.is_admin,
+                    email: user_model.email,
+                    password: user_model.password,
+                    salt: user_model.salt,
+                    o_auth_id: user_model.o_auth_id,
+                    o_auth_provider: user_model.o_auth_provider,
+                },
+            );
         }
         self.vehicle_specifics = VehicleSpecifics::find().all(s.db()).await.unwrap();
     }
@@ -458,7 +448,7 @@ impl Data {
         match result {
             Ok(_) => {
                 user.id = Some(result.unwrap().last_insert_id);
-                self.users.push(user);
+                self.users.insert(user.id.unwrap(), user);
                 StatusCode::CREATED
             }
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -493,7 +483,7 @@ impl Data {
         match result {
             Ok(_) => {
                 self.vehicles.push(VehicleData {
-                    id: result.unwrap().last_insert_id as usize,
+                    id: result.unwrap().last_insert_id,
                     license_plate: post_request.license_plate,
                     company: post_request.company as usize,
                     specifics: specs_id as usize,
@@ -648,7 +638,7 @@ impl Data {
         comm_t_target: NaiveDateTime,
     ) {
         let id = match assignment_id {
-            Some(a_id) => a_id as usize,
+            Some(a_id) => a_id,
             None => {
                 let a_id = self
                     .insert_assignment_into_db(
@@ -658,7 +648,7 @@ impl Data {
                         company,
                         vehicle,
                     )
-                    .await as usize;
+                    .await;
                 (&mut self.vehicles[vehicle - 1])
                     .assignments
                     .push(AssignmentData {
@@ -669,7 +659,7 @@ impl Data {
                         vehicle,
                         events: Vec::new(),
                     });
-                a_id
+                a_id as i32
             }
         };
         let (start_event_id, target_event_id) = self
@@ -701,11 +691,11 @@ impl Data {
                 coordinates: p1,
                 scheduled_time: sched_t_start,
                 communicated_time: comm_t_start,
-                customer: customer as usize,
+                customer: customer,
                 assignment: id,
                 required_specs: required_vehicle_specs as usize,
-                request_id: request_id as usize,
-                id: start_event_id as usize,
+                request_id: request_id,
+                id: start_event_id,
                 is_pickup: true,
                 company: company,
             },
@@ -713,11 +703,11 @@ impl Data {
                 coordinates: p2,
                 scheduled_time: sched_t_target,
                 communicated_time: comm_t_target,
-                customer: customer as usize,
+                customer: customer,
                 assignment: id,
                 required_specs: required_vehicle_specs as usize,
-                request_id: request_id as usize,
-                id: target_event_id as usize,
+                request_id: request_id,
+                id: target_event_id,
                 is_pickup: false,
                 company: company,
             },
@@ -900,6 +890,16 @@ impl Data {
 
         //find companies, that may process the request according to their zone
         let mut viable_companies = self.get_companies_matching_start_point(&start).await;
+        println!("viable companies:");
+        for (i, is_viable) in viable_companies.iter().enumerate() {
+            if !is_viable {
+                continue;
+            }
+            println!(
+                "id: {}, zone id: {}",
+                self.companies[i].id, self.companies[i].zone
+            );
+        }
 
         let mut start_viable_events: Vec<EventData> = Vec::new();
         let mut target_viable_events: Vec<EventData> = Vec::new();
@@ -930,14 +930,16 @@ impl Data {
         }
         //Find events valid for start and target based on beeline distances:
         for vehicle in self.vehicles.iter() {
-            if !viable_companies[vehicle.company as usize]
-                || self.vehicle_specifics[vehicle.specifics as usize].seats < passengers
+            if !viable_companies[(vehicle.company - 1) as usize]
+                || self.vehicle_specifics[(vehicle.specifics - 1) as usize].seats < passengers
+                || self.vehicle_specifics[(vehicle.specifics - 1) as usize].wheelchairs < 0
+                || self.vehicle_specifics[(vehicle.specifics - 1) as usize].storage_space < 0
             {
                 continue;
             }
             let assignments = &vehicle.assignments;
             let new_event_min_time_frame = Interval {
-                start_time: start_time,
+                start_time,
                 end_time: target_time,
             };
 
@@ -964,14 +966,23 @@ impl Data {
             //look for assignments to which the new event may be appended at the end
             assignments
                 .iter()
-                .filter(|a| a.arrival < start_time && !a.events.is_empty())
-                .map(|a| a.events.iter().max_by_key(|e| e.scheduled_time).unwrap())
-                .for_each(|e| {
+                .filter(|assignment| {
+                    assignment.arrival < start_time && !assignment.events.is_empty()
+                })
+                .map(|assignment| {
+                    assignment
+                        .events
+                        .iter()
+                        .max_by_key(|event| event.scheduled_time)
+                        .unwrap()
+                })
+                .for_each(|event| {
                     let beeline_approach_time: Duration = Duration::minutes(
-                        (e.coordinates.geodesic_distance(&start)).round() as i64 / AIR_DIST_SPEED,
+                        (event.coordinates.geodesic_distance(&start)).round() as i64
+                            / AIR_DIST_SPEED,
                     );
-                    if e.scheduled_time + beeline_approach_time < start_time {
-                        start_viable_events.push(e.clone());
+                    if event.scheduled_time + beeline_approach_time < start_time {
+                        start_viable_events.push(event.clone());
                     }
                 });
             //look for assignments to which the new event may be appended at the start
@@ -989,20 +1000,40 @@ impl Data {
                 });
         }
 
+        println!("start viable events:");
+        for ev in start_viable_events.iter() {
+            println!("event id: {}", ev.id);
+        }
+        println!("target viable events:");
+        for ev in target_viable_events.iter() {
+            println!("event id: {}", ev.id);
+        }
+
         //for all viable companies, ensure that there is a vehicle that is a valid choice to process the new request
-        for (i, c) in self.companies.iter().enumerate() {
+        for (i, _) in self.companies.iter().enumerate() {
             if !viable_companies[i] {
                 continue;
             }
             if !self.vehicles.iter().any(|v| {
                 v.company as usize == i
-                    && self.vehicle_specifics[v.specifics as usize].seats >= passengers
+                    && self.vehicle_specifics[(v.specifics - 1) as usize].seats >= passengers
                     && v.find_collisions(start_time, target_time).is_empty()
                     && v.is_available(start_time, target_time)
             }) {
                 viable_companies[i] = false;
                 continue;
             }
+        }
+
+        println!("viable companies after checking there is a vehicle available:");
+        for (i, is_viable) in viable_companies.iter().enumerate() {
+            if !is_viable {
+                continue;
+            }
+            println!(
+                "id: {}, zone id: {}",
+                self.companies[i].id, self.companies[i].zone
+            );
         }
         //get the actual costs
         let start_c = Coordinate {
@@ -1087,7 +1118,8 @@ impl Data {
             distance.dist as i64 * KM_PRICE as i64 + distance.time as i64 * MINUTE_PRICE as i64
         }
 
-        let n_viable_companies = viable_companies.iter().filter(|b| true).count();
+        let n_viable_companies = viable_companies.iter().filter(|b| **b).count();
+        println!("n_viable_companies: {}", n_viable_companies);
 
         //compute event costs
         let mut start_event_costs = Vec::<i32>::new();
@@ -1125,9 +1157,9 @@ impl Data {
                 + distances_to_target[company_pos].dist as i32 * KM_PRICE);
             viable_combinations.push(Comb {
                 is_start_company: true,
-                start_id: i,
+                start_pos: i,
                 is_target_company: true,
-                target_id: i,
+                target_pos: i,
                 cost: company_start_cost + company_target_cost,
             });
             for (j, e) in start_viable_events.iter().enumerate() {
@@ -1136,9 +1168,9 @@ impl Data {
                 }
                 viable_combinations.push(Comb {
                     is_start_company: false,
-                    start_id: e.assignment,
+                    start_pos: e.assignment as usize,
                     is_target_company: true,
-                    target_id: i,
+                    target_pos: i,
                     cost: start_event_costs[j] + company_target_cost,
                 })
             }
@@ -1148,9 +1180,9 @@ impl Data {
                 }
                 viable_combinations.push(Comb {
                     is_start_company: true,
-                    start_id: i,
+                    start_pos: i,
                     is_target_company: false,
-                    target_id: e.assignment,
+                    target_pos: e.assignment as usize,
                     cost: company_start_cost + target_event_costs[j],
                 })
             }
@@ -1163,12 +1195,17 @@ impl Data {
                 }
                 viable_combinations.push(Comb {
                     is_start_company: false,
-                    start_id: start.assignment,
+                    start_pos: start.assignment as usize,
                     is_target_company: false,
-                    target_id: target.assignment,
+                    target_pos: target.assignment as usize,
                     cost: start_event_costs[i] + target_event_costs[j],
                 })
             }
+        }
+
+        if viable_combinations.is_empty() {
+            println!("no viable combinations!");
+            return;
         }
 
         //use cost function to sort the viable combinations
@@ -1179,26 +1216,26 @@ impl Data {
         }
         let best_combination = &viable_combinations[0];
         let assignment_id: Option<usize> = if !best_combination.is_start_company {
-            Some(best_combination.start_id)
+            Some(best_combination.start_pos)
         } else if !best_combination.is_target_company {
-            Some(best_combination.target_id)
+            Some(best_combination.target_pos)
         } else {
             None
         };
         let company_id = if best_combination.is_start_company {
-            best_combination.start_id
+            best_combination.start_pos
         } else if best_combination.is_target_company {
-            best_combination.target_id
+            best_combination.target_pos
         } else {
             self.vehicles
                 .iter()
                 .find(|v| {
                     v.assignments
                         .iter()
-                        .any(|a| a.id == best_combination.start_id)
+                        .any(|a| a.id == best_combination.start_pos as i32)
                 })
                 .unwrap()
-                .company
+                .company as usize
         };
 
         self.insert_event_pair_into_db(
@@ -1263,7 +1300,7 @@ impl Data {
 
     pub async fn get_events_for_user(
         &self,
-        user_id: usize,
+        user_id: i32,
         time_frame_start: Option<NaiveDateTime>,
         time_frame_end: Option<NaiveDateTime>,
     ) -> Vec<&EventData> {
@@ -1290,7 +1327,7 @@ impl Data {
     pub async fn get_company_conflicts_for_assignment(
         &self,
         company_id: usize,
-        assignment_id: usize,
+        assignment_id: i32,
     ) -> HashMap<usize, Vec<&AssignmentData>> {
         let mut interval = Interval {
             start_time: NaiveDateTime::MIN,
@@ -1335,7 +1372,7 @@ impl Data {
     pub async fn get_vehicle_conflicts_for_assignment(
         &self,
         vehicle_id: usize,
-        assignment_id: usize,
+        assignment_id: i32,
     ) -> Vec<&AssignmentData> {
         let mut interval = Interval {
             start_time: NaiveDateTime::MIN,

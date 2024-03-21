@@ -647,7 +647,6 @@ pub async fn init(
         read_from_db_data == data
     );
 
-    /*
     println!(
         "number of assignments for vehicle 1: {} and number of the first assignments events: {}, departure: {}, arrival: {}, company: {}, vehicle: {}, id: {}",
         data.vehicles[0].assignments.len(),
@@ -698,7 +697,23 @@ pub async fn init(
         read_from_db_data.vehicles[0].assignments[0].events[0].is_pickup,
         read_from_db_data.vehicles[0].assignments[0].events[0].request_id,
         read_from_db_data.vehicles[0].assignments[0].events[0].required_specs,
-    );*/
+    );
+
+    data.handle_routing_request(
+        State(s.clone()),
+        NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(10, 55, 0)
+            .unwrap(),
+        true,
+        14.025081097762154,
+        51.195075641827316,
+        13.867512445295205,
+        51.22069201951501,
+        2,
+        2,
+    )
+    .await;
 }
 
 fn print_vehicles_of_company(
