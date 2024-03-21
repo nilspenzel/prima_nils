@@ -107,7 +107,7 @@ impl AssignmentData {
 #[derive(Eq, PartialEq)]
 pub struct AvailabilityData {
     id: i32,
-    interval: Interval,
+    pub interval: Interval,
 }
 
 #[derive(PartialEq)]
@@ -131,15 +131,19 @@ impl VehicleData {
         let mut mark_delete: Vec<usize> = Vec::new();
         for (pos, existing) in self.availability.iter().enumerate() {
             if !existing.interval.touches(&new_interval) {
+                //println!("intervals dont touch:{}  __  {}",existing.interval, new_interval);
                 continue;
             }
             if existing.interval.contains(&new_interval) {
+                //println!("interval {}  contains  {}", existing.interval, new_interval);
                 return;
             }
             if new_interval.contains(&existing.interval) {
+                //println!("interval {}  contains  {}", new_interval, existing.interval);
                 mark_delete.push(pos);
             }
             if new_interval.overlaps(&existing.interval) {
+                //println!("intervals overlap: {}  __  {}",new_interval, existing.interval);
                 mark_delete.push(pos);
                 new_interval.merge(&existing.interval);
             }
@@ -152,7 +156,6 @@ impl VehicleData {
             match result {
                 Ok(_) => {
                     self.availability.remove(to_delete);
-                    //info!("Interval {} deleted from db",self.availability[to_delete].interval,)
                 }
                 Err(e) => error!("Error deleting interval: {e:?}"),
             }
@@ -336,7 +339,6 @@ impl Data {
             Availability::find().all(s.db()).await.unwrap();
 
         for availability in availability_models.iter() {
-            println!("availability: {}", availability.id);
             self.vehicles[(availability.vehicle - 1) as usize]
                 .add_availability(
                     State(s.clone()),

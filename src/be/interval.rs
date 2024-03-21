@@ -37,7 +37,7 @@ impl Interval {
         self,
         other: &Interval,
     ) -> bool {
-        !(self.start_time >= other.end_time || self.end_time <= other.start_time)
+        !(self.start_time > other.end_time || self.end_time < other.start_time)
     }
     //overlaps asserts that the two intervals are touching
     pub fn overlaps(

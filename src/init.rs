@@ -699,6 +699,62 @@ pub async fn init(
         read_from_db_data.vehicles[0].assignments[0].events[0].required_specs,
     );
 
+    data.create_availability(
+        State(s.clone()),
+        axum::Json(CreateVehicleAvailability {
+            start_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
+                .unwrap()
+                .and_hms_opt(10, 10, 0)
+                .unwrap()),
+            end_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
+                .unwrap()
+                .and_hms_opt(14, 0, 0)
+                .unwrap()),
+            vehicle: 1,
+        }),
+    )
+    .await;
+
+    data.create_availability(
+        State(s.clone()),
+        axum::Json(CreateVehicleAvailability {
+            start_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
+                .unwrap()
+                .and_hms_opt(10, 10, 0)
+                .unwrap()),
+            end_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
+                .unwrap()
+                .and_hms_opt(14, 0, 0)
+                .unwrap()),
+            vehicle: 2,
+        }),
+    )
+    .await;
+
+    data.create_availability(
+        State(s.clone()),
+        axum::Json(CreateVehicleAvailability {
+            start_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
+                .unwrap()
+                .and_hms_opt(10, 10, 0)
+                .unwrap()),
+            end_time: (NaiveDate::from_ymd_opt(2024, 4, 15)
+                .unwrap()
+                .and_hms_opt(14, 0, 0)
+                .unwrap()),
+            vehicle: 3,
+        }),
+    )
+    .await;
+
+    println!(
+        "vehicle 1 availability count: {}",
+        data.vehicles[0].availability.len()
+    );
+    for v in data.vehicles[0].availability.iter() {
+        println!("{}", v.interval);
+    }
+
     data.handle_routing_request(
         State(s.clone()),
         NaiveDate::from_ymd_opt(2024, 4, 15)
