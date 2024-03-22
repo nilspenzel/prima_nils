@@ -1,5 +1,5 @@
 use crate::{
-    be::backend::{CreateCompany, CreateUser, CreateZone, Data},
+    be::backend::Data,
     constants::{
         bautzen_split_ost::BAUTZEN_OST, bautzen_split_west::BAUTZEN_WEST, gorlitz::GORLITZ,
     },
@@ -128,49 +128,40 @@ pub async fn init(
     let mut read_from_db_data = Data::new();
     data.create_user(
         State(s.clone()),
-        axum::Json(CreateUser {
-            id: None,
-            name: "TestDriver1".to_string(),
-            is_driver: true,
-            is_admin: false,
-            email: "".to_string(),
-            password: Some("".to_string()),
-            salt: "".to_string(),
-            o_auth_id: Some("".to_string()),
-            o_auth_provider: Some("".to_string()),
-        }),
+        "TestDriver1".to_string(),
+        true,
+        false,
+        "".to_string(),
+        Some("".to_string()),
+        "".to_string(),
+        Some("".to_string()),
+        Some("".to_string()),
     )
     .await;
 
     data.create_user(
         State(s.clone()),
-        axum::Json(CreateUser {
-            id: None,
-            name: "TestUser1".to_string(),
-            is_driver: false,
-            is_admin: false,
-            email: "".to_string(),
-            password: Some("".to_string()),
-            salt: "".to_string(),
-            o_auth_id: Some("".to_string()),
-            o_auth_provider: Some("".to_string()),
-        }),
+        "TestUser1".to_string(),
+        false,
+        false,
+        "".to_string(),
+        Some("".to_string()),
+        "".to_string(),
+        Some("".to_string()),
+        Some("".to_string()),
     )
     .await;
 
     data.create_user(
         State(s.clone()),
-        axum::Json(CreateUser {
-            id: None,
-            name: "TestUser2".to_string(),
-            is_driver: false,
-            is_admin: false,
-            email: "".to_string(),
-            password: Some("".to_string()),
-            salt: "".to_string(),
-            o_auth_id: Some("".to_string()),
-            o_auth_provider: Some("".to_string()),
-        }),
+        "TestUser2".to_string(),
+        false,
+        false,
+        "".to_string(),
+        Some("".to_string()),
+        "".to_string(),
+        Some("".to_string()),
+        Some("".to_string()),
     )
     .await;
 
@@ -183,28 +174,18 @@ pub async fn init(
 
     data.create_zone(
         State(s.clone()),
-        axum::Json(CreateZone {
-            name: "Bautzen Ost".to_string(),
-            area: BAUTZEN_OST.to_string(),
-        }),
+        "Bautzen Ost".to_string(),
+        BAUTZEN_OST.to_string(),
     )
     .await;
     data.create_zone(
         State(s.clone()),
-        axum::Json(CreateZone {
-            name: "Bautzen West".to_string(),
-            area: BAUTZEN_WEST.to_string(),
-        }),
+        "Bautzen West".to_string(),
+        BAUTZEN_WEST.to_string(),
     )
     .await;
-    data.create_zone(
-        State(s.clone()),
-        axum::Json(CreateZone {
-            name: "Görlitz".to_string(),
-            area: GORLITZ.to_string(),
-        }),
-    )
-    .await;
+    data.create_zone(State(s.clone()), "Görlitz".to_string(), GORLITZ.to_string())
+        .await;
 
     read_from_db_data.clear();
     read_from_db_data.read_data(State(s.clone())).await;
@@ -215,82 +196,66 @@ pub async fn init(
 
     data.create_company(
         State(s.clone()),
-        axum::Json(CreateCompany {
-            name: "Taxi-Unternehmen Bautzen-1".to_string(),
-            zone: 2,
-            lng: 13.895983751721786,
-            lat: 51.220826461859644,
-        }),
+        "Taxi-Unternehmen Bautzen-1".to_string(),
+        2,
+        13.895983751721786,
+        51.220826461859644,
     )
     .await;
     data.create_company(
         State(s.clone()),
-        axum::Json(CreateCompany {
-            name: "Taxi-Unternehmen Bautzen-2".to_string(),
-            zone: 2,
-            lng: 14.034681384488607,
-            lat: 51.31633774366952,
-        }),
+        "Taxi-Unternehmen Bautzen-2".to_string(),
+        2,
+        14.034681384488607,
+        51.31633774366952,
     )
     .await;
     data.create_company(
         State(s.clone()),
-        axum::Json(CreateCompany {
-            name: "Taxi-Unternehmen Bautzen-3".to_string(),
-            zone: 2,
-            lng: 14.179674338162073,
-            lat: 51.46704814415014,
-        }),
+        "Taxi-Unternehmen Bautzen-3".to_string(),
+        2,
+        14.179674338162073,
+        51.46704814415014,
     )
     .await;
     data.create_company(
         State(s.clone()),
-        axum::Json(CreateCompany {
-            name: "Taxi-Unternehmen Bautzen-4".to_string(),
-            zone: 1,
-            lng: 14.244972698642613,
-            lat: 51.27251252133357,
-        }),
+        "Taxi-Unternehmen Bautzen-4".to_string(),
+        1,
+        14.244972698642613,
+        51.27251252133357,
     )
     .await;
     data.create_company(
         State(s.clone()),
-        axum::Json(CreateCompany {
-            name: "Taxi-Unternehmen Bautzen-5".to_string(),
-            zone: 1,
-            lng: 14.381821307922678,
-            lat: 51.169106961190806,
-        }),
+        "Taxi-Unternehmen Bautzen-5".to_string(),
+        1,
+        14.381821307922678,
+        51.169106961190806,
     )
     .await;
     data.create_company(
         State(s.clone()),
-        axum::Json(CreateCompany {
-            name: "Taxi-Unternehmen Görlitz-1".to_string(),
-            zone: 3,
-            lng: 14.708969872564097,
-            lat: 51.43354047439519,
-        }),
+        "Taxi-Unternehmen Görlitz-1".to_string(),
+        3,
+        14.708969872564097,
+        51.43354047439519,
     )
     .await;
     data.create_company(
         State(s.clone()),
-        axum::Json(CreateCompany {
-            name: "Taxi-Unternehmen Görlitz-2".to_string(),
-            zone: 3,
-            lng: 14.879525132220152,
-            lat: 51.22165543174137,
-        }),
+        "Taxi-Unternehmen Görlitz-2".to_string(),
+        3,
+        14.879525132220152,
+        51.22165543174137,
     )
     .await;
     data.create_company(
         State(s.clone()),
-        axum::Json(CreateCompany {
-            name: "Taxi-Unternehmen Görlitz-3".to_string(),
-            zone: 3,
-            lng: 14.753736228472121,
-            lat: 51.04190085802671,
-        }),
+        "Taxi-Unternehmen Görlitz-3".to_string(),
+        3,
+        14.753736228472121,
+        51.04190085802671,
     )
     .await;
 

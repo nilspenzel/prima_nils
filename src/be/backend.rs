@@ -7,17 +7,13 @@ use crate::osrm::Coordinate;
 use crate::osrm::{DistTime, OSRM};
 
 use crate::{error, AppState, State, StatusCode};
-use axum::Json;
 use chrono::NaiveDateTime;
 use chrono::{Duration, Utc};
 use geo::prelude::*;
 use geo::{Coord, Point};
 use geojson::{GeoJson, Geometry};
 use itertools::Itertools;
-use sea_orm::{
-    ActiveModelTrait, ActiveValue, ColumnTrait, Database, DbConn, DeleteResult, EntityTrait,
-    QueryFilter, Set,
-};
+use sea_orm::{ActiveModelTrait, ActiveValue, DeleteResult, EntityTrait};
 use std::collections::HashMap;
 
 fn id_to_vec_pos(id: i32) -> usize {
@@ -28,34 +24,10 @@ fn vec_pos_to_id(pos: usize) -> i32 {
     1 + pos as i32
 }
 
-pub struct CreateCompany {
-    pub lat: f32,
-    pub lng: f32,
-    pub zone: i32,
-    pub name: String,
-}
-
-pub struct CreateZone {
-    pub area: String,
-    pub name: String,
-}
-#[derive(Clone)]
-pub struct CreateUser {
-    pub id: Option<i32>,
-    pub name: String,
-    pub is_driver: bool,
-    pub is_admin: bool,
-    pub email: String,
-    pub password: Option<String>,
-    pub salt: String,
-    pub o_auth_id: Option<String>,
-    pub o_auth_provider: Option<String>,
-}
-
 #[derive(PartialEq, Clone)]
 #[readonly::make]
 pub struct UserData {
-    pub id: Option<i32>,
+    pub id: i32,
     pub name: String,
     pub is_driver: bool,
     pub is_admin: bool,
@@ -64,22 +36,6 @@ pub struct UserData {
     pub salt: String,
     pub o_auth_id: Option<String>,
     pub o_auth_provider: Option<String>,
-}
-
-impl UserData {
-    fn from(user: CreateUser) -> Self {
-        Self {
-            id: user.id,
-            name: user.name,
-            is_driver: user.is_driver,
-            is_admin: user.is_admin,
-            email: user.email,
-            password: user.password,
-            salt: user.salt,
-            o_auth_id: user.o_auth_id,
-            o_auth_provider: user.o_auth_provider,
-        }
-    }
 }
 
 struct Comb {
@@ -265,19 +221,6 @@ struct CompanyData {
     zone: i32,
     name: String,
 }
-impl CompanyData {
-    fn from(
-        creator: CreateCompany,
-        new_id: i32,
-    ) -> Self {
-        Self {
-            id: new_id,
-            zone: creator.zone,
-            name: creator.name,
-            central_coordinates: Point::new(creator.lat as f64, creator.lng as f64),
-        }
-    }
-}
 
 #[derive(PartialEq)]
 #[readonly::make]
@@ -360,15 +303,15 @@ impl Data {
         let company_models: Vec<<company::Entity as sea_orm::EntityTrait>::Model> =
             Company::find().all(s.db()).await.unwrap();
         for company_model in company_models {
-            self.companies.push(CompanyData::from(
-                CreateCompany {
-                    name: company_model.name,
-                    zone: company_model.zone,
-                    lat: company_model.latitude,
-                    lng: company_model.longitude,
-                },
-                company_model.id,
-            ));
+            self.companies.push(CompanyData {
+                name: company_model.name,
+                zone: company_model.zone,
+                central_coordinates: Point::new(
+                    company_model.latitude as f64,
+                    company_model.longitude as f64,
+                ),
+                id: company_model.id,
+            });
         }
         let vehicle_models: Vec<<vehicle::Entity as sea_orm::EntityTrait>::Model> =
             Vehicle::find().all(s.db()).await.unwrap();
@@ -440,7 +383,7 @@ impl Data {
             self.users.insert(
                 user_model.id,
                 UserData {
-                    id: Some(user_model.id),
+                    id: user_model.id,
                     name: user_model.name,
                     is_driver: user_model.is_driver,
                     is_admin: user_model.is_admin,
@@ -485,19 +428,25 @@ impl Data {
     pub async fn create_user(
         &mut self,
         State(s): State<AppState>,
-        Json(post_request): Json<CreateUser>,
+        name: String,
+        is_driver: bool,
+        is_admin: bool,
+        email: String,
+        password: Option<String>,
+        salt: String,
+        o_auth_id: Option<String>,
+        o_auth_provider: Option<String>,
     ) -> StatusCode {
-        let mut user = post_request.clone();
         let active_m = user::ActiveModel {
             id: ActiveValue::NotSet,
-            name: ActiveValue::Set(post_request.name),
-            is_driver: ActiveValue::Set(post_request.is_driver),
-            is_admin: ActiveValue::Set(post_request.is_admin),
-            email: ActiveValue::Set(post_request.email),
-            password: ActiveValue::Set(post_request.password),
-            salt: ActiveValue::Set(post_request.salt),
-            o_auth_id: ActiveValue::Set(post_request.o_auth_id),
-            o_auth_provider: ActiveValue::Set(post_request.o_auth_provider),
+            name: ActiveValue::Set(name.clone()),
+            is_driver: ActiveValue::Set(is_driver),
+            is_admin: ActiveValue::Set(is_admin),
+            email: ActiveValue::Set(email.clone()),
+            password: ActiveValue::Set(password.clone()),
+            salt: ActiveValue::Set(salt.clone()),
+            o_auth_id: ActiveValue::Set(o_auth_id.clone()),
+            o_auth_provider: ActiveValue::Set(o_auth_provider.clone()),
             is_active: ActiveValue::Set(true),
         };
         let result = entities::prelude::User::insert(active_m.clone())
@@ -505,8 +454,21 @@ impl Data {
             .await;
         match result {
             Ok(_) => {
-                user.id = Some(result.unwrap().last_insert_id);
-                self.users.insert(user.id.unwrap(), UserData::from(user));
+                let id = result.unwrap().last_insert_id;
+                self.users.insert(
+                    id,
+                    UserData {
+                        id,
+                        name,
+                        is_driver,
+                        is_admin,
+                        email,
+                        password,
+                        salt,
+                        o_auth_id,
+                        o_auth_provider,
+                    },
+                );
                 StatusCode::CREATED
             }
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -620,18 +582,19 @@ impl Data {
     pub async fn create_zone(
         &mut self,
         State(s): State<AppState>,
-        Json(post_request): Json<CreateZone>,
+        name: String,
+        area: String,
     ) -> StatusCode {
         let result = Zone::insert(zone::ActiveModel {
             id: ActiveValue::NotSet,
-            area: ActiveValue::Set(post_request.area.to_string()),
-            name: ActiveValue::Set(post_request.name.to_string()),
+            name: ActiveValue::Set(name.to_string()),
+            area: ActiveValue::Set(area.to_string()),
         })
         .exec(s.db())
         .await;
         match result {
             Ok(_) => {
-                let geojson = post_request.area.parse::<GeoJson>().unwrap();
+                let geojson = area.parse::<GeoJson>().unwrap();
                 let feature: Geometry = Geometry::try_from(geojson).unwrap();
                 self.zones.push(ZoneData {
                     id: result.unwrap().last_insert_id,
@@ -646,23 +609,28 @@ impl Data {
     pub async fn create_company(
         &mut self,
         State(s): State<AppState>,
-        Json(post_request): Json<CreateCompany>,
+        name: String,
+        zone: i32,
+        lat: f32,
+        lng: f32,
     ) -> StatusCode {
         let result = Company::insert(company::ActiveModel {
             id: ActiveValue::NotSet,
-            longitude: ActiveValue::Set(post_request.lng),
-            latitude: ActiveValue::Set(post_request.lat),
-            name: ActiveValue::Set(post_request.name.to_string()),
-            zone: ActiveValue::Set(post_request.zone),
+            longitude: ActiveValue::Set(lng),
+            latitude: ActiveValue::Set(lat),
+            name: ActiveValue::Set(name.to_string()),
+            zone: ActiveValue::Set(zone),
         })
         .exec(s.db())
         .await;
         match result {
             Ok(_) => {
-                self.companies.push(CompanyData::from(
-                    post_request,
-                    result.unwrap().last_insert_id,
-                ));
+                self.companies.push(CompanyData {
+                    id: result.unwrap().last_insert_id,
+                    central_coordinates: Point::new(lat as f64, lng as f64),
+                    zone,
+                    name,
+                });
                 StatusCode::CREATED
             }
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -1208,7 +1176,7 @@ impl Data {
         //create all viable combinations
         let mut viable_combinations: Vec<Comb> = Vec::new();
         let mut company_pos = 0;
-        for (i, c) in self.companies.iter().enumerate() {
+        for (i, _) in self.companies.iter().enumerate() {
             if !viable_companies[i] {
                 continue;
             }
