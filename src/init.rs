@@ -1,5 +1,5 @@
 use crate::{
-    be::backend::{CreateCompany, CreateZone, Data, UserData},
+    be::backend::{CreateCompany, CreateUser, CreateZone, Data},
     constants::{
         bautzen_split_ost::BAUTZEN_OST, bautzen_split_west::BAUTZEN_WEST, gorlitz::GORLITZ,
     },
@@ -128,7 +128,7 @@ pub async fn init(
     let mut read_from_db_data = Data::new();
     data.create_user(
         State(s.clone()),
-        axum::Json(UserData {
+        axum::Json(CreateUser {
             id: None,
             name: "TestDriver1".to_string(),
             is_driver: true,
@@ -144,7 +144,7 @@ pub async fn init(
 
     data.create_user(
         State(s.clone()),
-        axum::Json(UserData {
+        axum::Json(CreateUser {
             id: None,
             name: "TestUser1".to_string(),
             is_driver: false,
@@ -160,7 +160,7 @@ pub async fn init(
 
     data.create_user(
         State(s.clone()),
-        axum::Json(UserData {
+        axum::Json(CreateUser {
             id: None,
             name: "TestUser2".to_string(),
             is_driver: false,

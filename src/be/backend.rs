@@ -15,7 +15,6 @@ use geo::{Coord, Point};
 use geojson::{GeoJson, Geometry};
 use itertools::Itertools;
 use sea_orm::{ActiveValue, DeleteResult, EntityTrait};
-use serde::Deserialize;
 use std::collections::HashMap;
 
 fn id_to_vec_pos(id: i32) -> usize {
@@ -26,7 +25,6 @@ fn vec_pos_to_id(pos: usize) -> i32 {
     1 + pos as i32
 }
 
-#[derive(Deserialize)]
 pub struct CreateCompany {
     pub lat: f32,
     pub lng: f32,
@@ -34,20 +32,25 @@ pub struct CreateCompany {
     pub name: String,
 }
 
-#[derive(Deserialize)]
 pub struct CreateZone {
     pub area: String,
     pub name: String,
 }
-
-#[derive(Deserialize)]
-pub struct CreateVehicleAvailability {
-    pub start_time: NaiveDateTime,
-    pub end_time: NaiveDateTime,
-    pub vehicle: i32,
+#[derive(Clone)]
+pub struct CreateUser {
+    pub id: Option<i32>,
+    pub name: String,
+    pub is_driver: bool,
+    pub is_admin: bool,
+    pub email: String,
+    pub password: Option<String>,
+    pub salt: String,
+    pub o_auth_id: Option<String>,
+    pub o_auth_provider: Option<String>,
 }
 
-#[derive(Deserialize, PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
+#[readonly::make]
 pub struct UserData {
     pub id: Option<i32>,
     pub name: String,
@@ -58,6 +61,22 @@ pub struct UserData {
     pub salt: String,
     pub o_auth_id: Option<String>,
     pub o_auth_provider: Option<String>,
+}
+
+impl UserData {
+    fn from(user: CreateUser) -> Self {
+        Self {
+            id: user.id,
+            name: user.name,
+            is_driver: user.is_driver,
+            is_admin: user.is_admin,
+            email: user.email,
+            password: user.password,
+            salt: user.salt,
+            o_auth_id: user.o_auth_id,
+            o_auth_provider: user.o_auth_provider,
+        }
+    }
 }
 
 struct Comb {
@@ -179,7 +198,7 @@ impl VehicleData {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 #[readonly::make]
 pub struct EventData {
     pub coordinates: geo::Point,
@@ -290,6 +309,7 @@ impl Data {
     }
 
     //expected to be used in fuzzing tests
+    #[allow(dead_code)]
     pub fn do_intervals_touch(&self) -> bool {
         self.vehicles
             .iter()
@@ -449,7 +469,7 @@ impl Data {
     pub async fn create_user(
         &mut self,
         State(s): State<AppState>,
-        Json(post_request): Json<UserData>,
+        Json(post_request): Json<CreateUser>,
     ) -> StatusCode {
         let mut user = post_request.clone();
         let active_m = user::ActiveModel {
@@ -470,7 +490,7 @@ impl Data {
         match result {
             Ok(_) => {
                 user.id = Some(result.unwrap().last_insert_id);
-                self.users.insert(user.id.unwrap(), user);
+                self.users.insert(user.id.unwrap(), UserData::from(user));
                 StatusCode::CREATED
             }
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -1362,7 +1382,6 @@ impl Data {
         };
         let mut found = false;
         for v in self.vehicles.iter() {
-            println!("dfnlsd     {}", v.id);
             for a in v.assignments.iter() {
                 if a.id != assignment_id {
                     continue;
@@ -1397,6 +1416,7 @@ impl Data {
         ret
     }
 
+    #[allow(dead_code)]
     pub async fn get_vehicle_conflicts_for_assignment(
         &self,
         vehicle_id: i32,
