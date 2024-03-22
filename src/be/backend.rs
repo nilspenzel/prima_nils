@@ -1,14 +1,16 @@
 use crate::be::interval::{InfiniteInterval, Interval};
-use crate::constants::constants::*;
-use crate::entities::prelude::*;
-use crate::entities::{self, availability};
-use crate::entities::{assignment, company, event, user, vehicle, vehicle_specifics, zone};
+use crate::constants::constants::{AIR_DIST_SPEED, KM_PRICE, MINUTE_PRICE, MINUTE_WAITING_PRICE};
+use crate::entities::prelude::{
+    Assignment, Availability, Company, Event, User, Vehicle, VehicleSpecifics, Zone,
+};
+use crate::entities::{
+    assignment, availability, company, event, user, vehicle, vehicle_specifics, zone,
+};
 use crate::osrm::Coordinate;
 use crate::osrm::{DistTime, OSRM};
 
 use crate::{error, AppState, State, StatusCode};
-use chrono::NaiveDateTime;
-use chrono::{Duration, Utc};
+use chrono::{Duration, NaiveDateTime, Utc};
 use geo::prelude::*;
 use geo::{Coord, Point};
 use geojson::{GeoJson, Geometry};
@@ -378,7 +380,7 @@ impl Data {
                 }
             }
         }
-        let user_models = entities::prelude::User::find().all(s.db()).await.unwrap();
+        let user_models = User::find().all(s.db()).await.unwrap();
         for user_model in user_models {
             self.users.insert(
                 user_model.id,
@@ -449,9 +451,7 @@ impl Data {
             o_auth_provider: ActiveValue::Set(o_auth_provider.clone()),
             is_active: ActiveValue::Set(true),
         };
-        let result = entities::prelude::User::insert(active_m.clone())
-            .exec(s.db())
-            .await;
+        let result = User::insert(active_m.clone()).exec(s.db()).await;
         match result {
             Ok(_) => {
                 let id = result.unwrap().last_insert_id;
