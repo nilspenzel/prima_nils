@@ -24,20 +24,6 @@ fn vec_pos_to_id(pos: usize) -> i32 {
     1 + pos as i32
 }
 
-#[derive(PartialEq, Clone)]
-#[readonly::make]
-pub struct UserData {
-    pub id: i32,
-    pub name: String,
-    pub is_driver: bool,
-    pub is_admin: bool,
-    pub email: String,
-    pub password: Option<String>,
-    pub salt: String,
-    pub o_auth_id: Option<String>,
-    pub o_auth_provider: Option<String>,
-}
-
 struct Comb {
     is_start_company: bool,
     start_pos: usize,
@@ -78,8 +64,22 @@ impl AssignmentData {
 #[derive(Clone, Eq, PartialEq)]
 #[readonly::make]
 pub struct AvailabilityData {
-    id: i32,
+    pub id: i32,
     pub interval: Interval,
+}
+
+#[derive(PartialEq, Clone)]
+#[readonly::make]
+pub struct UserData {
+    pub id: i32,
+    pub name: String,
+    pub is_driver: bool,
+    pub is_admin: bool,
+    pub email: String,
+    pub password: Option<String>,
+    pub salt: String,
+    pub o_auth_id: Option<String>,
+    pub o_auth_provider: Option<String>,
 }
 
 #[derive(Clone, PartialEq)]
@@ -215,37 +215,37 @@ impl EventData {
 
 #[derive(PartialEq)]
 #[readonly::make]
-struct CompanyData {
-    id: i32,
-    central_coordinates: geo::Point,
-    zone: i32,
-    name: String,
+pub struct CompanyData {
+    pub id: i32,
+    pub central_coordinates: geo::Point,
+    pub zone: i32,
+    pub name: String,
 }
 
 #[derive(PartialEq)]
 #[readonly::make]
-struct VehicleSpecificsData {
-    id: i32,
-    seats: i32,
-    wheelchairs: i32,
-    storage_space: i32,
+pub struct VehicleSpecificsData {
+    pub id: i32,
+    pub seats: i32,
+    pub wheelchairs: i32,
+    pub storage_space: i32,
 }
 
 #[derive(PartialEq)]
 #[readonly::make]
-struct ZoneData {
-    area: geo::MultiPolygon,
-    id: i32,
+pub struct ZoneData {
+    pub area: geo::MultiPolygon,
+    pub id: i32,
 }
 
 #[derive(PartialEq)]
 #[readonly::make]
 pub struct Data {
-    users: HashMap<i32, UserData>,
-    zones: Vec<ZoneData>,
-    companies: Vec<CompanyData>,
+    pub users: HashMap<i32, UserData>,
+    pub zones: Vec<ZoneData>,
+    pub companies: Vec<CompanyData>,
     pub vehicles: Vec<VehicleData>,
-    vehicle_specifics: Vec<VehicleSpecificsData>,
+    pub vehicle_specifics: Vec<VehicleSpecificsData>,
 }
 
 impl Data {
