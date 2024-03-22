@@ -1,11 +1,10 @@
 use axum::{
     extract::{Json, State},
-    http::{StatusCode, Uri},
+    http::StatusCode,
     response::{Html, Redirect},
     routing::{get, post},
     Form, Router,
 };
-use chrono::NaiveDate;
 use dotenv::dotenv;
 use entities::{prelude::User, user};
 use itertools::Itertools;
@@ -16,7 +15,6 @@ use sea_orm::{
     ActiveModelTrait, ActiveValue, ColumnTrait, Database, DbConn, EntityTrait, QueryFilter, Set,
 };
 use serde::Deserialize;
-use serde::Serialize;
 use serde_json::json;
 use std::{
     env,
@@ -353,7 +351,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         db: Arc::new(conn),
     };
 
-    init::init(State(s.clone()), false).await;
+    init::init(State(s.clone()), true).await;
 
     let app = Router::new();
     let app = app.layer(livereload);

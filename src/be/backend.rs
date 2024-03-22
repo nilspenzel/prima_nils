@@ -60,8 +60,6 @@ pub struct UserData {
     pub o_auth_provider: Option<String>,
 }
 
-//end of pub structs_______________________________________________________________________________________________________________________
-
 struct Comb {
     is_start_company: bool,
     start_pos: usize,
@@ -75,8 +73,8 @@ struct BestCombination {
     best_target_time_pos: usize,
 }
 
-//start data structs_______________________________________________________________________________________________________________________
 #[derive(Clone, PartialEq)]
+#[readonly::make]
 pub struct AssignmentData {
     pub id: i32,
     pub departure: NaiveDateTime,
@@ -86,28 +84,15 @@ pub struct AssignmentData {
     pub events: Vec<EventData>,
 }
 
-/*
-impl AssignmentData {
-    fn new() -> Self {
-        Self {
-            id: 0,
-            departure: NaiveDateTime::MIN,
-            arrival: NaiveDateTime::MAX,
-            company: 0,
-            vehicle: 0,
-            events: Vec::new(),
-        }
-    }
-}
- */
-
 #[derive(Eq, PartialEq)]
+#[readonly::make]
 pub struct AvailabilityData {
     id: i32,
     pub interval: Interval,
 }
 
 #[derive(PartialEq)]
+#[readonly::make]
 pub struct VehicleData {
     pub id: i32,
     pub license_plate: String,
@@ -123,24 +108,20 @@ impl VehicleData {
         &mut self,
         State(s): State<AppState>,
         new_interval: &mut Interval,
-        id: i32,
+        id_or_none: Option<i32>,
     ) {
         let mut mark_delete: Vec<usize> = Vec::new();
         for (pos, existing) in self.availability.iter().enumerate() {
             if !existing.interval.touches(&new_interval) {
-                //println!("intervals dont touch:{}  __  {}",existing.interval, new_interval);
                 continue;
             }
             if existing.interval.contains(&new_interval) {
-                //println!("interval {}  contains  {}", existing.interval, new_interval);
                 return;
             }
             if new_interval.contains(&existing.interval) {
-                //println!("interval {}  contains  {}", new_interval, existing.interval);
                 mark_delete.push(pos);
             }
             if new_interval.overlaps(&existing.interval) {
-                //println!("intervals overlap: {}  __  {}",new_interval, existing.interval);
                 mark_delete.push(pos);
                 new_interval.merge(&existing.interval);
             }
@@ -157,10 +138,28 @@ impl VehicleData {
                 Err(e) => error!("Error deleting interval: {e:?}"),
             }
         }
+        let id = match id_or_none {
+            Some(i) => i,
+            None => match Availability::insert(availability::ActiveModel {
+                id: ActiveValue::NotSet,
+                start_time: ActiveValue::Set(new_interval.start_time),
+                end_time: ActiveValue::Set(new_interval.end_time),
+                vehicle: ActiveValue::Set(self.id),
+            })
+            .exec(s.db())
+            .await
+            {
+                Ok(result) => result.last_insert_id,
+                Err(_) => -1,
+            },
+        };
+        if id == -1 {
+            return;
+        }
         self.availability.push(AvailabilityData {
             id,
             interval: *new_interval,
-        });
+        })
     }
 
     fn find_collisions(
@@ -181,6 +180,7 @@ impl VehicleData {
 }
 
 #[derive(Copy, Clone, PartialEq)]
+#[readonly::make]
 pub struct EventData {
     pub coordinates: geo::Point,
     pub scheduled_time: NaiveDateTime,
@@ -223,6 +223,7 @@ impl EventData {
 }
 
 #[derive(PartialEq)]
+#[readonly::make]
 struct CompanyData {
     id: i32,
     central_coordinates: geo::Point,
@@ -244,6 +245,7 @@ impl CompanyData {
 }
 
 #[derive(PartialEq)]
+#[readonly::make]
 struct VehicleSpecificsData {
     id: i32,
     seats: i32,
@@ -252,12 +254,14 @@ struct VehicleSpecificsData {
 }
 
 #[derive(PartialEq)]
+#[readonly::make]
 struct ZoneData {
     area: geo::MultiPolygon,
     id: i32,
 }
 
 #[derive(PartialEq)]
+#[readonly::make]
 pub struct Data {
     users: HashMap<i32, UserData>,
     zones: Vec<ZoneData>,
@@ -354,7 +358,7 @@ impl Data {
                         start_time: availability.start_time,
                         end_time: availability.end_time,
                     },
-                    availability.id,
+                    Some(availability.id),
                 )
                 .await;
         }
@@ -529,29 +533,17 @@ impl Data {
         end_time: NaiveDateTime,
         vehicle: i32,
     ) -> StatusCode {
-        let active_m = availability::ActiveModel {
-            id: ActiveValue::NotSet,
-            start_time: ActiveValue::Set(start_time),
-            end_time: ActiveValue::Set(end_time),
-            vehicle: ActiveValue::Set(vehicle),
-        };
-        let result = Availability::insert(active_m.clone()).exec(s.db()).await;
-        match result {
-            Ok(_) => {
-                self.vehicles[id_to_vec_pos(vehicle)]
-                    .add_availability(
-                        State(s.clone()),
-                        &mut Interval {
-                            start_time,
-                            end_time,
-                        },
-                        result.unwrap().last_insert_id,
-                    )
-                    .await;
-                StatusCode::CREATED
-            }
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
+        self.vehicles[id_to_vec_pos(vehicle)]
+            .add_availability(
+                State(s.clone()),
+                &mut Interval {
+                    start_time,
+                    end_time,
+                },
+                None,
+            )
+            .await;
+        StatusCode::CREATED
     }
 
     async fn internal_create_vehicle_specifics(

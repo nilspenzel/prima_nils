@@ -394,10 +394,6 @@ pub async fn init(
         1,
     )
     .await;
-    println!(
-        "=_=_=__=__=_=_=_=_=_==_=_=_==_=====_=_=_=_=_==___________________________________________________________________________________________________is data synchronized after creating availabilities: {}",
-        read_from_db_data == data
-    );
 
     read_from_db_data.clear();
     read_from_db_data.read_data(State(s.clone())).await;
@@ -568,6 +564,13 @@ pub async fn init(
         3,
     )
     .await;
+
+    read_from_db_data.clear();
+    read_from_db_data.read_data(State(s.clone())).await;
+    println!(
+        "=_=_=__=__=_=_=_=_=_==_=_=_==_=====_=_=_=_=_==___________________________________________________________________________________________________is data synchronized after creating availabilites: {}",
+        read_from_db_data == data
+    );
 
     println!("event ids of user with id 1:");
     for ev in data.get_events_for_user(1, None, None).await.iter() {
