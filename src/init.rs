@@ -613,6 +613,33 @@ pub async fn init(
         2,
     )
     .await;
+
+    println!(
+        "assignment count for vehicle 1 before change: {}",
+        data.vehicles[0].assignments.len()
+    );
+    println!(
+        "assignment count for vehicle 2 before change: {}",
+        data.vehicles[1].assignments.len()
+    );
+    println!(
+        "assignment1 vehicle: {}",
+        data.vehicles[0].assignments[0].vehicle
+    );
+    data.change_vehicle_for_assignment(State(s.clone()), 1, 2)
+        .await;
+    println!(
+        "assignment count for vehicle 1 after change: {}",
+        data.vehicles[0].assignments.len()
+    );
+    println!(
+        "assignment count for vehicle 2 after change: {}",
+        data.vehicles[1].assignments.len()
+    );
+    println!(
+        "assignment1 vehicle: {}",
+        data.vehicles[1].assignments[0].vehicle
+    );
 }
 
 fn print_vehicles_of_company(

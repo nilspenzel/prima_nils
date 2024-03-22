@@ -14,7 +14,10 @@ use geo::prelude::*;
 use geo::{Coord, Point};
 use geojson::{GeoJson, Geometry};
 use itertools::Itertools;
-use sea_orm::{ActiveValue, DeleteResult, EntityTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, ColumnTrait, Database, DbConn, DeleteResult, EntityTrait,
+    QueryFilter, Set,
+};
 use std::collections::HashMap;
 
 fn id_to_vec_pos(id: i32) -> usize {
@@ -103,14 +106,27 @@ pub struct AssignmentData {
     pub events: Vec<EventData>,
 }
 
-#[derive(Eq, PartialEq)]
+impl AssignmentData {
+    fn new() -> Self {
+        Self {
+            id: -1,
+            departure: NaiveDateTime::MIN,
+            arrival: NaiveDateTime::MAX,
+            company: -1,
+            vehicle: -1,
+            events: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq)]
 #[readonly::make]
 pub struct AvailabilityData {
     id: i32,
     pub interval: Interval,
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 #[readonly::make]
 pub struct VehicleData {
     pub id: i32,
@@ -1369,6 +1385,73 @@ impl Data {
             }
         }
         ret
+    }
+
+    pub async fn change_vehicle_for_assignment(
+        &mut self,
+        State(s): State<AppState>,
+        assignment_id: i32,
+        new_vehicle_id: i32,
+    ) -> StatusCode {
+        let vehicles = &mut self.vehicles;
+        let old_vehicle_id_vec: Vec<i32> = vehicles
+            .iter()
+            .filter(|vehicle| {
+                vehicle
+                    .assignments
+                    .iter()
+                    .any(|assignment| assignment.id == assignment_id)
+            })
+            .map(|vehicle| vehicle.id)
+            .collect();
+        if old_vehicle_id_vec.is_empty() {
+            return StatusCode::NOT_FOUND;
+        }
+        if old_vehicle_id_vec.len() > 1 {
+            error!("bad backend state: one assignment assigned to multiple cars");
+            //TODO
+        }
+        let old_vehicle_id = old_vehicle_id_vec[0];
+        let to_move_pos = vehicles[id_to_vec_pos(old_vehicle_id)]
+            .assignments
+            .iter()
+            .enumerate()
+            .filter(|(_pos, a)| a.id == assignment_id)
+            .map(|(pos, _)| pos)
+            .collect::<Vec<usize>>()[0];
+
+        let mut assignment_to_move: AssignmentData = AssignmentData::new();
+        vehicles
+            .iter_mut()
+            .filter(|vehicle| {
+                vehicle
+                    .assignments
+                    .iter()
+                    .any(|assignment| assignment.id == assignment_id)
+            })
+            .for_each(|vehicle| assignment_to_move = vehicle.assignments.swap_remove(to_move_pos));
+
+        if vehicles[id_to_vec_pos(new_vehicle_id)].company
+            != vehicles[id_to_vec_pos(old_vehicle_id)].company
+        {
+            //TODO: change companies for moving assignment and associated events
+        }
+        assignment_to_move.vehicle = new_vehicle_id;
+        vehicles[id_to_vec_pos(new_vehicle_id)]
+            .assignments
+            .push(assignment_to_move.clone());
+
+        let model: Option<assignment::Model> = Assignment::find_by_id(assignment_to_move.id)
+            .one(s.db())
+            .await
+            .unwrap();
+        let mut active_m: assignment::ActiveModel = model.unwrap().into();
+        active_m.vehicle = ActiveValue::Set(new_vehicle_id);
+        match active_m.update(s.db()).await {
+            Ok(_) => (),
+            Err(e) => error!("{}", e),
+        }
+        StatusCode::ACCEPTED
     }
 
     pub async fn get_company_conflicts_for_assignment(
