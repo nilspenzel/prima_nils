@@ -4,22 +4,18 @@ use geo::MultiPolygon;
 use geojson::{GeoJson, Geometry};
 
 pub fn multi_polygon_from_str(s: &str) -> Result<MultiPolygon, geojson::Error> {
+    //only accepts multipolygon, no featurecollection or polygon allowed
     match s.parse::<GeoJson>() {
-        Err(e) => {
-            error!("{}", e);
-            Err(e)
-        }
+        Err(e) => Err(e),
         Ok(geo_json) => match Geometry::try_from(geo_json) {
-            Err(e) => {
-                error!("{}", e);
-                Err(e)
-            }
+            Err(e) => Err(e),
             Ok(feature) => MultiPolygon::try_from(feature),
         },
     }
 }
 
 pub fn point_from_str(s: &str) -> Result<geo::Point, geojson::Error> {
+    //only accepts points, no featurecollection allowed
     match s.parse::<GeoJson>() {
         Err(e) => {
             error!("{}", e);

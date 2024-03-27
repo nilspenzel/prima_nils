@@ -1,129 +1,133 @@
-use crate::init::geo_from_str::point_from_str;
 use crate::{
-    be::{backend::Data, geo_from_str},
+    backend::data::Data,
+    constants::geo_points::TestPoints,
     constants::{
-        bautzen_split_ost::BAUTZEN_OST,
-        bautzen_split_west::BAUTZEN_WEST,
-        geo_points::{P1_BAUTZEN_OST, P1_BAUTZEN_WEST},
-        gorlitz::GORLITZ,
+        bautzen_split_ost::BAUTZEN_OST, bautzen_split_west::BAUTZEN_WEST, gorlitz::GORLITZ,
     },
     entities::{
         assignment, availability, company, event, prelude::User, user, vehicle, vehicle_specifics,
         zone,
     },
+    error,
+    init::StopFor::TEST1,
     AppState,
 };
 use axum::extract::State;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDate;
 use migration::ConnectionTrait;
 use sea_orm::EntityTrait;
 
-async fn clear(State(s): State<AppState>) {
+#[derive(PartialEq)]
+pub enum StopFor {
+    TEST1,
+}
+
+async fn clear(State(s): State<&AppState>) {
     match event::Entity::delete_many().exec(s.db()).await {
-        Ok(_) => match State(s.clone())
+        Ok(_) => match State(&s)
             .db()
             .execute_unprepared("ALTER SEQUENCE event_id_seq RESTART WITH 1")
             .await
         {
             Ok(_) => (),
-            Err(e) => println!("{}", e),
+            Err(e) => error!("{}", e),
         },
-        Err(e) => println!("{}", e),
+        Err(e) => error!("{}", e),
     }
     match assignment::Entity::delete_many().exec(s.db()).await {
-        Ok(_) => match State(s.clone())
+        Ok(_) => match State(&s)
             .db()
             .execute_unprepared("ALTER SEQUENCE assignment_id_seq RESTART WITH 1")
             .await
         {
             Ok(_) => (),
-            Err(e) => println!("{}", e),
+            Err(e) => error!("{}", e),
         },
-        Err(e) => println!("{}", e),
+        Err(e) => error!("{}", e),
     }
     match availability::Entity::delete_many().exec(s.db()).await {
-        Ok(_) => match State(s.clone())
+        Ok(_) => match State(&s)
             .db()
             .execute_unprepared("ALTER SEQUENCE availability_id_seq RESTART WITH 1")
             .await
         {
             Ok(_) => (),
-            Err(e) => println!("{}", e),
+            Err(e) => error!("{}", e),
         },
-        Err(e) => println!("{}", e),
+        Err(e) => error!("{}", e),
     }
     match vehicle::Entity::delete_many().exec(s.db()).await {
-        Ok(_) => match State(s.clone())
+        Ok(_) => match State(&s)
             .db()
             .execute_unprepared("ALTER SEQUENCE vehicle_id_seq RESTART WITH 1")
             .await
         {
             Ok(_) => (),
-            Err(e) => println!("{}", e),
+            Err(e) => error!("{}", e),
         },
-        Err(e) => println!("{}", e),
+        Err(e) => error!("{}", e),
     }
     match company::Entity::delete_many().exec(s.db()).await {
-        Ok(_) => match State(s.clone())
+        Ok(_) => match State(&s)
             .db()
             .execute_unprepared("ALTER SEQUENCE company_id_seq RESTART WITH 1")
             .await
         {
             Ok(_) => (),
-            Err(e) => println!("{}", e),
+            Err(e) => error!("{}", e),
         },
-        Err(e) => println!("{}", e),
+        Err(e) => error!("{}", e),
     }
     match zone::Entity::delete_many().exec(s.db()).await {
-        Ok(_) => match State(s.clone())
+        Ok(_) => match State(&s)
             .db()
             .execute_unprepared("ALTER SEQUENCE zone_id_seq RESTART WITH 1")
             .await
         {
             Ok(_) => (),
-            Err(e) => println!("{}", e),
+            Err(e) => error!("{}", e),
         },
-        Err(e) => println!("{}", e),
+        Err(e) => error!("{}", e),
     }
     match vehicle_specifics::Entity::delete_many().exec(s.db()).await {
-        Ok(_) => match State(s.clone())
+        Ok(_) => match State(&s)
             .db()
             .execute_unprepared("ALTER SEQUENCE vehicle_specifics_id_seq RESTART WITH 1")
             .await
         {
             Ok(_) => (),
-            Err(e) => println!("{}", e),
+            Err(e) => error!("{}", e),
         },
-        Err(e) => println!("{}", e),
+        Err(e) => error!("{}", e),
     }
     match user::Entity::delete_many().exec(s.db()).await {
-        Ok(_) => match State(s.clone())
+        Ok(_) => match State(&s)
             .db()
             .execute_unprepared("ALTER SEQUENCE user_id_seq RESTART WITH 1")
             .await
         {
             Ok(_) => (),
-            Err(e) => println!("{}", e),
+            Err(e) => error!("{}", e),
         },
-        Err(e) => println!("{}", e),
+        Err(e) => error!("{}", e),
     }
     println!("clear succesful");
 }
 
 pub async fn init(
-    State(s): State<AppState>,
+    State(s): State<&AppState>,
     clear_tables: bool,
-    stop_for_tests: bool,
+    stop_for_tests: StopFor,
 ) -> Data {
     if clear_tables {
-        clear(State(s.clone())).await;
+        clear(State(&s)).await;
     } else {
         match User::find().all(s.clone().db()).await {
             Ok(u) => {
                 if !u.is_empty() {
                     println!("users already exist, not running init() again.");
                     let mut data = Data::new();
-                    data.read_data(State(s)).await;
+                    data.read_data_from_db(State(&s)).await;
                     return data;
                 }
             }
@@ -133,11 +137,11 @@ pub async fn init(
     let mut data = Data::new();
 
     data.create_user(
-        State(s.clone()),
+        State(&s),
         "TestDriver1".to_string(),
         true,
         false,
-        "".to_string(),
+        "test@aol.com".to_string(),
         Some("".to_string()),
         "".to_string(),
         Some("".to_string()),
@@ -146,11 +150,11 @@ pub async fn init(
     .await;
 
     data.create_user(
-        State(s.clone()),
+        State(&s),
         "TestUser1".to_string(),
         false,
         false,
-        "".to_string(),
+        "test@web.com".to_string(),
         Some("".to_string()),
         "".to_string(),
         Some("".to_string()),
@@ -159,11 +163,11 @@ pub async fn init(
     .await;
 
     data.create_user(
-        State(s.clone()),
+        State(&s),
         "TestUser2".to_string(),
         false,
         false,
-        "".to_string(),
+        "test@mail.com".to_string(),
         Some("".to_string()),
         "".to_string(),
         Some("".to_string()),
@@ -172,22 +176,22 @@ pub async fn init(
     .await;
 
     data.create_zone(
-        State(s.clone()),
+        State(&s),
         "Bautzen Ost".to_string(),
         BAUTZEN_OST.to_string(),
     )
     .await;
     data.create_zone(
-        State(s.clone()),
+        State(&s),
         "Bautzen West".to_string(),
         BAUTZEN_WEST.to_string(),
     )
     .await;
-    data.create_zone(State(s.clone()), "Görlitz".to_string(), GORLITZ.to_string())
+    data.create_zone(State(&s), "Görlitz".to_string(), GORLITZ.to_string())
         .await;
 
     data.create_company(
-        State(s.clone()),
+        State(&s),
         "Taxi-Unternehmen Bautzen-1".to_string(),
         2,
         13.895983751721786,
@@ -195,7 +199,7 @@ pub async fn init(
     )
     .await;
     data.create_company(
-        State(s.clone()),
+        State(&s),
         "Taxi-Unternehmen Bautzen-2".to_string(),
         2,
         14.034681384488607,
@@ -203,7 +207,7 @@ pub async fn init(
     )
     .await;
     data.create_company(
-        State(s.clone()),
+        State(&s),
         "Taxi-Unternehmen Bautzen-3".to_string(),
         2,
         14.179674338162073,
@@ -211,7 +215,7 @@ pub async fn init(
     )
     .await;
     data.create_company(
-        State(s.clone()),
+        State(&s),
         "Taxi-Unternehmen Bautzen-4".to_string(),
         1,
         14.244972698642613,
@@ -219,7 +223,7 @@ pub async fn init(
     )
     .await;
     data.create_company(
-        State(s.clone()),
+        State(&s),
         "Taxi-Unternehmen Bautzen-5".to_string(),
         1,
         14.381821307922678,
@@ -227,7 +231,7 @@ pub async fn init(
     )
     .await;
     data.create_company(
-        State(s.clone()),
+        State(&s),
         "Taxi-Unternehmen Görlitz-1".to_string(),
         3,
         14.708969872564097,
@@ -235,7 +239,7 @@ pub async fn init(
     )
     .await;
     data.create_company(
-        State(s.clone()),
+        State(&s),
         "Taxi-Unternehmen Görlitz-2".to_string(),
         3,
         14.879525132220152,
@@ -243,7 +247,7 @@ pub async fn init(
     )
     .await;
     data.create_company(
-        State(s.clone()),
+        State(&s),
         "Taxi-Unternehmen Görlitz-3".to_string(),
         3,
         14.753736228472121,
@@ -251,63 +255,63 @@ pub async fn init(
     )
     .await;
 
-    data.create_vehicle(State(s.clone()), "TUB1-1".to_string(), 1)
+    data.create_vehicle(State(&s), "TUB1-1".to_string(), 1)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB1-2".to_string(), 1)
+    data.create_vehicle(State(&s), "TUB1-2".to_string(), 1)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB1-3".to_string(), 1)
+    data.create_vehicle(State(&s), "TUB1-3".to_string(), 1)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB1-4".to_string(), 1)
+    data.create_vehicle(State(&s), "TUB1-4".to_string(), 1)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB1-5".to_string(), 1)
+    data.create_vehicle(State(&s), "TUB1-5".to_string(), 1)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB2-1".to_string(), 2)
+    data.create_vehicle(State(&s), "TUB2-1".to_string(), 2)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB2-2".to_string(), 2)
+    data.create_vehicle(State(&s), "TUB2-2".to_string(), 2)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB2-3".to_string(), 2)
+    data.create_vehicle(State(&s), "TUB2-3".to_string(), 2)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB3-1".to_string(), 3)
+    data.create_vehicle(State(&s), "TUB3-1".to_string(), 3)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB3-2".to_string(), 3)
+    data.create_vehicle(State(&s), "TUB3-2".to_string(), 3)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB3-3".to_string(), 3)
+    data.create_vehicle(State(&s), "TUB3-3".to_string(), 3)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB3-4".to_string(), 3)
+    data.create_vehicle(State(&s), "TUB3-4".to_string(), 3)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB4-1".to_string(), 4)
+    data.create_vehicle(State(&s), "TUB4-1".to_string(), 4)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB4-2".to_string(), 4)
+    data.create_vehicle(State(&s), "TUB4-2".to_string(), 4)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB5-1".to_string(), 5)
+    data.create_vehicle(State(&s), "TUB5-1".to_string(), 5)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB5-2".to_string(), 5)
+    data.create_vehicle(State(&s), "TUB5-2".to_string(), 5)
         .await;
-    data.create_vehicle(State(s.clone()), "TUB5-3".to_string(), 5)
+    data.create_vehicle(State(&s), "TUB5-3".to_string(), 5)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG1-1".to_string(), 6)
+    data.create_vehicle(State(&s), "TUG1-1".to_string(), 6)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG1-2".to_string(), 6)
+    data.create_vehicle(State(&s), "TUG1-2".to_string(), 6)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG1-3".to_string(), 6)
+    data.create_vehicle(State(&s), "TUG1-3".to_string(), 6)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG2-1".to_string(), 7)
+    data.create_vehicle(State(&s), "TUG2-1".to_string(), 7)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG2-2".to_string(), 7)
+    data.create_vehicle(State(&s), "TUG2-2".to_string(), 7)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG2-3".to_string(), 7)
+    data.create_vehicle(State(&s), "TUG2-3".to_string(), 7)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG2-4".to_string(), 7)
+    data.create_vehicle(State(&s), "TUG2-4".to_string(), 7)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG3-1".to_string(), 8)
+    data.create_vehicle(State(&s), "TUG3-1".to_string(), 8)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG3-2".to_string(), 8)
+    data.create_vehicle(State(&s), "TUG3-2".to_string(), 8)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG3-3".to_string(), 8)
+    data.create_vehicle(State(&s), "TUG3-3".to_string(), 8)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG3-4".to_string(), 8)
+    data.create_vehicle(State(&s), "TUG3-4".to_string(), 8)
         .await;
-    data.create_vehicle(State(s.clone()), "TUG3-5".to_string(), 8)
+    data.create_vehicle(State(&s), "TUG3-5".to_string(), 8)
         .await;
 
     data.insert_or_add_assignment(
@@ -321,7 +325,7 @@ pub async fn init(
             .and_hms_opt(10, 0, 0)
             .unwrap(),
         1,
-        State(s.clone()),
+        State(&s),
         &"karolinenplatz 5".to_string(),
         &"Lichtwiesenweg 3".to_string(),
         13.867512445295205,
@@ -353,7 +357,7 @@ pub async fn init(
     .await;
 
     data.create_availability(
-        State(s.clone()),
+        State(&s),
         NaiveDate::from_ymd_opt(2024, 4, 15)
             .unwrap()
             .and_hms_opt(10, 10, 0)
@@ -367,7 +371,7 @@ pub async fn init(
     .await;
 
     data.create_availability(
-        State(s.clone()),
+        State(&s),
         NaiveDate::from_ymd_opt(2024, 4, 15)
             .unwrap()
             .and_hms_opt(10, 10, 0)
@@ -381,7 +385,7 @@ pub async fn init(
     .await;
 
     data.create_availability(
-        State(s.clone()),
+        State(&s),
         NaiveDate::from_ymd_opt(2024, 4, 15)
             .unwrap()
             .and_hms_opt(10, 10, 0)
@@ -393,43 +397,18 @@ pub async fn init(
         3,
     )
     .await;
-    /*
-        println!("handle routing request output:");
-        data.handle_routing_request(
-            State(s.clone()),
-            NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(10, 55, 0)
-                .unwrap(),
-            true,
-            14.025081097762154,
-            51.195075641827316,
-            13.867512445295205,
-            51.22069201951501,
-            2,
-            2,
-        )
-        .await;
 
-        read_from_db_data.clear();
-        read_from_db_data.read_data(State(s.clone())).await;
-        println!(
-                "=_=_=__=__=_=_=_=_=_==_=_=_==_=====_=_=_=_=_==___________________________________________________________________________________________________is data synchronized before changing assignment vehicle: {}",
-                read_from_db_data == data
-            );
-    */
+    data.change_vehicle_for_assignment(State(&s), 1, 2).await;
 
-    data.change_vehicle_for_assignment(State(s.clone()), 1, 2)
-        .await;
+    let test_points = TestPoints::new();
+    let p_in_bautzen_ost = test_points.bautzen_ost[0];
+    let p_in_bautzen_west = test_points.bautzen_west[0];
 
-    let p_in_bautzen_ost = point_from_str(P1_BAUTZEN_OST).unwrap();
-    let p_in_bautzen_west = point_from_str(P1_BAUTZEN_WEST).unwrap();
-
-    if stop_for_tests {
+    if stop_for_tests == TEST1 {
         return data;
     }
     data.handle_routing_request(
-        State(s.clone()),
+        State(&s),
         NaiveDate::from_ymd_opt(2024, 4, 15)
             .unwrap()
             .and_hms_opt(9, 10, 0)
