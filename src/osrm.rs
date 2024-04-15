@@ -1,9 +1,14 @@
 use anyhow::{anyhow, Result};
+use geo::Coord;
 use serde::Serialize;
 use serde_json::Value;
 use tera::Tera;
+pub enum Dir {
+    Forward,
+    Backward,
+}
 
-const REQUEST_TEMPLATE: &str = r#"{
+const FORWARD_REQUEST_TEMPLATE: &str = r#"{
     "destination":{
         "type":"Module",
         "target":"/osrm/one_to_many"
@@ -13,8 +18,25 @@ const REQUEST_TEMPLATE: &str = r#"{
         "profile":"car",
         "direction":"Forward",
         "one":{
-            "lat":{{ one.lat }},
-            "lng":{{ one.lng }}
+            "lat":{{ one.x }},
+            "lng":{{ one.y }}
+        },
+        "many": {{ many }}
+    }
+}"#;
+
+const BACKWARD_REQUEST_TEMPLATE: &str = r#"{
+    "destination":{
+        "type":"Module",
+        "target":"/osrm/one_to_many"
+    },
+    "content_type":"OSRMOneToManyRequest",
+    "content":{
+        "profile":"car",
+        "direction":"Backward",
+        "one":{
+            "lat":{{ one.x }},
+            "lng":{{ one.y }}
         },
         "many": {{ many }}
     }
@@ -22,11 +44,11 @@ const REQUEST_TEMPLATE: &str = r#"{
 
 #[derive(Serialize)]
 pub struct Coordinate {
-    lat: f64,
-    lng: f64,
+    pub lat: f64,
+    pub lng: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct DistTime {
     pub dist: f64,
     pub time: f64,
@@ -40,19 +62,36 @@ pub struct OSRM {
 impl OSRM {
     pub fn new() -> Self {
         let mut tera = Tera::default();
-        tera.add_raw_template("x", &REQUEST_TEMPLATE).unwrap();
+        tera.add_raw_template("x", FORWARD_REQUEST_TEMPLATE)
+            .unwrap();
         let client = reqwest::Client::new();
         Self { tera, client }
     }
 
     pub async fn one_to_many(
         &self,
-        one: Coordinate,
-        many: Vec<Coordinate>,
+        one: Coord,
+        many: Vec<Coord>,
+        direction: Dir,
     ) -> Result<Vec<DistTime>> {
         let mut ctx = tera::Context::new();
         ctx.try_insert("one", &one)?;
-        ctx.try_insert("many", &serde_json::to_string(&many).unwrap())?;
+        ctx.try_insert(
+            "many",
+            &serde_json::to_string(&many)
+                .unwrap()
+                .replace('x', "lat")
+                .replace('y', "lng"),
+        )?;
+
+        println!(
+            "request: {}  -  {}",
+            &serde_json::to_string(&one).unwrap(),
+            &serde_json::to_string(&many)
+                .unwrap()
+                .replace('x', "lat")
+                .replace('y', "lng")
+        );
 
         let request = self.tera.render("x", &ctx)?;
         let res = self
@@ -84,7 +123,14 @@ impl OSRM {
 
 #[cfg(test)]
 mod test {
-    use crate::osrm::{Coordinate, OSRM};
+    use crate::{
+        constants::geo_points::TestPoints,
+        osrm::{
+            Coord,
+            Dir::{Backward, Forward},
+            OSRM,
+        },
+    };
     use anyhow::Result;
 
     #[tokio::test]
@@ -92,20 +138,48 @@ mod test {
         let osrm = OSRM::new();
         let result = osrm
             .one_to_many(
-                Coordinate {
-                    lat: 49.87738029,
-                    lng: 8.64555359,
+                Coord {
+                    x: 49.87738029,
+                    y: 8.64555359,
                 },
                 vec![
-                    Coordinate {
-                        lat: 50.11485439,
-                        lng: 8.65791321,
+                    Coord {
+                        x: 50.11485439,
+                        y: 8.65791321,
                     },
-                    Coordinate {
-                        lat: 49.39444062,
-                        lng: 8.6743927,
+                    Coord {
+                        x: 49.39444062,
+                        y: 8.6743927,
                     },
                 ],
+                Forward,
+            )
+            .await?;
+        println!("result: {result:?}");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test2() -> Result<()> {
+        let osrm = OSRM::new();
+        let test_points = TestPoints::new();
+        let result = osrm
+            .one_to_many(
+                Coord {
+                    y: (test_points.bautzen_west[0].x() as f32) as f64,
+                    x: (test_points.bautzen_west[0].y() as f32) as f64,
+                },
+                vec![
+                    Coord {
+                        y: (test_points.bautzen_west[1].x() as f32) as f64,
+                        x: (test_points.bautzen_west[1].y() as f32) as f64,
+                    },
+                    Coord {
+                        y: (test_points.bautzen_west[2].x() as f32) as f64,
+                        x: (test_points.bautzen_west[2].y() as f32) as f64,
+                    },
+                ],
+                Forward,
             )
             .await?;
         println!("result: {result:?}");

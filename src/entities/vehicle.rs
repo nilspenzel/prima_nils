@@ -7,31 +7,33 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
+    #[sea_orm(unique)]
+    pub license_plate: String,
+    pub company: i32,
     pub seats: i32,
-    pub wheelchair: bool,
+    pub wheelchair_capacity: i32,
     pub storage_space: i32,
-    pub company_id: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::blocked_times::Entity")]
-    BlockedTimes,
+    #[sea_orm(has_many = "super::availability::Entity")]
+    Availability,
     #[sea_orm(
         belongs_to = "super::company::Entity",
-        from = "Column::CompanyId",
+        from = "Column::Company",
         to = "super::company::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
     Company,
-    #[sea_orm(has_many = "super::event::Entity")]
-    Event,
+    #[sea_orm(has_many = "super::tour::Entity")]
+    Tour,
 }
 
-impl Related<super::blocked_times::Entity> for Entity {
+impl Related<super::availability::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::BlockedTimes.def()
+        Relation::Availability.def()
     }
 }
 
@@ -41,9 +43,9 @@ impl Related<super::company::Entity> for Entity {
     }
 }
 
-impl Related<super::event::Entity> for Entity {
+impl Related<super::tour::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Event.def()
+        Relation::Tour.def()
     }
 }
 

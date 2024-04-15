@@ -1,4 +1,4 @@
-use crate::entities::prelude::User;
+use crate::init::InitType;
 use axum::{
     extract::State,
     http::{StatusCode, Uri},
@@ -6,32 +6,35 @@ use axum::{
     routing::get,
     Router,
 };
+use backend::lib::PrimaData;
 use dotenv::dotenv;
-use entities::user;
 use itertools::Itertools;
 use log::setup_logging;
 use migration::{Migrator, MigratorTrait};
 use notify::Watcher;
-use sea_orm::{ActiveValue, Database, DbConn, EntityTrait};
-use serde_json::json;
+use sea_orm::Database;
 use std::{
     env,
     path::Path,
     sync::{Arc, Mutex},
 };
 use tera::{Context, Tera};
+use tokio::sync::RwLock;
 use tower_http::{compression::CompressionLayer, services::ServeFile};
 use tower_livereload::LiveReloadLayer;
-use tracing::{error, info};
+use tracing::error;
 
+mod backend;
+mod constants;
 mod entities;
+mod init;
 mod log;
 mod osrm;
 
 #[derive(Clone)]
 struct AppState {
     tera: Arc<Mutex<Tera>>,
-    db: Arc<DbConn>,
+    data: Arc<RwLock<dyn PrimaData>>,
 }
 
 impl AppState {
@@ -42,19 +45,20 @@ impl AppState {
     ) -> Result<String, tera::Error> {
         self.tera.lock().unwrap().render(template_name, context)
     }
-
-    fn db(&self) -> &DbConn {
-        &*self.db
-    }
 }
 
 async fn calendar(
     _uri: Uri,
     State(s): State<AppState>,
 ) -> Result<Html<String>, StatusCode> {
+    s.data
+        .write()
+        .await
+        .create_vehicle("test_vehicle_1", 1)
+        .await;
     s.render("calendar.html", &Context::new())
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-        .map(|x| Html(x))
+        .map(Html)
 }
 
 async fn register(
@@ -63,29 +67,10 @@ async fn register(
 ) -> Result<Html<String>, StatusCode> {
     s.render("register.html", &Context::new())
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-        .map(|x| Html(x))
+        .map(Html)
 }
-
+/*
 async fn users(State(s): State<AppState>) -> Result<Html<String>, StatusCode> {
-    let result = User::insert(user::ActiveModel {
-        name: ActiveValue::Set("Test".to_string()),
-        id: ActiveValue::NotSet,
-        is_driver: ActiveValue::Set(true),
-        is_admin: ActiveValue::Set(true),
-        email: ActiveValue::Set("".to_string()),
-        password: ActiveValue::Set(Some("".to_string())),
-        salt: ActiveValue::Set("".to_string()),
-        o_auth_id: ActiveValue::Set(Some("".to_string())),
-        o_auth_provider: ActiveValue::Set(Some("".to_string())),
-    })
-    .exec(s.db())
-    .await;
-
-    match result {
-        Ok(_) => info!("User added"),
-        Err(e) => error!("Error adding user: {e:?}"),
-    }
-
     let username = User::find_by_id(1)
         .one(s.db())
         .await
@@ -110,7 +95,7 @@ async fn users(State(s): State<AppState>) -> Result<Html<String>, StatusCode> {
         })?;
     Ok(Html(response))
 }
-
+*/
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_logging()?;
@@ -150,15 +135,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         notify::RecursiveMode::NonRecursive,
     )?;
 
+    //let data = Data::new(&conn);
+    let data = init::init(&conn, true, 5000, InitType::Default).await;
+
     let s = AppState {
-        tera: tera,
-        db: Arc::new(conn),
+        tera,
+        data: Arc::new(RwLock::new(data)),
     };
+
+    s.data
+        .write()
+        .await
+        .create_vehicle("test_vehicle_1", 1)
+        .await;
+
+    s.data
+        .write()
+        .await
+        .create_vehicle("test_vehicle_2", 1)
+        .await;
+
+    let mutex_guarded_data3 = s.data.read().await;
+    let company_1_vehicles = mutex_guarded_data3.get_vehicles(1).await;
+    for vehicle in company_1_vehicles.unwrap().iter() {
+        println!("vehicle with id: {} and license-plate: {} belongs to company: {} and has {} currently scheduled tours.",
+            vehicle.get_id().await, vehicle.get_license_plate().await, mutex_guarded_data3.get_company(vehicle.get_company_id().await).await.unwrap().get_name().await, vehicle.get_tours().await.len());
+    }
 
     let app = Router::new();
     let app = app.route("/calendar", get(calendar).with_state(s.clone()));
     let app = app.route("/register", get(register).with_state(s.clone()));
-    let app = app.route("/users", get(users).with_state(s.clone()));
+    //let app = app.route("/users", get(users).with_state(s.clone()));
     let app = app.route_service("/output.css", ServeFile::new("output.css"));
     let app = app.layer(livereload);
     let app = app.layer(CompressionLayer::new());

@@ -7,26 +7,36 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub name: String,
-    pub zone_id: i32,
     #[sea_orm(column_type = "Float")]
-    pub central_latitude: f32,
+    pub latitude: f32,
     #[sea_orm(column_type = "Float")]
-    pub central_longitude: f32,
+    pub longitude: f32,
+    pub display_name: String,
+    #[sea_orm(unique)]
+    pub email: String,
+    pub zone: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_many = "super::user::Entity")]
+    User,
     #[sea_orm(has_many = "super::vehicle::Entity")]
     Vehicle,
     #[sea_orm(
         belongs_to = "super::zone::Entity",
-        from = "Column::ZoneId",
+        from = "Column::Zone",
         to = "super::zone::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
     Zone,
+}
+
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
+    }
 }
 
 impl Related<super::vehicle::Entity> for Entity {
