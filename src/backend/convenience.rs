@@ -1,31 +1,53 @@
-use std::ops::Deref;
-
-use tower_http::follow_redirect::policy::PolicyExt;
-
-use crate::backend::data;
+use super::data::EventData;
+use crate::backend::data::AssignmentData;
 use crate::backend::data::VehicleData;
 use crate::backend::interval::Interval;
+use std::collections::HashMap;
 
-use crate::backend::data::AssignmentData;
+#[derive(Default)]
+struct RedistibutionData {
+    assignment_id_for_events: Vec<i32>,
+    //all_assignments: HashMap<i32, AssignmentData>,
+    //all_events: HashMap<i32, EventData>,
+    events_to_redistribute: Vec<EventData>,
+    company_id: i32,
+    assignments_to_redistribute: Vec<AssignmentData>,
+}
 
-fn trigger_redistribution(
+pub fn trigger_redistribution(
     vehicle_id: i32,
     time_interval: Interval,
-    v_vd: Vec<VehicleData>,
+    v_vd: &Vec<VehicleData>, // mit & arbeiten statt mit clone!
 ) -> () {
     println!("In trigger redistibution");
     println!("vehicle id is: {}", vehicle_id);
     println!("time interval {:?}", time_interval);
-    let mut vd_id: VehicleData;
+    let size = v_vd.iter().flat_map(|vehicle| &vehicle.assignments).count();
+    println!("Size of assignments {}", size);
+    let mut red = RedistibutionData::default();
     for vd in v_vd.iter() {
         if vehicle_id == vd.id {
             println!("found matching id!");
-            vd_id = vd.clone();
+            red.company_id = vd.company;
+            println!("company id: {}", red.company_id);
+            for (_, ass) in vd.assignments.iter() {
+                let dep = ass.departure;
+                let arr = ass.arrival;
+                let assignment_interval = Interval {
+                    start_time: dep,
+                    end_time: arr,
+                };
+                // TODO - Fälle in denen es nicht komplett "contains"... Deswegen Events?
+                if time_interval.contains(&assignment_interval) {
+                    red.assignments_to_redistribute.push(ass.clone());
+                }
+                red.assignment_id_for_events.push(ass.id.clone());
+            }
         }
     }
 }
 
-#[cfg(test)]
+/*#[cfg(test)]
 mod test {
     use crate::{
         backend::data::Data,
@@ -83,4 +105,4 @@ mod test {
         convenience::trigger_redistribution(5, i, my_vehicles.to_vec());
         println!("Test finished");
     }
-}
+}*/

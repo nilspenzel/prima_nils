@@ -1676,6 +1676,23 @@ mod test {
         let mut read_data = Data::new();
         check_data_db_synchronized(State(&s), &d, &mut read_data).await;
 
+        //-------------TEST----------------------------------------------------------
+        use crate::backend::convenience;
+        use crate::backend::interval::Interval;
+        let i: Interval = Interval {
+            start_time: NaiveDate::from_ymd_opt(2024, 4, 15)
+                .unwrap()
+                .and_hms_opt(11, 0, 0)
+                .unwrap(),
+            end_time: NaiveDate::from_ymd_opt(2024, 4, 15)
+                .unwrap()
+                .and_hms_opt(12, 0, 0)
+                .unwrap(),
+        };
+        convenience::trigger_redistribution(5, i, &d.vehicles);
+
+        //---------------------------------------------------------------------------
+
         let test_points = TestPoints::new();
         //zonen tests:
         //0->Bautzen Ost
