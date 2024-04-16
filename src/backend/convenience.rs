@@ -1,108 +1,78 @@
-use super::data::EventData;
-use crate::backend::data::AssignmentData;
-use crate::backend::data::VehicleData;
-use crate::backend::interval::Interval;
-use std::collections::HashMap;
+use super::data::{EventData, TourData, VehicleData};
+use crate::backend::data;
+use chrono::NaiveDateTime;
+//use std::collections::HashMap;
+
+/* EventData hat Tour id
+ * TourData hat Event Vector
+ * mit & arbeiten statt mit clone!
+ */
 
 #[derive(Default)]
 struct RedistibutionData {
-    assignment_id_for_events: Vec<i32>,
+    tour_id_for_events: Vec<i32>,
     //all_assignments: HashMap<i32, AssignmentData>,
     //all_events: HashMap<i32, EventData>,
     events_to_redistribute: Vec<EventData>,
     company_id: i32,
-    assignments_to_redistribute: Vec<AssignmentData>,
+    tours_to_redistribute: Vec<TourData>,
 }
 
+// 1656
 pub fn trigger_redistribution(
     vehicle_id: i32,
-    time_interval: Interval,
-    v_vd: &Vec<VehicleData>, // mit & arbeiten statt mit clone!
+    start: NaiveDateTime,
+    end: NaiveDateTime,
 ) -> () {
-    println!("In trigger redistibution");
-    println!("vehicle id is: {}", vehicle_id);
-    println!("time interval {:?}", time_interval);
-    let size = v_vd.iter().flat_map(|vehicle| &vehicle.assignments).count();
-    println!("Size of assignments {}", size);
-    let mut red = RedistibutionData::default();
-    for vd in v_vd.iter() {
-        if vehicle_id == vd.id {
-            println!("found matching id!");
-            red.company_id = vd.company;
-            println!("company id: {}", red.company_id);
-            for (_, ass) in vd.assignments.iter() {
-                let dep = ass.departure;
-                let arr = ass.arrival;
-                let assignment_interval = Interval {
-                    start_time: dep,
-                    end_time: arr,
-                };
-                // TODO - Fälle in denen es nicht komplett "contains"... Deswegen Events?
-                if time_interval.contains(&assignment_interval) {
-                    red.assignments_to_redistribute.push(ass.clone());
-                }
-                red.assignment_id_for_events.push(ass.id.clone());
-            }
-        }
-    }
+    println!("in trigger redistribution");
+    let v = vehicle_id + 1;
+    println!("vehicle_id: {}, v: {} ", vehicle_id, v);
+    println!("Interval: starttime: {}, endtime: {} ", start, end);
 }
 
-/*#[cfg(test)]
-mod test {
+#[cfg(test)]
+mod red_test {
+    use crate::backend::convenience;
+    use crate::backend::lib::PrimaData;
     use crate::{
-        backend::data::Data,
-        constants::{geo_points::TestPoints, gorlitz::GORLITZ},
-        dotenv, env,
-        init::{self, StopFor::TEST1},
-        AppState, Arc, Database, Migrator, Mutex, Tera,
+        //backend::data::Data,
+        //constants::{geo_points::TestPoints, gorlitz::GORLITZ},
+        dotenv,
+        env,
+        init::{self, InitType},
+        Database,
+        Migrator,
     };
-    use axum::extract::State;
     use chrono::NaiveDate;
     use migration::MigratorTrait;
+    use sea_orm::DbConn;
+    use serial_test::serial;
 
-    #[tokio::test]
-    async fn test() {
-        use crate::backend::convenience;
-        use crate::backend::interval::Interval;
+    async fn red_test_main() -> DbConn {
         dotenv().ok();
         let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
         let conn = Database::connect(db_url)
             .await
             .expect("Database connection failed");
         Migrator::up(&conn, None).await.unwrap();
+        conn
+    }
 
-        let tera = match Tera::new(
-            "html/**/
-            *.html",
-        ) {
-            Ok(t) => Arc::new(Mutex::new(t)),
-            Err(e) => {
-                println!("Parsing error(s): {}", e);
-                ::std::process::exit(1);
-            }
-        };
-        let s = AppState {
-            tera,
-            db: Arc::new(conn),
-        };
-
-        let d = init::init(State(&s), true, TEST1).await;
-        assert_eq!(d.vehicles.len(), 29);
-        assert_eq!(d.zones.len(), 3);
-        assert_eq!(d.companies.len(), 8);
-
-        let i: Interval = Interval {
-            start_time: NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(11, 0, 0)
-                .unwrap(),
-            end_time: NaiveDate::from_ymd_opt(2024, 4, 15)
-                .unwrap()
-                .and_hms_opt(12, 0, 0)
-                .unwrap(),
-        };
-        let my_vehicles = &d.vehicles;
-        convenience::trigger_redistribution(5, i, my_vehicles.to_vec());
+    #[tokio::test]
+    #[serial]
+    async fn redistibution_test() {
+        let db_conn = red_test_main().await;
+        let d = init::init(&db_conn, true, 5000, InitType::Default).await;
+        let start_time = NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(11, 0, 0)
+            .unwrap();
+        let end_time = NaiveDate::from_ymd_opt(2024, 4, 15)
+            .unwrap()
+            .and_hms_opt(12, 0, 0)
+            .unwrap();
+        let my_vehicles = d.get_vehicles(0).await;
+        convenience::trigger_redistribution(5, start_time, end_time);
         println!("Test finished");
     }
-}*/
+}
