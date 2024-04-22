@@ -2,8 +2,8 @@ use crate::backend::interval::Interval;
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
 use hyper::StatusCode;
+use std::any::Any;
 use std::collections::HashMap;
-
 /*
 StatusCode and associated errors/results:
 INTERNAL_SERVER_ERROR           something bad happened
@@ -20,6 +20,7 @@ OK                              request processed succesfully
 #[async_trait]
 pub trait PrimaTour {
     async fn get_events(&self) -> Vec<Box<&dyn PrimaEvent>>;
+    fn as_any(&self) -> &dyn Any;
 }
 
 #[async_trait]

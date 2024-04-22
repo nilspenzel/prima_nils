@@ -24,7 +24,7 @@ use geo::{prelude::*, Coord, MultiPolygon, Point};
 use itertools::Itertools;
 use sea_orm::DbConn;
 use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait};
-use std::collections::HashMap;
+use std::{any::Any, collections::HashMap};
 
 #[derive(PartialEq, Eq, Hash)]
 enum TourConcatCase {
@@ -181,6 +181,9 @@ impl PrimaTour for TourData {
             .iter()
             .map(|event| Box::new(event as &dyn PrimaEvent))
             .collect_vec()
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
