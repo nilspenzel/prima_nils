@@ -14,6 +14,7 @@ pub enum InitType {
     BackendTest,
     FrontEnd,
     Default,
+    Convenience,
 }
 
 pub async fn clear(db_conn: &DbConn) {
@@ -131,6 +132,7 @@ pub async fn init(
         InitType::Default => init_default(db_conn, year).await,
         InitType::FrontEnd => init_default(db_conn, year).await,
         InitType::BackendTest => init_backend_test(db_conn, year).await,
+        InitType::Convenience => init_convenience_test(db_conn, year).await,
     }
 }
 
@@ -218,6 +220,195 @@ async fn init_backend_test(
             .and_hms_opt(14, 0, 0)
             .unwrap(),
         3,
+    )
+    .await;
+
+    data
+}
+
+async fn init_convenience_test(
+    db_conn: &DbConn,
+    year: i32,
+) -> Data {
+    let mut data = Data::new(db_conn);
+
+    data.create_zone("Bautzen Ost", BAUTZEN_OST).await;
+    data.create_zone("Bautzen West", BAUTZEN_WEST).await;
+    data.create_zone("Görlitz", GORLITZ).await;
+
+    data.create_company("Taxi-Unternehmen Bautzen-1", 1, "a@b", 13.895983, 51.220826)
+        .await;
+    data.create_company("Taxi-Unternehmen Bautzen-2", 1, "b@c", 14.034681, 51.316337)
+        .await;
+
+    data.create_user(
+        "TestDriver1",
+        true,
+        false,
+        Some(1),
+        false,
+        "test@aol.com",
+        Some("".to_string()),
+        "",
+        Some("".to_string()),
+        Some("".to_string()),
+    )
+    .await;
+
+    data.create_user(
+        "TestDriver2",
+        true,
+        false,
+        Some(1),
+        false,
+        "test2@aol.com",
+        Some("".to_string()),
+        "",
+        Some("".to_string()),
+        Some("".to_string()),
+    )
+    .await;
+
+    data.create_user(
+        "TestDriverA",
+        true,
+        false,
+        Some(2),
+        false,
+        "test@gmail.com",
+        Some("".to_string()),
+        "",
+        Some("".to_string()),
+        Some("".to_string()),
+    )
+    .await;
+
+    data.create_user(
+        "TestDriverB",
+        true,
+        false,
+        Some(2),
+        false,
+        "testB@gmail.com",
+        Some("".to_string()),
+        "",
+        Some("".to_string()),
+        Some("".to_string()),
+    )
+    .await;
+
+    data.create_user(
+        "TestUser1",
+        false,
+        false,
+        None,
+        false,
+        "test@web.com",
+        Some("".to_string()),
+        "",
+        Some("".to_string()),
+        Some("".to_string()),
+    )
+    .await;
+
+    data.create_vehicle("TUB1-1", 1).await; // 1
+    data.create_vehicle("TUB1-2", 1).await; // 2
+    data.create_vehicle("TUB2-1", 2).await; // 3
+    data.create_vehicle("TUB2-2", 2).await; // 4
+
+    // Vehicle 1: 19.04.2024 von 1010 bis 1400
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        1,
+    )
+    .await;
+
+    // Vehicle 1: 19.04.2024 von 1530 bis 1700
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(15, 30, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(17, 0, 0)
+            .unwrap(),
+        1,
+    )
+    .await;
+
+    // Vehicle 2: 19.04.2024 von 1010 bis 1400
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(15, 0, 0)
+            .unwrap(),
+        2,
+    )
+    .await;
+
+    // Vehicle 3: 19.04.2024 von 1010 bis 1400
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        3,
+    )
+    .await;
+
+    data.insert_or_addto_tour(
+        None,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 30, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 50, 0)
+            .unwrap(),
+        1,
+        "karolinenplatz 5",
+        "Lichtwiesenweg 3",
+        13.867512,
+        51.22069,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 35, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(9, 32, 0)
+            .unwrap(),
+        2,
+        3,
+        0,
+        0,
+        14.025081,
+        51.195075,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 45, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(9, 48, 0)
+            .unwrap(),
     )
     .await;
 
