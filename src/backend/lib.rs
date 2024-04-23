@@ -20,7 +20,6 @@ OK                              request processed succesfully
 #[async_trait]
 pub trait PrimaTour {
     async fn get_events(&self) -> Vec<Box<&dyn PrimaEvent>>;
-    fn as_any(&self) -> &dyn Any;
 }
 
 #[async_trait]
@@ -30,6 +29,7 @@ pub trait PrimaEvent {
     async fn get_lng(&self) -> f32;
     async fn get_customer_id(&self) -> i32;
     async fn get_address_id(&self) -> i32;
+    async fn get_scheduled_time(&self) -> NaiveDateTime;
 }
 
 #[async_trait]
@@ -142,6 +142,11 @@ pub trait PrimaData: Send + Sync {
         &self,
         company_id: i32,
     ) -> Result<Vec<Box<&dyn PrimaVehicle>>, StatusCode>;
+
+    async fn get_vehicle(
+        &self,
+        vehicle_id: i32,
+    ) -> Result<Box<&dyn PrimaVehicle>, StatusCode>;
 
     async fn get_events_for_vehicle(
         &self,

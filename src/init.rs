@@ -372,6 +372,10 @@ async fn init_convenience_test(
     )
     .await;
 
+    // es geht um die funktion insert or addto tour!
+    // evtl nicht sichtbar -> privat (instert or addto tour)
+    // nur für tests public machen?
+    // handle request ist alternative evtl
     data.insert_or_addto_tour(
         None,
         NaiveDate::from_ymd_opt(year, 4, 19)

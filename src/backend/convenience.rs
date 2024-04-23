@@ -1,22 +1,21 @@
-use super::data::{EventData, TourData, VehicleData};
+use super::lib::{PrimaEvent, PrimaTour};
 use crate::backend::{data::Data, lib::PrimaData};
-use crate::error;
-use chrono::NaiveDateTime;
-use std::ops::Deref;
-//use std::collections::HashMap;
+use chrono::{Days, NaiveDateTime};
 
-/* EventData hat Tour id
+/* Event Data hat Tour id
  * TourData hat Event Vector
  * mit & arbeiten statt mit clone!
+ *
+ * Alles in einer Funktion ? Brauche ich da red_data überhaupt?
  */
 
 #[derive(Default)]
 struct RedistibutionData<'a> {
-    tour_id_for_events: Vec<i32>,
-    //all_events: HashMap<i32, EventData>,
-    events_to_redistribute: Vec<EventData>,
+    events_to_redistribute: Vec<Box<&'a dyn PrimaEvent>>,
     company_id: i32,
-    tours_to_redistribute: Vec<&'a TourData>,
+    tours_to_redistribute: Vec<Box<&'a dyn PrimaTour>>,
+    blocking_events: Vec<Box<&'a dyn PrimaEvent>>,
+    self_blocking_events: Vec<Box<&'a dyn PrimaEvent>>,
 }
 
 // 1656
@@ -27,33 +26,76 @@ pub async fn trigger_redistribution(
     data: &Data,
 ) -> () {
     let mut red_data = RedistibutionData::default();
+    let timeframe = end - start;
+
     println!("in trigger redistribution");
-    let v = vehicle_id + 1;
-    println!("vehicle_id: {}, v: {} ", vehicle_id, v);
-    println!("Interval: starttime: {}, endtime: {} ", start, end);
-    let tours = data.get_tours(vehicle_id, start, end).await;
-    match tours {
-        Ok(tours) => {
-            println!("in match ok");
-            for t in tours.into_iter() {
-                println!("in for");
-                let tour_or_none = t.as_any().downcast_ref::<TourData>();
-                let tour = match tour_or_none {
-                    Some(tour) => red_data.tours_to_redistribute.push(tour),
-                    None => (),
-                };
-            }
-            println!("vec hat länge: {}", red_data.tours_to_redistribute.len());
-            // Länge ist 0
-        }
+    println!(
+        "Interval: starttime: {}, endtime: {} Duration (timeframe): {:?}",
+        start, end, timeframe
+    );
+
+    //get tours of this vehicle -> we want to redistibute those
+    let tours_or_not = data.get_tours(vehicle_id, start, end).await;
+    red_data.tours_to_redistribute = match tours_or_not {
+        Ok(tours_or_not) => tours_or_not,
         Err(e) => {
-            error!("{e:?}");
+            println!("vector of tours not available: {}", e);
+            Vec::new()
+        }
+    };
+    for t in red_data.tours_to_redistribute.into_iter() {
+        let mut eves = (*t).get_events().await;
+        red_data.events_to_redistribute.append(&mut eves);
+    }
+
+    // blocking events_for_vehicle are all events the vehicle has, in a one Day range
+    let start_all = start.checked_sub_days(Days::new(1)).unwrap();
+    let end_all = end.checked_add_days(Days::new(1)).unwrap();
+    println!(
+        "New Interval: starttime all: {}, endtime all: {} ",
+        start_all, end_all
+    );
+    let events_or_not = Data::get_events_for_vehicle(data, vehicle_id, start_all, end_all).await;
+    let mut blocking_events_for_vehicle = match events_or_not {
+        Ok(events_or_not) => events_or_not,
+        Err(e) => {
+            println!("vector of events not available: {}", e);
+            Vec::new()
+        }
+    };
+    red_data.self_blocking_events = blocking_events_for_vehicle.clone(); // damit blocking_events_for_vehicle nicht zerstört wird? Richtig??
+                                                                         // get a vector of all blocking events of all vehicles of this company
+    let vehicle = Data::get_vehicle(data, vehicle_id).await.unwrap();
+    red_data.company_id = (*vehicle).get_company_id().await;
+    let all_vehicles = Data::get_vehicles(data, red_data.company_id).await.unwrap();
+    if all_vehicles.len() != 1 {
+        for v in all_vehicles.into_iter() {
+            let v_id = (*v).get_id().await;
+            let v_events_or_not =
+                Data::get_events_for_vehicle(data, v_id, start_all, end_all).await;
+            let mut vehicle_blocking_events = match v_events_or_not {
+                Ok(v_events_or_not) => v_events_or_not,
+                Err(e) => {
+                    println!(
+                        "vector of vehicle events not available: {} vehicle id: {}",
+                        e, v_id
+                    );
+                    Vec::new()
+                }
+            };
+            blocking_events_for_vehicle.append(&mut vehicle_blocking_events);
         }
     }
-    println!("match tours fertig");
-    println!("Ende");
+    red_data.blocking_events = blocking_events_for_vehicle;
+    // existiert blocking_events_for_vehicle noch?
 
-    //data.get_vehicles();
+    // self redistibution
+    for eve in red_data.self_blocking_events.into_iter() {
+        let pickup = eve.get_scheduled_time().await;
+        // Fragen über events
+    }
+
+    println!("Ende: Trigger Red");
 }
 
 #[cfg(test)]

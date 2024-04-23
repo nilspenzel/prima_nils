@@ -182,9 +182,6 @@ impl PrimaTour for TourData {
             .map(|event| Box::new(event as &dyn PrimaEvent))
             .collect_vec()
     }
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 }
 
 impl TourData {
@@ -431,6 +428,10 @@ impl PrimaEvent for EventData {
     async fn get_address_id(&self) -> i32 {
         self.address_id
     }
+
+    async fn get_scheduled_time(&self) -> NaiveDateTime {
+        self.scheduled_time
+    }
 }
 
 impl EventData {
@@ -524,6 +525,7 @@ impl PartialEq for Data {
     }
 }
 
+// im moment noch fehlerhaft
 #[async_trait]
 impl PrimaData for Data {
     async fn handle_routing_request(
@@ -1469,6 +1471,18 @@ impl PrimaData for Data {
             .filter(|vehicle| vehicle.company == company_id)
             .map(|vehicle| Box::new(vehicle as &'_ dyn PrimaVehicle))
             .collect_vec())
+    }
+
+    async fn get_vehicle(
+        &self,
+        vehicle_id: i32,
+    ) -> Result<Box<&'_ dyn PrimaVehicle>, StatusCode> {
+        if self.max_vehicle_id() < vehicle_id || vehicle_id as usize <= 0 {
+            return Err(StatusCode::NOT_FOUND);
+        }
+        Ok(Box::new(
+            &self.vehicles[id_to_vec_pos(vehicle_id)] as &'_ dyn PrimaVehicle,
+        ))
     }
 
     async fn get_events_for_user(
