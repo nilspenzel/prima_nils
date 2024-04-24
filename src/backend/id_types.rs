@@ -102,8 +102,7 @@ mod test {
     #[should_panic]
     #[test]
     fn test_in_range_panic() {
-        let c_id = CompanyIdT::new(3);
-        assert!(c_id.is_in_range(3, 3));
+        CompanyIdT::new(3).is_in_range(3, 3);
     }
 
     #[test]
