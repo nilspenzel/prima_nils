@@ -3837,9 +3837,9 @@ mod test {
         let db_conn = test_main().await;
         let d = init(&db_conn, true, 5000, InitType::BackendTest).await;
 
-        let c1_license_plates = vec!["TUB1-1", "TUB1-2"];
-        let c2_license_plates = vec!["TUB2-1", "TUB2-2"];
-        let c3_license_plates = vec!["TUG1-1"];
+        let c1_license_plates = ["TUB1-1", "TUB1-2"];
+        let c2_license_plates = ["TUB2-1", "TUB2-2"];
+        let c3_license_plates = ["TUG1-1"];
 
         let c1_res = d.get_vehicles(CompanyIdT::new(1)).await;
         assert!(c1_res.is_ok());
