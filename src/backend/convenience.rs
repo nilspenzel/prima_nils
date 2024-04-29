@@ -1,5 +1,8 @@
 use super::lib::{PrimaEvent, PrimaTour};
-use crate::backend::{data::Data, lib::PrimaData};
+use crate::backend::{
+    data::Data,
+    lib::{PrimaData, PrimaVehicle},
+};
 use chrono::{Days, NaiveDateTime};
 
 /* Event Data hat Tour id
@@ -65,8 +68,15 @@ pub async fn trigger_redistribution(
     };
     red_data.self_blocking_events = blocking_events_for_vehicle.clone(); // damit blocking_events_for_vehicle nicht zerstört wird? Richtig??
                                                                          // get a vector of all blocking events of all vehicles of this company
-    let vehicle = Data::get_vehicle(data, vehicle_id).await.unwrap();
-    red_data.company_id = (*vehicle).get_company_id().await;
+    let vehicle_or_not = Data::get_vehicle(data, vehicle_id).await.unwrap();
+    /*let vehicle = match vehicle_or_not {
+        Ok(vehicle_or_not) => vehicle_or_not,
+        Err(e) => {
+            println!("no vehicle: {}", e);
+            //Box::<dyn PrimaVehicle>::new()
+        }
+    };*/
+    red_data.company_id = (*vehicle_or_not).get_company_id().await;
     let all_vehicles = Data::get_vehicles(data, red_data.company_id).await.unwrap();
     if all_vehicles.len() != 1 {
         for v in all_vehicles.into_iter() {

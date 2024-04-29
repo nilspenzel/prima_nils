@@ -2,7 +2,6 @@ use crate::backend::interval::Interval;
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
 use hyper::StatusCode;
-use std::any::Any;
 use std::collections::HashMap;
 /*
 StatusCode and associated errors/results:
