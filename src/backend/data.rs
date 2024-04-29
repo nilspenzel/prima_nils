@@ -1411,58 +1411,10 @@ impl PrimaData for Data {
             .map(|(pos, _)| pos)
             .unwrap();
         let tour = &self.vehicles[old_vehicle_id.as_idx()].tours[tour_idx];
-        let first_event_opt = tour.events.iter().min_by_key(|event| event.scheduled_time);
-        let last_event_opt = tour.events.iter().max_by_key(|event| event.scheduled_time);
-        let new_vehicle_company_coordinates = Coord::from(
-            self.companies[self.vehicles[new_vehicle_id.as_idx()].company.as_idx()]
-                .central_coordinates,
-        );
-        let (approach_duration_res, return_duration_res) = match (first_event_opt, last_event_opt) {
-            (None, None) => return StatusCode::INTERNAL_SERVER_ERROR,
-            (Some(_), None) => return StatusCode::INTERNAL_SERVER_ERROR,
-            (None, Some(_)) => return StatusCode::INTERNAL_SERVER_ERROR,
-            (Some(first), Some(last)) => (
-                self.osrm
-                    .one_to_many(
-                        Coord::from(first.coordinates),
-                        vec![new_vehicle_company_coordinates],
-                        Forward,
-                    )
-                    .await,
-                self.osrm
-                    .one_to_many(
-                        Coord::from(last.coordinates),
-                        vec![new_vehicle_company_coordinates],
-                        Backward,
-                    )
-                    .await,
-            ),
-        };
-        let (approach_duration, return_duration) =
-            match (approach_duration_res, return_duration_res) {
-                (Err(e1), Err(e2)) => {
-                    error!("{} and {}", e1, e2);
-                    return StatusCode::INTERNAL_SERVER_ERROR;
-                }
-                (Ok(_), Err(e2)) => {
-                    error!("{}", e2);
-                    return StatusCode::INTERNAL_SERVER_ERROR;
-                }
-                (Err(e1), Ok(_)) => {
-                    error!("{}", e1);
-                    return StatusCode::INTERNAL_SERVER_ERROR;
-                }
-                (Ok(approach), Ok(ret)) => (
-                    seconds_to_minutes_duration(approach[0].time),
-                    seconds_to_minutes_duration(ret[0].time),
-                ),
-            };
+
         if !self.may_vehicle_operate_during::<true, true>(
             &self.vehicles[new_vehicle_id.as_idx()],
-            &Interval::new(
-                tour.departure - approach_duration,
-                tour.arrival + return_duration,
-            ),
+            &Interval::new(tour.departure, tour.arrival),
         ) {
             return StatusCode::NOT_ACCEPTABLE;
         }
