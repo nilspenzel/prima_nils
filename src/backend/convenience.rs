@@ -1,8 +1,8 @@
-use super::lib::{PrimaEvent, PrimaTour};
-use crate::backend::{
-    data::Data,
-    lib::{PrimaData, PrimaVehicle},
+use super::{
+    id_types::{CompanyIdT, VehicleIdT},
+    lib::{PrimaEvent, PrimaTour},
 };
+use crate::backend::{data::Data, lib::PrimaData};
 use chrono::{Days, NaiveDateTime};
 
 /* Event Data hat Tour id
@@ -15,7 +15,7 @@ use chrono::{Days, NaiveDateTime};
 #[derive(Default)]
 struct RedistibutionData<'a> {
     events_to_redistribute: Vec<Box<&'a dyn PrimaEvent>>,
-    company_id: i32,
+    company_id: CompanyIdT,
     tours_to_redistribute: Vec<Box<&'a dyn PrimaTour>>,
     blocking_events: Vec<Box<&'a dyn PrimaEvent>>,
     self_blocking_events: Vec<Box<&'a dyn PrimaEvent>>,
@@ -23,7 +23,7 @@ struct RedistibutionData<'a> {
 
 // 1656
 pub async fn trigger_redistribution(
-    vehicle_id: i32,
+    vehicle_id: VehicleIdT,
     start: NaiveDateTime,
     end: NaiveDateTime,
     data: &Data,
@@ -76,19 +76,19 @@ pub async fn trigger_redistribution(
             //Box::<dyn PrimaVehicle>::new()
         }
     };*/
-    red_data.company_id = (*vehicle_or_not).get_company_id().await;
+    red_data.company_id = *(*vehicle_or_not).get_company_id().await;
     let all_vehicles = Data::get_vehicles(data, red_data.company_id).await.unwrap();
     if all_vehicles.len() != 1 {
         for v in all_vehicles.into_iter() {
             let v_id = (*v).get_id().await;
             let v_events_or_not =
-                Data::get_events_for_vehicle(data, v_id, start_all, end_all).await;
+                Data::get_events_for_vehicle(data, *v_id, start_all, end_all).await;
             let mut vehicle_blocking_events = match v_events_or_not {
                 Ok(v_events_or_not) => v_events_or_not,
                 Err(e) => {
                     println!(
-                        "vector of vehicle events not available: {} vehicle id: {}",
-                        e, v_id
+                        "vector of vehicle events not available: {} vehicle id: {:?}",
+                        e, *v_id
                     );
                     Vec::new()
                 }
@@ -100,10 +100,10 @@ pub async fn trigger_redistribution(
     // existiert blocking_events_for_vehicle noch?
 
     // self redistibution
-    for eve in red_data.self_blocking_events.into_iter() {
+    /*for eve in red_data.self_blocking_events.into_iter() {
         let pickup = eve.get_scheduled_time().await;
         // Fragen über events
-    }
+    }*/
 
     println!("Ende: Trigger Red");
 }
@@ -111,7 +111,7 @@ pub async fn trigger_redistribution(
 #[cfg(test)]
 mod red_test {
     use crate::backend::convenience;
-    use crate::backend::lib::PrimaData;
+    use crate::backend::id_types::{IdT, VehicleIdT};
     use crate::{
         //backend::data::Data,
         //constants::{geo_points::TestPoints, gorlitz::GORLITZ},
@@ -151,7 +151,7 @@ mod red_test {
             .and_hms_opt(12, 0, 0)
             .unwrap();
         //let my_vehicles = d.get_vehicles(0).await;
-        convenience::trigger_redistribution(1, start_time, end_time, &d).await;
+        convenience::trigger_redistribution(VehicleIdT::new(1), start_time, end_time, &d).await;
         println!("Test finished");
     }
 }

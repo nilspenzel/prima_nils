@@ -18,13 +18,14 @@ const FORWARD_REQUEST_TEMPLATE: &str = r#"{
         "profile":"car",
         "direction":"Forward",
         "one":{
-            "lat":{{ one.x }},
-            "lng":{{ one.y }}
+            "lat":{{ one.y }},
+            "lng":{{ one.x }}
         },
         "many": {{ many }}
     }
 }"#;
 
+#[allow(dead_code)]
 const BACKWARD_REQUEST_TEMPLATE: &str = r#"{
     "destination":{
         "type":"Module",
@@ -35,8 +36,8 @@ const BACKWARD_REQUEST_TEMPLATE: &str = r#"{
         "profile":"car",
         "direction":"Backward",
         "one":{
-            "lat":{{ one.x }},
-            "lng":{{ one.y }}
+            "lat":{{ one.y }},
+            "lng":{{ one.x }}
         },
         "many": {{ many }}
     }
@@ -54,6 +55,7 @@ pub struct DistTime {
     pub time: f64,
 }
 
+#[derive(Clone)]
 pub struct OSRM {
     client: reqwest::Client,
     tera: tera::Tera,
@@ -80,21 +82,12 @@ impl OSRM {
             "many",
             &serde_json::to_string(&many)
                 .unwrap()
-                .replace('x', "lat")
-                .replace('y', "lng"),
+                .replace('y', "lat")
+                .replace('x', "lng"),
         )?;
 
-        println!(
-            "request: {}  -  {}",
-            &serde_json::to_string(&one).unwrap(),
-            &serde_json::to_string(&many)
-                .unwrap()
-                .replace('x', "lat")
-                .replace('y', "lng")
-        );
-
         let request = self.tera.render("x", &ctx)?;
-        let res = self
+        let mut res = self
             .client
             .post("https://europe.motis-project.de/")
             .body(request)
@@ -102,8 +95,18 @@ impl OSRM {
             .await?
             .text()
             .await?;
+        res = res.replace("179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368",
+             &format!("{}", 99999999).to_string());
 
-        let v: Value = serde_json::from_str(&res)?;
+        let v_res: Result<Value, serde_json::Error> = serde_json::from_str(&res);
+        let v = match v_res {
+            Ok(v) => v,
+            Err(e) => {
+                println!("serde error when deserializing osrm-response: {}", e);
+                return Err(e.into());
+            }
+        };
+
         Ok(v.get("content")
             .ok_or_else(|| anyhow!("MOTIS response had no content"))?
             .get("costs")
@@ -139,17 +142,17 @@ mod test {
         let result = osrm
             .one_to_many(
                 Coord {
-                    x: 49.87738029,
-                    y: 8.64555359,
+                    y: 49.87738029,
+                    x: 8.64555359,
                 },
                 vec![
                     Coord {
-                        x: 50.11485439,
-                        y: 8.65791321,
+                        y: 50.11485439,
+                        x: 8.65791321,
                     },
                     Coord {
-                        x: 49.39444062,
-                        y: 8.6743927,
+                        y: 49.39444062,
+                        x: 8.6743927,
                     },
                 ],
                 Forward,
@@ -166,17 +169,17 @@ mod test {
         let result = osrm
             .one_to_many(
                 Coord {
-                    y: (test_points.bautzen_west[0].x() as f32) as f64,
-                    x: (test_points.bautzen_west[0].y() as f32) as f64,
+                    y: (test_points.bautzen_west[0].y() as f32) as f64,
+                    x: (test_points.bautzen_west[0].x() as f32) as f64,
                 },
                 vec![
                     Coord {
-                        y: (test_points.bautzen_west[1].x() as f32) as f64,
-                        x: (test_points.bautzen_west[1].y() as f32) as f64,
+                        y: (test_points.bautzen_west[1].y() as f32) as f64,
+                        x: (test_points.bautzen_west[1].x() as f32) as f64,
                     },
                     Coord {
-                        y: (test_points.bautzen_west[2].x() as f32) as f64,
-                        x: (test_points.bautzen_west[2].y() as f32) as f64,
+                        y: (test_points.bautzen_west[2].y() as f32) as f64,
+                        x: (test_points.bautzen_west[2].x() as f32) as f64,
                     },
                 ],
                 Forward,

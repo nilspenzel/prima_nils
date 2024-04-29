@@ -1,5 +1,9 @@
 use crate::{
-    backend::{data::Data, lib::PrimaData},
+    backend::{
+        data::Data,
+        id_types::{CompanyIdT, IdT, UserIdT, VehicleIdT, ZoneIdT},
+        lib::PrimaData,
+    },
     constants::{bautzen_ost::BAUTZEN_OST, bautzen_west::BAUTZEN_WEST, gorlitz::GORLITZ},
     entities::{
         address, availability, company, event, prelude::User, request, tour, user, vehicle, zone,
@@ -12,6 +16,7 @@ use sea_orm::{DbConn, EntityTrait};
 
 pub enum InitType {
     BackendTest,
+    BackendTestWithEvents,
     FrontEnd,
     Default,
     Convenience,
@@ -130,10 +135,18 @@ pub async fn init(
     }
     match t {
         InitType::Default => init_default(db_conn, year).await,
-        InitType::FrontEnd => init_default(db_conn, year).await,
+        InitType::FrontEnd => init_frontend(db_conn, year).await,
         InitType::BackendTest => init_backend_test(db_conn, year).await,
         InitType::Convenience => init_convenience_test(db_conn, year).await,
+        InitType::BackendTestWithEvents => init_backend_test_with_events(db_conn, year).await,
     }
+}
+
+async fn init_frontend(
+    db_conn: &DbConn,
+    _year: i32,
+) -> Data {
+    Data::new(db_conn)
 }
 
 async fn init_backend_test(
@@ -146,16 +159,36 @@ async fn init_backend_test(
     data.create_zone("Bautzen West", BAUTZEN_WEST).await;
     data.create_zone("Görlitz", GORLITZ).await;
 
-    data.create_company("Taxi-Unternehmen Bautzen-1", 1, "a@b", 13.895983, 51.220826)
-        .await;
-    data.create_company("Taxi-Unternehmen Bautzen-2", 1, "b@c", 14.034681, 51.316337)
-        .await;
+    data.create_company(
+        "Taxi-Unternehmen Bautzen-1",
+        ZoneIdT::new(1),
+        "a@b",
+        51.203935,
+        13.941692,
+    )
+    .await;
+    data.create_company(
+        "Taxi-Unternehmen Bautzen-2",
+        ZoneIdT::new(1),
+        "b@c",
+        51.31332,
+        14.030458,
+    )
+    .await;
+    data.create_company(
+        "Taxi-Unternehmen Görlitz-1",
+        ZoneIdT::new(2),
+        "c@d",
+        51.27332,
+        14.031458,
+    )
+    .await;
 
     data.create_user(
         "TestDriver1",
         true,
         false,
-        Some(1),
+        Some(CompanyIdT::new(1)),
         false,
         "test@aol.com",
         Some("".to_string()),
@@ -179,10 +212,11 @@ async fn init_backend_test(
     )
     .await;
 
-    data.create_vehicle("TUB1-1", 1).await;
-    data.create_vehicle("TUB1-2", 1).await;
-    data.create_vehicle("TUB2-1", 2).await;
-    data.create_vehicle("TUB2-2", 2).await;
+    data.create_vehicle("TUB1-1", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB1-2", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB2-1", CompanyIdT::new(2)).await;
+    data.create_vehicle("TUB2-2", CompanyIdT::new(2)).await;
+    data.create_vehicle("TUG1-1", CompanyIdT::new(3)).await;
 
     data.create_availability(
         NaiveDate::from_ymd_opt(year, 4, 19)
@@ -193,33 +227,264 @@ async fn init_backend_test(
             .unwrap()
             .and_hms_opt(14, 0, 0)
             .unwrap(),
+        VehicleIdT::new(1),
+    )
+    .await;
+
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        VehicleIdT::new(2),
+    )
+    .await;
+
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        VehicleIdT::new(3),
+    )
+    .await;
+
+    data
+}
+
+async fn init_backend_test_with_events(
+    db_conn: &DbConn,
+    year: i32,
+) -> Data {
+    let mut data = Data::new(db_conn);
+
+    data.create_zone("Bautzen Ost", BAUTZEN_OST).await;
+    data.create_zone("Bautzen West", BAUTZEN_WEST).await;
+    data.create_zone("Görlitz", GORLITZ).await;
+
+    data.create_company(
+        "Taxi-Unternehmen Bautzen-1",
+        ZoneIdT::new(1),
+        "a@b",
+        51.203935,
+        13.941692,
+    )
+    .await;
+    data.create_company(
+        "Taxi-Unternehmen Bautzen-2",
+        ZoneIdT::new(1),
+        "b@c",
+        51.31332,
+        14.030458,
+    )
+    .await;
+    data.create_company(
+        "Taxi-Unternehmen Görlitz-1",
+        ZoneIdT::new(2),
+        "c@d",
+        51.27332,
+        14.031458,
+    )
+    .await;
+
+    data.create_user(
+        "TestDriver1",
+        true,
+        false,
+        Some(CompanyIdT::new(1)),
+        false,
+        "test@aol.com",
+        Some("".to_string()),
+        "",
+        Some("".to_string()),
+        Some("".to_string()),
+    )
+    .await;
+
+    data.create_user(
+        "TestUser1",
+        false,
+        false,
+        None,
+        false,
+        "test@web.com",
+        Some("".to_string()),
+        "",
+        Some("".to_string()),
+        Some("".to_string()),
+    )
+    .await;
+
+    data.create_vehicle("TUB1-1", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB1-2", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB2-1", CompanyIdT::new(2)).await;
+    data.create_vehicle("TUB2-2", CompanyIdT::new(2)).await;
+    data.create_vehicle("TUG1-1", CompanyIdT::new(3)).await;
+
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        VehicleIdT::new(1),
+    )
+    .await;
+
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        VehicleIdT::new(2),
+    )
+    .await;
+
+    data.create_availability(
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(14, 0, 0)
+            .unwrap(),
+        VehicleIdT::new(3),
+    )
+    .await;
+
+    data.insert_or_addto_tour(
+        None,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(11, 00, 0)
+            .unwrap(),
+        VehicleIdT::new(1),
+        "start_address",
+        "target_address",
+        51.203935,
+        13.941692,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 15, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 15, 0)
+            .unwrap(),
+        UserIdT::new(1),
         1,
+        0,
+        0,
+        51.203935,
+        13.941692,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 50, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 50, 0)
+            .unwrap(),
     )
     .await;
 
-    data.create_availability(
+    data.insert_or_addto_tour(
+        None,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(12, 10, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(13, 0, 0)
+            .unwrap(),
+        VehicleIdT::new(2),
+        "start_address",
+        "target_address",
+        51.203935,
+        13.941692,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(12, 15, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(12, 15, 0)
+            .unwrap(),
+        UserIdT::new(1),
+        1,
+        0,
+        0,
+        51.203935,
+        13.941692,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(13, 5, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(13, 5, 0)
+            .unwrap(),
+    )
+    .await;
+
+    data.insert_or_addto_tour(
+        None,
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
             .and_hms_opt(10, 10, 0)
             .unwrap(),
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
-            .and_hms_opt(14, 0, 0)
+            .and_hms_opt(10, 10, 0)
             .unwrap(),
-        2,
-    )
-    .await;
-
-    data.create_availability(
+        VehicleIdT::new(1),
+        "start_address",
+        "target_address",
+        51.203935,
+        13.941692,
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
             .and_hms_opt(10, 10, 0)
             .unwrap(),
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
-            .and_hms_opt(14, 0, 0)
+            .and_hms_opt(10, 10, 0)
             .unwrap(),
-        3,
+        UserIdT::new(2),
+        1,
+        0,
+        0,
+        51.203935,
+        13.941692,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 50, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(10, 50, 0)
+            .unwrap(),
     )
     .await;
 
@@ -236,16 +501,28 @@ async fn init_convenience_test(
     data.create_zone("Bautzen West", BAUTZEN_WEST).await;
     data.create_zone("Görlitz", GORLITZ).await;
 
-    data.create_company("Taxi-Unternehmen Bautzen-1", 1, "a@b", 13.895983, 51.220826)
-        .await;
-    data.create_company("Taxi-Unternehmen Bautzen-2", 1, "b@c", 14.034681, 51.316337)
-        .await;
+    data.create_company(
+        "Taxi-Unternehmen Bautzen-1",
+        ZoneIdT::new(1),
+        "a@b",
+        13.895983,
+        51.220826,
+    )
+    .await;
+    data.create_company(
+        "Taxi-Unternehmen Bautzen-2",
+        ZoneIdT::new(1),
+        "b@c",
+        14.034681,
+        51.316337,
+    )
+    .await;
 
     data.create_user(
         "TestDriver1",
         true,
         false,
-        Some(1),
+        Some(CompanyIdT::new(1)),
         false,
         "test@aol.com",
         Some("".to_string()),
@@ -259,7 +536,7 @@ async fn init_convenience_test(
         "TestDriver2",
         true,
         false,
-        Some(1),
+        Some(CompanyIdT::new(1)),
         false,
         "test2@aol.com",
         Some("".to_string()),
@@ -273,7 +550,7 @@ async fn init_convenience_test(
         "TestDriverA",
         true,
         false,
-        Some(2),
+        Some(CompanyIdT::new(2)),
         false,
         "test@gmail.com",
         Some("".to_string()),
@@ -287,7 +564,7 @@ async fn init_convenience_test(
         "TestDriverB",
         true,
         false,
-        Some(2),
+        Some(CompanyIdT::new(2)),
         false,
         "testB@gmail.com",
         Some("".to_string()),
@@ -311,10 +588,10 @@ async fn init_convenience_test(
     )
     .await;
 
-    data.create_vehicle("TUB1-1", 1).await; // 1
-    data.create_vehicle("TUB1-2", 1).await; // 2
-    data.create_vehicle("TUB2-1", 2).await; // 3
-    data.create_vehicle("TUB2-2", 2).await; // 4
+    data.create_vehicle("TUB1-1", CompanyIdT::new(1)).await; // 1
+    data.create_vehicle("TUB1-2", CompanyIdT::new(1)).await; // 2
+    data.create_vehicle("TUB2-1", CompanyIdT::new(2)).await; // 3
+    data.create_vehicle("TUB2-2", CompanyIdT::new(2)).await; // 4
 
     // Vehicle 1: 19.04.2024 von 1010 bis 1400
     data.create_availability(
@@ -326,7 +603,7 @@ async fn init_convenience_test(
             .unwrap()
             .and_hms_opt(14, 0, 0)
             .unwrap(),
-        1,
+        VehicleIdT::new(1),
     )
     .await;
 
@@ -340,7 +617,7 @@ async fn init_convenience_test(
             .unwrap()
             .and_hms_opt(17, 0, 0)
             .unwrap(),
-        1,
+        VehicleIdT::new(1),
     )
     .await;
 
@@ -354,7 +631,7 @@ async fn init_convenience_test(
             .unwrap()
             .and_hms_opt(15, 0, 0)
             .unwrap(),
-        2,
+        VehicleIdT::new(2),
     )
     .await;
 
@@ -368,7 +645,7 @@ async fn init_convenience_test(
             .unwrap()
             .and_hms_opt(14, 0, 0)
             .unwrap(),
-        3,
+        VehicleIdT::new(3),
     )
     .await;
 
@@ -386,7 +663,7 @@ async fn init_convenience_test(
             .unwrap()
             .and_hms_opt(10, 50, 0)
             .unwrap(),
-        1,
+        VehicleIdT::new(1),
         "karolinenplatz 5",
         "Lichtwiesenweg 3",
         13.867512,
@@ -399,7 +676,7 @@ async fn init_convenience_test(
             .unwrap()
             .and_hms_opt(9, 32, 0)
             .unwrap(),
-        2,
+        UserIdT::new(2),
         3,
         0,
         0,
@@ -431,66 +708,66 @@ async fn init_default(
 
     data.create_company(
         "Taxi-Unternehmen Bautzen-1",
-        2,
+        ZoneIdT::new(2),
         "a@b",
-        13.895983751721786,
-        51.220826461859644,
+        13.895984,
+        51.220826,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Bautzen-2",
-        2,
+        ZoneIdT::new(2),
         "b@c",
-        14.034681384488607,
-        51.31633774366952,
+        14.034681,
+        51.316338,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Bautzen-3",
-        2,
+        ZoneIdT::new(2),
         "c@d",
-        14.179674338162073,
-        51.46704814415014,
+        14.179674,
+        51.46705,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Bautzen-4",
-        1,
+        ZoneIdT::new(1),
         "d@e",
-        14.244972698642613,
-        51.27251252133357,
+        14.244972,
+        51.27251,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Bautzen-5",
-        1,
+        ZoneIdT::new(1),
         "e@f",
-        14.381821307922678,
-        51.169106961190806,
+        14.381821,
+        51.169107,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Görlitz-1",
-        3,
+        ZoneIdT::new(3),
         "f@g",
-        14.708969872564097,
-        51.43354047439519,
+        14.70897,
+        51.43354,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Görlitz-2",
-        3,
+        ZoneIdT::new(3),
         "g@h",
-        14.879525132220152,
-        51.22165543174137,
+        14.879525,
+        51.221655,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Görlitz-3",
-        3,
+        ZoneIdT::new(3),
         "h@i",
-        14.753736228472121,
-        51.04190085802671,
+        14.7537362,
+        51.0419,
     )
     .await;
 
@@ -498,7 +775,7 @@ async fn init_default(
         "TestDriver1",
         true,
         false,
-        Some(1),
+        Some(CompanyIdT::new(1)),
         false,
         "test@aol.com",
         Some("".to_string()),
@@ -536,35 +813,35 @@ async fn init_default(
     )
     .await;
 
-    data.create_vehicle("TUB1-1", 1).await;
-    data.create_vehicle("TUB1-2", 1).await;
-    data.create_vehicle("TUB1-3", 1).await;
-    data.create_vehicle("TUB1-4", 1).await;
-    data.create_vehicle("TUB1-5", 1).await;
-    data.create_vehicle("TUB2-1", 2).await;
-    data.create_vehicle("TUB2-2", 2).await;
-    data.create_vehicle("TUB2-3", 2).await;
-    data.create_vehicle("TUB3-1", 3).await;
-    data.create_vehicle("TUB3-2", 3).await;
-    data.create_vehicle("TUB3-3", 3).await;
-    data.create_vehicle("TUB3-4", 3).await;
-    data.create_vehicle("TUB4-1", 4).await;
-    data.create_vehicle("TUB4-2", 4).await;
-    data.create_vehicle("TUB5-1", 5).await;
-    data.create_vehicle("TUB5-2", 5).await;
-    data.create_vehicle("TUB5-3", 5).await;
-    data.create_vehicle("TUG1-1", 6).await;
-    data.create_vehicle("TUG1-2", 6).await;
-    data.create_vehicle("TUG1-3", 6).await;
-    data.create_vehicle("TUG2-1", 7).await;
-    data.create_vehicle("TUG2-2", 7).await;
-    data.create_vehicle("TUG2-3", 7).await;
-    data.create_vehicle("TUG2-4", 7).await;
-    data.create_vehicle("TUG3-1", 8).await;
-    data.create_vehicle("TUG3-2", 8).await;
-    data.create_vehicle("TUG3-3", 8).await;
-    data.create_vehicle("TUG3-4", 8).await;
-    data.create_vehicle("TUG3-5", 8).await;
+    data.create_vehicle("TUB1-1", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB1-2", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB1-3", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB1-4", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB1-5", CompanyIdT::new(1)).await;
+    data.create_vehicle("TUB2-1", CompanyIdT::new(2)).await;
+    data.create_vehicle("TUB2-2", CompanyIdT::new(2)).await;
+    data.create_vehicle("TUB2-3", CompanyIdT::new(2)).await;
+    data.create_vehicle("TUB3-1", CompanyIdT::new(3)).await;
+    data.create_vehicle("TUB3-2", CompanyIdT::new(3)).await;
+    data.create_vehicle("TUB3-3", CompanyIdT::new(3)).await;
+    data.create_vehicle("TUB3-4", CompanyIdT::new(3)).await;
+    data.create_vehicle("TUB4-1", CompanyIdT::new(4)).await;
+    data.create_vehicle("TUB4-2", CompanyIdT::new(4)).await;
+    data.create_vehicle("TUB5-1", CompanyIdT::new(5)).await;
+    data.create_vehicle("TUB5-2", CompanyIdT::new(5)).await;
+    data.create_vehicle("TUB5-3", CompanyIdT::new(5)).await;
+    data.create_vehicle("TUG1-1", CompanyIdT::new(6)).await;
+    data.create_vehicle("TUG1-2", CompanyIdT::new(6)).await;
+    data.create_vehicle("TUG1-3", CompanyIdT::new(6)).await;
+    data.create_vehicle("TUG2-1", CompanyIdT::new(7)).await;
+    data.create_vehicle("TUG2-2", CompanyIdT::new(7)).await;
+    data.create_vehicle("TUG2-3", CompanyIdT::new(7)).await;
+    data.create_vehicle("TUG2-4", CompanyIdT::new(7)).await;
+    data.create_vehicle("TUG3-1", CompanyIdT::new(8)).await;
+    data.create_vehicle("TUG3-2", CompanyIdT::new(8)).await;
+    data.create_vehicle("TUG3-3", CompanyIdT::new(8)).await;
+    data.create_vehicle("TUG3-4", CompanyIdT::new(8)).await;
+    data.create_vehicle("TUG3-5", CompanyIdT::new(8)).await;
 
     data.insert_or_addto_tour(
         None,
@@ -576,7 +853,7 @@ async fn init_default(
             .unwrap()
             .and_hms_opt(10, 0, 0)
             .unwrap(),
-        1,
+        VehicleIdT::new(1),
         "karolinenplatz 5",
         "Lichtwiesenweg 3",
         13.867512,
@@ -589,7 +866,7 @@ async fn init_default(
             .unwrap()
             .and_hms_opt(9, 12, 0)
             .unwrap(),
-        2,
+        UserIdT::new(2),
         3,
         0,
         0,
@@ -615,7 +892,7 @@ async fn init_default(
             .unwrap()
             .and_hms_opt(14, 0, 0)
             .unwrap(),
-        1,
+        VehicleIdT::new(1),
     )
     .await;
 
@@ -628,7 +905,7 @@ async fn init_default(
             .unwrap()
             .and_hms_opt(14, 0, 0)
             .unwrap(),
-        2,
+        VehicleIdT::new(2),
     )
     .await;
 
@@ -641,7 +918,7 @@ async fn init_default(
             .unwrap()
             .and_hms_opt(14, 0, 0)
             .unwrap(),
-        3,
+        VehicleIdT::new(3),
     )
     .await;
     data
