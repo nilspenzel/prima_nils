@@ -511,56 +511,56 @@ async fn init_default(
         "Taxi-Unternehmen Bautzen-2",
         ZoneIdT::new(2),
         "b@c",
-        14.034681,
         51.316338,
+        14.034681,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Bautzen-3",
         ZoneIdT::new(2),
         "c@d",
-        14.179674,
         51.46705,
+        14.179674,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Bautzen-4",
         ZoneIdT::new(1),
         "d@e",
-        14.244972,
         51.27251,
+        14.244972,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Bautzen-5",
         ZoneIdT::new(1),
         "e@f",
-        14.381821,
         51.169107,
+        14.381821,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Görlitz-1",
         ZoneIdT::new(3),
         "f@g",
-        14.70897,
         51.43354,
+        14.70897,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Görlitz-2",
         ZoneIdT::new(3),
         "g@h",
-        14.879525,
         51.221655,
+        14.879525,
     )
     .await;
     data.create_company(
         "Taxi-Unternehmen Görlitz-3",
         ZoneIdT::new(3),
         "h@i",
-        14.7537362,
         51.0419,
+        14.7537362,
     )
     .await;
 
@@ -649,8 +649,8 @@ async fn init_default(
         VehicleIdT::new(1),
         "karolinenplatz 5",
         "Lichtwiesenweg 3",
-        13.867512,
         51.22069,
+        13.867512,
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
             .and_hms_opt(9, 15, 0)
@@ -663,8 +663,8 @@ async fn init_default(
         3,
         0,
         0,
-        14.025081,
         51.195075,
+        14.025081,
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
             .and_hms_opt(9, 55, 0)
