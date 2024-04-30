@@ -443,6 +443,10 @@ impl PrimaEvent for EventData {
     async fn get_address_id(&self) -> &AddressIdT {
         &self.address_id
     }
+
+    async fn get_scheduled_time(&self) -> NaiveDateTime {
+        self.scheduled_time
+    }
 }
 
 impl EventData {

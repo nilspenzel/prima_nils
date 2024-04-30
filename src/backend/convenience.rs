@@ -1,9 +1,12 @@
+use std::future::IntoFuture;
+
 use super::{
     id_types::{CompanyIdT, VehicleIdT},
     lib::{PrimaEvent, PrimaTour},
 };
 use crate::backend::{data::Data, lib::PrimaData};
-use chrono::{Days, NaiveDateTime};
+use chrono::{Days, Duration, NaiveDateTime};
+use hyper::StatusCode;
 
 /* Event Data hat Tour id
  * TourData hat Event Vector
@@ -27,7 +30,7 @@ pub async fn trigger_redistribution(
     start: NaiveDateTime,
     end: NaiveDateTime,
     data: &Data,
-) -> () {
+) -> StatusCode {
     let mut red_data = RedistibutionData::default();
     let timeframe = end - start;
 
@@ -42,13 +45,17 @@ pub async fn trigger_redistribution(
     red_data.tours_to_redistribute = match tours_or_not {
         Ok(tours_or_not) => tours_or_not,
         Err(e) => {
-            println!("vector of tours not available: {}", e);
-            Vec::new()
+            return e;
         }
     };
-    for t in red_data.tours_to_redistribute.into_iter() {
+    // evtl noch unschön...
+    let mut first_start: Vec<NaiveDateTime> = Vec::new();
+    let mut last_end: Vec<NaiveDateTime> = Vec::new();
+    for t in red_data.tours_to_redistribute.iter() {
         let mut eves = (*t).get_events().await;
         red_data.events_to_redistribute.append(&mut eves);
+        first_start.push(eves.first().unwrap().get_scheduled_time().await);
+        last_end.push(eves.last().unwrap().get_scheduled_time().await);
     }
 
     // blocking events_for_vehicle are all events the vehicle has, in a one Day range
@@ -62,35 +69,46 @@ pub async fn trigger_redistribution(
     let mut blocking_events_for_vehicle = match events_or_not {
         Ok(events_or_not) => events_or_not,
         Err(e) => {
-            println!("vector of events not available: {}", e);
-            Vec::new()
+            return e;
         }
     };
+    // theoretisch sind hier jetzt auch die drin die redistibuted werden sollen, sortieren!
+    // events_to_redistibute abgleichen mit blocking events for vehicle
+    let filtered_blocking_events = blocking_events_for_vehicle
+        .into_iter()
+        .zip(red_data.events_to_redistribute.iter())
+        .filter(|(eve, adam)| eve.get_id() != adam.get_id())
+        .collect::<Vec<_>>();
+
+    // vector wieder in zwei vectoren aufteilen, siehe beispiel!
+
     red_data.self_blocking_events = blocking_events_for_vehicle.clone(); // damit blocking_events_for_vehicle nicht zerstört wird? Richtig??
-                                                                         // get a vector of all blocking events of all vehicles of this company
-    let vehicle_or_not = Data::get_vehicle(data, vehicle_id).await.unwrap();
-    /*let vehicle = match vehicle_or_not {
+
+    // get a vector of all blocking events of all vehicles of this company
+    let vehicle_or_not = Data::get_vehicle(data, vehicle_id).await;
+    let vehicle = match vehicle_or_not {
         Ok(vehicle_or_not) => vehicle_or_not,
         Err(e) => {
-            println!("no vehicle: {}", e);
-            //Box::<dyn PrimaVehicle>::new()
+            return e;
         }
-    };*/
-    red_data.company_id = *(*vehicle_or_not).get_company_id().await;
-    let all_vehicles = Data::get_vehicles(data, red_data.company_id).await.unwrap();
+    };
+    red_data.company_id = *(*vehicle).get_company_id().await;
+    let all_vehicles_or_none = Data::get_vehicles(data, red_data.company_id).await;
+    let all_vehicles = match all_vehicles_or_none {
+        Ok(all_vehicles_or_none) => all_vehicles_or_none,
+        Err(e) => {
+            return e;
+        }
+    };
     if all_vehicles.len() != 1 {
-        for v in all_vehicles.into_iter() {
-            let v_id = (*v).get_id().await;
+        for v in all_vehicles.iter() {
+            let v_id = *(*v).get_id().await;
             let v_events_or_not =
-                Data::get_events_for_vehicle(data, *v_id, start_all, end_all).await;
+                Data::get_events_for_vehicle(data, v_id, start_all, end_all).await;
             let mut vehicle_blocking_events = match v_events_or_not {
                 Ok(v_events_or_not) => v_events_or_not,
                 Err(e) => {
-                    println!(
-                        "vector of vehicle events not available: {} vehicle id: {:?}",
-                        e, *v_id
-                    );
-                    Vec::new()
+                    return e;
                 }
             };
             blocking_events_for_vehicle.append(&mut vehicle_blocking_events);
@@ -99,13 +117,26 @@ pub async fn trigger_redistribution(
     red_data.blocking_events = blocking_events_for_vehicle;
     // existiert blocking_events_for_vehicle noch?
 
-    // self redistibution
-    /*for eve in red_data.self_blocking_events.into_iter() {
+    // --- self redistibution ---
+
+    //das müsste jetzt die duration von der gesamten (ersten: index 0) tour sein. Um nachzuschauen, ob die gesamte tour
+    //umgeplant werden kann.
+    let mut tour_durations: Vec<Duration> = Vec::new();
+    for (idx, dur) in first_start.iter().enumerate() {
+        let timewindow = (*last_end.get(idx).unwrap()) - *dur;
+        tour_durations.push(timewindow);
+    }
+    for (i, eve) in red_data.self_blocking_events.iter().enumerate() {
         let pickup = eve.get_scheduled_time().await;
         // Fragen über events
-    }*/
+    }
+
+    //TODO:Idee war, ein elem weiter schauen, bzw. immer zwei elems/schritte machen, da die eves zusammenhängen, start/ziel
+    // Um dann die duration zu bekommen. Evtl geht's einfacher mit duration???? Nochmal Nils fragen, wie die Events sind
 
     println!("Ende: Trigger Red");
+    return StatusCode::OK;
+    //Ok(red_data)
 }
 
 #[cfg(test)]

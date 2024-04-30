@@ -31,6 +31,7 @@ pub trait PrimaEvent: Send + Sync {
     async fn get_lng(&self) -> f32;
     async fn get_customer_id(&self) -> UserIdT;
     async fn get_address_id(&self) -> &AddressIdT;
+    async fn get_scheduled_time(&self) -> NaiveDateTime;
 }
 
 #[async_trait]
