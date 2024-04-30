@@ -2797,6 +2797,45 @@ mod test {
 
     #[tokio::test]
     #[serial]
+    async fn availability_test2() {
+        let db_conn = test_main().await;
+        let mut d = init(&db_conn, true, 5000, InitType::BackendTest).await;
+
+        let base_time = NaiveDate::from_ymd_opt(5000, 4, 15)
+            .unwrap()
+            .and_hms_opt(9, 10, 0)
+            .unwrap();
+        let in_2_hours = base_time + Duration::hours(2);
+        let in_3_hours = base_time + Duration::hours(3);
+        d.vehicles[0].availability.clear();
+
+        let vehicle_id = VehicleIdT::new(1);
+        assert_eq!(
+            d.create_availability(in_2_hours, in_3_hours, vehicle_id)
+                .await,
+            StatusCode::CREATED
+        );
+        assert_eq!(d.vehicles[0].availability.len(), 1);
+        assert_eq!(
+            d.remove_availability(
+                in_2_hours + Duration::minutes(30),
+                in_2_hours + Duration::minutes(45),
+                vehicle_id
+            )
+            .await,
+            StatusCode::OK
+        );
+        assert_eq!(d.vehicles[0].availability.len(), 2);
+        assert_eq!(
+            d.remove_availability(in_2_hours + Duration::minutes(45), in_3_hours, vehicle_id)
+                .await,
+            StatusCode::OK
+        );
+        assert_eq!(d.vehicles[0].availability.len(), 1);
+    }
+
+    #[tokio::test]
+    #[serial]
     async fn get_events_for_vehicle_test() {
         let db_conn = test_main().await;
         let d = init(&db_conn, true, 5000, InitType::BackendTestWithEvents).await;
