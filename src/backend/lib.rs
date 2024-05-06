@@ -32,6 +32,8 @@ pub trait PrimaEvent: Send + Sync {
     async fn get_customer_id(&self) -> UserIdT;
     async fn get_address_id(&self) -> &AddressIdT;
     async fn get_scheduled_time(&self) -> NaiveDateTime;
+    async fn get_is_pickup(&self) -> bool;
+    async fn get_tour_id(&self) -> TourIdT;
 }
 
 #[async_trait]

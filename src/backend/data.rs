@@ -447,6 +447,14 @@ impl PrimaEvent for EventData {
     async fn get_scheduled_time(&self) -> NaiveDateTime {
         self.scheduled_time
     }
+
+    async fn get_is_pickup(&self) -> bool {
+        self.is_pickup
+    }
+
+    async fn get_tour_id(&self) -> TourIdT {
+        self.tour
+    }
 }
 
 impl EventData {
