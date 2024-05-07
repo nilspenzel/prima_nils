@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         data::Data,
-        id_types::{CompanyIdT, IdT, UserIdT, VehicleIdT, ZoneIdT},
+        id_types::{CompanyIdT, IdT, TourIdT, UserIdT, VehicleIdT, ZoneIdT},
         lib::PrimaData,
     },
     constants::{bautzen_ost::BAUTZEN_OST, bautzen_west::BAUTZEN_WEST, gorlitz::GORLITZ},
@@ -592,8 +592,9 @@ async fn init_convenience_test(
     data.create_vehicle("TUB1-2", CompanyIdT::new(1)).await; // 2
     data.create_vehicle("TUB2-1", CompanyIdT::new(2)).await; // 3
     data.create_vehicle("TUB2-2", CompanyIdT::new(2)).await; // 4
+    data.create_vehicle("TUB1-3", CompanyIdT::new(1)).await; // 5
 
-    // Vehicle 1: 19.04.2024 von 1010 bis 1400
+    // Vehicle 1: 19.04 von 1010 bis 1400
     data.create_availability(
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
@@ -607,7 +608,7 @@ async fn init_convenience_test(
     )
     .await;
 
-    // Vehicle 1: 19.04.2024 von 1530 bis 1700
+    // Vehicle 1: 19.04 von 1530 bis 1700
     data.create_availability(
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
@@ -621,7 +622,7 @@ async fn init_convenience_test(
     )
     .await;
 
-    // Vehicle 2: 19.04.2024 von 1010 bis 1400
+    // Vehicle 2: 19.04 von 1010 bis 1400
     data.create_availability(
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
@@ -635,7 +636,7 @@ async fn init_convenience_test(
     )
     .await;
 
-    // Vehicle 3: 19.04.2024 von 1010 bis 1400
+    // Vehicle 3: 19.04 von 1010 bis 1400
     data.create_availability(
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
@@ -649,10 +650,6 @@ async fn init_convenience_test(
     )
     .await;
 
-    // es geht um die funktion insert or addto tour!
-    // evtl nicht sichtbar -> privat (instert or addto tour)
-    // nur für tests public machen?
-    // handle request ist alternative evtl
     data.insert_or_addto_tour(
         None,
         NaiveDate::from_ymd_opt(year, 4, 19)
@@ -674,7 +671,7 @@ async fn init_convenience_test(
             .unwrap(),
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
-            .and_hms_opt(9, 32, 0)
+            .and_hms_opt(10, 32, 0)
             .unwrap(),
         UserIdT::new(2),
         3,
@@ -688,7 +685,87 @@ async fn init_convenience_test(
             .unwrap(),
         NaiveDate::from_ymd_opt(year, 4, 19)
             .unwrap()
-            .and_hms_opt(9, 48, 0)
+            .and_hms_opt(10, 48, 0)
+            .unwrap(),
+    )
+    .await;
+
+    data.insert_or_addto_tour(
+        None,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(11, 0, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(11, 50, 0)
+            .unwrap(),
+        VehicleIdT::new(1),
+        "Darmstadium",
+        "Hauptbahnhof",
+        13.967512,
+        51.42069,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(11, 05, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(11, 10, 0)
+            .unwrap(),
+        UserIdT::new(2),
+        3,
+        0,
+        0,
+        14.325081,
+        51.995075,
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(11, 45, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 19)
+            .unwrap()
+            .and_hms_opt(11, 48, 0)
+            .unwrap(),
+    )
+    .await;
+
+    data.insert_or_addto_tour(
+        None,
+        NaiveDate::from_ymd_opt(year, 4, 20)
+            .unwrap()
+            .and_hms_opt(10, 30, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 20)
+            .unwrap()
+            .and_hms_opt(10, 50, 0)
+            .unwrap(),
+        VehicleIdT::new(2),
+        "karolinenplatz 5",
+        "Lichtwiesenweg 3",
+        13.867512,
+        51.22069,
+        NaiveDate::from_ymd_opt(year, 4, 20)
+            .unwrap()
+            .and_hms_opt(10, 35, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 20)
+            .unwrap()
+            .and_hms_opt(10, 32, 0)
+            .unwrap(),
+        UserIdT::new(2),
+        3,
+        0,
+        0,
+        14.025081,
+        51.195075,
+        NaiveDate::from_ymd_opt(year, 4, 20)
+            .unwrap()
+            .and_hms_opt(10, 45, 0)
+            .unwrap(),
+        NaiveDate::from_ymd_opt(year, 4, 20)
+            .unwrap()
+            .and_hms_opt(10, 48, 0)
             .unwrap(),
     )
     .await;

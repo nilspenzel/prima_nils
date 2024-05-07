@@ -2,8 +2,8 @@ use super::{
     id_types::{CompanyIdT, TourIdT, VehicleIdT},
     lib::{PrimaEvent, PrimaTour},
 };
-use crate::backend::{data::Data, lib::PrimaData};
-use chrono::{Days, Duration, NaiveDateTime};
+use crate::backend::{data::Data, id_types::IdT, lib::PrimaData};
+use chrono::{Date, Days, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use hyper::StatusCode;
 use sea_orm::prelude::TimeTime;
 
@@ -39,9 +39,11 @@ pub async fn trigger_redistribution(
     data: &Data,
 ) -> Option<StatusCode> {
     let mut red_data = RedistibutionData::default();
+    let zero_date = NaiveDate::from_ymd_opt(1, 1, 1);
+    let zero_time = NaiveTime::from_hms_opt(0, 0, 0);
     let timeframe = end - start;
 
-    println!("in trigger redistribution");
+    println!("<<--in trigger redistribution-->>");
     println!(
         "Interval: starttime: {}, endtime: {} Duration (timeframe): {:?}",
         start, end, timeframe
@@ -55,15 +57,28 @@ pub async fn trigger_redistribution(
             return Some(e);
         }
     };
-    // evtl noch unschön...
+    println!("LÄNGE! len{:?}", red_data.tours_to_redistribute.len());
     let mut first_start: Vec<NaiveDateTime> = Vec::new();
     let mut last_end: Vec<NaiveDateTime> = Vec::new();
     for t in red_data.tours_to_redistribute.iter() {
         let mut eves = (*t).get_events().await;
-        red_data.events_to_redistribute.append(&mut eves);
         first_start.push(eves.first().unwrap().get_scheduled_time().await); // erstes event der tour startzeit
         last_end.push(eves.last().unwrap().get_scheduled_time().await); // letztes event der tour endzeit
+        println!("  eves länge in for: {:?}", eves.len());
+        red_data.events_to_redistribute.append(&mut eves);
     }
+    // 1105
+    println!(
+        "  first start: len {:?}; elem 0 {:?}",
+        first_start.len(),
+        first_start.get(0)
+    );
+    // 1145
+    println!(
+        "  last end: len {:?}; elem 0 {:?}",
+        last_end.len(),
+        last_end.get(0)
+    );
 
     // blocking events_for_vehicle are all events the vehicle has, in a 1 Day range
     let start_all = start.checked_sub_days(Days::new(1)).unwrap();
@@ -79,16 +94,40 @@ pub async fn trigger_redistribution(
             return Some(e);
         }
     };
-
+    println!(
+        "HIER! len blocking evenets: {:?}",
+        blocking_events_for_vehicle.len()
+    );
+    println!(
+        "HIER! len events to red: {:?}",
+        red_data.events_to_redistribute.len()
+    );
     // filter out all events we want to redestibute, to have just the blocking events for this vehicle
     let mut filtered_blocking_events: Vec<Box<&dyn PrimaEvent>> = Vec::new();
     for (i, eve) in blocking_events_for_vehicle.into_iter().enumerate() {
-        let adam = red_data.events_to_redistribute.get(i)?;
+        let adam = match red_data.events_to_redistribute.get(i) {
+            Some(event) => event,
+            None => {
+                println!("in none -> continue");
+                continue;
+            }
+        };
         if eve.get_id().await != adam.get_id().await {
+            println!("in if selfblocking write...");
             filtered_blocking_events.push(eve);
         }
+        println!("i: {}", i);
     }
+
     red_data.self_blocking_events = filtered_blocking_events.clone();
+    println!(
+        "LÄNGE filtered_blocking_events: {:?}",
+        filtered_blocking_events.len()
+    );
+    println!(
+        "LÄNGE self_blocking_events: {:?}",
+        red_data.self_blocking_events.len()
+    );
 
     // get a vector of all blocking events of all vehicles of this company
     let vehicle_or_not = Data::get_vehicle(data, vehicle_id).await;
@@ -107,8 +146,12 @@ pub async fn trigger_redistribution(
         }
     };
     if all_vehicles.len() > 1 {
+        println!("in if all vehicles > 1 len: {:?}", all_vehicles.len());
         for v in all_vehicles.iter() {
             let v_id = *(*v).get_id().await;
+            if v_id == vehicle_id {
+                continue;
+            }
             let v_events_or_not =
                 Data::get_events_for_vehicle(data, v_id, start_all, end_all).await;
             let mut vehicle_blocking_events = match v_events_or_not {
@@ -122,8 +165,13 @@ pub async fn trigger_redistribution(
     }
     red_data.blocking_events = filtered_blocking_events; //hier auch clone?
 
-    // --- self redistibution ---
+    println!(
+        "LÄNGE blocking_events: {:?}",
+        red_data.blocking_events.len()
+    );
 
+    // --- self redistibution ---
+    println!("<<--self red-->>");
     // tour to red: 1200 - 1400
     // events: 0 = 1100 pickup
     // events: 1 = 1200 dropoff
@@ -137,13 +185,20 @@ pub async fn trigger_redistribution(
         let timewindow = (*last_end.get(idx).unwrap()) - *dur;
         tour_durations.push(timewindow);
     }
+    // 1105 - 1145 => 40min = 2400 sec
+    println!(
+        "LÄNGE tour_durations: {:?} dur: {:?}",
+        tour_durations.len(),
+        tour_durations.get(0)
+    );
     let mut tt: Vec<Timetable> = Vec::new();
-    let mut pu_e: &dyn PrimaEvent;
-    let mut do_e: &dyn PrimaEvent;
-    let mut pu_t: NaiveDateTime;
-    let mut do_t: NaiveDateTime;
-    let mut tour_id: TourIdT;
+    let mut pu_e = *(*red_data.self_blocking_events.first().unwrap());
+    let mut do_e = *(*red_data.self_blocking_events.first().unwrap());
+    let mut pu_t = NaiveDateTime::new(zero_date.unwrap(), zero_time.unwrap());
+    let mut do_t = NaiveDateTime::new(zero_date.unwrap(), zero_time.unwrap());
+    let mut tour_id = TourIdT::new(0);
     for (i, eve) in red_data.self_blocking_events.iter().enumerate() {
+        println!("in self blocking for-Schleife i: {:?}", i);
         if i % 2 == 0 {
             tour_id = (*eve).get_tour_id().await;
             if (*eve).get_is_pickup().await {
@@ -173,26 +228,20 @@ pub async fn trigger_redistribution(
         }
     }
 
-    //TODO:Idee war, ein elem weiter schauen, bzw. immer zwei elems/schritte machen, da die eves zusammenhängen, start/ziel
-    // Um dann die duration zu bekommen. Evtl geht's einfacher mit duration???? Nochmal Nils fragen, wie die Events sind
-
-    println!("Ende: Trigger Red");
+    // -- redistribution --
+    println!("<<--Ende: Trigger Red-->>");
     return Some(StatusCode::OK);
-    //Ok(red_data)
 }
 
 #[cfg(test)]
 mod red_test {
     use crate::backend::convenience;
     use crate::backend::id_types::{IdT, VehicleIdT};
+    use crate::backend::lib::PrimaData;
     use crate::{
-        //backend::data::Data,
-        //constants::{geo_points::TestPoints, gorlitz::GORLITZ},
-        dotenv,
-        env,
+        dotenv, env,
         init::{self, InitType},
-        Database,
-        Migrator,
+        Database, Migrator,
     };
     use chrono::NaiveDate;
     use migration::MigratorTrait;
@@ -213,17 +262,41 @@ mod red_test {
     #[serial]
     async fn redistibution_test() {
         let db_conn = red_test_main().await;
-        let d = init::init(&db_conn, true, 5000, InitType::Convenience).await;
+        let d = init::init(&db_conn, true, 2025, InitType::Convenience).await;
 
-        let start_time = NaiveDate::from_ymd_opt(2024, 4, 19)
+        // self blocking
+        // ids: tour 1; vehicle 1
+        // dep: 19.04 1030 arr: 19.04 1050
+        // scheduled time: 1035
+        // passengers 3, wheelchair, luggage
+
+        // to red
+        // ids: tour 2; vehicle 1
+        // dep: 1100 arr: 1150
+        // scheduled time: 1105
+        // passengers 3, wheelchair, luggage
+
+        let v_or_not = d.get_vehicle(VehicleIdT::new(1)).await;
+        let v = match v_or_not {
+            Ok(v_or_not) => v_or_not,
+            Err(e) => {
+                panic!("Fail: {:?}", e);
+            }
+        };
+        let vid = v.get_id().await;
+        println!("VID: {:?} ", *vid);
+        let tours_or_not = v.get_tours().await;
+        println!("!! tours len: {:?}", tours_or_not.len());
+
+        // 1100 bis 1200 redestibute => 1105 bis 1145 Tour
+        let start_time = NaiveDate::from_ymd_opt(2025, 4, 19)
             .unwrap()
             .and_hms_opt(11, 0, 0)
             .unwrap();
-        let end_time = NaiveDate::from_ymd_opt(2024, 4, 19)
+        let end_time = NaiveDate::from_ymd_opt(2025, 4, 19)
             .unwrap()
             .and_hms_opt(12, 0, 0)
             .unwrap();
-        //let my_vehicles = d.get_vehicles(0).await;
         convenience::trigger_redistribution(VehicleIdT::new(1), start_time, end_time, &d).await;
         println!("Test finished");
     }
