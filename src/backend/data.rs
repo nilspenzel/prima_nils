@@ -165,6 +165,15 @@ impl PrimaTour for TourData {
             .map(|event| Box::new(event as &dyn PrimaEvent))
             .collect_vec()
     }
+    async fn get_dep(&self) -> NaiveDateTime {
+        self.departure
+    }
+    async fn get_arr(&self) -> NaiveDateTime {
+        self.arrival
+    }
+    async fn get_id(&self) -> TourIdT {
+        self.id
+    }
 }
 
 impl TourData {
@@ -488,6 +497,20 @@ pub struct CompanyData {
     email: String,
 }
 
+pub async fn get_dur_to_company(
+    coord: Point,
+    cid: CompanyIdT,
+    data: &Data,
+) -> Option<Duration> {
+    let idx = cid.as_idx();
+    let company = data.companies.get(idx)?;
+    let company_coord = company.get_coord().await;
+    let distance = coord.haversine_distance(&company_coord); // in meter
+    let dur = distance / (50.0 * 3.6); // in minutes
+    let result = Duration::minutes(dur.ceil() as i64);
+    Some(result)
+}
+
 #[async_trait]
 impl PrimaCompany for CompanyData {
     async fn get_id(&self) -> &CompanyIdT {
@@ -496,6 +519,10 @@ impl PrimaCompany for CompanyData {
 
     async fn get_name(&self) -> &str {
         &self.name
+    }
+
+    async fn get_coord(&self) -> Point {
+        self.central_coordinates
     }
 }
 

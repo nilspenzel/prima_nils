@@ -3,33 +3,39 @@ use super::{
     lib::{PrimaEvent, PrimaTour},
 };
 use crate::backend::{data::Data, id_types::IdT, lib::PrimaData};
-use chrono::{Date, Days, Duration, NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{Days, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use hyper::StatusCode;
-use sea_orm::prelude::TimeTime;
 
 /* Event Data hat Tour id
  * TourData hat Event Vector
  * mit & arbeiten statt mit clone!
  *
  * Alles in einer Funktion ? Brauche ich da red_data überhaupt?
+ *
+ * may_vehicle_operate_during funktion die evtl. nützlich ist
  */
 
-#[derive(Default)]
-struct RedistibutionData<'a> {
+struct TimetableMatrix {
+    time: NaiveDateTime,
+    available: bool,
+}
+
+//#[derive(Default)]
+/*struct RedistibutionData<'a> {
     events_to_redistribute: Vec<Box<&'a dyn PrimaEvent>>,
     company_id: CompanyIdT,
     tours_to_redistribute: Vec<Box<&'a dyn PrimaTour>>,
     blocking_events: Vec<Box<&'a dyn PrimaEvent>>,
     self_blocking_events: Vec<Box<&'a dyn PrimaEvent>>,
-}
+}*/
 
-struct Timetable<'a> {
+/*struct Timetable<'a> {
     pickup_event: &'a dyn PrimaEvent,
     dropoff_event: &'a dyn PrimaEvent,
     pickup_time: NaiveDateTime,
     dropoff_time: NaiveDateTime,
     tour_id: TourIdT,
-}
+}*/
 
 // 1656
 pub async fn trigger_redistribution(
@@ -38,7 +44,7 @@ pub async fn trigger_redistribution(
     end: NaiveDateTime,
     data: &Data,
 ) -> Option<StatusCode> {
-    let mut red_data = RedistibutionData::default();
+    //let mut red_data = RedistibutionData::default();
     let zero_date = NaiveDate::from_ymd_opt(1, 1, 1);
     let zero_time = NaiveTime::from_hms_opt(0, 0, 0);
     let timeframe = end - start;
@@ -49,87 +55,54 @@ pub async fn trigger_redistribution(
         start, end, timeframe
     );
 
+    // IMPORTANT: Wenn die Tour angekratzt nicht gemacht werden kann, dann komplett umverteilen!
+    // => sollte schon drin sein, in get tours mit overlaps.
+
     //get tours of this vehicle -> we want to redistibute those
     let tours_or_not = data.get_tours(vehicle_id, start, end).await;
-    red_data.tours_to_redistribute = match tours_or_not {
+    let tours_to_redistribute = match tours_or_not {
         Ok(tours_or_not) => tours_or_not,
         Err(e) => {
             return Some(e);
         }
     };
-    println!("LÄNGE! len{:?}", red_data.tours_to_redistribute.len());
-    let mut first_start: Vec<NaiveDateTime> = Vec::new();
-    let mut last_end: Vec<NaiveDateTime> = Vec::new();
-    for t in red_data.tours_to_redistribute.iter() {
-        let mut eves = (*t).get_events().await;
-        first_start.push(eves.first().unwrap().get_scheduled_time().await); // erstes event der tour startzeit
-        last_end.push(eves.last().unwrap().get_scheduled_time().await); // letztes event der tour endzeit
-        println!("  eves länge in for: {:?}", eves.len());
-        red_data.events_to_redistribute.append(&mut eves);
-    }
-    // 1105
-    println!(
-        "  first start: len {:?}; elem 0 {:?}",
-        first_start.len(),
-        first_start.get(0)
-    );
-    // 1145
-    println!(
-        "  last end: len {:?}; elem 0 {:?}",
-        last_end.len(),
-        last_end.get(0)
-    );
-
-    // blocking events_for_vehicle are all events the vehicle has, in a 1 Day range
+    // one day interval
     let start_all = start.checked_sub_days(Days::new(1)).unwrap();
     let end_all = end.checked_add_days(Days::new(1)).unwrap();
     println!(
         "New Interval: starttime all: {}, endtime all: {} ",
         start_all, end_all
     );
-    let events_or_not = Data::get_events_for_vehicle(data, vehicle_id, start_all, end_all).await;
-    let blocking_events_for_vehicle = match events_or_not {
-        Ok(events_or_not) => events_or_not,
+    // get self blocking tours in a one day range
+    let all_tours_or_not = data.get_tours(vehicle_id, start_all, end_all).await;
+    let all_other_tours = match all_tours_or_not {
+        Ok(all_tours_or_not) => all_tours_or_not,
         Err(e) => {
             return Some(e);
         }
     };
-    println!(
-        "HIER! len blocking evenets: {:?}",
-        blocking_events_for_vehicle.len()
-    );
-    println!(
-        "HIER! len events to red: {:?}",
-        red_data.events_to_redistribute.len()
-    );
-    // filter out all events we want to redestibute, to have just the blocking events for this vehicle
-    let mut filtered_blocking_events: Vec<Box<&dyn PrimaEvent>> = Vec::new();
-    for (i, eve) in blocking_events_for_vehicle.into_iter().enumerate() {
-        let adam = match red_data.events_to_redistribute.get(i) {
+    println!("LEN all other tours: {:?}", all_other_tours.len());
+    let mut filtered_blocking_tours: Vec<Box<&dyn PrimaTour>> = Vec::new();
+    for (i, tour) in all_other_tours.into_iter().enumerate() {
+        let red_tour = match tours_to_redistribute.get(i) {
             Some(event) => event,
             None => {
                 println!("in none -> continue");
                 continue;
             }
         };
-        if eve.get_id().await != adam.get_id().await {
+        if tour.get_id().await != red_tour.get_id().await {
             println!("in if selfblocking write...");
-            filtered_blocking_events.push(eve);
+            filtered_blocking_tours.push(tour);
         }
         println!("i: {}", i);
     }
-
-    red_data.self_blocking_events = filtered_blocking_events.clone();
     println!(
-        "LÄNGE filtered_blocking_events: {:?}",
-        filtered_blocking_events.len()
+        "LEN blocking tours: {:?}, len tours to red {:?}",
+        filtered_blocking_tours.len(),
+        tours_to_redistribute.len(),
     );
-    println!(
-        "LÄNGE self_blocking_events: {:?}",
-        red_data.self_blocking_events.len()
-    );
-
-    // get a vector of all blocking events of all vehicles of this company
+    // get vehicle and company infos
     let vehicle_or_not = Data::get_vehicle(data, vehicle_id).await;
     let vehicle = match vehicle_or_not {
         Ok(vehicle_or_not) => vehicle_or_not,
@@ -137,8 +110,8 @@ pub async fn trigger_redistribution(
             return Some(e);
         }
     };
-    red_data.company_id = *(*vehicle).get_company_id().await;
-    let all_vehicles_or_none = Data::get_vehicles(data, red_data.company_id).await;
+    let company_id = *(*vehicle).get_company_id().await;
+    let all_vehicles_or_none = Data::get_vehicles(data, company_id).await;
     let all_vehicles = match all_vehicles_or_none {
         Ok(all_vehicles_or_none) => all_vehicles_or_none,
         Err(e) => {
@@ -152,55 +125,146 @@ pub async fn trigger_redistribution(
             if v_id == vehicle_id {
                 continue;
             }
-            let v_events_or_not =
-                Data::get_events_for_vehicle(data, v_id, start_all, end_all).await;
-            let mut vehicle_blocking_events = match v_events_or_not {
-                Ok(v_events_or_not) => v_events_or_not,
+            let company_tours_or_not = data.get_tours(v_id, start_all, end_all).await;
+            let mut company_tours = match company_tours_or_not {
+                Ok(company_tours_or_not) => company_tours_or_not,
                 Err(e) => {
                     return Some(e);
                 }
             };
-            filtered_blocking_events.append(&mut vehicle_blocking_events);
+            filtered_blocking_tours.append(&mut company_tours);
         }
     }
-    red_data.blocking_events = filtered_blocking_events; //hier auch clone?
 
-    println!(
+    // -------- Events ----------------------------------------------------------------------------------------------------- !!
+    //println!("LÄNGE! len{:?}", red_data.tours_to_redistribute.len());
+    /*let mut first_start: Vec<NaiveDateTime> = Vec::new();
+        let mut last_end: Vec<NaiveDateTime> = Vec::new();
+        for t in red_data.tours_to_redistribute.iter() {
+            let mut eves = (*t).get_events().await;
+            first_start.push(eves.first().unwrap().get_scheduled_time().await); // erstes event der tour startzeit
+            last_end.push(eves.last().unwrap().get_scheduled_time().await); // letztes event der tour endzeit
+                                                                            //println!("  eves länge in for: {:?}", eves.len());
+            red_data.events_to_redistribute.append(&mut eves);
+        }
+        // 1105
+        /*println!(
+            "  first start: len {:?}; elem 0 {:?}",
+            first_start.len(),
+            first_start.get(0)
+        );
+        // 1145
+        println!(
+            "  last end: len {:?}; elem 0 {:?}",
+            last_end.len(),
+            last_end.get(0)
+        );*/
+        // blocking events_for_vehicle are all events the vehicle has, in a 1 Day range
+        let events_or_not = Data::get_events_for_vehicle(data, vehicle_id, start_all, end_all).await;
+        let blocking_events_for_vehicle = match events_or_not {
+            Ok(events_or_not) => events_or_not,
+            Err(e) => {
+                return Some(e);
+            }
+        };
+        /*println!(
+            "HIER! len blocking evenets: {:?}",
+            blocking_events_for_vehicle.len()
+        );
+        println!(
+            "HIER! len events to red: {:?}",
+            red_data.events_to_redistribute.len()
+        );*/
+        // filter out all events we want to redestibute, to have just the blocking events for this vehicle
+        let mut filtered_blocking_events: Vec<Box<&dyn PrimaEvent>> = Vec::new();
+        for (i, eve) in blocking_events_for_vehicle.into_iter().enumerate() {
+            let adam = match red_data.events_to_redistribute.get(i) {
+                Some(event) => event,
+                None => {
+                    //println!("in none -> continue");
+                    continue;
+                }
+            };
+            if eve.get_id().await != adam.get_id().await {
+                //println!("in if selfblocking write...");
+                filtered_blocking_events.push(eve);
+            }
+            //println!("i: {}", i);
+        }
+
+        red_data.self_blocking_events = filtered_blocking_events.clone();
+        /*println!(
+            "LÄNGE filtered_blocking_events: {:?}",
+            filtered_blocking_events.len()
+        );
+        println!(
+            "LÄNGE self_blocking_events: {:?}",
+            red_data.self_blocking_events.len()
+        );*/
+
+        // get a vector of all blocking events of all vehicles of this company
+        if all_vehicles.len() > 1 {
+            //println!("in if all vehicles > 1 len: {:?}", all_vehicles.len());
+            for v in all_vehicles.iter() {
+                let v_id = *(*v).get_id().await;
+                if v_id == vehicle_id {
+                    continue;
+                }
+                let v_events_or_not =
+                    Data::get_events_for_vehicle(data, v_id, start_all, end_all).await;
+                let mut vehicle_blocking_events = match v_events_or_not {
+                    Ok(v_events_or_not) => v_events_or_not,
+                    Err(e) => {
+                        return Some(e);
+                    }
+                };
+                filtered_blocking_events.append(&mut vehicle_blocking_events);
+            }
+        }
+        red_data.blocking_events = filtered_blocking_events; //hier auch clone?
+    */
+    /*println!(
         "LÄNGE blocking_events: {:?}",
         red_data.blocking_events.len()
-    );
+    );*/
+    // ----------------------------------- "self" redistibution -------------------------------------------------------------
+    println!("<<--self red tours-->>");
+    // Tour 0: dep: 1030, arr: 1050, sched_start: 1035, comm_start: 1032, sched_end: 1045. comm_end: 1048; VID: 1
+    // Tour 1: dep: 1100, arr: 1150, sched_start: 1105, comm_start: 1110, sched_end: 1145. comm_end: 1148; VID: 1
+    // Tour 2: dep: 1030, arr: 1050, sched_start: 1035, comm_start: 1032, sched_end: 1045. comm_end: 1048; VID: 2
+    // Alle selbe Company
 
-    // --- self redistibution ---
-    println!("<<--self red-->>");
-    // tour to red: 1200 - 1400
-    // events: 0 = 1100 pickup
-    // events: 1 = 1200 dropoff
-    // events: 2 = 1300 pickup
-    // events: 3 = 1400 dropoff
-    // event is_pickup bool und tour id gleich
+    // Erstbeste Option:  anderes Fahrzeug, zur selben Zeit
+    // Zweitbeste Option: selbes Fahrzeug (oder anderes Fahrzeug, selbe Company) andere Uhrzeit
+    // Drittbeste Option: andere Company, selbe Zeit
+    // Letzte Option:     andere Company, andere Zeit
 
-    //let mut not_available: Vec<>
-    let mut tour_durations: Vec<Duration> = Vec::new();
-    for (idx, dur) in first_start.iter().enumerate() {
-        let timewindow = (*last_end.get(idx).unwrap()) - *dur;
-        tour_durations.push(timewindow);
+    let mut red_tour_durations: Vec<Duration> = Vec::new();
+    for t in tours_to_redistribute.iter() {
+        let timewindow = t.get_arr().await - t.get_dep().await;
+        red_tour_durations.push(timewindow);
     }
-    // 1105 - 1145 => 40min = 2400 sec
+    // 1100 - 1150 => 50min = 3000 sec
     println!(
         "LÄNGE tour_durations: {:?} dur: {:?}",
-        tour_durations.len(),
-        tour_durations.get(0)
+        red_tour_durations.len(),
+        red_tour_durations.get(0)
     );
-    let mut tt: Vec<Timetable> = Vec::new();
+
+    // ToDo: mache einen timetablematrix vector und befülle ihn mit allen Zeiten ... noch überlegen wie genau.
+    // dann schauen, wo frei ist, sodass red_tour_dur reinpasst. Dann neue tour erstellen, die als suggestion zurückgeben
+    // rückgabetyp dann Result<Tour, StatusCode>
+
+    /*let mut tt: Vec<Timetable> = Vec::new();
     let mut pu_e = *(*red_data.self_blocking_events.first().unwrap());
     let mut do_e = *(*red_data.self_blocking_events.first().unwrap());
     let mut pu_t = NaiveDateTime::new(zero_date.unwrap(), zero_time.unwrap());
     let mut do_t = NaiveDateTime::new(zero_date.unwrap(), zero_time.unwrap());
     let mut tour_id = TourIdT::new(0);
     for (i, eve) in red_data.self_blocking_events.iter().enumerate() {
-        println!("in self blocking for-Schleife i: {:?}", i);
+        //println!("in self blocking for-Schleife i: {:?}", i);
+        tour_id = (*eve).get_tour_id().await;
         if i % 2 == 0 {
-            tour_id = (*eve).get_tour_id().await;
             if (*eve).get_is_pickup().await {
                 pu_e = *(*eve);
                 pu_t = eve.get_scheduled_time().await;
@@ -209,7 +273,6 @@ pub async fn trigger_redistribution(
                 do_t = eve.get_scheduled_time().await;
             }
         } else {
-            tour_id = (*eve).get_tour_id().await;
             if (*eve).get_is_pickup().await {
                 pu_e = *(*eve);
                 pu_t = eve.get_scheduled_time().await;
@@ -227,8 +290,12 @@ pub async fn trigger_redistribution(
             tt.push(combine);
         }
     }
+    //println!("LÄNGE tt: {:?}", tt.len(),);
+    */
 
     // -- redistribution --
+    // TODO: rückgabe ist redistribution Vorschlag!
+    // TODO: get all vehicles of all COMPANIES, if we have to redistribute to another company
     println!("<<--Ende: Trigger Red-->>");
     return Some(StatusCode::OK);
 }

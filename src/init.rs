@@ -650,6 +650,7 @@ async fn init_convenience_test(
     )
     .await;
 
+    // Tour 0: dep: 1030, arr: 1050, sched_start: 1035, comm_start: 1032, sched_end: 1045. comm_end: 1048
     data.insert_or_addto_tour(
         None,
         NaiveDate::from_ymd_opt(year, 4, 19)
@@ -690,6 +691,7 @@ async fn init_convenience_test(
     )
     .await;
 
+    // Tour 1: dep: 1100, arr: 1150, sched_start: 1105, comm_start: 1110, sched_end: 1145. comm_end: 1148
     data.insert_or_addto_tour(
         None,
         NaiveDate::from_ymd_opt(year, 4, 19)
@@ -730,6 +732,7 @@ async fn init_convenience_test(
     )
     .await;
 
+    // Tour 2: dep: 1030, arr: 1050, sched_start: 1035, comm_start: 1032, sched_end: 1045. comm_end: 1048
     data.insert_or_addto_tour(
         None,
         NaiveDate::from_ymd_opt(year, 4, 20)

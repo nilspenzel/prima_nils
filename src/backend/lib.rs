@@ -4,6 +4,7 @@ use crate::backend::{
 };
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
+use geo::Point;
 use hyper::StatusCode;
 use std::collections::HashMap;
 /*
@@ -22,6 +23,9 @@ OK                              request processed succesfully
 #[async_trait]
 pub trait PrimaTour {
     async fn get_events(&self) -> Vec<Box<&dyn PrimaEvent>>;
+    async fn get_id(&self) -> TourIdT;
+    async fn get_dep(&self) -> NaiveDateTime;
+    async fn get_arr(&self) -> NaiveDateTime;
 }
 
 #[async_trait]
@@ -58,6 +62,7 @@ pub trait PrimaUser: Send + Sync {
 pub trait PrimaCompany {
     async fn get_id(&self) -> &CompanyIdT;
     async fn get_name(&self) -> &str;
+    async fn get_coord(&self) -> Point;
 }
 
 #[async_trait]
