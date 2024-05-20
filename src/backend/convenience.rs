@@ -2,7 +2,7 @@ use super::{
     id_types::{CompanyIdT, TourIdT, VehicleIdT},
     lib::{PrimaEvent, PrimaTour},
 };
-use crate::backend::{data::Data, id_types::IdT, lib::PrimaData};
+use crate::backend::{data::Data, id_types::IdT, interval::Interval, lib::PrimaData};
 use chrono::{Days, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use hyper::StatusCode;
 
@@ -15,9 +15,10 @@ use hyper::StatusCode;
  * may_vehicle_operate_during funktion die evtl. nützlich ist
  */
 
-struct TimetableMatrix {
-    time: NaiveDateTime,
-    available: bool,
+struct Intervals {
+    start_time: NaiveDateTime,
+    duration: Duration,
+    vehicle_idx: VehicleIdT,
 }
 
 //#[derive(Default)]
@@ -44,18 +45,19 @@ pub async fn trigger_redistribution(
     end: NaiveDateTime,
     data: &Data,
 ) -> Option<StatusCode> {
+    //rückgabetyp dann Result<Tour, StatusCode>
     //let mut red_data = RedistibutionData::default();
-    let zero_date = NaiveDate::from_ymd_opt(1, 1, 1);
-    let zero_time = NaiveTime::from_hms_opt(0, 0, 0);
-    let timeframe = end - start;
+    //let zero_date = NaiveDate::from_ymd_opt(1, 1, 1);
+    //let zero_time = NaiveTime::from_hms_opt(0, 0, 0);
+    let red_dur = end - start;
 
     println!("<<--in trigger redistribution-->>");
     println!(
         "Interval: starttime: {}, endtime: {} Duration (timeframe): {:?}",
-        start, end, timeframe
+        start, end, red_dur
     );
 
-    // IMPORTANT: Wenn die Tour angekratzt nicht gemacht werden kann, dann komplett umverteilen!
+    // Wenn die Tour angekratzt nicht gemacht werden kann, dann komplett umverteilen!
     // => sollte schon drin sein, in get tours mit overlaps.
 
     //get tours of this vehicle -> we want to redistibute those
@@ -74,7 +76,7 @@ pub async fn trigger_redistribution(
         start_all, end_all
     );
     // get self blocking tours in a one day range
-    let all_tours_or_not = data.get_tours(vehicle_id, start_all, end_all).await;
+    /*let all_tours_or_not = data.get_tours(vehicle_id, start_all, end_all).await;
     let all_other_tours = match all_tours_or_not {
         Ok(all_tours_or_not) => all_tours_or_not,
         Err(e) => {
@@ -101,7 +103,7 @@ pub async fn trigger_redistribution(
         "LEN blocking tours: {:?}, len tours to red {:?}",
         filtered_blocking_tours.len(),
         tours_to_redistribute.len(),
-    );
+    );*/
     // get vehicle and company infos
     let vehicle_or_not = Data::get_vehicle(data, vehicle_id).await;
     let vehicle = match vehicle_or_not {
@@ -118,23 +120,38 @@ pub async fn trigger_redistribution(
             return Some(e);
         }
     };
-    if all_vehicles.len() > 1 {
-        println!("in if all vehicles > 1 len: {:?}", all_vehicles.len());
-        for v in all_vehicles.iter() {
-            let v_id = *(*v).get_id().await;
-            if v_id == vehicle_id {
-                continue;
+    // create timetable for redistribution
+    let mut company_timetable: Vec<Vec<Intervals>> = Vec::new();
+    //if all_vehicles.len() > 1 {
+    println!("in if all vehicles > 1 len: {:?}", all_vehicles.len());
+    for v in all_vehicles.iter() {
+        let mut vehicle_timetable: Vec<Intervals> = Vec::new();
+        let v_id = *(*v).get_id().await;
+        //if v_id == vehicle_id {
+        //    continue;
+        //}
+        let this_vehicle_tours_or_not = data.get_tours(v_id, start_all, end_all).await;
+        let this_vehicle_tours = match this_vehicle_tours_or_not {
+            Ok(this_vehicle_tours_or_not) => this_vehicle_tours_or_not,
+            Err(e) => {
+                return Some(e);
             }
-            let company_tours_or_not = data.get_tours(v_id, start_all, end_all).await;
-            let mut company_tours = match company_tours_or_not {
-                Ok(company_tours_or_not) => company_tours_or_not,
-                Err(e) => {
-                    return Some(e);
-                }
+        };
+        for tour in this_vehicle_tours.iter() {
+            let arr = tour.get_arr().await;
+            let dep = tour.get_dep().await;
+            let dur = arr - dep;
+            let interval = Intervals {
+                start_time: dep,
+                duration: dur,
+                vehicle_idx: v_id,
             };
-            filtered_blocking_tours.append(&mut company_tours);
+            vehicle_timetable.push(interval);
         }
+        //filtered_blocking_tours.append(&mut this_vehicle_tours);
+        company_timetable.push(vehicle_timetable);
     }
+    //}
 
     // -------- Events ----------------------------------------------------------------------------------------------------- !!
     //println!("LÄNGE! len{:?}", red_data.tours_to_redistribute.len());
@@ -239,9 +256,15 @@ pub async fn trigger_redistribution(
     // Drittbeste Option: andere Company, selbe Zeit
     // Letzte Option:     andere Company, andere Zeit
 
+    let mut red_depatures: Vec<NaiveDateTime> = Vec::new();
+    let mut red_arrivals: Vec<NaiveDateTime> = Vec::new();
     let mut red_tour_durations: Vec<Duration> = Vec::new();
     for t in tours_to_redistribute.iter() {
-        let timewindow = t.get_arr().await - t.get_dep().await;
+        let dep = t.get_dep().await;
+        red_depatures.push(dep);
+        let arr = t.get_arr().await;
+        red_arrivals.push(arr);
+        let timewindow = arr - dep;
         red_tour_durations.push(timewindow);
     }
     // 1100 - 1150 => 50min = 3000 sec
@@ -251,9 +274,46 @@ pub async fn trigger_redistribution(
         red_tour_durations.get(0)
     );
 
-    // ToDo: mache einen timetablematrix vector und befülle ihn mit allen Zeiten ... noch überlegen wie genau.
-    // dann schauen, wo frei ist, sodass red_tour_dur reinpasst. Dann neue tour erstellen, die als suggestion zurückgeben
-    // rückgabetyp dann Result<Tour, StatusCode>
+    // Hier die for schleife machen, die auf Zettel ist mit i, i+1 (next)
+    for v_tt in company_timetable.iter() {
+        let mut v_tt_iter = v_tt.iter().peekable();
+        // erstes elem im ersten durchlauf
+        while v_tt_iter.peek().is_some() {
+            // ebenfalls erstes elem, mit next aber iterator eins weiter
+            let v_tours = v_tt_iter.next().unwrap();
+            //let v_tours = match v_tt_iter.next() {
+            //    Some() =>
+            //    None => ,
+            //}
+            if vehicle_id != v_tours.vehicle_idx {
+                if start == v_tours.start_time {
+                    continue;
+                }
+                let current_interval =
+                    Interval::new(v_tours.start_time, v_tours.start_time + v_tours.duration);
+                if v_tt_iter.peek().is_some() {
+                    let v_tours_next = *v_tt_iter.peek().unwrap();
+                    if !(current_interval.contains_point(&start)) && end > v_tours_next.start_time {
+                        //leeres Feld, passt rein
+                    }
+                } else {
+                    // ToDo: wenn das aktuelle elem das letzte elem ist
+                    // hinten dran hängen mit availability-check?
+                }
+            }
+        }
+    }
+    // TODO
+    // Wichitg: Tests mit mehr touren füllen, sonst habe ich nichts zum vergleichen
+    // nochmal schauen, dass die tests auch mit wenig touren laufen!
+
+    /* Algo:
+     *  check if other vehicle of same company at same time is available (and has same dependencies) -> yes: finished
+     *  no -> loop through all vehicles of same company and see if there is a timeslot available (with same dependencies) -> yes: finished
+     *  no -> loop through all vehicles of all other comapny at same time see if available (and has same dependencies) -> yes: finished
+     *  no -> loop through again, and find free timeslot (with same dependencies)
+     *  Rückgabe ist suggestion new tour-zuordnung
+     */
 
     /*let mut tt: Vec<Timetable> = Vec::new();
     let mut pu_e = *(*red_data.self_blocking_events.first().unwrap());
@@ -333,7 +393,7 @@ mod red_test {
 
         // self blocking
         // ids: tour 1; vehicle 1
-        // dep: 19.04 1030 arr: 19.04 1050
+        // dep: 1030 arr: 1050
         // scheduled time: 1035
         // passengers 3, wheelchair, luggage
 
