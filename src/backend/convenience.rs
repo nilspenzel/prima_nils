@@ -22,10 +22,11 @@ struct Intervals {
 
 pub async fn trigger_redistribution(
     from_vehicle_id: VehicleIdT,
+    to_vehicle_id: VehicleIdT,
     start: NaiveDateTime,
     end: NaiveDateTime,
     data: &mut Data,
-) -> Result<Vec<Box<&dyn PrimaTour>>, StatusCode> {
+) -> StatusCode {
     let red_dur = end - start;
 
     println!("<<--in trigger redistribution-->>");
@@ -39,7 +40,7 @@ pub async fn trigger_redistribution(
     let tours_to_redistribute = match tours_or_not {
         Ok(tours_or_not) => tours_or_not,
         Err(e) => {
-            return Err(e);
+            return e;
         }
     };
     // get vehicle and company infos
@@ -58,7 +59,10 @@ pub async fn trigger_redistribution(
             return Some(e);
         }
     };*/
-    return Ok(tours_to_redistribute);
+    if !tours_to_redistribute.is_empty() {
+        return redistribute(to_vehicle_id, tours_to_redistribute, data).await;
+    }
+    return StatusCode::NO_CONTENT;
 }
 // ----------------------------------- redistibution -------------------------------------------------------------
 // Tour 0: dep: 1030, arr: 1050, sched_start: 1035, comm_start: 1032, sched_end: 1045. comm_end: 1048; VID: 1
@@ -156,6 +160,7 @@ mod red_test {
             .unwrap();
         let trigger = convenience::trigger_redistribution(
             VehicleIdT::new(1),
+            VehicleIdT::new(2),
             start_time,
             end_time,
             d_mut_ref,
@@ -163,9 +168,9 @@ mod red_test {
         .await;
 
         //let d_mut_ref = &mut d;
-        if trigger.is_ok() {
-            convenience::redistribute(VehicleIdT::new(2), trigger.unwrap(), d_mut_ref).await;
-        }
+        //if trigger.is_ok() {
+        //    convenience::redistribute(VehicleIdT::new(2), trigger.unwrap(), d_mut_ref).await;
+        //}
         println!("Test finished");
     }
 }
