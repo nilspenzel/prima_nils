@@ -30,6 +30,7 @@ impl Interval {
         }
     }
 
+    #[allow(dead_code)]
     pub fn overlaps_day(
         &self,
         day: NaiveDate,

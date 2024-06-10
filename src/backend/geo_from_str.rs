@@ -1,3 +1,4 @@
+use crate::backend::point::Point;
 use geo::MultiPolygon;
 use geojson::{GeoJson, Geometry};
 
@@ -6,9 +7,12 @@ pub fn multi_polygon_from_str(s: &str) -> Result<MultiPolygon, geojson::Error> {
     Geometry::try_from(geojson).and_then(MultiPolygon::try_from)
 }
 
-pub fn point_from_str(s: &str) -> Result<geo::Point, geojson::Error> {
+#[allow(unused)]
+pub fn point_from_str(s: &str) -> Result<Point, geojson::Error> {
     let geojson: GeoJson = s.parse()?;
-    Geometry::try_from(geojson).and_then(geo::Point::try_from)
+    Ok(Point::from(
+        Geometry::try_from(geojson).and_then(geo::Point::try_from)?,
+    ))
 }
 
 #[cfg(test)]
@@ -62,28 +66,31 @@ mod test {
         let bautzen_west = multi_polygon_from_str(bautzen_west::BAUTZEN_WEST).unwrap();
         let gorlitz = multi_polygon_from_str(gorlitz::GORLITZ).unwrap();
         for p in test_points.bautzen_ost {
-            assert!(bautzen.contains(&p));
-            assert!(bautzen_ost.contains(&p));
-            assert!(!bautzen_west.contains(&p));
-            assert!(!gorlitz.contains(&p));
+            assert!(bautzen.contains(&p.p()));
+            assert!(bautzen_ost.contains(&p.p()));
+            assert!(!bautzen_west.contains(&p.p()));
+            assert!(!gorlitz.contains(&p.p()));
+            assert!(p.get_lat() > p.get_lng());
         }
         for p in test_points.bautzen_west {
-            assert!(bautzen.contains(&p));
-            assert!(!bautzen_ost.contains(&p));
-            assert!(bautzen_west.contains(&p));
-            assert!(!gorlitz.contains(&p));
+            assert!(bautzen.contains(&p.p()));
+            assert!(!bautzen_ost.contains(&p.p()));
+            assert!(bautzen_west.contains(&p.p()));
+            assert!(!gorlitz.contains(&p.p()));
+            assert!(p.get_lat() > p.get_lng());
         }
         for p in test_points.gorlitz {
-            assert!(!bautzen.contains(&p));
-            assert!(!bautzen_ost.contains(&p));
-            assert!(!bautzen_west.contains(&p));
-            assert!(gorlitz.contains(&p));
+            assert!(!bautzen.contains(&p.p()));
+            assert!(!bautzen_ost.contains(&p.p()));
+            assert!(!bautzen_west.contains(&p.p()));
+            assert!(gorlitz.contains(&p.p()));
+            assert!(p.get_lat() > p.get_lng());
         }
         for p in test_points.outside {
-            assert!(!bautzen.contains(&p));
-            assert!(!bautzen_ost.contains(&p));
-            assert!(!bautzen_west.contains(&p));
-            assert!(!gorlitz.contains(&p));
+            assert!(!bautzen.contains(&p.p()));
+            assert!(!bautzen_ost.contains(&p.p()));
+            assert!(!bautzen_west.contains(&p.p()));
+            assert!(!gorlitz.contains(&p.p()));
         }
     }
 }

@@ -1,4 +1,4 @@
-//has negative area
+//has inner ring
 pub const GORLITZ: &str = r#"{
   "type": "MultiPolygon",
   "coordinates": [

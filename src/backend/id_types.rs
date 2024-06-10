@@ -1,4 +1,7 @@
-trait Id {
+use core::hash::Hash;
+use std::slice::Iter;
+
+pub trait Id: Send + PartialEq + Eq + Hash {
     fn id(&self) -> i32;
     fn as_idx(&self) -> usize;
 }
@@ -6,7 +9,7 @@ trait Id {
 #[macro_export]
 macro_rules! define_id {
     ($t:ident) => {
-        #[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord, Hash, Copy)]
+        #[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord, Hash, Copy, Default)]
         pub struct $t {
             id: i32,
         }
@@ -24,7 +27,7 @@ macro_rules! define_id {
 
         impl $t {
             #[allow(dead_code)]
-            fn new(id: i32) -> Self {
+            pub fn new(id: i32) -> Self {
                 Self { id }
             }
         }
@@ -55,19 +58,67 @@ define_id!(AddressId);
 define_id!(UserId);
 define_id!(TourId);
 define_id!(EventId);
+define_id!(AvailabilityId);
 
 #[allow(dead_code)]
-struct VecMap<K: Id, V> {
+#[derive(Clone, PartialEq, Default)]
+pub struct VecMap<K: Id, V> {
     vec: Vec<V>,
     id: K,
 }
 
-impl<K: Id, V> VecMap<K, V> {
+impl<K: Id + Default, V: Clone> VecMap<K, V> {
+    pub fn new() -> Self {
+        Self {
+            vec: Vec::<V>::new(),
+            id: K::default(),
+        }
+    }
+
     #[allow(dead_code)]
-    fn get(
+    pub fn get(
         &self,
         key: K,
     ) -> &V {
         &self.vec[key.as_idx()]
+    }
+
+    #[allow(dead_code)]
+    pub fn get_mut(
+        &mut self,
+        key: K,
+    ) -> &mut V {
+        &mut self.vec[key.as_idx()]
+    }
+
+    pub fn set(
+        &mut self,
+        key: K,
+        value: V,
+    ) {
+        self.vec[key.as_idx()] = value
+    }
+
+    pub fn iter(&self) -> Iter<V> {
+        self.vec.iter()
+    }
+
+    pub fn push(
+        &mut self,
+        v: V,
+    ) {
+        self.vec.push(v);
+    }
+
+    pub fn resize(
+        &mut self,
+        new_size: usize,
+        default_val: V,
+    ) {
+        self.vec.resize(new_size, default_val);
+    }
+
+    pub fn len(&self) -> usize {
+        self.vec.len()
     }
 }

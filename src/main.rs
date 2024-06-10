@@ -1,29 +1,40 @@
-use axum::Router;
+use crate::init::InitType;
+use axum::{
+    extract::State,
+    http::{StatusCode, Uri},
+    response::Html,
+    routing::get,
+    Router,
+};
+use backend::{id_types::CompanyId, lib::PrimaData};
 use dotenv::dotenv;
 use itertools::Itertools;
 use log::setup_logging;
 use migration::{Migrator, MigratorTrait};
 use notify::Watcher;
-use sea_orm::{Database, DbConn};
+use sea_orm::Database;
 use std::{
     env,
     path::Path,
     sync::{Arc, Mutex},
 };
 use tera::{Context, Tera};
+use tokio::sync::RwLock;
 use tower_http::{compression::CompressionLayer, services::ServeFile};
 use tower_livereload::LiveReloadLayer;
+use tracing::error;
 
 mod backend;
 mod constants;
 mod entities;
+mod init;
 mod log;
 mod osrm;
 
 #[derive(Clone)]
 struct AppState {
     tera: Arc<Mutex<Tera>>,
-    db: Arc<DbConn>,
+    data: Arc<RwLock<dyn PrimaData>>,
 }
 
 impl AppState {
@@ -34,12 +45,57 @@ impl AppState {
     ) -> Result<String, tera::Error> {
         self.tera.lock().unwrap().render(template_name, context)
     }
-
-    fn db(&self) -> &DbConn {
-        &self.db
-    }
 }
 
+async fn calendar(
+    _uri: Uri,
+    State(s): State<AppState>,
+) -> Result<Html<String>, StatusCode> {
+    s.data
+        .write()
+        .await
+        .create_vehicle("test_vehicle_1", CompanyId::new(1))
+        .await;
+    s.render("calendar.html", &Context::new())
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        .map(Html)
+}
+
+async fn register(
+    _uri: Uri,
+    State(s): State<AppState>,
+) -> Result<Html<String>, StatusCode> {
+    s.render("register.html", &Context::new())
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        .map(Html)
+}
+/*
+async fn users(State(s): State<AppState>) -> Result<Html<String>, StatusCode> {
+    let username = User::find_by_id(1)
+        .one(s.db())
+        .await
+        .map_err(|e| {
+            error!("Database error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?
+        .name
+        .clone();
+    let response = s
+        .render(
+            "user.html",
+            &Context::from_serialize(json!({"user": username})).map_err(|e| {
+                error!("Serialize error: {e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?,
+        )
+        .map_err(|e| {
+            error!("Render error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    Ok(Html(response))
+}
+*/
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_logging()?;
@@ -79,12 +135,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         notify::RecursiveMode::NonRecursive,
     )?;
 
+    //let data = Data::new(&conn);
+    let data = init::init(&conn, true, 5000, InitType::Default).await;
+
     let s = AppState {
         tera,
-        db: Arc::new(conn),
+        data: Arc::new(RwLock::new(data)),
     };
 
     let app = Router::new();
+    let app = app.route("/calendar", get(calendar).with_state(s.clone()));
+    let app = app.route("/register", get(register).with_state(s.clone()));
+    //let app = app.route("/users", get(users).with_state(s.clone()));
     let app = app.route_service("/output.css", ServeFile::new("output.css"));
     let app = app.layer(livereload);
     let app = app.layer(CompressionLayer::new());

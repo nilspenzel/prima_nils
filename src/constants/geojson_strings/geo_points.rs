@@ -1,4 +1,4 @@
-use geo::Point;
+use crate::backend::point::Point;
 
 use crate::backend::geo_from_str::point_from_str;
 
@@ -12,8 +12,8 @@ pub const P1_BAUTZEN_OST: &str = r#"{
 
 pub const P2_BAUTZEN_OST: &str = r#"{
   "coordinates": [
-    14.359163546182856,
-    51.421657386809926
+    14.373990188462784,
+    51.427087158228886
   ],
   "type": "Point"
 }"#;
@@ -44,32 +44,32 @@ pub const P1_BAUTZEN_WEST: &str = r#"{
 
 pub const P2_BAUTZEN_WEST: &str = r#"{
   "coordinates": [
-    14.19340286403866,
-    51.440220511859906
+    14.189811353271807,
+    51.44063104265106
   ],
   "type": "Point"
 }"#;
 
 pub const P3_BAUTZEN_WEST: &str = r#"{
   "coordinates": [
-    13.9528292197908,
-    51.347601960830275
+    13.964261195431362,
+    51.34546497574152
   ],
   "type": "Point"
 }"#;
 
 pub const P4_BAUTZEN_WEST: &str = r#"{
   "coordinates": [
-    13.903059630285287,
-    51.221411427881804
+    13.90599714362827,
+    51.22438446231891
   ],
   "type": "Point"
 }"#;
 
 pub const P1_GORLITZ: &str = r#"{
   "coordinates": [
-    14.841968625266304,
-    51.262332903493416
+    14.850804828058614,
+    51.26774655165522
   ],
   "type": "Point"
 }"#;
@@ -92,8 +92,8 @@ pub const P3_GORLITZ: &str = r#"{
 
 pub const P4_GORLITZ: &str = r#"{
   "coordinates": [
-    14.621498570053717,
-    51.4342088690766
+    14.626865828113097,
+    51.426203425881255
   ],
   "type": "Point"
 }"#;
@@ -166,7 +166,7 @@ impl TestPoints {
                 point_from_str(P1_OUTSIDE).unwrap(),
                 point_from_str(P2_OUTSIDE).unwrap(),
                 point_from_str(P3_OUTSIDE).unwrap(),
-                //point_from_str(P4_OUTSIDE).unwrap(),
+                point_from_str(P4_OUTSIDE).unwrap(),
             ],
         }
     }
