@@ -6,13 +6,13 @@ use crate::{
         lib::{PrimaTour, PrimaVehicle},
         tour::TourData,
     },
-    entities::{availability, prelude::Availability},
+    entities::availability,
     error, StatusCode,
 };
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
 use itertools::Itertools;
-use sea_orm::{ActiveModelTrait, ActiveValue, DbConn, EntityTrait, TransactionTrait};
+use sea_orm::{ActiveModelTrait, ActiveValue, DbConn, TransactionTrait};
 use std::collections::HashMap;
 
 use super::id_types::AvailabilityId;
@@ -157,7 +157,7 @@ impl VehicleData {
                 continue;
             }
             if existing.contains(new_interval) {
-                return StatusCode::OK;
+                return StatusCode::NO_CONTENT; // availability inserted succesfully, but nothing changed
             }
             if existing.contains(new_interval) {
                 mark_delete.push(*id);
@@ -204,21 +204,10 @@ impl VehicleData {
         }
         let id = match id_or_none {
             Some(i) => i,
-            None => match Availability::insert(availability::ActiveModel {
-                id: ActiveValue::NotSet,
-                start_time: ActiveValue::Set(new_interval.start_time),
-                end_time: ActiveValue::Set(new_interval.end_time),
-                vehicle: ActiveValue::Set(self.id.id()),
-            })
-            .exec(db_conn)
-            .await
-            {
-                Ok(result) => result.last_insert_id,
-                Err(e) => {
-                    error!("Error creating availability in db: {}", e);
-                    return StatusCode::INTERNAL_SERVER_ERROR;
-                }
-            },
+            None => {
+                error!("Id for inserted availability was none.");
+                return StatusCode::INTERNAL_SERVER_ERROR;
+            }
         };
         match self.availability.insert(
             id,

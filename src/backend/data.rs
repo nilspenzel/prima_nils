@@ -1112,7 +1112,7 @@ mod test {
         assert_eq!(
             d.create_availability(in_2_hours, in_3_hours, VehicleId::new(1))
                 .await,
-            StatusCode::OK
+            StatusCode::NO_CONTENT
         );
         assert_eq!(d.vehicles.get(VehicleId::new(1)).availability.len(), 1);
 
