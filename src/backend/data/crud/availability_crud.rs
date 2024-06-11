@@ -23,7 +23,7 @@ impl AvailabilityCrud for Data {
     ) -> StatusCode {
         let mut interval = Interval::new(start_time, end_time);
         if !is_valid(&interval) {
-            return StatusCode::NOT_ACCEPTABLE;
+            // return StatusCode::NOT_ACCEPTABLE;
         }
         self.vehicles
             .get_mut(vehicle)

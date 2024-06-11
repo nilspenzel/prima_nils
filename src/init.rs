@@ -15,7 +15,7 @@ use crate::{
     },
     error,
 };
-use chrono::NaiveDate;
+use chrono::{Datelike, NaiveDate, Utc};
 use migration::ConnectionTrait;
 use sea_orm::{DbConn, EntityTrait};
 
@@ -563,6 +563,12 @@ async fn init_default(
     db_conn: &DbConn,
     year: i32,
 ) -> Data {
+    let now = Utc::now().naive_utc();
+    let this_year = now.year();
+    let this_month = now.month();
+    let this_day = now.day();
+    let today = NaiveDate::from_ymd_opt(this_year, this_month, this_day).unwrap();
+
     let mut data = Data::new(db_conn);
 
     data.create_zone("Bautzen Ost", BAUTZEN_OST).await;
@@ -716,14 +722,8 @@ async fn init_default(
 
     data.insert_or_addto_tour(
         None,
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(9, 10, 0)
-            .unwrap(),
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(10, 0, 0)
-            .unwrap(),
+        today.and_hms_opt(9, 10, 0).unwrap(),
+        today.and_hms_opt(10, 0, 0).unwrap(),
         VehicleId::new(1),
         "karolinenplatz 5",
         "Lichtwiesenweg 3",
@@ -743,52 +743,28 @@ async fn init_default(
         0,
         Latitude::new(51.195075),
         Longitude::new(14.025081),
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(9, 55, 0)
-            .unwrap(),
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(9, 18, 0)
-            .unwrap(),
+        today.and_hms_opt(9, 55, 0).unwrap(),
+        today.and_hms_opt(9, 18, 0).unwrap(),
     )
     .await;
 
     data.create_availability(
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(10, 10, 0)
-            .unwrap(),
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(14, 0, 0)
-            .unwrap(),
+        today.and_hms_opt(10, 10, 0).unwrap(),
+        today.and_hms_opt(14, 0, 0).unwrap(),
         VehicleId::new(1),
     )
     .await;
 
     data.create_availability(
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(10, 10, 0)
-            .unwrap(),
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(14, 0, 0)
-            .unwrap(),
+        today.and_hms_opt(10, 10, 0).unwrap(),
+        today.and_hms_opt(14, 0, 0).unwrap(),
         VehicleId::new(2),
     )
     .await;
 
     data.create_availability(
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(10, 10, 0)
-            .unwrap(),
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(14, 0, 0)
-            .unwrap(),
+        today.and_hms_opt(10, 10, 0).unwrap(),
+        today.and_hms_opt(14, 0, 0).unwrap(),
         VehicleId::new(3),
     )
     .await;

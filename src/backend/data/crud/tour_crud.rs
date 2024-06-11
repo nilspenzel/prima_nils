@@ -48,7 +48,7 @@ impl TourCrud for Data {
         if !is_valid(&Interval::new(departure, arrival))
             || !is_valid(&Interval::new(sched_t_start, sched_t_target))
         {
-            return StatusCode::NOT_ACCEPTABLE;
+            //return StatusCode::NOT_ACCEPTABLE;
         }
         if !self.users.contains_key(&customer) || self.max_vehicle_id() < vehicle.id() {
             return StatusCode::EXPECTATION_FAILED;
