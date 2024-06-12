@@ -15,7 +15,7 @@ use crate::{
     },
     error,
 };
-use chrono::{Datelike, NaiveDate, Utc};
+use chrono::{Datelike, Duration, NaiveDate, Utc};
 use migration::ConnectionTrait;
 use sea_orm::{DbConn, EntityTrait};
 
@@ -568,6 +568,7 @@ async fn init_default(
     let this_month = now.month();
     let this_day = now.day();
     let today = NaiveDate::from_ymd_opt(this_year, this_month, this_day).unwrap();
+    let yesterday = today - Duration::days(1);
 
     let mut data = Data::new(db_conn);
 
@@ -761,6 +762,28 @@ async fn init_default(
         Longitude::new(14.025081),
         today.and_hms_opt(16, 55, 0).unwrap(),
         today.and_hms_opt(16, 55, 0).unwrap(),
+    )
+    .await;
+
+    data.insert_or_addto_tour(
+        None,
+        yesterday.and_hms_opt(16, 10, 0).unwrap(),
+        yesterday.and_hms_opt(17, 0, 0).unwrap(),
+        VehicleId::new(1),
+        "karolinenplatz 5",
+        "Lichtwiesenweg 3",
+        Latitude::new(51.22069),
+        Longitude::new(13.867512),
+        yesterday.and_hms_opt(16, 15, 0).unwrap(),
+        yesterday.and_hms_opt(16, 15, 0).unwrap(),
+        UserId::new(2),
+        3,
+        0,
+        0,
+        Latitude::new(51.195075),
+        Longitude::new(14.025081),
+        yesterday.and_hms_opt(16, 55, 0).unwrap(),
+        yesterday.and_hms_opt(16, 55, 0).unwrap(),
     )
     .await;
 
