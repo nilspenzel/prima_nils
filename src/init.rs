@@ -729,14 +729,8 @@ async fn init_default(
         "Lichtwiesenweg 3",
         Latitude::new(51.22069),
         Longitude::new(13.867512),
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(9, 15, 0)
-            .unwrap(),
-        NaiveDate::from_ymd_opt(year, 4, 19)
-            .unwrap()
-            .and_hms_opt(9, 12, 0)
-            .unwrap(),
+        today.and_hms_opt(9, 15, 0).unwrap(),
+        today.and_hms_opt(9, 15, 0).unwrap(),
         UserId::new(2),
         3,
         0,
@@ -744,7 +738,29 @@ async fn init_default(
         Latitude::new(51.195075),
         Longitude::new(14.025081),
         today.and_hms_opt(9, 55, 0).unwrap(),
-        today.and_hms_opt(9, 18, 0).unwrap(),
+        today.and_hms_opt(9, 55, 0).unwrap(),
+    )
+    .await;
+
+    data.insert_or_addto_tour(
+        None,
+        today.and_hms_opt(16, 10, 0).unwrap(),
+        today.and_hms_opt(17, 0, 0).unwrap(),
+        VehicleId::new(6),
+        "karolinenplatz 5",
+        "Lichtwiesenweg 3",
+        Latitude::new(51.22069),
+        Longitude::new(13.867512),
+        today.and_hms_opt(16, 15, 0).unwrap(),
+        today.and_hms_opt(16, 15, 0).unwrap(),
+        UserId::new(2),
+        3,
+        0,
+        0,
+        Latitude::new(51.195075),
+        Longitude::new(14.025081),
+        today.and_hms_opt(16, 55, 0).unwrap(),
+        today.and_hms_opt(16, 55, 0).unwrap(),
     )
     .await;
 
