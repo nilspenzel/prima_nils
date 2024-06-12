@@ -58,14 +58,25 @@
 		);
 	});
 
+	function isSameDay(date1: Date, date2: Date) {
+		return (
+			date1.getDate() == date2.getDate() &&
+			date1.getMonth() == date2.getMonth() &&
+			date1.getFullYear() == date2.getFullYear()
+		);
+	}
+
 	let tours = $state<Array<Tour>>([]);
 	onMount(async () => {
-		tours = data.tours.map((t) => ({
-			id: t.id,
-			from: t.departure,
-			to: t.arrival,
-			vehicle_id: t.vehicle
-		}));
+		const today = new Date();
+		tours = data.tours
+			.filter((t) => isSameDay(t.arrival, today) || isSameDay(t.departure, today))
+			.map((t) => ({
+				id: t.id,
+				from: t.departure,
+				to: t.arrival,
+				vehicle_id: t.vehicle
+			}));
 	});
 
 	let value = $state(today('CET'));
