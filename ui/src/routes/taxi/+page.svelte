@@ -102,6 +102,29 @@
 
 	const overlaps = (a: Range, b: Range) => a.from < b.to && a.to > b.from;
 
+	const contains = (a: Range, b: Range) => a.from < b.from && a.to > b.to;
+
+	const merge = (a: Range, b: Range): Range => {
+		return {
+			from: new Date(Math.min(a.from.getTime(), b.from.getTime())),
+			to: new Date(Math.max(a.to.getTime(), b.to.getTime()))
+		};
+	};
+
+	const cut = (to_cut: Range, cutter: Range): Range => {
+		if (to_cut.from < cutter.from) {
+			return { from: to_cut.from, to: cutter.from };
+		}
+		return { from: cutter.to, to: to_cut.to };
+	};
+	/*
+	const split = (to_split: Range, splitter: Range): [Range, Range] => {
+		return [
+			{ from: to_split.from, to: splitter.from },
+			{ from: splitter.to, to: to_split.to }
+		];
+	};
+*/
 	const hasTour = (vehicle_id: number, cell: Range) => {
 		return tours.some((t) => vehicle_id == t.vehicle_id && overlaps(t, cell));
 	};
