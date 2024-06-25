@@ -14,6 +14,7 @@
 
 	import { Date as ReactiveDate, Map } from 'svelte/reactivity';
 	import { Button } from '$lib/components/ui/button';
+	import { Toaster, toast } from 'svelte-sonner';
 	import * as Card from '$lib/components/ui/card';
 	import { Plus, ChevronRight, ChevronLeft } from 'lucide-svelte';
 
@@ -203,10 +204,14 @@
 				});
 			}
 			selection = null;
+			let response;
 			if (available) {
-				await addAvailability(vehicle_id, selectedRange.from, selectedRange.to);
+				response = await addAvailability(vehicle_id, selectedRange.from, selectedRange.to);
 			} else {
-				await removeAvailability(vehicle_id, selectedRange.from, selectedRange.to);
+				response = await removeAvailability(vehicle_id, selectedRange.from, selectedRange.to);
+			}
+			if (!response || !response.ok) {
+				toast('Verfügbarkeits Update nicht erfolgreich.');
 			}
 			invalidateAll();
 		}
@@ -251,7 +256,12 @@
 			draggedTours.tours.forEach(async (t) => {
 				t.vehicle_id = draggedTours!.vehicle_id;
 			});
-			await Promise.all(draggedTours.tours.map((t) => updateTour(t.id, t.vehicle_id)));
+			const responses = await Promise.all(
+				draggedTours.tours.map((t) => updateTour(t.id, t.vehicle_id))
+			);
+			if (responses.some((r) => !r.ok)) {
+				toast('Tour Update nicht erfolgreich.');
+			}
 			invalidateAll();
 		}
 		draggedTours = null;
@@ -277,6 +287,8 @@
 		}
 	};
 </script>
+
+<Toaster />
 
 <svelte:window onmouseup={() => selectionFinish()} />
 
