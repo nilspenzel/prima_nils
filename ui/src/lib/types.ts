@@ -25,6 +25,7 @@ export interface CompanyTable {
 	display_name: string;
 	email: string;
 	zone: number;
+	community_area: number;
 }
 
 export type Company = Selectable<CompanyTable>;
