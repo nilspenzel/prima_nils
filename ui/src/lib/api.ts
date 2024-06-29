@@ -20,3 +20,11 @@ export const updateTour = async (tour_id: number, vehicle_id: number): Promise<R
 	});
 	return await response.json();
 };
+
+export async function latLongToAddress(latitude: number, longitude: number) { 
+    return await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`).then((res) => res.json());
+}
+
+export async function geoSearch(houseNr: string, street: string, city: string, country: string){
+	return await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${houseNr}+${street}+${city}+${country}`).then((res) => res.json());
+}

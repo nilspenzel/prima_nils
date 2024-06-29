@@ -10,7 +10,6 @@
 	import * as Card from '$lib/components/ui/card';
 	import Leaflet from '$lib/Leaflet.svelte';
 	import type { LatLngExpression } from 'leaflet';
-
 	const form = superForm(data.form, {
 		validators: zodClient(formSchema)
 	});
