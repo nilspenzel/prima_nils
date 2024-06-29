@@ -8,11 +8,14 @@
 	import { superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import * as Card from '$lib/components/ui/card';
+	import Leaflet from '$lib/Leaflet.svelte';
+	import type { LatLngExpression } from 'leaflet';
 
 	const form = superForm(data.form, {
 		validators: zodClient(formSchema)
 	});
 	const { form: formData, enhance } = form;
+	let initialView: LatLngExpression = [51.1832089304817, 14.699930898211079];
 
 	$: selectedZone = {
 		value: $formData.zone,
@@ -25,11 +28,13 @@
 	};
 
 	if (data.company) {
+		$formData.address = data.address;
 		$formData.companyname = data.company.display_name;
 		$formData.email = data.company.email;
-
 		$formData.zone = data.zones.find((z) => (z.id! = data.company!.zone))!.name;
 		$formData.community = data.zones.find((z) => (z.id! = data.company!.community_area))!.name;
+
+		initialView = [data.company.latitude, data.company.longitude];
 	}
 </script>
 
@@ -130,9 +135,5 @@
 		</div>
 	</Card.Root>
 
-	<Card.Root>
-		<Card.Content>
-			<Input value="test">TEST</Input>
-		</Card.Content>
-	</Card.Root>
+	<div><Leaflet view={initialView} zoom={15}></Leaflet></div>
 </div>

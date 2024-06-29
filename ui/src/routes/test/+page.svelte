@@ -1,0 +1,10 @@
+<script lang="ts">
+	import type { LatLngExpression } from 'leaflet';
+	import Leaflet from '$lib/Leaflet.svelte';
+
+	const initialView: LatLngExpression = [51.514244, 7.468429];
+</script>
+
+<div class="w-full h-screen">
+	<Leaflet view={initialView} zoom={14}></Leaflet>
+</div>

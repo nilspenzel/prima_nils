@@ -6,18 +6,24 @@ import { formSchema } from './schema';
 import { db } from '$lib/database';
 
 let company_id = 0;
-company_id = 1;
+company_id = 2;
 export const load: PageServerLoad = async () => {
 	const zones = db.selectFrom('zone').selectAll().execute();
-	const company = db
+	const company = await db
 		.selectFrom('company')
 		.where('id', '=', company_id)
 		.selectAll()
 		.executeTakeFirst();
+		let r = undefined;
+	if (company) {
+		let url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${company.latitude}&lon=${company.longitude}`;
+		r = await fetch(url).then((res) => res.json());
+	}
 	return {
 		form: await superValidate(zod(formSchema)),
 		zones: await zones,
-		company: await company
+		company: company,
+		address: r ? r.address.postcode + ", " + r.address.town + ", " + r.address.road : ''
 	};
 };
 
