@@ -20,3 +20,15 @@ export const updateTour = async (tour_id: number, vehicle_id: number): Promise<R
 	});
 	return await response.json();
 };
+
+export async function reverseGeoCode(latitude: number, longitude: number) {
+	return await fetch(
+		`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+	).then((res) => res.json());
+}
+
+export async function geoCode(address: string) {
+	return await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${address}`).then(
+		(res) => res.json()
+	);
+}

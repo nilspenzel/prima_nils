@@ -4,6 +4,7 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { formSchema } from './schema';
 import { db } from '$lib/database';
+import { geoCode } from '$lib/api.js';
 
 let company_id = 0;
 company_id = 1;
@@ -17,7 +18,7 @@ export const load: PageServerLoad = async () => {
 	return {
 		form: await superValidate(zod(formSchema)),
 		zones: await zones,
-		company: await company
+		company: company_id ? await company : undefined
 	};
 };
 
@@ -33,6 +34,15 @@ export const actions: Actions = {
 		const zone = form.data.zone;
 		const community = form.data.community;
 		const email = form.data.email;
+		const address = form.data.address;
+		const addressJson = await geoCode(address);
+		if (addressJson.length == 0) {
+			return fail(400, {
+				form
+			});
+		}
+		const latitude = addressJson[0].lat;
+		const longitude = addressJson[0].lon;
 		const zone_id = await db
 			.selectFrom('zone')
 			.where('name', '=', zone)
@@ -53,8 +63,8 @@ export const actions: Actions = {
 					email: email,
 					zone: zone_id.id,
 					community_area: community_id.id,
-					latitude: 1.0,
-					longitude: 1.0
+					latitude: latitude,
+					longitude: longitude
 				})
 				.execute();
 		} else {
@@ -64,8 +74,8 @@ export const actions: Actions = {
 					email: email,
 					zone: zone_id.id,
 					community_area: community_id.id,
-					latitude: 1.0,
-					longitude: 1.0
+					latitude: latitude,
+					longitude: longitude
 				})
 				.where('id', '=', company_id)
 				.execute();

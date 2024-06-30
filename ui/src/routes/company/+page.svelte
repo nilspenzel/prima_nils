@@ -105,7 +105,7 @@
 											s && s.label && ($formData.community = s.label!);
 										}}
 									>
-										<Select.Trigger id="zone">
+										<Select.Trigger id="community">
 											<Select.Value placeholder="Bitte auswählen" />
 										</Select.Trigger>
 										<Select.Content>
