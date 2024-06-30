@@ -4,12 +4,12 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { formSchema } from './schema';
 import { db } from '$lib/database';
-import { geoSearch, latLongToAddress } from '$lib/api.js';
+import { addressToLatLong, latLongToAddress } from '$lib/api.js';
 
 let company_id = 0;
 company_id = 2;
 export const load: PageServerLoad = async () => {
-	console.log((await geoSearch("7","kasinostr","darmstadt","germany")));
+	console.log((await addressToLatLong("7","kasinostr","darmstadt","germany")));
 	const zones = db.selectFrom('zone').selectAll().execute();
 	const company = await db
 		.selectFrom('company')
