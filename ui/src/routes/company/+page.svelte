@@ -30,6 +30,8 @@
 
 		$formData.zone = data.zones.find((z) => (z.id! = data.company!.zone))!.name;
 		$formData.community = data.zones.find((z) => (z.id! = data.company!.community_area))!.name;
+
+		$formData.address = data.address.display_name;
 	}
 </script>
 

@@ -4,21 +4,25 @@ import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { formSchema } from './schema';
 import { db } from '$lib/database';
-import { geoCode } from '$lib/api.js';
+import { geoCode, reverseGeoCode } from '$lib/api.js';
 
 let company_id = 0;
 company_id = 1;
 export const load: PageServerLoad = async () => {
 	const zones = db.selectFrom('zone').selectAll().execute();
-	const company = db
+	let company = undefined;
+	if(company_id){
+	 company = await db
 		.selectFrom('company')
 		.where('id', '=', company_id)
 		.selectAll()
 		.executeTakeFirst();
+	}
 	return {
 		form: await superValidate(zod(formSchema)),
 		zones: await zones,
-		company: company_id ? await company : undefined
+		company: company_id ? company : undefined,
+		address: company ? await reverseGeoCode(company.latitude, company.longitude) : ''
 	};
 };
 
