@@ -320,68 +320,59 @@
 	</table>
 {/snippet}
 
-<div class="flex min-h-screen">
-	<Card.Root class="w-fit m-auto">
-		<div class="flex justify-between">
-			<Card.Header>
-				<Card.Title>Fahrzeuge und Touren</Card.Title>
-				<Card.Description>Fahrzeugverfügbarkeit- und Tourenverwaltung</Card.Description>
-			</Card.Header>
-			<div class="font-semibold leading-none tracking-tight p-6 flex gap-4">
-				<div class="flex gap-1">
-					<Button variant="outline" size="icon" on:click={() => (value = value.add({ days: -1 }))}>
-						<ChevronLeft class="h-4 w-4" />
+<div class="flex justify-between">
+	<Card.Header>
+		<Card.Title>Fahrzeuge und Touren</Card.Title>
+		<Card.Description>Fahrzeugverfügbarkeit- und Tourenverwaltung</Card.Description>
+	</Card.Header>
+	<div class="font-semibold leading-none tracking-tight p-6 flex gap-4">
+		<div class="flex gap-1">
+			<Button variant="outline" size="icon" on:click={() => (value = value.add({ days: -1 }))}>
+				<ChevronLeft class="h-4 w-4" />
+			</Button>
+			<Popover.Root>
+				<Popover.Trigger asChild let:builder>
+					<Button
+						variant="outline"
+						class="w-fit justify-start text-left font-normal"
+						builders={[builder]}
+					>
+						<CalendarIcon class="mr-2 h-4 w-4" />
+						{df.format(value.toDate(getLocalTimeZone()))}
 					</Button>
-					<Popover.Root>
-						<Popover.Trigger asChild let:builder>
-							<Button
-								variant="outline"
-								class="w-fit justify-start text-left font-normal"
-								builders={[builder]}
-							>
-								<CalendarIcon class="mr-2 h-4 w-4" />
-								{df.format(value.toDate(getLocalTimeZone()))}
-							</Button>
-						</Popover.Trigger>
-						<Popover.Content class="absolute z-10 w-auto">
-							<Calendar bind:value />
-						</Popover.Content>
-					</Popover.Root>
-					<Button variant="outline" size="icon" on:click={() => (value = value.add({ days: 1 }))}>
-						<ChevronRight class="h-4 w-4" />
-					</Button>
-				</div>
-				<div>
-					<Popover.Root>
-						<Popover.Trigger>
-							<Button variant="outline">
-								<Plus class="mr-2 h-4 w-4" />
-								{'Fahrzeug hinzufügen'}
-							</Button>
-						</Popover.Trigger>
-						<Popover.Content class="absolute z-10">
-							Place content for the popover here.
-						</Popover.Content>
-					</Popover.Root>
-				</div>
-				<Button on:click={toggleMode} variant="outline" size="icon">
-					<Sun
-						class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-					/>
-					<Moon
-						class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-					/>
-					<span class="sr-only">Toggle theme</span>
-				</Button>
-			</div>
+				</Popover.Trigger>
+				<Popover.Content class="absolute z-10 w-auto">
+					<Calendar bind:value />
+				</Popover.Content>
+			</Popover.Root>
+			<Button variant="outline" size="icon" on:click={() => (value = value.add({ days: 1 }))}>
+				<ChevronRight class="h-4 w-4" />
+			</Button>
 		</div>
-		<Card.Content class="mt-8">
-			{@render availability_table({ from: base, to: today_morning })}
-			{@render availability_table({ from: today_morning, to: today_day })}
-			{@render availability_table({ from: today_day, to: tomorrow_night })}
-		</Card.Content>
-	</Card.Root>
+		<div>
+			<Popover.Root>
+				<Popover.Trigger>
+					<Button variant="outline">
+						<Plus class="mr-2 h-4 w-4" />
+						{'Fahrzeug hinzufügen'}
+					</Button>
+				</Popover.Trigger>
+				<Popover.Content class="absolute z-10">Place content for the popover here.</Popover.Content>
+			</Popover.Root>
+		</div>
+		<Button on:click={toggleMode} variant="outline" size="icon">
+			<Sun
+				class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+			/>
+			<Moon
+				class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+			/>
+			<span class="sr-only">Toggle theme</span>
+		</Button>
+	</div>
 </div>
-
-<style>
-</style>
+<Card.Content class="mt-8">
+	{@render availability_table({ from: base, to: today_morning })}
+	{@render availability_table({ from: today_morning, to: today_day })}
+	{@render availability_table({ from: today_day, to: tomorrow_night })}
+</Card.Content>
