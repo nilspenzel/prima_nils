@@ -31,9 +31,7 @@ describe('1start 1target same zones', async () => {
 describe('1start 1target different zones', async () => {
 	const p = getTestParameters();
 	const inDifferentZoneThanStart = new Coordinates(51.179639396440706, 14.425225548739235);
-	const res = await bookingApiQuery(p.start, p.capacities, p.interval, [
-		inDifferentZoneThanStart
-	]);
+	const res = await bookingApiQuery(p.start, p.capacities, p.interval, [inDifferentZoneThanStart]);
 	it('zones match', () => {
 		expect(res.companies.length).toBe(1);
 		expect(res.companies[0].zoneId).toBe(2);
@@ -45,9 +43,7 @@ describe('1start 1target same zone, too many passengers', async () => {
 	const p = getTestParameters();
 	const capacities = p.capacities;
 	capacities.passengers = 4;
-	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		p.target
-	]);
+	const res = await bookingApiQuery(p.start, capacities, p.interval, [p.target]);
 	it('zones match', () => expect(res.companies.length).toBe(0));
 });
 
@@ -55,9 +51,7 @@ describe('1start 1target same zone, too many bikes', async () => {
 	const p = getTestParameters();
 	const capacities = p.capacities;
 	capacities.bikes = 1;
-	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		p.target
-	]);
+	const res = await bookingApiQuery(p.start, capacities, p.interval, [p.target]);
 	it('zones match', () => expect(res.companies.length).toBe(0));
 });
 
@@ -65,9 +59,7 @@ describe('1start 1target same zone, too many wheelchairs', async () => {
 	const p = getTestParameters();
 	const capacities = p.capacities;
 	capacities.wheelchairs = 1;
-	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		p.target
-	]);
+	const res = await bookingApiQuery(p.start, capacities, p.interval, [p.target]);
 	it('zones match', () => expect(res.companies.length).toBe(0));
 });
 
@@ -75,9 +67,7 @@ describe('1start 1target same zone, too much luggage', async () => {
 	const p = getTestParameters();
 	const capacities = p.capacities;
 	capacities.luggage = 3;
-	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		p.target
-	]);
+	const res = await bookingApiQuery(p.start, capacities, p.interval, [p.target]);
 	it('zones match', () => expect(res.companies.length).toBe(0));
 });
 
@@ -85,9 +75,7 @@ describe('1start 1target same zone, luggage may be put on seats', async () => {
 	const p = getTestParameters();
 	const capacities = p.capacities;
 	capacities.luggage = 2;
-	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		p.target
-	]);
+	const res = await bookingApiQuery(p.start, capacities, p.interval, [p.target]);
 	it('zones match', () => expect(res.companies.length).toBe(1));
 });
 
