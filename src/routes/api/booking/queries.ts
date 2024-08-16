@@ -1,6 +1,5 @@
 import { Coordinates } from '$lib/location.js';
 import { Interval } from '$lib/interval.js';
-import {} from '$lib/utils.js';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { sql } from 'kysely';
 import { db } from '$lib/database';
