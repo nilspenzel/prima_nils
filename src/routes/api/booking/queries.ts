@@ -47,10 +47,7 @@ export type Event = {
 	coordinates: Coordinates;
 };
 
-const selectAvailabilities = (
-	eb: ExpressionBuilder<Database, 'vehicle'>,
-	interval: Interval
-) => {
+const selectAvailabilities = (eb: ExpressionBuilder<Database, 'vehicle'>, interval: Interval) => {
 	return jsonArrayFrom(
 		eb
 			.selectFrom('availability')
@@ -85,10 +82,7 @@ const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 	).as('events');
 };
 
-const selectTours = (
-	eb: ExpressionBuilder<Database, 'vehicle'>,
-	interval: Interval
-) => {
+const selectTours = (eb: ExpressionBuilder<Database, 'vehicle'>, interval: Interval) => {
 	return jsonArrayFrom(
 		eb
 			.selectFrom('tour')
@@ -184,7 +178,9 @@ export const bookingApiQuery = async (
 					sql<string>`SELECT cast(${i} as integer) AS index, ${target.lat} AS latitude, ${target.lng} AS longitude`
 			);
 			return db
-				.selectFrom(sql<CoordinateTable>`(${sql.join(cteValues, sql<string>` UNION ALL `)})`.as('cte'))
+				.selectFrom(
+					sql<CoordinateTable>`(${sql.join(cteValues, sql<string>` UNION ALL `)})`.as('cte')
+				)
 				.selectAll();
 		})
 		.selectFrom('zone')
