@@ -94,3 +94,16 @@ describe('1start 1target same zone, luggage may be put on seats', async () => {
 	it('zones match', () => expect(res.companies.length).toBe(1));
 	it('targetZones match', () => expect([...res.targetZones.keys()].length).toBe(0));
 });
+
+describe('1start 2targets', async () => {
+	const p = getTestParameters();
+	const inSameZoneAsStart = new Coordinates(51.505762013387766, 14.63155985748017);
+	const res = await bookingApiQuery(p.start, p.capacities, p.interval, [
+		inSameZoneAsStart, p.target
+	]);
+	it('zones match', () => {
+		expect(res.companies.length).toBe(1);
+		expect(res.companies[0].zoneId).toBe(2);
+	});
+	it('targetZones match', () => expect([...res.targetZones.keys()].length).toBe(2));
+});

@@ -49,7 +49,7 @@ export type Event = {
 
 const selectAvailabilities = (
 	eb: ExpressionBuilder<Database, 'vehicle'>,
-	expandedSearchInterval: Interval
+	interval: Interval
 ) => {
 	return jsonArrayFrom(
 		eb
@@ -57,8 +57,8 @@ const selectAvailabilities = (
 			.whereRef('availability.vehicle', '=', 'vehicle.id')
 			.where((eb) =>
 				eb.and([
-					eb('availability.start_time', '<=', expandedSearchInterval.endTime),
-					eb('availability.end_time', '>=', expandedSearchInterval.startTime)
+					eb('availability.start_time', '<=', interval.endTime),
+					eb('availability.end_time', '>=', interval.startTime)
 				])
 			)
 			.select(['availability.start_time', 'availability.end_time'])
@@ -87,7 +87,7 @@ const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 
 const selectTours = (
 	eb: ExpressionBuilder<Database, 'vehicle'>,
-	expandedSearchInterval: Interval
+	interval: Interval
 ) => {
 	return jsonArrayFrom(
 		eb
@@ -95,8 +95,8 @@ const selectTours = (
 			.whereRef('tour.vehicle', '=', 'vehicle.id')
 			.where((eb) =>
 				eb.and([
-					eb('tour.departure', '<=', expandedSearchInterval.endTime),
-					eb('tour.arrival', '>=', expandedSearchInterval.startTime)
+					eb('tour.departure', '<=', interval.endTime),
+					eb('tour.arrival', '>=', interval.startTime)
 				])
 			)
 			.select((eb) => ['tour.id', 'tour.departure', 'tour.arrival', selectEvents(eb)])
@@ -105,7 +105,7 @@ const selectTours = (
 
 const selectVehicles = (
 	eb: ExpressionBuilder<Database, 'company'>,
-	expandedSearchInterval: Interval,
+	interval: Interval,
 	requiredCapacities: Capacity
 ) => {
 	return jsonArrayFrom(
@@ -130,15 +130,15 @@ const selectVehicles = (
 				'vehicle.storage_space',
 				'vehicle.wheelchair_capacity',
 				'vehicle.seats',
-				selectTours(eb, expandedSearchInterval),
-				selectAvailabilities(eb, expandedSearchInterval)
+				selectTours(eb, interval),
+				selectAvailabilities(eb, interval)
 			])
 	).as('vehicles');
 };
 
 const selectCompanies = (
 	eb: ExpressionBuilder<Database, 'company' | 'zone'>,
-	expandedSearchInterval: Interval,
+	interval: Interval,
 	requiredCapacities: Capacity
 ) => {
 	return jsonArrayFrom(
@@ -160,7 +160,7 @@ const selectCompanies = (
 				'company.longitude',
 				'company.id',
 				'company.zone',
-				selectVehicles(eb, expandedSearchInterval, requiredCapacities)
+				selectVehicles(eb, interval, requiredCapacities)
 			])
 	).as('companies');
 };
@@ -184,7 +184,7 @@ export const bookingApiQuery = async (
 					sql<string>`SELECT cast(${i} as integer) AS index, ${target.lat} AS latitude, ${target.lng} AS longitude`
 			);
 			return db
-				.selectFrom(sql<CoordinateTable>`(${sql.join(cteValues, sql` UNION ALL `)})`.as('cte'))
+				.selectFrom(sql<CoordinateTable>`(${sql.join(cteValues, sql<string>` UNION ALL `)})`.as('cte'))
 				.selectAll();
 		})
 		.selectFrom('zone')
