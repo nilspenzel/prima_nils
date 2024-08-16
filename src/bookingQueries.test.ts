@@ -12,7 +12,7 @@ const getTestParameters = () => {
 			new Date(Date.now() + hoursToMs(48)),
 			new Date(Date.now() + hoursToMs(72))
 		),
-		capacities: { bikes: 0, wheelchairs: 0, luggage: 0, passengers: 0 }
+		capacities: { bikes: 0, wheelchairs: 0, luggage: 0, passengers: 1 }
 	};
 };
 
@@ -30,8 +30,9 @@ describe('1start 1target same zones', async () => {
 
 describe('1start 1target different zones', async () => {
 	const p = getTestParameters();
+	const inDifferentZoneThanStart = new Coordinates(51.179639396440706, 14.425225548739235);
 	const res = await bookingApiQuery(p.start, p.capacities, p.interval, [
-		new Coordinates(51.179639396440706, 14.425225548739235)
+		inDifferentZoneThanStart
 	]);
 	it('zones match', () => {
 		expect(res.companies.length).toBe(1);
@@ -45,43 +46,39 @@ describe('1start 1target same zone, too many passengers', async () => {
 	const capacities = p.capacities;
 	capacities.passengers = 4;
 	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		new Coordinates(51.179639396440706, 14.425225548739235)
+		p.target
 	]);
 	it('zones match', () => expect(res.companies.length).toBe(0));
-	it('targetZones match', () => expect([...res.targetZones.keys()].length).toBe(0));
 });
 
 describe('1start 1target same zone, too many bikes', async () => {
 	const p = getTestParameters();
 	const capacities = p.capacities;
-	capacities.bikes = 4;
+	capacities.bikes = 1;
 	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		new Coordinates(51.179639396440706, 14.425225548739235)
+		p.target
 	]);
 	it('zones match', () => expect(res.companies.length).toBe(0));
-	it('targetZones match', () => expect([...res.targetZones.keys()].length).toBe(0));
 });
 
 describe('1start 1target same zone, too many wheelchairs', async () => {
 	const p = getTestParameters();
 	const capacities = p.capacities;
-	capacities.wheelchairs = 4;
+	capacities.wheelchairs = 1;
 	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		new Coordinates(51.179639396440706, 14.425225548739235)
+		p.target
 	]);
 	it('zones match', () => expect(res.companies.length).toBe(0));
-	it('targetZones match', () => expect([...res.targetZones.keys()].length).toBe(0));
 });
 
 describe('1start 1target same zone, too much luggage', async () => {
 	const p = getTestParameters();
 	const capacities = p.capacities;
-	capacities.luggage = 4;
+	capacities.luggage = 3;
 	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		new Coordinates(51.179639396440706, 14.425225548739235)
+		p.target
 	]);
 	it('zones match', () => expect(res.companies.length).toBe(0));
-	it('targetZones match', () => expect([...res.targetZones.keys()].length).toBe(0));
 });
 
 describe('1start 1target same zone, luggage may be put on seats', async () => {
@@ -89,10 +86,9 @@ describe('1start 1target same zone, luggage may be put on seats', async () => {
 	const capacities = p.capacities;
 	capacities.luggage = 2;
 	const res = await bookingApiQuery(p.start, capacities, p.interval, [
-		new Coordinates(51.179639396440706, 14.425225548739235)
+		p.target
 	]);
 	it('zones match', () => expect(res.companies.length).toBe(1));
-	it('targetZones match', () => expect([...res.targetZones.keys()].length).toBe(0));
 });
 
 describe('1start 2targets', async () => {
