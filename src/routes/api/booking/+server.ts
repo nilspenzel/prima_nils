@@ -401,7 +401,11 @@ export const POST = async (event) => {
 					address: startAddress.id,
 					request: requestId!,
 					tour: tourId!,
-					customer: customerId
+					customer: customerId,
+					passengers: numPassengers,
+					bikes: numBikes,
+					wheelchairs: numWheelchairs,
+					luggage
 				},
 				{
 					is_pickup: false,
@@ -412,7 +416,11 @@ export const POST = async (event) => {
 					address: targetAddress.id,
 					request: requestId!,
 					tour: tourId!,
-					customer: customerId
+					customer: customerId,
+					passengers: numPassengers,
+					bikes: numBikes,
+					wheelchairs: numWheelchairs,
+					luggage
 				}
 			])
 			.execute();
