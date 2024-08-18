@@ -222,12 +222,8 @@ export const bookingApiQuery = async (
 											is_pickup: e.is_pickup,
 											coordinates: new Coordinates(e.latitude, e.longitude),
 											time: new Interval(
-												new Date(
-													Math.min(scheduled.getTime(), communicated_time.getTime())
-												),
-												new Date(
-													Math.max(scheduled.getTime(), communicated_time.getTime())
-												)
+												new Date(Math.min(scheduled.getTime(), communicated_time.getTime())),
+												new Date(Math.max(scheduled.getTime(), communicated_time.getTime()))
 											)
 										};
 									})

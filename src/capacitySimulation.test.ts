@@ -59,7 +59,6 @@ describe('capacity Simulation yields correct insertion-intervals, simple', async
 		luggage: 0
 	};
 	const insertions = simulation.getPossibleInsertionIntervals(events, requiredCapacities);
-	console.log("ins",insertions);
 	it('zones match', () => {
 		expect(insertions).toStrictEqual([new Range(0, 0), new Range(2, 2)]);
 	});

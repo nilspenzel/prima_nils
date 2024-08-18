@@ -10,12 +10,10 @@ const isInsertionPossible = (prev: Event, next: Event): boolean => {
 	return true;
 };
 
-export const addTourConcatCoordinates = (
-	tourConcatenation: TourConcatenation,
+function addTourConcatCoordinates(tourConcatenation: TourConcatenation,
 	startMany: Coordinates[],
-	targetMany: Coordinates[]
-) => {
-	const addTc = (
+	targetMany: Coordinates[]): void {
+	const addCoordinates = (
 		start: boolean,
 		tourConcatenation: TourConcatenation,
 		many: Coordinates[],
@@ -37,17 +35,19 @@ export const addTourConcatCoordinates = (
 			tourConcatenation.manyRoutingResultIdx = routingResultIdx;
 		}
 	};
-	addTc(true, tourConcatenation, startMany, tourConcatenation.getStartCoordinates());
-	addTc(false, tourConcatenation, targetMany, tourConcatenation.getTargetCoordinates());
-};
+	addCoordinates(true, tourConcatenation, startMany, tourConcatenation.getStartCoordinates());
+	addCoordinates(false, tourConcatenation, targetMany, tourConcatenation.getTargetCoordinates());
+}
 
 type StartTimesWithDuration = {
 	possibleStartTimes: Interval[];
 	duration: number;
 };
 
-export enum TourConcatenationType{
-	NEW_TOUR, BETWEEN_EVENTS, BETWEEN_EVENTS_PAIR
+export enum TourConcatenationType {
+	NEW_TOUR,
+	BETWEEN_EVENTS,
+	BETWEEN_EVENTS_PAIR
 }
 
 export class TourConcatenation {
@@ -170,11 +170,11 @@ export class TourConcatenations {
 	};
 
 	createTourConcatenations = (companies: Company[], requiredCapacity: Capacity) => {
-		this.concatenations = this.concatenations.concat(companies.map((c) => new NewTour(c.id, 1, c.coordinates)));
+		this.concatenations = companies.map((c) => new NewTour(c.id, 1, c.coordinates));
 		forEachVehicle(companies, (c, v) => {
 			let allEvents: Event[] = [];
 			v.tours.forEach((t) => (allEvents = allEvents.concat(t.events)));
-			if(allEvents.length == 0) {
+			if (allEvents.length == 0) {
 				return;
 			}
 			const simulation = new CapacitySimulation(
@@ -189,7 +189,6 @@ export class TourConcatenations {
 			);
 			const isInsertionAfterEventPossible = new Map<number, boolean>();
 			validEventInsertions.forEach((insertion) => {
-				let counter=0;
 				insertion.forEachEventTuple(allEvents, (prevEvent1, nextEvent1, prevEvent2, nextEvent2) => {
 					if (!isInsertionAfterEventPossible.has(prevEvent1.id)) {
 						isInsertionAfterEventPossible.set(
