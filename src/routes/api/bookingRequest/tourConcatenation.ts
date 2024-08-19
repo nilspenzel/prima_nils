@@ -10,9 +10,11 @@ const isInsertionPossible = (prev: Event, next: Event): boolean => {
 	return true;
 };
 
-function addTourConcatCoordinates(tourConcatenation: TourConcatenation,
+function addTourConcatCoordinates(
+	tourConcatenation: TourConcatenation,
 	startMany: Coordinates[],
-	targetMany: Coordinates[]): void {
+	targetMany: Coordinates[]
+): void {
 	const addCoordinates = (
 		start: boolean,
 		tourConcatenation: TourConcatenation,
@@ -46,8 +48,11 @@ type StartTimesWithDuration = {
 
 export enum TourConcatenationType {
 	NEW_TOUR,
-	BETWEEN_EVENTS,
-	BETWEEN_EVENTS_PAIR
+	INSERT,
+	INSERT_SAME,
+	BETWEEN_EVENTS_PAIR,
+	APPEND,
+	PREPEND
 }
 
 export class TourConcatenation {
@@ -110,9 +115,26 @@ class NewTour extends TourConcatenation {
 	};
 }
 
-class BetweenEvents extends TourConcatenation {
+class BetweenEvents {
+	constructor(event1: Event, event2: Event, type: TourConcatenationType) {
+		this.type = TourConcatenationType.INSERT;
+		this.event1 = event1;
+		this.event2 = event2;
+	}
+	type: TourConcatenationType;
+	event1: Event;
+	event2: Event;
+	getStartCoordinates = (): Coordinates => {
+		return this.event1.coordinates;
+	};
+	getTargetCoordinates = (): Coordinates => {
+		return this.event2.coordinates;
+	};
+}
+
+class BetweenSameEvents extends TourConcatenation {
 	constructor(event1: Event, event2: Event, companyId: number, vehicleId: number) {
-		super(companyId, 1, TourConcatenationType.BETWEEN_EVENTS);
+		super(companyId, 1, TourConcatenationType.INSERT_SAME);
 		this.event1 = event1;
 		this.event2 = event2;
 		this.vehicleId = vehicleId;
@@ -190,23 +212,49 @@ export class TourConcatenations {
 			const isInsertionAfterEventPossible = new Map<number, boolean>();
 			validEventInsertions.forEach((insertion) => {
 				insertion.forEachEventTuple(allEvents, (prevEvent1, nextEvent1, prevEvent2, nextEvent2) => {
+					if (nextEvent1.tourId != prevEvent2.tourId) {
+						return;
+					}
 					if (!isInsertionAfterEventPossible.has(prevEvent1.id)) {
 						isInsertionAfterEventPossible.set(
 							prevEvent1.id,
 							isInsertionPossible(prevEvent1, nextEvent1)
 						);
 					}
-					if (!isInsertionAfterEventPossible.get(prevEvent1.id)) {
+					if (!isInsertionAfterEventPossible.has(prevEvent2.id)) {
+						isInsertionAfterEventPossible.set(
+							prevEvent2.id,
+							isInsertionPossible(prevEvent2, nextEvent1)
+						);
+					}
+					if (
+						!isInsertionAfterEventPossible.get(prevEvent1.id) ||
+						!isInsertionAfterEventPossible.get(prevEvent2.id)
+					) {
 						return;
 					}
 					if (prevEvent1.id == prevEvent2.id) {
-						this.concatenations.push(new BetweenEvents(prevEvent1, nextEvent1, c.id, v.id));
+						this.concatenations.push(new BetweenSameEvents(prevEvent1, nextEvent1, c.id, v.id));
+						if(prevEvent1.tourId != nextEvent2.tourId){
+							this.concatenations.push(new BetweenSameEvents(prevEvent1, nextEvent1, c.id, v.id));
+						}
 						return;
+					}
+					if (prevEvent1.tourId != nextEvent1.tourId) {
+						this.concatenations.push(
+							new BetweenEventsPair(
+								new BetweenEvents(prevEvent1, nextEvent1, TourConcatenationType.APPEND),
+								new BetweenEvents(prevEvent2, nextEvent2, TourConcatenationType.INSERT),
+								c.id,
+								v.id,
+								1
+							)
+						);
 					}
 					this.concatenations.push(
 						new BetweenEventsPair(
-							new BetweenEvents(prevEvent1, nextEvent1, c.id, v.id),
-							new BetweenEvents(prevEvent2, nextEvent2, c.id, v.id),
+							new BetweenEvents(prevEvent1, nextEvent1, TourConcatenationType.INSERT),
+							new BetweenEvents(prevEvent2, nextEvent2, TourConcatenationType.INSERT),
 							c.id,
 							v.id,
 							1
