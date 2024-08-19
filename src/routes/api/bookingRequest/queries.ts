@@ -48,16 +48,17 @@ const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 		eb
 			.selectFrom('event')
 			.whereRef('event.tour', '=', 'tour.id')
+			.innerJoin('request', 'request.tour', 'tour.id')
 			.select([
 				'event.id',
 				'event.communicated_time',
 				'event.scheduled_time',
 				'event.latitude',
 				'event.longitude',
-				'event.passengers',
-				'event.bikes',
-				'event.luggage',
-				'event.wheelchairs',
+				'request.passengers',
+				'request.bikes',
+				'request.luggage',
+				'request.wheelchairs',
 				'event.is_pickup'
 			])
 	).as('events');
