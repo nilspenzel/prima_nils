@@ -46,9 +46,9 @@ const selectAvailabilities = (eb: ExpressionBuilder<Database, 'vehicle'>, interv
 const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 	return jsonArrayFrom(
 		eb
-			.selectFrom('event')
-			.whereRef('event.tour', '=', 'tour.id')
-			.innerJoin('request', 'request.tour', 'tour.id')
+			.selectFrom('request')
+			.whereRef('request.tour', '=', 'tour.id')
+			.innerJoin('event', 'event.tour', 'tour.id')
 			.select([
 				'event.id',
 				'event.communicated_time',
