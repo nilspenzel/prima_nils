@@ -1,10 +1,8 @@
-import type { Company, Event } from '$lib/compositionTypes';
 import { describe, it, expect } from 'vitest';
-import { Capacity, CapacitySimulation, Range } from './routes/api/bookingRequest/capacities';
+import { Capacity } from './routes/api/bookingRequest/capacities';
 import { Interval } from '$lib/interval';
 import { Coordinates } from '$lib/location';
 import {
-	TourConcatenationType,
 	TourConcatenations
 } from './routes/api/bookingRequest/tourConcatenation';
 import { bookingApiQuery } from './routes/api/bookingRequest/queries';

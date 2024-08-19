@@ -5,10 +5,23 @@ import { Capacity, CapacitySimulation, Range } from './capacities.js';
 import { forEachVehicle } from './queries.js';
 import { type Company, type Event } from '$lib/compositionTypes.js';
 
-const isInsertionPossible = (prev: Event, next: Event): boolean => {
-	// TODO: Check based on beeline distance
-	return true;
-};
+class CheckBeelineViability {
+	constructor() {
+		this.isInsertionAfterEventPossible = new Map<number, boolean>();
+	}
+	isInsertionAfterEventPossible: Map<number, boolean>;
+	isInsertionPossible = (prev: Event, next: Event): boolean => {
+		if (!this.isInsertionAfterEventPossible.has(prev.id)) {
+			this.isInsertionAfterEventPossible.set(prev.id, true);
+		}
+		return this.beelineCheck(prev, next);
+	};
+
+	beelineCheck = (prev_: Event, next_: Event): boolean => {
+		// TODO: Check based on beeline distance
+		return true;
+	};
+}
 
 function addTourConcatCoordinates(
 	tourConcatenation: TourConcatenation,
@@ -194,42 +207,27 @@ export class TourConcatenations {
 	createTourConcatenations = (companies: Company[], requiredCapacity: Capacity) => {
 		this.concatenations = companies.map((c) => new NewTour(c.id, 1, c.coordinates));
 		forEachVehicle(companies, (c, v) => {
-			let allEvents: Event[] = [];
-			v.tours.forEach((t) => (allEvents = allEvents.concat(t.events)));
-			if (allEvents.length == 0) {
-				return;
-			}
+			const allEvents: Event[] = v.tours.flatMap((t) => t.events);
 			const simulation = new CapacitySimulation(
 				v.bike_capacity,
 				v.wheelchair_capacity,
 				v.seats,
 				v.storage_space
 			);
-			let validEventInsertions: Range[] = simulation.getPossibleInsertionIntervals(
+			const validEventInsertions: Range[] = simulation.getPossibleInsertionIntervals(
 				allEvents,
 				requiredCapacity
 			);
 			const isInsertionAfterEventPossible = new Map<number, boolean>();
+			const beelineCheck = new CheckBeelineViability();
 			validEventInsertions.forEach((insertion) => {
 				insertion.forEachEventTuple(allEvents, (prevEvent1, nextEvent1, prevEvent2, nextEvent2) => {
 					if (nextEvent1.tourId != prevEvent2.tourId) {
 						return;
 					}
-					if (!isInsertionAfterEventPossible.has(prevEvent1.id)) {
-						isInsertionAfterEventPossible.set(
-							prevEvent1.id,
-							isInsertionPossible(prevEvent1, nextEvent1)
-						);
-					}
-					if (!isInsertionAfterEventPossible.has(prevEvent2.id)) {
-						isInsertionAfterEventPossible.set(
-							prevEvent2.id,
-							isInsertionPossible(prevEvent2, nextEvent1)
-						);
-					}
 					if (
-						!isInsertionAfterEventPossible.get(prevEvent1.id) ||
-						!isInsertionAfterEventPossible.get(prevEvent2.id)
+						!beelineCheck.isInsertionPossible(prevEvent1, nextEvent1) ||
+						!beelineCheck.isInsertionPossible(prevEvent2, nextEvent2)
 					) {
 						return;
 					}
