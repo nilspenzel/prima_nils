@@ -235,7 +235,7 @@ export class TourConcatenations {
 					}
 					if (prevEvent1.id == prevEvent2.id) {
 						this.concatenations.push(new BetweenSameEvents(prevEvent1, nextEvent1, c.id, v.id));
-						if(prevEvent1.tourId != nextEvent2.tourId){
+						if (prevEvent1.tourId != nextEvent2.tourId) {
 							this.concatenations.push(new BetweenSameEvents(prevEvent1, nextEvent1, c.id, v.id));
 						}
 						return;
