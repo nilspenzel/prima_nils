@@ -13,7 +13,7 @@ import {
 	selectZonesContainingCoordinates,
 	ZoneType
 } from '$lib/sqlHelpers';
-import type { Company, Tour, Vehicle } from '$lib/compositionTypes';
+import type { Company, Vehicle } from '$lib/compositionTypes';
 
 export type BookingApiQueryResult = {
 	companies: Company[];
