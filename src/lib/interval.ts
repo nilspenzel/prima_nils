@@ -109,8 +109,8 @@ export class Interval {
 		return undefined;
 	}
 
-	static intersect = (many: Interval[], one: Interval|undefined): Interval[] => {
-		if(one==undefined){
+	static intersect = (many: Interval[], one: Interval | undefined): Interval[] => {
+		if (one == undefined) {
 			return [];
 		}
 		const result: Interval[] = [];

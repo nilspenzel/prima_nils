@@ -50,8 +50,6 @@ const createEvent = (coordinates: Coordinates): Event => {
 
 describe('compute Intervals for single insertions test', () => {
 	it('TODO', () => {
-
-
 		let eventLatLng = 100;
 		let companyLatLng = 5;
 		const companies = [
@@ -69,10 +67,41 @@ describe('compute Intervals for single insertions test', () => {
 		];
 		const insertions = new Map<number, Range[]>();
 		insertions.set(1, [{ earliestPickup: 0, latestDropoff: 1 }]);
-        const travelDurations = [50];
-        const routingResults: RoutingResults = {busStops: [{fromPrev: [{duration: 0, distance: 0},{duration: 0, distance: 0}], toNext:[{duration: 0, distance: 0},{duration: 0, distance: 0}]}], userChosen: {fromPrev: [{duration: 0, distance: 0},{duration: 0, distance: 0}], toNext:[{duration: 0, distance: 0},{duration: 0, distance: 0}]}};
-        const busStopTimes = [[new Interval(new Date(), new Date())]];
-        const result = computeTravelDurations(companies, insertions, routingResults, travelDurations, true, busStopTimes, []);
-        console.log(result);
+		const travelDurations = [50];
+		const routingResults: RoutingResults = {
+			busStops: [
+				{
+					fromPrev: [
+						{ duration: 0, distance: 0 },
+						{ duration: 0, distance: 0 }
+					],
+					toNext: [
+						{ duration: 0, distance: 0 },
+						{ duration: 0, distance: 0 }
+					]
+				}
+			],
+			userChosen: {
+				fromPrev: [
+					{ duration: 0, distance: 0 },
+					{ duration: 0, distance: 0 }
+				],
+				toNext: [
+					{ duration: 0, distance: 0 },
+					{ duration: 0, distance: 0 }
+				]
+			}
+		};
+		const busStopTimes = [[new Interval(new Date(), new Date())]];
+		const result = computeTravelDurations(
+			companies,
+			insertions,
+			routingResults,
+			travelDurations,
+			true,
+			busStopTimes,
+			[]
+		);
+		console.log(result);
 	});
 });
