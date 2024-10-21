@@ -4,8 +4,10 @@ import { db } from '$lib/database';
 import { AddressGuess, geoCode } from '$lib/api.js';
 import type { Coordinates } from '$lib/location.js';
 import { covers, intersects } from '$lib/sqlHelpers.js';
+import { bookingApiQuery22 } from '../../api/booking/query.js';
 
 export const load: PageServerLoad = async (event) => {
+	bookingApiQuery22();
 	const companyId = event.locals.user?.company;
 	const zones = await db
 		.selectFrom('zone')
