@@ -12,7 +12,10 @@
 	import ConfirmationDialog from '$lib/ConfirmationDialog.svelte';
 	import maplibregl from 'maplibre-gl';
 	import { Button } from '$lib/components/ui/button';
-	import { MIN_PREP_MINUTES } from './constants';
+	import { MIN_PREP_MINUTES, MOTIS_BASE_URL } from './constants';
+	import { plan } from './motis';
+	import { coordinatesToStr } from './motisUtils';
+	import { Coordinates } from './location';
 
 	class Props {
 		open!: {
@@ -42,18 +45,17 @@
 			let e1 = tourEvents![e];
 			let e2 = tourEvents![e + 1];
 			routes.push(
-				getRoute({
-					start: {
-						lat: e1.latitude,
-						lng: e1.longitude
-					},
-					destination: {
-						lat: e2.latitude,
-						lng: e2.longitude
-					},
-					profile: 'car',
-					direction: 'forward'
-				})
+				plan({
+					baseUrl: MOTIS_BASE_URL,
+					query: {
+						fromPlace: coordinatesToStr(new Coordinates(e1.latitude, e1.longitude)),
+						toPlace: coordinatesToStr(new Coordinates(e2.latitude, e2.longitude)),
+						max: 3600,
+						maxMatchingDistance: 100,
+						mode: ['CAR'],
+						arriveBy: false
+					}
+				}).then((d) => d.data!)
 			);
 		}
 

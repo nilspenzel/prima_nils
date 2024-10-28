@@ -3,9 +3,11 @@ import { fail } from '@sveltejs/kit';
 import { db } from '$lib/database';
 import { Coordinates } from '$lib/location.js';
 import { covers, intersects } from '$lib/sqlHelpers.js';
-import { geocode } from '$lib/motis/services.gen.js';
+import { geocode, levels, plan } from '$lib/motis/services.gen.js';
 import { MOTIS_BASE_URL } from '$lib/constants.js';
 import type { GeocodeResponse } from '$lib/motis/types.gen.js';
+import { coordinatesToPlace, coordinatesToStr, coordinatesToStr2 } from '$lib/motisUtils.js';
+import type { Mode } from '$lib/motis/types.gen.ts';
 
 export const load: PageServerLoad = async (event) => {
 	const companyId = event.locals.user?.company;
@@ -31,6 +33,21 @@ export const load: PageServerLoad = async (event) => {
 				name: null,
 				community_area: null
 			};
+			const m = new Array<Mode>(1);
+			m[0] = 'TRANSIT';
+	const a = await plan({
+		baseUrl: MOTIS_BASE_URL,
+		query: {
+			fromPlace: coordinatesToPlace(new Coordinates(
+				50.08870625033495,8.663856733303817
+				)),
+			toPlace: coordinatesToPlace(new Coordinates(
+				50.10319028845868,8.644976211749878
+				))
+		}
+	});
+	const b = a.data;
+	console.log(a.data?.itineraries[0].legs[0].legGeometry);
 	return {
 		company,
 		zones,
