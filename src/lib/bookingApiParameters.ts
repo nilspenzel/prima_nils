@@ -1,15 +1,31 @@
 import type { BusStop } from './busStop';
 import type { Capacities } from './capacities';
-import type { Coordinates } from './location';
+import type { Coordinates, Location } from './location';
 
-export type CheckBookingValidityParameters = {
-	userChosen: Coordinates;
-	busStops: BusStop[];
+export type ExpectedConnection = {
+	start: Location;
+	target: Location;
+	startTime: Date;
+	targetTime: Date;
+};
+
+export type WhitelistRequest = {
+	start: Coordinates;
+	target: Coordinates;
+	startBusStops: BusStop[];
+	targetBusStops: BusStop[];
+	times: Date[];
 	startFixed: boolean;
 	capacities: Capacities;
 };
 
-export const schema = {
+export type BookingRequest = {
+	connection1: ExpectedConnection;
+	connection2: ExpectedConnection | null;
+	capacities: Capacities;
+};
+
+export const bookingSchema = {
 	$schema: 'http://json-schema.org/draft-07/schema#',
 	type: 'object',
 	definitions: {
@@ -28,11 +44,102 @@ export const schema = {
 				}
 			},
 			required: ['lat', 'lng']
+		},
+		location: {
+			type: 'object',
+			properties: {
+				coordinates: {
+					$ref: '#/definitions/coordinates'
+				},
+				address: {
+					type: 'string'
+				}
+			}
+		},
+		times: {
+			type: 'array',
+			items: {
+				type: 'string',
+				format: 'date-time'
+			}
+		},
+		connection: {
+			type: 'object',
+			properties: {
+				start: {
+					$ref: '#/definitions/location'
+				},
+				target: {
+					$ref: '#/definitions/location'
+				},
+				startAddress: {
+					type: 'string'
+				},
+				targetAddress: {
+					type: 'string'
+				}
+			}
 		}
 	},
 	properties: {
-		userChosen: {
-			$ref: '#/definitions/coordinates'
+		connection1: {
+			$ref: '#/definitions/connection'
+		},
+		connection2: {
+			$ref: '#/definitions/connection'
+		},
+		capacities: {
+			type: 'object',
+			properties: {
+				passengers: {
+					type: 'integer',
+					minimum: 0
+				},
+				wheelchairs: {
+					type: 'integer',
+					minimum: 0
+				},
+				bikes: {
+					type: 'integer',
+					minimum: 0
+				},
+				luggage: {
+					type: 'integer',
+					minimum: 0
+				}
+			},
+			required: ['passengers', 'wheelchairs', 'bikes', 'luggage']
+		}
+	},
+	required: ['connection1', 'capacities']
+};
+
+export const whitelistSchema = {
+	$schema: 'http://json-schema.org/draft-07/schema#',
+	type: 'object',
+	definitions: {
+		coordinates: {
+			type: 'object',
+			properties: {
+				lat: {
+					type: 'number',
+					minimum: -90,
+					maximum: 90
+				},
+				lng: {
+					type: 'number',
+					minimum: -180,
+					maximum: 180
+				}
+			},
+			required: ['lat', 'lng']
+		},
+		times: {
+			type: 'array',
+			items: {
+				type: 'string',
+				format: 'date-time'
+			}
 		},
 		busStops: {
 			type: 'array',
@@ -43,15 +150,28 @@ export const schema = {
 						$ref: '#/definitions/coordinates'
 					},
 					times: {
-						type: 'array',
-						items: {
-							type: 'string',
-							format: 'date-time'
-						}
+						$ref: '#/definitions/coordinates'
 					}
 				},
 				required: ['coordinates', 'times']
 			}
+		}
+	},
+	properties: {
+		start: {
+			$ref: '#/definitions/coordinates'
+		},
+		target: {
+			$ref: '#/definitions/coordinates'
+		},
+		startBusStops: {
+			$ref: '#definitions/busStops'
+		},
+		targetBusStops: {
+			$ref: '#definitions/busStops'
+		},
+		times: {
+			$ref: '#definitions/times'
 		},
 		startFixed: {
 			type: 'boolean'
