@@ -160,7 +160,7 @@ export const getViableBusStops = async (
 	return dbResult;
 };
 
-type BlacklistingResult = {
+export type BlacklistingResult = {
 	timeIndex: number;
 	busstopindex: number;
 };

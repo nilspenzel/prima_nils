@@ -6,6 +6,15 @@ export type Range = {
 	latestDropoff: number;
 };
 
+export const isValid = (capacities: Capacities, required: Capacities): boolean => {
+	return (
+		capacities.bikes >= required.bikes &&
+		capacities.wheelchairs >= required.wheelchairs &&
+		capacities.luggage + capacities.passengers >= required.luggage + required.passengers &&
+		capacities.passengers >= required.passengers
+	);
+};
+
 export function capacitySimulation(
 	capacities: Capacities,
 	requiredNewEvent: Capacities,
@@ -20,14 +29,6 @@ export function capacitySimulation(
 		capacities.passengers += event.is_pickup
 			? event.capacities.passengers
 			: -event.capacities.passengers;
-	};
-	const isValid = (capacities: Capacities, required: Capacities): boolean => {
-		return (
-			capacities.bikes >= required.bikes &&
-			capacities.wheelchairs >= required.wheelchairs &&
-			capacities.luggage + capacities.passengers >= required.luggage + required.passengers &&
-			capacities.passengers >= required.passengers
-		);
 	};
 	const current = {
 		wheelchairs: requiredNewEvent.wheelchairs,
