@@ -10,26 +10,66 @@ test('Set company data, incomplete 1', async ({ page }) => {
 	await page.getByLabel('Name').fill('Test');
 	await page.getByRole('button', { name: 'Übernehmen' }).click();
 
-	await expect(page.getByText('Adresse zu kurz.')).toBeVisible();
+	await expect(page.getByText('Straße zu kurz.')).toBeVisible();
 });
 
 test('Set company data, incomplete 2', async ({ page }) => {
 	await login(page, ENTREPENEUR);
+	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
 
 	await page.getByLabel('Name').fill('Test');
-	await page.getByLabel('Unternehmenssitz').fill('Plantagenweg 3, 02827 Görlitz');
+	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
+	await page.getByRole('button', { name: 'Übernehmen' }).click();
+
+	await expect(page.getByText('Hausnummer zu kurz.')).toBeVisible();
+});
+
+test('Set company data, incomplete 3', async ({ page }) => {
+	await login(page, ENTREPENEUR);
+	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
+
+	await page.getByLabel('Name').fill('Test');
+	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
+	await page.getByLabel('Hausnummer').fill('70A');
+	await page.getByRole('button', { name: 'Übernehmen' }).click();
+
+	await expect(page.getByText('Postleitzahl zu kurz.')).toBeVisible();
+});
+
+test('Set company data, incomplete 4', async ({ page }) => {
+	await login(page, ENTREPENEUR);
+	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
+
+	await page.getByLabel('Name').fill('Test');
+	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
+	await page.getByLabel('Hausnummer').fill('70A');
+	await page.getByLabel('Postleitzahl').fill('02943');
+	await page.getByRole('button', { name: 'Übernehmen' }).click();
+
+	await expect(page.getByText('Stadt zu kurz.')).toBeVisible();
+});
+
+test('Set company data, incomplete 5', async ({ page }) => {
+	await login(page, ENTREPENEUR);
+
+	await page.getByLabel('Name').fill('Test');
+	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
+	await page.getByLabel('Hausnummer').fill('70A');
+	await page.getByLabel('Postleitzahl').fill('02943');
+	await page.getByLabel('Stadt').fill('Weißwasser/Oberlausitz');
 	await page.getByRole('button', { name: 'Übernehmen' }).click();
 
 	await expect(page.getByText('Gemeinde nicht gesetzt.')).toBeVisible();
 });
 
-test('Set company data, incomplete 3', async ({ page }) => {
+test('Set company data, incomplete 6', async ({ page }) => {
 	await login(page, ENTREPENEUR);
 
 	await page.getByLabel('Name').fill('Taxi Weißwasser');
-	await page
-		.getByLabel('Unternehmenssitz')
-		.fill('Werner-Seelenbinder-Straße 70A, 02943 Weißwasser/Oberlausitz');
+	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
+	await page.getByLabel('Hausnummer').fill('70A');
+	await page.getByLabel('Postleitzahl').fill('02943');
+	await page.getByLabel('Stadt').fill('Weißwasser/Oberlausitz');
 	await page.getByLabel('Pflichtfahrgebiet').selectOption({ label: 'Görlitz' });
 	await page.getByRole('button', { name: 'Übernehmen' }).click();
 
