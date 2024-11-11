@@ -6,7 +6,7 @@ import { isValid, type Range } from './capacitySimulation';
 import { minutesToMs } from '$lib/time_utils';
 import {
 	BUFFER_TIME,
-	MAX_TRAVEL_DURATION,
+	MAX_TRAVEL_MS,
 	MIN_PREP_MINUTES,
 	PASSENGER_CHANGE_MINUTES,
 	PASSENGER_TIME_COST_FACTOR,
@@ -93,9 +93,9 @@ export function evaluateBothInsertion(
 		next
 	);
 	if (
-		approachDuration > MAX_TRAVEL_DURATION + minutesToMs(BUFFER_TIME) ||
-		returnDuration > MAX_TRAVEL_DURATION + minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES) ||
-		travelDuration > MAX_TRAVEL_DURATION
+		approachDuration > MAX_TRAVEL_MS + minutesToMs(BUFFER_TIME) ||
+		returnDuration > MAX_TRAVEL_MS + minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES) ||
+		travelDuration > MAX_TRAVEL_MS
 	) {
 		return undefined;
 	}
@@ -174,7 +174,7 @@ export function evaluateSingleInsertion(
 		busStopIdx,
 		next
 	);
-	if (approachDuration > MAX_TRAVEL_DURATION || returnDuration > MAX_TRAVEL_DURATION) {
+	if (approachDuration > MAX_TRAVEL_MS || returnDuration > MAX_TRAVEL_MS) {
 		return undefined;
 	}
 	const arrivalWindow = getArrivalWindow(

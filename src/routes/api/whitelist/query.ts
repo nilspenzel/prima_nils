@@ -5,7 +5,7 @@ import { sql } from 'kysely';
 import { db } from '$lib/database';
 import type { ExpressionBuilder, Kysely, Transaction } from 'kysely';
 import type { Database } from '$lib/types';
-import { MAX_TRAVEL_DURATION, SRID } from '$lib/constants';
+import { MAX_TRAVEL_MS, SRID } from '$lib/constants';
 import type { Company, Vehicle } from '$lib/compositionTypes';
 import type { Capacities } from '$lib/capacities';
 import type { Event } from '$lib/compositionTypes';
@@ -272,14 +272,8 @@ export const bookingApiQuery = async (
 		longitude: number;
 		latitude: number;
 	}
-	const expandedSearchInterval = searchInterval.expand(
-		MAX_TRAVEL_DURATION * 3,
-		MAX_TRAVEL_DURATION * 3
-	);
-	const twiceExpandedSearchInterval = searchInterval.expand(
-		MAX_TRAVEL_DURATION * 6,
-		MAX_TRAVEL_DURATION * 6
-	);
+	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 3, MAX_TRAVEL_MS * 3);
+	const twiceExpandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
 	if (trx == null) {
 		trx = db;
 	}

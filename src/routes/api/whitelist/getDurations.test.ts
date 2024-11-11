@@ -12,7 +12,7 @@ import {
 	type InsertionInfo,
 	type InsertionType
 } from './insertionTypes';
-import { MAX_TRAVEL_DURATION } from '$lib/constants';
+import { MAX_TRAVEL_MS } from '$lib/constants';
 
 const createVehicle = (id: number, events: Event[]): Vehicle => {
 	return {
@@ -52,83 +52,23 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [
-					{
-						duration: 1,
-						distance: 0
-					}
-				],
-				toCompany: [
-					{
-						duration: 2,
-						distance: 0
-					}
-				],
-				fromPrevEvent: [
-					{
-						duration: 3,
-						distance: 0
-					}
-				],
-				toNextEvent: [
-					{
-						duration: 4,
-						distance: 0
-					}
-				]
+				fromCompany: [1],
+				toCompany: [2],
+				fromPrevEvent: [3],
+				toNextEvent: [4]
 			},
 			busStops: [
 				{
-					fromCompany: [
-						{
-							duration: 5,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 6,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 7,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 8,
-							distance: 0
-						}
-					]
+					fromCompany: [5],
+					toCompany: [6],
+					fromPrevEvent: [7],
+					toNextEvent: [8]
 				},
 				{
-					fromCompany: [
-						{
-							duration: 9,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 10,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 11,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 12,
-							distance: 0
-						}
-					]
+					fromCompany: [9],
+					toCompany: [10],
+					fromPrevEvent: [11],
+					toNextEvent: [12]
 				}
 			]
 		};
@@ -178,83 +118,23 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [
-					{
-						duration: 1,
-						distance: 0
-					}
-				],
-				toCompany: [
-					{
-						duration: 2,
-						distance: 0
-					}
-				],
-				fromPrevEvent: [
-					{
-						duration: 3,
-						distance: 0
-					}
-				],
-				toNextEvent: [
-					{
-						duration: 4,
-						distance: 0
-					}
-				]
+				fromCompany: [1],
+				toCompany: [2],
+				fromPrevEvent: [3],
+				toNextEvent: [4]
 			},
 			busStops: [
 				{
-					fromCompany: [
-						{
-							duration: 5,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 6,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 7,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 8,
-							distance: 0
-						}
-					]
+					fromCompany: [5],
+					toCompany: [6],
+					fromPrevEvent: [7],
+					toNextEvent: [8]
 				},
 				{
-					fromCompany: [
-						{
-							duration: 9,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 10,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 11,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 12,
-							distance: 0
-						}
-					]
+					fromCompany: [9],
+					toCompany: [10],
+					fromPrevEvent: [11],
+					toNextEvent: [12]
 				}
 			]
 		};
@@ -304,83 +184,23 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [
-					{
-						duration: 1,
-						distance: 0
-					}
-				],
-				toCompany: [
-					{
-						duration: 2,
-						distance: 0
-					}
-				],
-				fromPrevEvent: [
-					{
-						duration: 3,
-						distance: 0
-					}
-				],
-				toNextEvent: [
-					{
-						duration: 4,
-						distance: 0
-					}
-				]
+				fromCompany: [1],
+				toCompany: [2],
+				fromPrevEvent: [3],
+				toNextEvent: [4]
 			},
 			busStops: [
 				{
-					fromCompany: [
-						{
-							duration: 5,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 6,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 7,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 8,
-							distance: 0
-						}
-					]
+					fromCompany: [5],
+					toCompany: [6],
+					fromPrevEvent: [7],
+					toNextEvent: [8]
 				},
 				{
-					fromCompany: [
-						{
-							duration: 9,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 10,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 11,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 12,
-							distance: 0
-						}
-					]
+					fromCompany: [9],
+					toCompany: [10],
+					fromPrevEvent: [11],
+					toNextEvent: [12]
 				}
 			]
 		};
@@ -403,7 +223,7 @@ describe('getApproach and getReturn - duration tests', () => {
 			0,
 			undefined
 		);
-		expect(approach1).toBe(MAX_TRAVEL_DURATION);
+		expect(approach1).toBe(MAX_TRAVEL_MS);
 	});
 	it('insert both after last event, direction: to_bus', () => {
 		const insertionCase: InsertionType = {
@@ -414,83 +234,23 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [
-					{
-						duration: 1,
-						distance: 0
-					}
-				],
-				toCompany: [
-					{
-						duration: 2,
-						distance: 0
-					}
-				],
-				fromPrevEvent: [
-					{
-						duration: 3,
-						distance: 0
-					}
-				],
-				toNextEvent: [
-					{
-						duration: 4,
-						distance: 0
-					}
-				]
+				fromCompany: [1],
+				toCompany: [2],
+				fromPrevEvent: [3],
+				toNextEvent: [4]
 			},
 			busStops: [
 				{
-					fromCompany: [
-						{
-							duration: 5,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 6,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 7,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 8,
-							distance: 0
-						}
-					]
+					fromCompany: [5],
+					toCompany: [6],
+					fromPrevEvent: [7],
+					toNextEvent: [8]
 				},
 				{
-					fromCompany: [
-						{
-							duration: 9,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 10,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 11,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 12,
-							distance: 0
-						}
-					]
+					fromCompany: [9],
+					toCompany: [10],
+					fromPrevEvent: [11],
+					toNextEvent: [12]
 				}
 			]
 		};
@@ -540,83 +300,23 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [
-					{
-						duration: 1,
-						distance: 0
-					}
-				],
-				toCompany: [
-					{
-						duration: 2,
-						distance: 0
-					}
-				],
-				fromPrevEvent: [
-					{
-						duration: 3,
-						distance: 0
-					}
-				],
-				toNextEvent: [
-					{
-						duration: 4,
-						distance: 0
-					}
-				]
+				fromCompany: [1],
+				toCompany: [2],
+				fromPrevEvent: [3],
+				toNextEvent: [4]
 			},
 			busStops: [
 				{
-					fromCompany: [
-						{
-							duration: 5,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 6,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 7,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 8,
-							distance: 0
-						}
-					]
+					fromCompany: [5],
+					toCompany: [6],
+					fromPrevEvent: [7],
+					toNextEvent: [8]
 				},
 				{
-					fromCompany: [
-						{
-							duration: 9,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 10,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 11,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 12,
-							distance: 0
-						}
-					]
+					fromCompany: [9],
+					toCompany: [10],
+					fromPrevEvent: [11],
+					toNextEvent: [12]
 				}
 			]
 		};
@@ -666,83 +366,23 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [
-					{
-						duration: 1,
-						distance: 0
-					}
-				],
-				toCompany: [
-					{
-						duration: 2,
-						distance: 0
-					}
-				],
-				fromPrevEvent: [
-					{
-						duration: 3,
-						distance: 0
-					}
-				],
-				toNextEvent: [
-					{
-						duration: 4,
-						distance: 0
-					}
-				]
+				fromCompany: [1],
+				toCompany: [2],
+				fromPrevEvent: [3],
+				toNextEvent: [4]
 			},
 			busStops: [
 				{
-					fromCompany: [
-						{
-							duration: 5,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 6,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 7,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 8,
-							distance: 0
-						}
-					]
+					fromCompany: [5],
+					toCompany: [6],
+					fromPrevEvent: [7],
+					toNextEvent: [8]
 				},
 				{
-					fromCompany: [
-						{
-							duration: 9,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 10,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 11,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 12,
-							distance: 0
-						}
-					]
+					fromCompany: [9],
+					toCompany: [10],
+					fromPrevEvent: [11],
+					toNextEvent: [12]
 				}
 			]
 		};
@@ -765,7 +405,7 @@ describe('getApproach and getReturn - duration tests', () => {
 			0,
 			undefined
 		);
-		expect(approach1).toBe(MAX_TRAVEL_DURATION);
+		expect(approach1).toBe(MAX_TRAVEL_MS);
 	});
 	it('insert bus after last event', () => {
 		const insertionCase: InsertionType = {
@@ -776,83 +416,23 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [
-					{
-						duration: 1,
-						distance: 0
-					}
-				],
-				toCompany: [
-					{
-						duration: 2,
-						distance: 0
-					}
-				],
-				fromPrevEvent: [
-					{
-						duration: 3,
-						distance: 0
-					}
-				],
-				toNextEvent: [
-					{
-						duration: 4,
-						distance: 0
-					}
-				]
+				fromCompany: [1],
+				toCompany: [2],
+				fromPrevEvent: [3],
+				toNextEvent: [4]
 			},
 			busStops: [
 				{
-					fromCompany: [
-						{
-							duration: 5,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 6,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 7,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 8,
-							distance: 0
-						}
-					]
+					fromCompany: [5],
+					toCompany: [6],
+					fromPrevEvent: [7],
+					toNextEvent: [8]
 				},
 				{
-					fromCompany: [
-						{
-							duration: 9,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 10,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 11,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 12,
-							distance: 0
-						}
-					]
+					fromCompany: [9],
+					toCompany: [10],
+					fromPrevEvent: [11],
+					toNextEvent: [12]
 				}
 			]
 		};
@@ -910,83 +490,23 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [
-					{
-						duration: 1,
-						distance: 0
-					}
-				],
-				toCompany: [
-					{
-						duration: 2,
-						distance: 0
-					}
-				],
-				fromPrevEvent: [
-					{
-						duration: 3,
-						distance: 0
-					}
-				],
-				toNextEvent: [
-					{
-						duration: 4,
-						distance: 0
-					}
-				]
+				fromCompany: [1],
+				toCompany: [2],
+				fromPrevEvent: [3],
+				toNextEvent: [4]
 			},
 			busStops: [
 				{
-					fromCompany: [
-						{
-							duration: 5,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 6,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 7,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 8,
-							distance: 0
-						}
-					]
+					fromCompany: [5],
+					toCompany: [6],
+					fromPrevEvent: [7],
+					toNextEvent: [8]
 				},
 				{
-					fromCompany: [
-						{
-							duration: 9,
-							distance: 0
-						}
-					],
-					toCompany: [
-						{
-							duration: 10,
-							distance: 0
-						}
-					],
-					fromPrevEvent: [
-						{
-							duration: 11,
-							distance: 0
-						}
-					],
-					toNextEvent: [
-						{
-							duration: 12,
-							distance: 0
-						}
-					]
+					fromCompany: [9],
+					toCompany: [10],
+					fromPrevEvent: [11],
+					toNextEvent: [12]
 				}
 			]
 		};

@@ -1,5 +1,5 @@
 import type { Event, Vehicle } from '$lib/compositionTypes';
-import { BUFFER_TIME, MAX_TRAVEL_DURATION, PASSENGER_CHANGE_MINUTES } from '$lib/constants';
+import { BUFFER_TIME, MAX_TRAVEL_MS, PASSENGER_CHANGE_MINUTES } from '$lib/constants';
 import { Interval } from '$lib/interval';
 import { minutesToMs } from '$lib/time_utils';
 import {
@@ -35,7 +35,7 @@ export const getApproachDuration = (
 	prev: Event | undefined
 ): number => {
 	if (prev == undefined) {
-		return MAX_TRAVEL_DURATION;
+		return MAX_TRAVEL_MS;
 	}
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
@@ -58,8 +58,8 @@ export const getApproachDuration = (
 	return (
 		(comesFromCompany(insertionCase)
 			? relevantRoutingResults.fromCompany[insertionInfo.companyIdx]
-			: relevantRoutingResults.fromPrevEvent[insertionInfo.prevEventIdxInRoutingResults]
-		).duration + minutesToMs(BUFFER_TIME)
+			: relevantRoutingResults.fromPrevEvent[insertionInfo.prevEventIdxInRoutingResults]) +
+		minutesToMs(BUFFER_TIME)
 	);
 };
 
@@ -71,7 +71,7 @@ export const getReturnDuration = (
 	next: Event | undefined
 ): number => {
 	if (next == undefined) {
-		return MAX_TRAVEL_DURATION;
+		return MAX_TRAVEL_MS;
 	}
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
@@ -93,8 +93,8 @@ export const getReturnDuration = (
 	return (
 		(returnsToCompany(insertionCase)
 			? relevantRoutingResults.toCompany[insertionInfo.companyIdx]
-			: relevantRoutingResults.toNextEvent[insertionInfo.nextEventIdxInRoutingResults]
-		).duration + minutesToMs(PASSENGER_CHANGE_MINUTES + BUFFER_TIME)
+			: relevantRoutingResults.toNextEvent[insertionInfo.nextEventIdxInRoutingResults]) +
+		minutesToMs(PASSENGER_CHANGE_MINUTES + BUFFER_TIME)
 	);
 };
 
@@ -194,9 +194,9 @@ export function getArrivalWindow(
 	returnDuration: number
 ): Interval | undefined {
 	if (
-		approachDuration > MAX_TRAVEL_DURATION ||
-		returnDuration > MAX_TRAVEL_DURATION ||
-		travelDuration > MAX_TRAVEL_DURATION
+		approachDuration > MAX_TRAVEL_MS ||
+		returnDuration > MAX_TRAVEL_MS ||
+		travelDuration > MAX_TRAVEL_MS
 	) {
 		return undefined;
 	}

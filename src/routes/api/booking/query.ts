@@ -98,6 +98,9 @@ export async function insertRequest(
 	};*/
 
 	const mergeTourList: number[] = []; //TODO
+	const departure = new Date();
+	const arrival = new Date();
+	const tourId = 21;
 	await sql`
         CALL create_and_merge_tours(
             ROW(${capacities.passengers}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}),

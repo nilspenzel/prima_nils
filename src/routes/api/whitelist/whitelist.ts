@@ -2,7 +2,7 @@ import type { Capacities } from '$lib/capacities';
 import {
 	MAX_PASSENGER_WAITING_TIME_DROPOFF,
 	MAX_PASSENGER_WAITING_TIME_PICKUP,
-	MAX_TRAVEL_DURATION
+	MAX_TRAVEL_MS
 } from '$lib/constants';
 import { Interval } from '$lib/interval';
 import type { Coordinates } from '$lib/location';
@@ -16,7 +16,7 @@ import {
 } from './insertions';
 import { gatherRoutingCoordinates, routing } from './routing';
 import { bookingApiQuery } from './query';
-import { Direction, oneToMany } from '$lib/api';
+import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { Transaction } from 'kysely';
 import type { Database } from '$lib/types';
@@ -45,10 +45,7 @@ export async function white(
 		}
 	}
 	const searchInterval = new Interval(firstTime, lastTime);
-	const expandedSearchInterval = searchInterval.expand(
-		MAX_TRAVEL_DURATION * 6,
-		MAX_TRAVEL_DURATION * 6
-	);
+	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
 	const busStopCoordinates = busStops.map((busStop) => busStop.coordinates);
 	const companies = await bookingApiQuery(
 		userChosen,
@@ -58,13 +55,7 @@ export async function white(
 		trx
 	);
 
-	const travelDurations = (
-		await oneToMany(
-			userChosen,
-			busStopCoordinates,
-			startFixed ? Direction.Backward : Direction.Forward
-		)
-	).map((r) => r.duration);
+	const travelDurations = await oneToMany(userChosen, busStopCoordinates, startFixed);
 
 	const insertionRanges = new Map<number, Range[]>();
 	companies.forEach((company) =>

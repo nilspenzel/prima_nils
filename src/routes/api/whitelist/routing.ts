@@ -1,4 +1,4 @@
-import { Direction, oneToMany, type OneToManyResult } from '$lib/api';
+import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { Company } from '$lib/compositionTypes';
 import { Coordinates } from '$lib/location';
@@ -6,10 +6,10 @@ import type { Range } from './capacitySimulation';
 import { iterateAllInsertions } from './utils';
 
 export type InsertionRoutingResult = {
-	fromCompany: OneToManyResult[];
-	toCompany: OneToManyResult[];
-	fromPrevEvent: OneToManyResult[];
-	toNextEvent: OneToManyResult[];
+	fromCompany: number[];
+	toCompany: number[];
+	fromPrevEvent: number[];
+	toNextEvent: number[];
 };
 
 export type RoutingResults = {
@@ -102,8 +102,8 @@ export async function routing(
 	userChosen: Coordinates,
 	busStops: BusStop[]
 ): Promise<RoutingResults> {
-	const from = await oneToMany(userChosen, coordinates.userChosenBackwardMany, Direction.Backward);
-	const to = await oneToMany(userChosen, coordinates.userChosenForwardMany, Direction.Forward);
+	const from = await oneToMany(userChosen, coordinates.userChosenBackwardMany, true);
+	const to = await oneToMany(userChosen, coordinates.userChosenForwardMany, false);
 	const ret = {
 		userChosen: {
 			fromCompany: from.slice(0, busStops.length),
@@ -121,12 +121,12 @@ export async function routing(
 		const from = await oneToMany(
 			busStop.coordinates,
 			coordinates.busStopBackwardMany[busStopIdx],
-			Direction.Backward
+			true
 		);
 		const to = await oneToMany(
 			busStop.coordinates,
 			coordinates.busStopForwardMany[busStopIdx],
-			Direction.Forward
+			false
 		);
 		ret.busStops[busStopIdx] = {
 			fromCompany: from.slice(0, relevantCompanyCount),
