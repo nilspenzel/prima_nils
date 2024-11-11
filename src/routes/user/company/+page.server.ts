@@ -1,10 +1,12 @@
 import type { PageServerLoad, Actions } from './$types.js';
 import { fail } from '@sveltejs/kit';
 import { db } from '$lib/database';
-import { AddressGuess, geoCode } from '$lib/api.js';
-import type { Coordinates } from '$lib/location.js';
+import { Coordinates } from '$lib/location.js';
 import { covers, intersects } from '$lib/sqlHelpers.js';
 import { bookingApiQuery22 } from '../../api/booking/query.js';
+import { geocode } from '$lib/motis/services.gen.js';
+import { MOTIS_BASE_URL } from '$lib/constants.js';
+import type { GeocodeResponse } from '$lib/motis/types.gen.js';
 
 export const load: PageServerLoad = async (event) => {
 	bookingApiQuery22();
@@ -81,16 +83,20 @@ export const actions = {
 			return fail(400, { error: 'Pflichtfahrgebiet nicht gesetzt.' });
 		}
 
-		let bestAddressGuess: AddressGuess | undefined = undefined;
-		try {
-			bestAddressGuess = await geoCode(
-				street + ' ' + house_number + ' ' + postal_code + ' ' + city
-			);
-		} catch {
+		const response: GeocodeResponse = await geocode({
+			baseUrl: MOTIS_BASE_URL,
+			query: {
+				text: street + ' ' + house_number + ' ' + postal_code + ' ' + city
+			}
+		}).then((res) => {
+			return res.data!;
+		});
+		if (response.length == 0) {
 			return fail(400, { error: 'Die Addresse konnte nicht gefunden werden.' });
 		}
+		const bestAddressGuess = new Coordinates(response[0].lat, response[0].lon);
 
-		if (!(await contains(community_area, bestAddressGuess.pos))) {
+		if (!(await contains(community_area, bestAddressGuess))) {
 			return fail(400, {
 				error: 'Die Addresse liegt nicht in der ausgewählten Gemeinde.'
 			});
@@ -112,8 +118,8 @@ export const actions = {
 				house_number,
 				postal_code,
 				city,
-				latitude: bestAddressGuess!.pos.lat,
-				longitude: bestAddressGuess!.pos.lng
+				latitude: bestAddressGuess!.lat,
+				longitude: bestAddressGuess!.lng
 			})
 			.where('id', '=', companyId)
 			.execute();
