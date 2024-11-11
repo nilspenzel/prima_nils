@@ -9,7 +9,7 @@ import { MOTIS_BASE_URL } from '$lib/constants.js';
 import type { GeocodeResponse } from '$lib/motis/types.gen.js';
 
 export const load: PageServerLoad = async (event) => {
-	bookingApiQuery22();
+	//bookingApiQuery22();
 	const companyId = event.locals.user?.company;
 	const zones = await db
 		.selectFrom('zone')

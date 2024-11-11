@@ -59,20 +59,6 @@
 				<div>
 					<Label for="postal_code">Postleitzahl</Label>
 					<Input name="postal_code" id="postal_code" value={postal_code} />
-					<Label for="street">Straße</Label>
-					<Input name="street" id="street" value={street} />
-				</div>
-				<div>
-					<Label for="house_number">Hausnummer</Label>
-					<Input name="house_number" id="house_number" value={house_number} />
-				</div>
-				<div>
-					<Label for="city">Stadt</Label>
-					<Input name="city" id="city" value={city} />
-				</div>
-				<div>
-					<Label for="postal_code">Postleitzahl</Label>
-					<Input name="postal_code" id="postal_code" value={postal_code} />
 				</div>
 				<div>
 					<Label for="zone">Pflichtfahrgebiet</Label>
