@@ -86,7 +86,10 @@ export const bookingSchema = {
 			$ref: '#/definitions/connection'
 		},
 		connection2: {
-			$ref: '#/definitions/connection'
+			oneOf: [
+				{ $ref: '#/definitions/connection' },
+				{ type: 'null' }
+			  ]
 		},
 		capacities: {
 			type: 'object',
