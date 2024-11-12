@@ -1,91 +1,73 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { login, ENTREPENEUR } from './utils';
 
 test.describe.configure({ mode: 'serial' });
 
-test('Set company data, incomplete 1', async ({ page }) => {
+const textFields = ['Name','Straße','Hausnummer','Postleitzahl','Stadt'];
+const selectFields = ['Geminde', 'Pflichtfahrgebiet'];
+
+const setCompanyData = async (page: Page, textData: string[], selectData: string[]) => {
+	const enterData = async (field: string, data: string|undefined, isTextField: boolean) => {
+		if(data!=undefined){
+			if(isTextField){
+				await page.getByLabel(field).fill(data);
+			}else{
+				await page.getByLabel(field).selectOption({ label: data });
+			}
+		}
+	}
+
 	await login(page, ENTREPENEUR);
 	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
-
-	await page.getByLabel('Name').fill('Test');
+	textData.forEach((d, i) => enterData(textFields[i],d,true));
+	await page.waitForTimeout(250);
+	selectData.forEach((d,i)=>enterData(selectFields[i],d,false))
 	await page.getByRole('button', { name: 'Übernehmen' }).click();
+}
+
+test('Set company data, incomplete 1', async ({ page }) => {
+	setCompanyData(page, ['Test'],[]);
 
 	await expect(page.getByText('Straße zu kurz.')).toBeVisible();
 });
 
 test('Set company data, incomplete 2', async ({ page }) => {
-	await login(page, ENTREPENEUR);
-	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
-
-	await page.getByLabel('Name').fill('Test');
-	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
-	await page.getByRole('button', { name: 'Übernehmen' }).click();
+	setCompanyData(page, ['Test','Werner-Seelenbinder-Straße'],[]);
 
 	await expect(page.getByText('Hausnummer zu kurz.')).toBeVisible();
 });
 
 test('Set company data, incomplete 3', async ({ page }) => {
-	await login(page, ENTREPENEUR);
-	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
 
-	await page.getByLabel('Name').fill('Test');
-	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
-	await page.getByLabel('Hausnummer').fill('70A');
-	await page.getByRole('button', { name: 'Übernehmen' }).click();
+	setCompanyData(page, ['Test','Werner-Seelenbinder-Straße','70A'],[]);
 
 	await expect(page.getByText('Postleitzahl zu kurz.')).toBeVisible();
 });
 
 test('Set company data, incomplete 4', async ({ page }) => {
-	await login(page, ENTREPENEUR);
-	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
 
-	await page.getByLabel('Name').fill('Test');
-	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
-	await page.getByLabel('Hausnummer').fill('70A');
-	await page.getByLabel('Postleitzahl').fill('02943');
-	await page.getByRole('button', { name: 'Übernehmen' }).click();
+	setCompanyData(page, ['Test','Werner-Seelenbinder-Straße','70A','02943'],[]);
 
 	await expect(page.getByText('Stadt zu kurz.')).toBeVisible();
 });
 
 test('Set company data, incomplete 5', async ({ page }) => {
-	await login(page, ENTREPENEUR);
-
-	await page.getByLabel('Name').fill('Test');
-	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
-	await page.getByLabel('Hausnummer').fill('70A');
-	await page.getByLabel('Postleitzahl').fill('02943');
-	await page.getByLabel('Stadt').fill('Weißwasser/Oberlausitz');
-	await page.getByRole('button', { name: 'Übernehmen' }).click();
+	setCompanyData(page, ['Test','Werner-Seelenbinder-Straße','70A','02943','Weißwasser/Oberlausitz'],[]);
 
 	await expect(page.getByText('Gemeinde nicht gesetzt.')).toBeVisible();
 });
 
 test('Set company data, incomplete 6', async ({ page }) => {
-	await login(page, ENTREPENEUR);
-
-	await page.getByLabel('Name').fill('Taxi Weißwasser');
-	await page.getByLabel('Straße').fill('Werner-Seelenbinder-Straße');
-	await page.getByLabel('Hausnummer').fill('70A');
-	await page.getByLabel('Postleitzahl').fill('02943');
-	await page.getByLabel('Stadt').fill('Weißwasser/Oberlausitz');
+	
+	setCompanyData(page, ['Test','Werner-Seelenbinder-Straße','70A','02943','Weißwasser/Oberlausitz'],[]);
 	await page.getByLabel('Pflichtfahrgebiet').selectOption({ label: 'Görlitz' });
-	await page.getByRole('button', { name: 'Übernehmen' }).click();
 
 	await expect(page.getByText('Gemeinde nicht gesetzt.')).toBeVisible();
 });
 
 test('Set company data, address not in community', async ({ page }) => {
-	await login(page, ENTREPENEUR);
-	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
 
-	await page.getByLabel('Name').fill('Taxi Weißwasser');
-	await page.getByLabel('Unternehmenssitz').fill('Plantagenweg 3, 02827 Görlitz');
-	await page.waitForTimeout(250);
-	await page.getByLabel('Pflichtfahrgebiet').selectOption({ label: 'Görlitz' });
-	await page.getByLabel('Gemeinde').selectOption({ label: 'Weißwasser/O.L.' });
-	await page.getByRole('button', { name: 'Übernehmen' }).click();
+	setCompanyData(page, ['Taxi Weißwasser','Plantagenweg','3','02827','Görlitz'],['Weißwasser/O.L.']);
 
 	await expect(
 		page.getByText('Die Addresse liegt nicht in der ausgewählten Gemeinde.')
@@ -93,19 +75,9 @@ test('Set company data, address not in community', async ({ page }) => {
 });
 
 test('Set company data, complete and consistent', async ({ page }) => {
-	await login(page, ENTREPENEUR);
-	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
 
-	await page.getByLabel('Name').fill('Taxi Weißwasser');
-	await page
-		.getByLabel('Unternehmenssitz')
-		.fill('Werner-Seelenbinder-Strasse 70A, 02943 Weißwasser/Oberlausitz');
-	await page.waitForTimeout(250);
-	await page.getByLabel('Pflichtfahrgebiet').selectOption({ label: 'Weißwasser' });
-	await page.getByLabel('Gemeinde').selectOption({ label: 'Weißwasser/O.L.' });
-	await page.getByRole('button', { name: 'Übernehmen' }).click();
+	setCompanyData(page, ['Test','Werner-Seelenbinder-Straße','70A','02943','Weißwasser/Oberlausitz'],['Weißwasser/O.L.']);
 
-	await expect(page.getByRole('heading', { name: 'Stammdaten Ihres Unternehmens' })).toBeVisible();
 
 	const checkData = async () => {
 		await expect(page.getByLabel('Name')).toHaveValue('Taxi Weißwasser');
