@@ -91,6 +91,10 @@ const createVehicle = (v: DbVehicle, expandedSearchInterval: Interval) => {
 	const tours = v.tours.filter((tour) =>
 		expandedSearchInterval.overlaps(new Interval(tour.departure, tour.arrival))
 	);
+	const toursBefore = v.tours
+	.filter((tour) => tour.arrival < expandedSearchInterval.startTime);
+	const toursAfter = v.tours
+	.filter((tour) => tour.departure > expandedSearchInterval.endTime);
 	return {
 		id: v.id,
 		capacities: {
@@ -111,14 +115,12 @@ const createVehicle = (v: DbVehicle, expandedSearchInterval: Interval) => {
 			};
 		}),
 		events: tours.flatMap((t) => t.events.map((e) => createEvent(e, t))),
-		lastEventBefore: v.tours
-			.filter((tour) => tour.arrival < expandedSearchInterval.startTime)
+		lastEventBefore: toursBefore.length == 0 ? undefined : toursBefore
 			.flatMap((tour) => tour.events.map((event) => createEvent(event, tour)))
 			.reduce((max, current) => {
 				return max == undefined ? current : current.communicated > max.communicated ? current : max;
 			}),
-		firstEventAfter: v.tours
-			.filter((tour) => tour.departure > expandedSearchInterval.endTime)
+		firstEventAfter: toursAfter.length == 0 ? undefined : toursAfter
 			.flatMap((tour) => tour.events.map((event) => createEvent(event, tour)))
 			.reduce((min, current) => {
 				return min == undefined ? current : current.communicated < min.communicated ? current : min;
@@ -278,7 +280,7 @@ export const bookingApiQuery = async (
 		trx = db;
 	}
 	const dbResult = await trx
-		.with('busStops', (db) => {
+		.with('busstops', (db) => {
 			const cteValues = busStops.map(
 				(busStop, i) =>
 					sql<string>`SELECT cast(${i} as integer) AS index, ${busStop.lat} AS latitude, ${busStop.lng} AS longitude`
@@ -298,11 +300,11 @@ export const bookingApiQuery = async (
 			selectCompanies(eb, expandedSearchInterval, twiceExpandedSearchInterval, requiredCapacities),
 			jsonArrayFrom(
 				eb
-					.selectFrom('busStops')
+					.selectFrom('busstops')
 					.where(
-						sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(cast(busStops.longitude as float), cast(busStops.latitude as float)), ${SRID}))`
+						sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(cast(busstops.longitude as float), cast(busstops.latitude as float)), ${SRID}))`
 					)
-					.select(['busStops.index as busStopIndex', 'zone.id as zoneId'])
+					.select(['busstops.index as busStopIndex', 'zone.id as zoneId'])
 			).as('busStop')
 		])
 		.executeTakeFirst();
