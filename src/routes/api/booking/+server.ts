@@ -43,7 +43,7 @@ export async function POST(event: RequestEvent) {
 				[
 					{
 						coordinates: parameters.connection1.target.coordinates,
-						times: [parameters.connection1.targetTime]
+						times: [new Date(parameters.connection1.targetTime)]
 					}
 				],
 				parameters.capacities,
@@ -61,7 +61,7 @@ export async function POST(event: RequestEvent) {
 					[
 						{
 							coordinates: parameters.connection2.target.coordinates,
-							times: [parameters.connection2.targetTime]
+							times: [new Date(parameters.connection2.targetTime)]
 						}
 					],
 					parameters.capacities,
