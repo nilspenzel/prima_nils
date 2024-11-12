@@ -84,14 +84,19 @@ export const booking = async (
 	return await fetch('/api/booking', {
 		method: 'POST',
 		body: JSON.stringify({
-			from,
-			to,
-			startFixed,
-			timeStamp,
-			numPassengers,
-			numWheelchairs,
-			numBikes,
-			luggage
+			connection1: {
+				start: from,
+				target: to,
+				startTime: new Date(),
+				targetTime: new Date()
+			},
+			connection2: null,
+			capacities: {
+				wheelchairs: numWheelchairs,
+				bikes: numBikes,
+				passengers: numPassengers,
+				luggage
+			}
 		})
 	});
 };
