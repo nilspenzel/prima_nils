@@ -11,8 +11,6 @@ export async function insertRequest(
 	customer: string
 ) {
 	const mergeTourList: number[] = []; //TODO
-	const departure = new Date();
-	const arrival = new Date();
 	const tourId = connection.tour;
 	// create_and_merge_tours is a stored procedure introduced in migrations/2024-10-24-stored-procedures.js
 	await sql`
@@ -21,6 +19,6 @@ export async function insertRequest(
             ROW(${true}, ${c.start.coordinates.lat}, ${c.start.coordinates.lng}, ${connection.pickupTime}, ${connection.pickupTime}, ${customer}, ${connection.passengerDuration}, ${connection.passengerDuration},${c.start.address}),
             ROW(${true}, ${c.target.coordinates.lat}, ${c.target.coordinates.lng}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${customer}, ${connection.passengerDuration}, ${connection.passengerDuration},${c.target.address}),
             ${mergeTourList},
-            ROW(${departure}, ${arrival}, ${connection.vehicle}, ${tourId})
+            ROW(${connection.departure}, ${connection.arrival}, ${connection.vehicle}, ${tourId})
         )`.execute(db);
 }

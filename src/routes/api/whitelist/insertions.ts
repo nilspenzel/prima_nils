@@ -25,11 +25,13 @@ import {
 } from './insertionTypes';
 import type { Capacities } from '$lib/capacities';
 import {
+	comesFromCompany,
 	getAllowedOperationTimes,
 	getApproachDuration,
 	getArrivalWindow,
 	getReturnDuration,
-	getTaxiWaitingTime
+	getTaxiWaitingTime,
+	returnsToCompany
 } from './durations';
 
 type Evaluations = {
@@ -50,6 +52,8 @@ export type InsertionEvaluation = {
 	company: number;
 	vehicle: number;
 	tour: number | undefined;
+	departure: Date | undefined;
+	arrival: Date | undefined;
 };
 
 type SingleInsertionEvaluation = {
@@ -124,29 +128,33 @@ export function evaluateBothInsertion(
 				? prev.returnDuration
 				: prev.returnDuration + next.approachDuration);
 	const taxiWaitingTime = getTaxiWaitingTime(insertionCase, approachDuration, prev, next);
+	const pickupTime = 
+	insertionCase.direction == InsertDirection.FROM_BUS_STOP
+		? arrivalWindow.endTime
+		: new Date(
+				arrivalWindow.startTime.getTime() -
+					travelDuration -
+					minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
+			);
+	const dropoffTime = 
+	insertionCase.direction == InsertDirection.FROM_BUS_STOP
+		? new Date(
+				arrivalWindow.endTime.getTime() +
+					travelDuration +
+					minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
+			)
+		: arrivalWindow.startTime;
 	return {
-		pickupTime:
-			insertionCase.direction == InsertDirection.FROM_BUS_STOP
-				? arrivalWindow.endTime
-				: new Date(
-						arrivalWindow.startTime.getTime() -
-							travelDuration -
-							minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
-					),
-		dropoffTime:
-			insertionCase.direction == InsertDirection.FROM_BUS_STOP
-				? new Date(
-						arrivalWindow.endTime.getTime() +
-							travelDuration +
-							minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
-					)
-				: arrivalWindow.startTime,
+		pickupTime,
+		dropoffTime,
 		pickupCase: insertionCase,
 		dropoffCase: insertionCase,
 		passengerDuration: travelDuration,
 		taxiDuration,
 		taxiWaitingTime,
-		cost: computeCost(travelDuration, taxiDuration, taxiWaitingTime)
+		cost: computeCost(travelDuration, taxiDuration, taxiWaitingTime),
+		departure: comesFromCompany(insertionCase) ? new Date(pickupTime.getTime() - approachDuration) : undefined,
+		arrival: returnsToCompany(insertionCase) ? new Date(dropoffTime.getTime() + returnDuration) : undefined
 	};
 }
 
@@ -490,7 +498,9 @@ export function evaluatePairInsertions(
 								cost,
 								company: insertionInfo.companyIdx,
 								vehicle: insertionInfo.vehicle.id,
-								tour: 1 // TODO
+								tour: 1, // TODO,
+								departure: comesFromCompany(pickup.case) ? new Date(pickup.time.getTime() - pickup.approachDuration) : undefined,
+								arrival: returnsToCompany(dropoff.case) ? new Date(dropoff.time.getTime() + dropoff.returnDuration) : undefined
 							};
 						}
 					}

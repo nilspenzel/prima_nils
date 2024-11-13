@@ -17,7 +17,7 @@ export async function requestRide(page: Page) {
 	await page.goto('/request');
 	await page.waitForTimeout(1000);
 
-	await page.getByRole('textbox').fill('2026-09-30T08:40:00Z');
+	await page.getByRole('textbox').fill('2026-09-30T08:47:00Z');
 	await page.getByRole('button', { name: 'Suchen' }).click();
 	await expect(page.getByRole('heading', { name: ': OK' })).toHaveText('200: OK');
 }
@@ -101,7 +101,7 @@ test('Request ride', async ({ page }) => {
 		page.locator(
 			'table:nth-child(2) > tbody > tr > td:nth-child(4) > .w-full > tbody > tr > td:nth-child(4) > .w-8'
 		)
-	).toHaveCSS('background-color', 'rgb(254, 249, 195)');
+	).toHaveCSS('background-color', 'rgb(251, 146, 60)');
 	await expect(
 		page
 			.locator(

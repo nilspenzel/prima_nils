@@ -1,8 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { login, MAINTAINER } from './utils';
 
 test('should create a booking and validate database state', async ({ page, request }) => {
-	await login(page, MAINTAINER);
 	const bookingData = {
 		connection1: {
 			start: {

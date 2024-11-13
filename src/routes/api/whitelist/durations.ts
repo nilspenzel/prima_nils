@@ -11,7 +11,7 @@ import {
 } from './insertionTypes';
 import type { InsertionRoutingResult, RoutingResults } from './routing';
 
-const returnsToCompany = (insertionCase: InsertionType): boolean => {
+export const returnsToCompany = (insertionCase: InsertionType): boolean => {
 	return (
 		insertionCase.how === InsertHow.CONNECT ||
 		insertionCase.how === InsertHow.APPEND ||
@@ -19,7 +19,7 @@ const returnsToCompany = (insertionCase: InsertionType): boolean => {
 	);
 };
 
-const comesFromCompany = (insertionCase: InsertionType): boolean => {
+export const comesFromCompany = (insertionCase: InsertionType): boolean => {
 	return (
 		insertionCase.how === InsertHow.CONNECT ||
 		insertionCase.how === InsertHow.PREPEND ||
@@ -216,12 +216,15 @@ export function getArrivalWindow(
 			)
 		);
 	}
+	console.log(arrivalWindows);
 	let arrivalWindows2 = arrivalWindows.filter((window) => window != undefined);
+	console.log(arrivalWindows2);
 	if (busStopWindow != undefined) {
 		arrivalWindows2 = arrivalWindows2
-			.map((window) => window!.intersect(busStopWindow))
+			.map((window) => window.intersect(busStopWindow))
 			.filter((window) => window != undefined);
 	}
+	console.log(arrivalWindows2);
 	if (arrivalWindows2.length == 0) {
 		return undefined;
 	}
