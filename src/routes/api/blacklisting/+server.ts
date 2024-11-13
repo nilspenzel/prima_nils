@@ -2,12 +2,13 @@ import { Validator } from 'jsonschema';
 import { getViableBusStops } from './viableBusStops';
 import type { RequestEvent } from './$types';
 import { json } from '@sveltejs/kit';
-import { whitelistSchema } from '$lib/bookingApiParameters';
+import { schemaDefinitions, whitelistSchema } from '$lib/bookingApiParameters';
 import type { WhitelistRequest as BlacklistRequest } from '$lib/bookingApiParameters';
 
 export const POST = async (event: RequestEvent) => {
 	const p = await event.request.json();
 	const validator = new Validator();
+	validator.addSchema(schemaDefinitions, '/schemaDefinitions');
 	const result = validator.validate(p, whitelistSchema);
 	if (!result.valid) {
 		return json(

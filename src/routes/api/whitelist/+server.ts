@@ -1,7 +1,7 @@
 import { type InsertionEvaluation } from './insertions';
 import type { RequestEvent } from './$types';
 import { Validator } from 'jsonschema';
-import { whitelistSchema, type WhitelistRequest } from '$lib/bookingApiParameters';
+import { schemaDefinitions, whitelistSchema, type WhitelistRequest } from '$lib/bookingApiParameters';
 import { json } from '@sveltejs/kit';
 import { white } from './whitelist';
 
@@ -14,6 +14,7 @@ export type WhitelistResponse = {
 export async function POST(event: RequestEvent) {
 	const p = await event.request.json();
 	const validator = new Validator();
+	validator.addSchema(schemaDefinitions, '/schemaDefinitions');
 	const result = validator.validate(p, whitelistSchema);
 	if (!result.valid) {
 		return json(

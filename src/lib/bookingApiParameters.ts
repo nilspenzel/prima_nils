@@ -25,7 +25,7 @@ export type BookingRequest = {
 	capacities: Capacities;
 };
 
-const schemaDefinitions = {
+export const schemaDefinitions = {
 	$schema: 'http://json-schema.org/draft-07/schema#',
 	definitions: {
 		coordinates: {
@@ -84,11 +84,11 @@ export const bookingSchema = {
 	$schema: 'http://json-schema.org/draft-07/schema#',
 	type: 'object',
 	properties: {
-		connection1: { $ref: 'schemaDefinitions#/definitions/connection' },
+		connection1: { $ref: '/schemaDefinitions#/definitions/connection' },
 		connection2: {
-			oneOf: [{ $ref: 'schemaDefinitions#/definitions/connection' }, { type: 'null' }]
+			oneOf: [{ $ref: '/schemaDefinitions#/definitions/connection' }, { type: 'null' }]
 		},
-		capacities: { $ref: 'schemaDefinitions#/definitions/capacities' }
+		capacities: { $ref: '/schemaDefinitions#/definitions/capacities' }
 	},
 	required: ['connection1', 'capacities']
 };
@@ -97,13 +97,13 @@ export const whitelistSchema = {
 	$schema: 'http://json-schema.org/draft-07/schema#',
 	type: 'object',
 	properties: {
-		start: { $ref: 'schemaDefinitions#/definitions/coordinates' },
-		target: { $ref: 'schemaDefinitions#/definitions/coordinates' },
-		startBusStops: { $ref: 'schemaDefinitions#/definitions/busStops' },
-		targetBusStops: { $ref: 'schemaDefinitions#/definitions/busStops' },
-		times: { $ref: 'schemaDefinitions#/definitions/times' },
+		start: { $ref: '/schemaDefinitions#/definitions/coordinates' },
+		target: { $ref: '/schemaDefinitions#/definitions/coordinates' },
+		startBusStops: { $ref: '/schemaDefinitions#/definitions/busStops' },
+		targetBusStops: { $ref: '/schemaDefinitions#/definitions/busStops' },
+		times: { $ref: '/schemaDefinitions#/definitions/times' },
 		startFixed: { type: 'boolean' },
-		capacities: { $ref: 'schemaDefinitions#/definitions/capacities' }
+		capacities: { $ref: '/schemaDefinitions#/definitions/capacities' }
 	},
 	required: ['start', 'target', 'startFixed', 'capacities']
 };

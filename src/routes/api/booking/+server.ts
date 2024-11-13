@@ -1,6 +1,6 @@
 import type { RequestEvent } from './$types';
 import { Validator } from 'jsonschema';
-import { bookingSchema, type BookingRequest } from '$lib/bookingApiParameters';
+import { bookingSchema, schemaDefinitions, type BookingRequest } from '$lib/bookingApiParameters';
 import { error, json } from '@sveltejs/kit';
 import { white } from '../whitelist/whitelist';
 import { db } from '$lib/database';
@@ -24,6 +24,7 @@ export async function POST(event: RequestEvent) {
 	}
 	const p = await event.request.json();
 	const validator = new Validator();
+	validator.addSchema(schemaDefinitions, '/schemaDefinitions');
 	const result = validator.validate(p, bookingSchema);
 	if (!result.valid) {
 		return json(
