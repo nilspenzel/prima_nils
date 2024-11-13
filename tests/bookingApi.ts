@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('should create a booking and validate database state', async ({ page, request }) => {
+test('should create a booking and validate database state', async ({ request }) => {
 	const bookingData = {
 		connection1: {
 			start: {

@@ -3,13 +3,11 @@ import { fail } from '@sveltejs/kit';
 import { db } from '$lib/database';
 import { Coordinates } from '$lib/location.js';
 import { covers, intersects } from '$lib/sqlHelpers.js';
-import { bookingApiQuery22 } from '../../api/booking/query.js';
 import { geocode } from '$lib/motis/services.gen.js';
 import { MOTIS_BASE_URL } from '$lib/constants.js';
 import type { GeocodeResponse } from '$lib/motis/types.gen.js';
 
 export const load: PageServerLoad = async (event) => {
-	//bookingApiQuery22();
 	const companyId = event.locals.user?.company;
 	const zones = await db
 		.selectFrom('zone')
