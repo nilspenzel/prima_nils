@@ -23,7 +23,7 @@ export default defineConfig({
 		locale: 'de-DE',
 		timezoneId: 'Europe/Berlin',
 		launchOptions: {
-			slowMo: 0,
+			slowMo: 0
 		}
 	},
 	testDir: './tests',
@@ -51,6 +51,15 @@ export default defineConfig({
 			name: 'move tour',
 			testMatch: 'moveTour.ts',
 			dependencies: ['availability']
+		},
+		{ name: 'auth', testMatch: 'auth.setup.ts', dependencies: ['move tour'] },
+		{
+			name: 'booking api',
+			testMatch: 'bookingApi.ts',
+			dependencies: ['auth'],
+			use: {
+				storageState: 'tests/auth/user.json'
+			}
 		}
 	]
 });

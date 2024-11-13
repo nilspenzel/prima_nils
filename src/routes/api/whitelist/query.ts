@@ -81,7 +81,7 @@ const createEvent = (e: DbEvent, t: DbTour): Event => {
 			new Date(Math.min(scheduled.getTime(), communicated.getTime())),
 			new Date(Math.max(scheduled.getTime(), communicated.getTime()))
 		),
-		communicated,
+		communicated: new Date(communicated),
 		approachDuration: e.approach_duration,
 		returnDuration: e.return_duration
 	};
@@ -91,10 +91,8 @@ const createVehicle = (v: DbVehicle, expandedSearchInterval: Interval) => {
 	const tours = v.tours.filter((tour) =>
 		expandedSearchInterval.overlaps(new Interval(tour.departure, tour.arrival))
 	);
-	const toursBefore = v.tours
-	.filter((tour) => tour.arrival < expandedSearchInterval.startTime);
-	const toursAfter = v.tours
-	.filter((tour) => tour.departure > expandedSearchInterval.endTime);
+	const toursBefore = v.tours.filter((tour) => tour.arrival < expandedSearchInterval.startTime);
+	const toursAfter = v.tours.filter((tour) => tour.departure > expandedSearchInterval.endTime);
 	return {
 		id: v.id,
 		capacities: {
@@ -105,7 +103,8 @@ const createVehicle = (v: DbVehicle, expandedSearchInterval: Interval) => {
 		},
 		availabilities: Interval.merge(
 			v.availabilities.map(
-				(availbility) => new Interval(availbility.start_time, availbility.end_time)
+				(availbility) =>
+					new Interval(new Date(availbility.start_time), new Date(availbility.end_time))
 			)
 		),
 		tours: tours.map((tour) => {
@@ -115,16 +114,30 @@ const createVehicle = (v: DbVehicle, expandedSearchInterval: Interval) => {
 			};
 		}),
 		events: tours.flatMap((t) => t.events.map((e) => createEvent(e, t))),
-		lastEventBefore: toursBefore.length == 0 ? undefined : toursBefore
-			.flatMap((tour) => tour.events.map((event) => createEvent(event, tour)))
-			.reduce((max, current) => {
-				return max == undefined ? current : current.communicated > max.communicated ? current : max;
-			}),
-		firstEventAfter: toursAfter.length == 0 ? undefined : toursAfter
-			.flatMap((tour) => tour.events.map((event) => createEvent(event, tour)))
-			.reduce((min, current) => {
-				return min == undefined ? current : current.communicated < min.communicated ? current : min;
-			})
+		lastEventBefore:
+			toursBefore.length == 0
+				? undefined
+				: toursBefore
+						.flatMap((tour) => tour.events.map((event) => createEvent(event, tour)))
+						.reduce((max, current) => {
+							return max == undefined
+								? current
+								: current.communicated > max.communicated
+									? current
+									: max;
+						}),
+		firstEventAfter:
+			toursAfter.length == 0
+				? undefined
+				: toursAfter
+						.flatMap((tour) => tour.events.map((event) => createEvent(event, tour)))
+						.reduce((min, current) => {
+							return min == undefined
+								? current
+								: current.communicated < min.communicated
+									? current
+									: min;
+						})
 	};
 };
 
@@ -336,7 +349,7 @@ export const bookingApiQuery = async (
 		companies.forEach((company, companyIdx) => {
 			busStopCompanyFilter[busStopIdx][companyIdx] =
 				dbResult.busStop.find(
-					(bs) => bs.zoneId == company.zoneId && bs.busStopIndex == busStopIdx
+					(busStop) => busStop.zoneId == company.zoneId && busStop.busStopIndex == busStopIdx
 				) != undefined;
 		});
 	});

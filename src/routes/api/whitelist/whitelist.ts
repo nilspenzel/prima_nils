@@ -31,8 +31,8 @@ export async function white(
 	if (busStops.length == 0) {
 		return [];
 	}
-	let firstTime = new Date(0);
-	let lastTime = new Date('5000-01-01T00:00:00.0Z');
+	let lastTime = new Date(0);
+	let firstTime = new Date('5000-01-01T00:00:00.0Z');
 	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
 		for (let timeIdx = 0; timeIdx != busStops[busStopIdx].times.length; ++timeIdx) {
 			const time = busStops[busStopIdx].times[timeIdx];

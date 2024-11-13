@@ -35,7 +35,7 @@ export const getApproachDuration = (
 	prev: Event | undefined
 ): number => {
 	if (prev == undefined) {
-		return MAX_TRAVEL_MS;
+		//	return MAX_TRAVEL_MS;
 	}
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
@@ -71,7 +71,7 @@ export const getReturnDuration = (
 	next: Event | undefined
 ): number => {
 	if (next == undefined) {
-		return MAX_TRAVEL_MS;
+		//return MAX_TRAVEL_MS;
 	}
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
@@ -162,10 +162,12 @@ export function getTaxiWaitingTime(
 	prev: Event | undefined,
 	next: Event | undefined
 ) {
+	/*
 	console.assert(
 		!(prev == undefined && next == undefined),
 		'Insertion neither has previous nor successor event.'
 	);
+	*/
 	console.assert(
 		!(
 			(InsertHow.CONNECT == insertionCase.how || insertionCase.how == InsertHow.INSERT) &&
@@ -201,36 +203,32 @@ export function getArrivalWindow(
 		return undefined;
 	}
 	console.assert(!(busStopWindow != undefined && InsertWhat.USER_CHOSEN == insertionCase.what));
-	let arrivalWindows = windows
-		.map((window) =>
-			window
-				.shrink(approachDuration, returnDuration)
-				?.shrink(
-					insertionCase.what == InsertWhat.BOTH
-						? insertionCase.direction == InsertDirection.TO_BUS_STOP
-							? travelDuration + minutesToMs(BUFFER_TIME) + minutesToMs(PASSENGER_CHANGE_MINUTES)
-							: 0
-						: 0,
-					insertionCase.what == InsertWhat.BOTH
-						? insertionCase.direction == InsertDirection.FROM_BUS_STOP
-							? travelDuration + minutesToMs(BUFFER_TIME) + minutesToMs(PASSENGER_CHANGE_MINUTES)
-							: 0
-						: 0
-				)
-		)
-		.filter((window) => window != undefined);
+	let arrivalWindows = windows.map((window) => window.shrink(approachDuration, returnDuration));
+	if (insertionCase.what == InsertWhat.BOTH) {
+		arrivalWindows = arrivalWindows.map((window) =>
+			window?.shrink(
+				insertionCase.direction == InsertDirection.TO_BUS_STOP
+					? travelDuration + minutesToMs(BUFFER_TIME) + minutesToMs(PASSENGER_CHANGE_MINUTES)
+					: 0,
+				insertionCase.direction == InsertDirection.FROM_BUS_STOP
+					? travelDuration + minutesToMs(BUFFER_TIME) + minutesToMs(PASSENGER_CHANGE_MINUTES)
+					: 0
+			)
+		);
+	}
+	let arrivalWindows2 = arrivalWindows.filter((window) => window != undefined);
 	if (busStopWindow != undefined) {
-		arrivalWindows = arrivalWindows
-			.map((window) => window.intersect(busStopWindow))
+		arrivalWindows2 = arrivalWindows2
+			.map((window) => window!.intersect(busStopWindow))
 			.filter((window) => window != undefined);
 	}
-	if (arrivalWindows.length == 0) {
+	if (arrivalWindows2.length == 0) {
 		return undefined;
 	}
 	const arrivalWindow =
 		insertionCase.direction == InsertDirection.FROM_BUS_STOP
-			? arrivalWindows.reduce((current, best) => (current.endTime > best.endTime ? current : best))
-			: arrivalWindows.reduce((current, best) =>
+			? arrivalWindows2.reduce((current, best) => (current.endTime > best.endTime ? current : best))
+			: arrivalWindows2.reduce((current, best) =>
 					current.startTime < best.startTime ? current : best
 				);
 	return arrivalWindow;

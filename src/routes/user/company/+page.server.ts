@@ -67,7 +67,7 @@ export const actions = {
 			return fail(400, { error: 'Straße zu kurz.' });
 		}
 
-		if(!house_number || house_number.length < 1) {
+		if (!house_number || house_number.length < 1) {
 			return fail(400, { error: 'Hausnummer zu kurz.' });
 		}
 

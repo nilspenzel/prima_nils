@@ -87,8 +87,8 @@ export const booking = async (
 			connection1: {
 				start: from,
 				target: to,
-				startTime: new Date(),
-				targetTime: new Date()
+				startTime: timeStamp,
+				targetTime: timeStamp
 			},
 			connection2: null,
 			capacities: {

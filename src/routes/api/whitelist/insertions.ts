@@ -49,6 +49,7 @@ export type InsertionEvaluation = {
 	cost: number;
 	company: number;
 	vehicle: number;
+	tour: number | undefined;
 };
 
 type SingleInsertionEvaluation = {
@@ -280,7 +281,8 @@ export function evaluateNewTours(
 						bestEvaluations[busStopIdx][busTimeIdx] = {
 							...resultNewTour,
 							company: companyIdx,
-							vehicle: vehicle.id
+							vehicle: vehicle.id,
+							tour: undefined
 						};
 					}
 				}
@@ -393,7 +395,8 @@ export function evaluateSingleInsertions(
 							bothEvaluations[busStopIdx][busTimeIdx] = {
 								...resultBoth,
 								company: insertionInfo.companyIdx,
-								vehicle: insertionInfo.vehicle.id
+								vehicle: insertionInfo.vehicle.id,
+								tour: insertionCase.how == InsertHow.APPEND ? prev?.tourId : next?.tourId
 							};
 						}
 					}
@@ -486,7 +489,8 @@ export function evaluatePairInsertions(
 								passengerDuration,
 								cost,
 								company: insertionInfo.companyIdx,
-								vehicle: insertionInfo.vehicle.id
+								vehicle: insertionInfo.vehicle.id,
+								tour: 1 // TODO
 							};
 						}
 					}

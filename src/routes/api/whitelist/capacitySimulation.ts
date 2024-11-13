@@ -20,6 +20,9 @@ export function capacitySimulation(
 	requiredNewEvent: Capacities,
 	events: Event[]
 ) {
+	if (events.length == 0) {
+		return [];
+	}
 	const adjustValues = (capacities: Capacities, event: Event): void => {
 		capacities.bikes += event.is_pickup ? event.capacities.bikes : -event.capacities.bikes;
 		capacities.luggage += event.is_pickup ? event.capacities.luggage : -event.capacities.luggage;
