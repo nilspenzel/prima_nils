@@ -6,8 +6,95 @@ import { covers, intersects } from '$lib/sqlHelpers.js';
 import { geocode } from '$lib/motis/services.gen.js';
 import { MOTIS_BASE_URL } from '$lib/constants.js';
 import type { GeocodeResponse } from '$lib/motis/types.gen.js';
+import { clearDatabase } from '$lib/testHelpers.js';
+import { insertRequest } from '../../api/booking/query.js';
+import { InsertDirection, InsertHow, InsertWhat, InsertWhere } from '../../api/whitelist/insertionTypes.js';
 
 export const load: PageServerLoad = async (event) => {
+	//clearDatabase();
+	const capacities = {
+		wheelchairs: 0,
+		bikes: 0,
+		passengers: 1,
+		luggage: 0
+	}
+	const exp1 = {
+		start: {
+			coordinates: new Coordinates(1,1),
+			address: ''
+		},
+		target: {
+			coordinates: new Coordinates(1,1),
+			address: ''
+		},
+		startTime: new Date(),
+		targetTime: new Date(),
+	}
+	const exp2 = {
+		start: {
+			coordinates: new Coordinates(1,1),
+			address: ''
+		},
+		target: {
+			coordinates: new Coordinates(1,1),
+			address: ''
+		},
+		startTime: new Date(),
+		targetTime: new Date(),
+	}
+	const c1 = {
+		pickupTime: new Date(),
+		dropoffTime: new Date(),
+		pickupCase: {
+			how: InsertHow.APPEND,
+			direction: InsertDirection.FROM_BUS_STOP,
+			where: InsertWhere.AFTER_LAST_EVENT,
+			what: InsertWhat.BOTH,
+		},
+		dropoffCase: {
+			how: InsertHow.APPEND,
+			direction: InsertDirection.FROM_BUS_STOP,
+			where: InsertWhere.AFTER_LAST_EVENT,
+			what: InsertWhat.BOTH,
+		},
+		taxiWaitingTime: 1,
+		taxiDuration: 1,
+		passengerDuration: 1,
+		cost: 1,
+		company: 92,
+		vehicle: 92,
+		tour: undefined,
+		departure: new Date(),
+		arrival: new Date(),
+		mergeTourList: []
+	}
+	const c2 = {
+		pickupTime: new Date(),
+		dropoffTime: new Date(),
+		pickupCase: {
+			how: InsertHow.APPEND,
+			direction: InsertDirection.FROM_BUS_STOP,
+			where: InsertWhere.AFTER_LAST_EVENT,
+			what: InsertWhat.BOTH,
+		},
+		dropoffCase: {
+			how: InsertHow.APPEND,
+			direction: InsertDirection.FROM_BUS_STOP,
+			where: InsertWhere.AFTER_LAST_EVENT,
+			what: InsertWhat.BOTH,
+		},
+		taxiWaitingTime: 1,
+		taxiDuration: 1,
+		passengerDuration: 1,
+		cost: 1,
+		company: 92,
+		vehicle: 92,
+		tour: undefined,
+		departure: new Date(),
+		arrival: new Date(),
+		mergeTourList: []
+	}
+	insertRequest(c1, capacities, exp1, event.locals.user!.id);
 	const companyId = event.locals.user?.company;
 	const zones = await db
 		.selectFrom('zone')

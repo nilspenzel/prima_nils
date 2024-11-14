@@ -109,6 +109,14 @@ export async function white(
 		busStopEvaluations,
 		userChosenEvaluations
 	);
-
-	return takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
+	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
+	for(let i=0;i!=best.length;++i){
+		for(let j=0;j!=best[i].length;++j){
+			const ett = new Set<number>();
+			companies.find((c) => c.id==best[i][j]?.company)!.vehicles.find((v) => v.id==best[i][j]?.vehicle)!.events.filter((e) => e.communicated<best[i][j]?.dropoffTime!&&e.communicated>best[i][j]?.pickupTime!)
+			.forEach((e) => ett.add(e.tourId));
+			best[i][j]!.mergeTourList=[...ett];
+		}
+	}
+	return best;
 }

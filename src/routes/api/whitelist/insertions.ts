@@ -54,6 +54,7 @@ export type InsertionEvaluation = {
 	tour: number | undefined;
 	departure: Date | undefined;
 	arrival: Date | undefined;
+	mergeTourList: Array<number>;
 };
 
 type SingleInsertionEvaluation = {
@@ -290,7 +291,8 @@ export function evaluateNewTours(
 							...resultNewTour,
 							company: companyIdx,
 							vehicle: vehicle.id,
-							tour: undefined
+							tour: undefined,
+							mergeTourList: []
 						};
 					}
 				}
@@ -404,7 +406,8 @@ export function evaluateSingleInsertions(
 								...resultBoth,
 								company: insertionInfo.companyIdx,
 								vehicle: insertionInfo.vehicle.id,
-								tour: insertionCase.how == InsertHow.APPEND ? prev?.tourId : next?.tourId
+								tour: insertionCase.how == InsertHow.APPEND ? prev?.tourId : next?.tourId,
+								mergeTourList: []
 							};
 						}
 					}
@@ -500,7 +503,8 @@ export function evaluatePairInsertions(
 								vehicle: insertionInfo.vehicle.id,
 								tour: 1, // TODO,
 								departure: comesFromCompany(pickup.case) ? new Date(pickup.time.getTime() - pickup.approachDuration) : undefined,
-								arrival: returnsToCompany(dropoff.case) ? new Date(dropoff.time.getTime() + dropoff.returnDuration) : undefined
+								arrival: returnsToCompany(dropoff.case) ? new Date(dropoff.time.getTime() + dropoff.returnDuration) : undefined,
+								mergeTourList: []
 							};
 						}
 					}
