@@ -19,6 +19,26 @@ services:
     ports:
       - 6501:8080
 
+  motis-import:
+    image: ghcr.io/motis-project/motis:2.0.0-beta.15
+    volumes:
+      - ./GTFS.zip:/data/GTFS.zip
+      - ./my.osm.pbf:/data/my.osm.pbf
+      - ./config.yml:/data/config.yml
+      - data-volume:/data:rw
+    command: /bin/sh -c "./motis import -c /data/config.yml /data/my.osm.pbf /data/GTFS.zip"
+
+  motis-server:
+    image: ghcr.io/motis-project/motis:2.0.0-beta.15
+    depends_on:
+      - motis-import
+    volumes:
+      - ./config.yml:/data/config.yml
+      - data-volume:/data:rw
+    ports:
+      - 8080:8080
+    command: /bin/sh -c "./motis server -d /data"
+
   prima:
     image: prima
     restart: always
@@ -29,6 +49,9 @@ services:
       - ORIGIN=http://localhost:7777
     build:
       context: .
+    depends_on:
+      - motis-server
+      - pg
 
 volumes:
   data-volume:

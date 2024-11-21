@@ -13,3 +13,6 @@ booking-generator/data/stops.txt
 booking-generator/test
 .vscode
 /driver-app/.gradle/
+GTFS.zip
+my.osm.pbf
+/screenshots
