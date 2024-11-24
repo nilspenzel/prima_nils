@@ -1,4 +1,4 @@
-import { type InsertionEvaluation } from '../../../lib/bookingAPI/insertions';
+import { type InsertionEvaluation } from '$lib/bookingAPI/insertions';
 import type { RequestEvent } from './$types';
 import { Validator } from 'jsonschema';
 import {
@@ -40,8 +40,6 @@ export async function POST(event: RequestEvent) {
 			times: parameters.times
 		});
 	}
-	console.log("start", parameters.start,parameters.startBusStops,parameters.capacities);
-	console.log("target", parameters.target,parameters.targetBusStops,parameters.capacities);
 	const start = await whitelist(
 		parameters.start,
 		parameters.startBusStops,

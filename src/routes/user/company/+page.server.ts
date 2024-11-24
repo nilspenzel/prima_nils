@@ -104,7 +104,7 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 	//insertRequest(c1, capacities, exp1, event.locals.user!.id, [], []);
 
 	const goerlitz = new Coordinates(51.15211908961152, 14.980690499347247);
-	const reichenbach = new Coordinates(51.143223108169025, 14.804599652220105);
+	const koenigshain = new Coordinates(51.181482763047086, 14.872886683336674);
 	const startFixed = true;
 	const times = [new Date("2024-11-30T08:47:00")];
 	const capacities2: Capacities = {
@@ -121,12 +121,13 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 		times: [new Date("2024-11-30T08:55:00")]
 	}];
 	const targetBusStops = [{
-			coordinates: new Coordinates(51.144001989553544, 14.795203906190494),
+			coordinates: new Coordinates(51.18191111011515, 14.87610809458937),
 			times: [new Date("2024-11-30T09:10:00")]
 	}];
 
-	const a = await wl(event, goerlitz,reichenbach,startFixed,times,capacities2,startBusStops,targetBusStops);
+	const a = await wl(event, goerlitz,koenigshain,startFixed,times,capacities2,startBusStops,targetBusStops);
 	const b= await a.json();
+	console.log(b.target[0][0]);
 
 	const companyId = event.locals.user?.company;
 	const zones = await db

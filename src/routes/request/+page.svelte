@@ -30,7 +30,17 @@
 	let destination = $state<Coordinates>({
 		lat: 51.505730979747334,
 		lng: 14.638267982988827
-	});
+	});  
+	
+	const parsedZones = data.zones.map((zoneString) => {
+    try {
+      return JSON.parse(zoneString.border); // Parse each string to GeoJSON
+    } catch (e) {
+      console.error('Invalid GeoJSON string:', zoneString, e);
+      return null; // Return null for invalid strings
+    }
+  }).filter((zone) => zone !== null); // Filter out invalid zones
+
 	let query = $derived<{
 		from: Location;
 		to: Location;
@@ -260,6 +270,42 @@
 						>
 					</div>
 				</div>
+
+
+			{#if data.drawBorders}	
+  {#each parsedZones as zone, index}
+        <GeoJSON id={'zone-' + index} data={zone}>
+          <Layer
+            id={'zone-outline-' + index}
+            type="line"
+            layout={{
+              'line-join': 'round',
+              'line-cap': 'round'
+            }}
+            filter={true}
+            paint={{
+              'line-color': '#ff0000',
+              'line-width': 2,
+              'line-opacity': 0.8
+            }}
+          />
+          <Layer
+            id={'zone-fill-' + index}
+            type="fill"
+        	layout={{}}
+            filter={true}
+            paint={{
+              'fill-color': '#ffcccc',
+              'fill-opacity': 0.3
+            }}
+          />
+        </GeoJSON>
+  {/each}
+  {/if}
+
+
+
+
 				<div class="flex flex-col space-y-8 h-[45vh] overflow-y-auto px-4 py-8">
 					{#each bookingResponse as bookingResponse}
 						{#await bookingResponse}

@@ -19,7 +19,7 @@ export async function whitelist(
 	let firstTime = new Date('5000-01-01T00:00:00.0Z');
 	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
 		for (let timeIdx = 0; timeIdx != busStops[busStopIdx].times.length; ++timeIdx) {
-			const time = busStops[busStopIdx].times[timeIdx];
+			const time = new Date(busStops[busStopIdx].times[timeIdx]);
 			if (time < firstTime) {
 				firstTime = time;
 			}
@@ -30,7 +30,6 @@ export async function whitelist(
 	}
 	const searchInterval = new Interval(firstTime, lastTime);
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
-	console.log("busstops",busStops);
 
 	return await evaluateRequest(
 		await bookingApiQuery(

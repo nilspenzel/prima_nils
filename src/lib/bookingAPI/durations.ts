@@ -127,9 +127,6 @@ export function getAllowedOperationTimes(
 	if (insertionCase.how == InsertHow.INSERT) {
 		return [window];
 	}
-	console.log(insertionCase.how);
-	console.log('avas', vehicle.availabilities);
-	console.log('tours', vehicle.tours);
 	const relevantAvailabilities = (() => {
 		switch (insertionCase.how) {
 			case InsertHow.APPEND:
@@ -149,7 +146,6 @@ export function getAllowedOperationTimes(
 				);
 		}
 	})();
-	console.log('releAva', relevantAvailabilities);
 	console.assert(
 		!(insertionCase.how != InsertHow.NEW_TOUR && relevantAvailabilities.length > 1),
 		'Found 2 intervals, which are supposed to be disjoint, containing the same timestamp.'

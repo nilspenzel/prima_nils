@@ -44,9 +44,6 @@ export async function evaluateRequest(
 			);
 		})
 	);
-	console.log("companies",companies);
-	console.log("inser",insertionRanges);
-	console.log("rc: ",gatherRoutingCoordinates(companies, insertionRanges));
 	const routingResults = await routing(
 		companies,
 		gatherRoutingCoordinates(companies, insertionRanges),
