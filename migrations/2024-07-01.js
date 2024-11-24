@@ -99,6 +99,7 @@ export async function up(db) {
         .addColumn('communicated_time', 'timestamp', (col) => col.notNull())
         .addColumn('approach_duration', 'integer', (col) => col.notNull())
         .addColumn('return_duration', 'integer', (col) => col.notNull())
+        .addColumn('event_group', 'varchar', (col) => col.notNull())
         .addColumn('request', 'integer', (col) =>
             col.references('request.id').notNull(),
         )

@@ -124,10 +124,12 @@ export function getAllowedOperationTimes(
 				: prev.communicated;
 	windowStartTime = new Date(Math.max(windowStartTime.getTime(), prepTime.getTime()));
 	const window = new Interval(windowStartTime, windowEndTime);
-
 	if (insertionCase.how == InsertHow.INSERT) {
 		return [window];
 	}
+	console.log(insertionCase.how);
+	console.log('avas', vehicle.availabilities);
+	console.log('tours', vehicle.tours);
 	const relevantAvailabilities = (() => {
 		switch (insertionCase.how) {
 			case InsertHow.APPEND:
@@ -147,6 +149,7 @@ export function getAllowedOperationTimes(
 				);
 		}
 	})();
+	console.log('releAva', relevantAvailabilities);
 	console.assert(
 		!(insertionCase.how != InsertHow.NEW_TOUR && relevantAvailabilities.length > 1),
 		'Found 2 intervals, which are supposed to be disjoint, containing the same timestamp.'
@@ -216,15 +219,12 @@ export function getArrivalWindow(
 			)
 		);
 	}
-	console.log(arrivalWindows);
 	let arrivalWindows2 = arrivalWindows.filter((window) => window != undefined);
-	console.log(arrivalWindows2);
 	if (busStopWindow != undefined) {
 		arrivalWindows2 = arrivalWindows2
 			.map((window) => window.intersect(busStopWindow))
 			.filter((window) => window != undefined);
 	}
-	console.log(arrivalWindows2);
 	if (arrivalWindows2.length == 0) {
 		return undefined;
 	}

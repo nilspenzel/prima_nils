@@ -52,6 +52,7 @@
 		"@mapbox/polyline": "^1.2.1",
 		"@node-rs/argon2": "^1.8.3",
 		"@playwright/test": "^1.45.2",
+		"@types/uuid": "^10.0.0",
 		"bits-ui": "^0.21.13",
 		"clsx": "^2.1.1",
 		"formsnap": "^1.0.1",

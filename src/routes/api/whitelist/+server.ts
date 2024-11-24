@@ -1,7 +1,11 @@
 import { type InsertionEvaluation } from './insertions';
 import type { RequestEvent } from './$types';
 import { Validator } from 'jsonschema';
-import { schemaDefinitions, whitelistSchema, type WhitelistRequest } from '$lib/bookingApiParameters';
+import {
+	schemaDefinitions,
+	whitelistSchema,
+	type WhitelistRequest
+} from '$lib/bookingApiParameters';
 import { json } from '@sveltejs/kit';
 import { white } from './whitelist';
 
@@ -40,15 +44,13 @@ export async function POST(event: RequestEvent) {
 		parameters.start,
 		parameters.startBusStops,
 		parameters.capacities,
-		false,
-		null
+		false
 	);
 	const target = await white(
 		parameters.target,
 		parameters.targetBusStops,
 		parameters.capacities,
-		true,
-		null
+		true
 	);
 	const direct = parameters.startFixed ? target[target.length - 1] : start[start.length - 1];
 	const response: WhitelistResponse = {

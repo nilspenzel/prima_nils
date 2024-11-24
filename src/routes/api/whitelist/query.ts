@@ -36,6 +36,7 @@ type DbEvent = {
 	longitude: number;
 	approach_duration: number;
 	return_duration: number;
+	event_group: string;
 };
 
 type DbTour = {
@@ -83,7 +84,8 @@ const createEvent = (e: DbEvent, t: DbTour): Event => {
 		),
 		communicated: new Date(communicated),
 		approachDuration: e.approach_duration,
-		returnDuration: e.return_duration
+		returnDuration: e.return_duration,
+		eventGroup: e.event_group
 	};
 };
 
@@ -174,7 +176,8 @@ const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 				'request.wheelchairs',
 				'event.is_pickup',
 				'event.approach_duration',
-				'event.return_duration'
+				'event.return_duration',
+				'event.event_group'
 			])
 	).as('events');
 };

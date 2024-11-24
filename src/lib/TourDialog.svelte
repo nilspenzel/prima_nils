@@ -12,19 +12,11 @@
 	import ConfirmationDialog from '$lib/ConfirmationDialog.svelte';
 	import maplibregl from 'maplibre-gl';
 	import { Button } from '$lib/components/ui/button';
-	import { MIN_PREP_MINUTES, MOTIS_BASE_URL } from './constants';
-	import { plan, type PlanResponse } from './motis';
-	import { coordinatesToPlace } from './motisUtils';
+	import { MIN_PREP_MINUTES } from './constants';
+	import { type PlanResponse } from './motis';
+	import { plan } from '$lib/api.js';
 	import { Coordinates } from './location';
-	import polyline from '@mapbox/polyline';
-
-	export function polylineToGeoJSON(encodedPolyline: string): GeoJSON.LineString {
-		const coordinates = polyline.decode(encodedPolyline, 7).map(([lng, lat]) => [lat, lng]);
-		return {
-			type: 'LineString',
-			coordinates
-		};
-	}
+	import { polylineToGeoJSON } from './polylineToGeojson';
 
 	class Props {
 		open!: {
@@ -53,15 +45,7 @@
 			let e1 = tourEvents![e];
 			let e2 = tourEvents![e + 1];
 			routes.push(
-				plan({
-					baseUrl: MOTIS_BASE_URL,
-					query: {
-						fromPlace: coordinatesToPlace(new Coordinates(e1.latitude, e1.longitude)),
-						toPlace: coordinatesToPlace(new Coordinates(e2.latitude, e2.longitude)),
-						maxDirectTime: 3600,
-						mode: ['CAR']
-					}
-				}).then((d) => d.data!)
+				plan(new Coordinates(e1.latitude, e1.longitude), new Coordinates(e2.latitude, e2.longitude))
 			);
 		}
 		return routes;

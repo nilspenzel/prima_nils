@@ -1,25 +1,30 @@
 import { sql } from 'kysely';
 
 export async function up(db) {
+  await sql`
+  CREATE TYPE event_group AS (
+      id INTEGER,
+      group TEXT
+  );`.execute(db);
+
 	await sql`
-      CREATE TYPE request_type AS (
-          passengers INTEGER,
-          wheelchairs INTEGER,
-          bikes INTEGER,
-          luggage INTEGER
-      );
-  `.execute(db);
+  CREATE TYPE request_type AS (
+      passengers INTEGER,
+      wheelchairs INTEGER,
+      bikes INTEGER,
+      luggage INTEGER
+  );`.execute(db);
 
   await sql`
-      CREATE TYPE tour_type AS (
-          departure TIMESTAMP,
-          arrival TIMESTAMP,
-          vehicle INTEGER,
-          id INTEGER
-      );
-  `.execute(db);
+  CREATE TYPE tour_type AS (
+      departure TIMESTAMP,
+      arrival TIMESTAMP,
+      vehicle INTEGER,
+      id INTEGER
+  );`.execute(db);
 
-	await sql`CREATE TYPE event_type AS ( 
+	await sql`
+  CREATE TYPE event_type AS ( 
     is_pickup boolean,
     latitude float,
     longitude float,
@@ -28,8 +33,22 @@ export async function up(db) {
     customer text,
     approach_duration integer,
     return_duration integer,
-    address TEXT
+    address TEXT,
+    event_group TEXT
   );`.execute(db);
+
+  await sql`
+    CREATE OR REPLACE PROCEDURE update_event_groups(
+      p_update_list event_group[]
+    ) AS $$
+    BEGIN
+      UPDATE event
+      SET event_group = eg.id
+      FROM unnest(p_update_list) AS eg(id, group)
+      WHERE tour = eg.group;
+    END;
+    $$ LANGUAGE plpgsql;
+  `.execute(db);
 
 	await sql`
     CREATE OR REPLACE PROCEDURE insert_request(
@@ -54,12 +73,12 @@ export async function up(db) {
       BEGIN
         INSERT INTO event (
           is_pickup, latitude, longitude, scheduled_time, communicated_time,
-          address, tour, customer, request, approach_duration, return_duration
+          address, tour, customer, request, approach_duration, return_duration, event_group
         )
       VALUES (
         p_event.is_pickup, p_event.latitude, p_event.longitude, p_event.scheduled_time,
         p_event.communicated_time, p_event.address, p_tour_id, p_event.customer,
-        p_request_id, p_event.approach_duration, p_event.return_duration
+        p_request_id, p_event.approach_duration, p_event.return_duration, p_event.event_group
       );
     END;
     $$ LANGUAGE plpgsql;`.execute(db);
@@ -104,12 +123,14 @@ export async function up(db) {
       p_event1 event_type,
       p_event2 event_type,
       p_merge_tour_list INTEGER[],
+      p_update_event_group_list event_group[],
       p_tour tour_type
     ) AS $$
     DECLARE
       v_request_id INTEGER;
       v_tour_id INTEGER;
     BEGIN
+      CALL update_event_groups(p_update_event_group_list);
       IF p_tour.id IS NULL THEN
           CALL insert_tour(p_tour, v_tour_id);
       ELSE

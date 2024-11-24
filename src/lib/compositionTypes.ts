@@ -37,4 +37,5 @@ export type Event = {
 	communicated: Date;
 	approachDuration: number;
 	returnDuration: number;
+	eventGroup: string;
 };

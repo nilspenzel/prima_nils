@@ -140,6 +140,7 @@ export interface EventTable {
 	request: number;
 	approach_duration: number;
 	return_duration: number;
+	event_group: string;
 }
 
 export type Event = Selectable<EventTable>;

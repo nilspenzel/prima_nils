@@ -18,44 +18,23 @@ import { gatherRoutingCoordinates, routing } from './routing';
 import { bookingApiQuery } from './query';
 import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
-import type { Transaction } from 'kysely';
-import type { Database } from '$lib/types';
+import type { Company, Event } from '$lib/compositionTypes';
+import { v4 as uuidv4 } from 'uuid';
+import { InsertHow } from './insertionTypes';
 
-export async function white(
+export async function evaluateRequest(
+	companies: Company[],
+	expandedSearchInterval: Interval,
 	userChosen: Coordinates,
 	busStops: BusStop[],
 	required: Capacities,
-	startFixed: boolean,
-	trx: Transaction<Database> | null
+	startFixed: boolean
 ) {
-	if (busStops.length == 0) {
-		return [];
-	}
-	let lastTime = new Date(0);
-	let firstTime = new Date('5000-01-01T00:00:00.0Z');
-	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
-		for (let timeIdx = 0; timeIdx != busStops[busStopIdx].times.length; ++timeIdx) {
-			const time = busStops[busStopIdx].times[timeIdx];
-			if (time < firstTime) {
-				firstTime = time;
-			}
-			if (time > lastTime) {
-				lastTime = time;
-			}
-		}
-	}
-	const searchInterval = new Interval(firstTime, lastTime);
-	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
-	const busStopCoordinates = busStops.map((busStop) => busStop.coordinates);
-	const companies = await bookingApiQuery(
+	const travelDurations = await oneToMany(
 		userChosen,
-		required,
-		searchInterval,
-		busStopCoordinates,
-		trx
+		busStops.map((busStop) => busStop.coordinates),
+		startFixed
 	);
-
-	const travelDurations = await oneToMany(userChosen, busStopCoordinates, startFixed);
 
 	const insertionRanges = new Map<number, Range[]>();
 	companies.forEach((company) =>
@@ -110,13 +89,50 @@ export async function white(
 		userChosenEvaluations
 	);
 	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
-	for(let i=0;i!=best.length;++i){
-		for(let j=0;j!=best[i].length;++j){
-			const ett = new Set<number>();
-			companies.find((c) => c.id==best[i][j]?.company)!.vehicles.find((v) => v.id==best[i][j]?.vehicle)!.events.filter((e) => e.communicated<best[i][j]?.dropoffTime!&&e.communicated>best[i][j]?.pickupTime!)
-			.forEach((e) => ett.add(e.tourId));
-			best[i][j]!.mergeTourList=[...ett];
+	console.log(bothEvaluations);
+	console.log(newTourEvaluations);
+	console.log(pairEvaluations);
+	return best;
+}
+
+export async function white(
+	userChosen: Coordinates,
+	busStops: BusStop[],
+	required: Capacities,
+	startFixed: boolean
+) {
+	if (busStops.length == 0) {
+		return [];
+	}
+	let lastTime = new Date(0);
+	let firstTime = new Date('5000-01-01T00:00:00.0Z');
+	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
+		for (let timeIdx = 0; timeIdx != busStops[busStopIdx].times.length; ++timeIdx) {
+			const time = busStops[busStopIdx].times[timeIdx];
+			if (time < firstTime) {
+				firstTime = time;
+			}
+			if (time > lastTime) {
+				lastTime = time;
+			}
 		}
 	}
-	return best;
+	const searchInterval = new Interval(firstTime, lastTime);
+	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
+	const companies = await bookingApiQuery(
+		userChosen,
+		required,
+		searchInterval,
+		busStops.map((busStop) => busStop.coordinates),
+		null
+	);
+
+	return await evaluateRequest(
+		companies,
+		expandedSearchInterval,
+		userChosen,
+		busStops,
+		required,
+		startFixed
+	);
 }

@@ -54,7 +54,6 @@ export type InsertionEvaluation = {
 	tour: number | undefined;
 	departure: Date | undefined;
 	arrival: Date | undefined;
-	mergeTourList: Array<number>;
 };
 
 type SingleInsertionEvaluation = {
@@ -129,22 +128,22 @@ export function evaluateBothInsertion(
 				? prev.returnDuration
 				: prev.returnDuration + next.approachDuration);
 	const taxiWaitingTime = getTaxiWaitingTime(insertionCase, approachDuration, prev, next);
-	const pickupTime = 
-	insertionCase.direction == InsertDirection.FROM_BUS_STOP
-		? arrivalWindow.endTime
-		: new Date(
-				arrivalWindow.startTime.getTime() -
-					travelDuration -
-					minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
-			);
-	const dropoffTime = 
-	insertionCase.direction == InsertDirection.FROM_BUS_STOP
-		? new Date(
-				arrivalWindow.endTime.getTime() +
-					travelDuration +
-					minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
-			)
-		: arrivalWindow.startTime;
+	const pickupTime =
+		insertionCase.direction == InsertDirection.FROM_BUS_STOP
+			? arrivalWindow.endTime
+			: new Date(
+					arrivalWindow.startTime.getTime() -
+						travelDuration -
+						minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
+				);
+	const dropoffTime =
+		insertionCase.direction == InsertDirection.FROM_BUS_STOP
+			? new Date(
+					arrivalWindow.endTime.getTime() +
+						travelDuration +
+						minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
+				)
+			: arrivalWindow.startTime;
 	return {
 		pickupTime,
 		dropoffTime,
@@ -154,8 +153,12 @@ export function evaluateBothInsertion(
 		taxiDuration,
 		taxiWaitingTime,
 		cost: computeCost(travelDuration, taxiDuration, taxiWaitingTime),
-		departure: comesFromCompany(insertionCase) ? new Date(pickupTime.getTime() - approachDuration) : undefined,
-		arrival: returnsToCompany(insertionCase) ? new Date(dropoffTime.getTime() + returnDuration) : undefined
+		departure: comesFromCompany(insertionCase)
+			? new Date(pickupTime.getTime() - approachDuration)
+			: undefined,
+		arrival: returnsToCompany(insertionCase)
+			? new Date(dropoffTime.getTime() + returnDuration)
+			: undefined
 	};
 }
 
@@ -291,8 +294,7 @@ export function evaluateNewTours(
 							...resultNewTour,
 							company: companyIdx,
 							vehicle: vehicle.id,
-							tour: undefined,
-							mergeTourList: []
+							tour: undefined
 						};
 					}
 				}
@@ -406,8 +408,7 @@ export function evaluateSingleInsertions(
 								...resultBoth,
 								company: insertionInfo.companyIdx,
 								vehicle: insertionInfo.vehicle.id,
-								tour: insertionCase.how == InsertHow.APPEND ? prev?.tourId : next?.tourId,
-								mergeTourList: []
+								tour: insertionCase.how == InsertHow.APPEND ? prev?.tourId : next?.tourId
 							};
 						}
 					}
@@ -502,9 +503,12 @@ export function evaluatePairInsertions(
 								company: insertionInfo.companyIdx,
 								vehicle: insertionInfo.vehicle.id,
 								tour: 1, // TODO,
-								departure: comesFromCompany(pickup.case) ? new Date(pickup.time.getTime() - pickup.approachDuration) : undefined,
-								arrival: returnsToCompany(dropoff.case) ? new Date(dropoff.time.getTime() + dropoff.returnDuration) : undefined,
-								mergeTourList: []
+								departure: comesFromCompany(pickup.case)
+									? new Date(pickup.time.getTime() - pickup.approachDuration)
+									: undefined,
+								arrival: returnsToCompany(dropoff.case)
+									? new Date(dropoff.time.getTime() + dropoff.returnDuration)
+									: undefined
 							};
 						}
 					}

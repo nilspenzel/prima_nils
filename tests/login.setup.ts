@@ -27,6 +27,8 @@ test('activate taxi', async ({ page }) => {
 	await login(page, MAINTAINER);
 	await expect(page.getByRole('heading', { name: 'Unternehmer freischalten' })).toBeVisible();
 	await page.getByLabel('Email').fill(ENTREPENEUR.email);
+	await page.screenshot({ path: 'screenshots/afterEnteringEntrepreneurEmail.png', fullPage: true });
 	await page.getByRole('button', { name: 'Unternehmer freischalten' }).click();
+	await page.screenshot({ path: 'screenshots/afterActivatingEntrepreneur.png', fullPage: true });
 	await expect(page.getByText('Freischalten erfolgreich!')).toBeVisible();
 });
