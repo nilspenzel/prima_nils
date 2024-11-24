@@ -8,8 +8,8 @@ import {
 	InsertWhat,
 	InsertWhere,
 	type InsertionType
-} from './insertionTypes';
-import { getAllowedOperationTimes } from './durations';
+} from '../../../lib/bookingAPI/insertionTypes';
+import { getAllowedOperationTimes } from '../../../lib/bookingAPI/durations';
 
 const createVehicle = (availabilities: Interval[]): Vehicle => {
 	return {
@@ -35,7 +35,8 @@ const createEvent = (departure: number, communicated: number, arrival: number): 
 		communicated: inX(communicated),
 		approachDuration: 0,
 		returnDuration: 0,
-		time: new Interval(new Date(), new Date())
+		time: new Interval(new Date(), new Date()),
+		eventGroup: ''
 	};
 };
 

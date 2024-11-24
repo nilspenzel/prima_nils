@@ -53,7 +53,8 @@ export const POST = async (event: RequestEvent) => {
 				parameters.capacities,
 				parameters.connection1,
 				customer.id,
-				[]
+				firstConnection.eventGroupUpdateList,
+				firstConnection.mergeTourList
 			);
 			return json([]);
 		}
@@ -67,18 +68,20 @@ export const POST = async (event: RequestEvent) => {
 			return json({ message: 'Die zweite Anfrage kann nicht erfüllt werden.' }, { status: 400 });
 		}
 		insertRequest(
-			secondConnection.best,
+			firstConnection.best,
 			parameters.capacities,
 			parameters.connection2,
 			customer.id,
-			[]
+			firstConnection.eventGroupUpdateList,
+			firstConnection.mergeTourList
 		);
 		insertRequest(
-			firstConnection.best,
+			secondConnection.best,
 			parameters.capacities,
 			parameters.connection1,
 			customer.id,
-			[]
+			secondConnection.eventGroupUpdateList,
+			secondConnection.mergeTourList
 		);
 	});
 	return json([]);

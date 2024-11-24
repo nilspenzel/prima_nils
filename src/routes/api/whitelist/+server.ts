@@ -1,4 +1,4 @@
-import { type InsertionEvaluation } from './insertions';
+import { type InsertionEvaluation } from '../../../lib/bookingAPI/insertions';
 import type { RequestEvent } from './$types';
 import { Validator } from 'jsonschema';
 import {
@@ -7,7 +7,7 @@ import {
 	type WhitelistRequest
 } from '$lib/bookingApiParameters';
 import { json } from '@sveltejs/kit';
-import { white } from './whitelist';
+import { whitelist } from './whitelist';
 
 export type WhitelistResponse = {
 	start: (InsertionEvaluation | undefined)[][];
@@ -40,13 +40,13 @@ export async function POST(event: RequestEvent) {
 			times: parameters.times
 		});
 	}
-	const start = await white(
+	const start = await whitelist(
 		parameters.start,
 		parameters.startBusStops,
 		parameters.capacities,
 		false
 	);
-	const target = await white(
+	const target = await whitelist(
 		parameters.target,
 		parameters.targetBusStops,
 		parameters.capacities,

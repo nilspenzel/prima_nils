@@ -27,7 +27,7 @@ const createEvent = (id: number): Event => {
 		communicated: new Date(),
 		approachDuration: 0,
 		returnDuration: 0,
-		time: new Interval(new Date(), new Date()), 
+		time: new Interval(new Date(), new Date()),
 		eventGroup: ''
 	};
 };

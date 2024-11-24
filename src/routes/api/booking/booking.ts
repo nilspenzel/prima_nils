@@ -7,9 +7,9 @@ import type { Transaction } from 'kysely';
 import type { Database } from '$lib/types';
 import type { Event } from '$lib/compositionTypes';
 import { v4 as uuidv4 } from 'uuid';
-import { InsertHow } from '../whitelist/insertionTypes';
+import { InsertHow } from '../../../lib/bookingAPI/insertionTypes';
 import type { ExpectedConnection } from '$lib/bookingApiParameters';
-import { evaluateRequest } from '../whitelist/whitelist';
+import { evaluateRequest } from '$lib/bookingAPI/evaluateRequest';
 
 export async function booking(
 	c: ExpectedConnection,
@@ -45,22 +45,32 @@ export async function booking(
 		.find((c) => c.id == best.company)!
 		.vehicles.find((v) => v.id == best.vehicle)!.events;
 	const prevEventIdx = events.findLastIndex((e) => e.communicated <= best.pickupTime);
-	const prevEvent: Event | undefined = events[prevEventIdx];
-	const nextEvent: Event | undefined = events[prevEventIdx + 1];
-	const res1 = getEventGroups(events, c.start.coordinates, prevEventIdx, best.pickupCase.how);
-	const res2 = getEventGroups(events, c.target.coordinates, prevEventIdx, best.dropoffCase.how);
-	const eventGroupUpdateList = res1.updateList.concat(res2.updateList);
+	const startEventGroupInfo = handleEventGroups(
+		events,
+		c.start.coordinates,
+		prevEventIdx,
+		best.pickupCase.how
+	);
+	const prevDropoffEventIdx = events.findLastIndex((e) => e.communicated <= best.pickupTime);
+	const targetEventGroupInfo = handleEventGroups(
+		events,
+		c.target.coordinates,
+		prevDropoffEventIdx,
+		best.dropoffCase.how
+	);
+	const eventGroupUpdateList = startEventGroupInfo.updateList.concat(
+		targetEventGroupInfo.updateList
+	);
+
+	const prevEvent = events[prevEventIdx];
+	const nextEvent = events[prevEventIdx + 1];
 	const tour = (() => {
 		switch (best.pickupCase.how) {
 			case InsertHow.NEW_TOUR:
 				return undefined;
-			case InsertHow.INSERT:
-				return prevEvent!.tourId;
-			case InsertHow.APPEND:
-				return prevEvent!.tourId;
 			case InsertHow.PREPEND:
 				return nextEvent!.tourId;
-			case InsertHow.CONNECT:
+			default:
 				return prevEvent!.tourId;
 		}
 	})();
@@ -68,6 +78,16 @@ export async function booking(
 	if (best.pickupCase.how == InsertHow.CONNECT) {
 		mergeTourList.push(prevEvent.tourId);
 		mergeTourList.push(nextEvent.tourId);
+	}
+	if (best.dropoffCase.how == InsertHow.CONNECT) {
+		const prevDropoffEvent = events[prevDropoffEventIdx];
+		const nextDropoffEvent = events[prevDropoffEventIdx + 1];
+		if (mergeTourList.find((t) => t == prevDropoffEvent.tourId) == undefined) {
+			mergeTourList.push(prevDropoffEvent.tourId);
+		}
+		if (mergeTourList.find((t) => t == nextDropoffEvent.tourId) == undefined) {
+			mergeTourList.push(nextDropoffEvent.tourId);
+		}
 	}
 	return {
 		best,
@@ -82,45 +102,61 @@ export type EventGroup = {
 	group: string;
 };
 
-const getEventGroups = (
+const samePlace = (c1: Coordinates, c2: Coordinates) => {
+	return c1.lat == c2.lat && c1.lng == c2.lng;
+};
+
+const handleEventGroups = (
+	events: Event[],
+	coordinates: Coordinates,
+	how: InsertHow,
+	prevEventIdx: number
+) => {
+	const prevEvent = events[prevEventIdx];
+	const nextEvent = events[prevEventIdx + 1];
+	const newEventGroup = getNewEventGroup(prevEvent, nextEvent, coordinates, how);
+	return {
+		newEventGroup,
+		updateList: getEventGroupUpdates(events, coordinates, prevEventIdx, how, newEventGroup)
+	};
+};
+
+const getNewEventGroup = (
+	prevEvent: Event,
+	nextEvent: Event,
+	coordinates: Coordinates,
+	how: InsertHow
+) => {
+	if (how == InsertHow.NEW_TOUR) {
+		return uuidv4();
+	}
+	const comparisonEvent = how == InsertHow.PREPEND ? nextEvent : prevEvent;
+	return !samePlace(comparisonEvent.coordinates, coordinates)
+		? uuidv4()
+		: comparisonEvent.eventGroup;
+};
+
+const getEventGroupUpdates = (
 	events: Event[],
 	coordinates: Coordinates,
 	prevEventIdx: number,
-	how: InsertHow
+	how: InsertHow,
+	newEventGroup: string
 ) => {
-	const samePlace = (c1: Coordinates, c2: Coordinates) => {
-		return c1.lat == c2.lat && c1.lng == c2.lng;
-	};
-	const updateList: EventGroup[] = [];
-	const nextEvent = events[prevEventIdx + 1];
-	if (how == InsertHow.NEW_TOUR) {
-		return { updateList, eventGroup: uuidv4() };
-	}
-	if (how == InsertHow.PREPEND) {
-		const eventGroup = !samePlace(nextEvent.coordinates, coordinates)
-			? uuidv4()
-			: nextEvent.eventGroup;
-		return { updateList, eventGroup };
-	}
-	const prevEvent = events[prevEventIdx];
-	const eventGroup = !samePlace(prevEvent.coordinates, coordinates)
-		? uuidv4()
-		: prevEvent.eventGroup;
 	if (how != InsertHow.CONNECT) {
-		return { updateList, eventGroup };
+		return [];
 	}
+	const nextEvent = events[prevEventIdx + 1];
 	const nextTour = nextEvent!.tourId;
+	const updateList: EventGroup[] = [];
 	for (let i = prevEventIdx + 1; i != events.length; ++i) {
 		if (nextTour != events[i].tourId || !samePlace(events[i].coordinates, coordinates)) {
 			break;
 		}
 		updateList.push({
 			id: events[i].id,
-			group: eventGroup
+			group: newEventGroup
 		});
 	}
-	return {
-		updateList,
-		eventGroup
-	};
+	return updateList;
 };

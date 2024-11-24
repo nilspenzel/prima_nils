@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { Coordinates } from '$lib/location';
 import type { Vehicle, Event } from '$lib/compositionTypes';
-import { type RoutingResults } from './routing';
+import { type RoutingResults } from '../../../lib/bookingAPI/routing';
 import { Interval } from '$lib/interval';
-import { getApproachDuration, getReturnDuration } from './durations';
+import { getApproachDuration, getReturnDuration } from '../../../lib/bookingAPI/durations';
 import {
 	InsertDirection,
 	InsertHow,
@@ -11,7 +11,7 @@ import {
 	InsertWhere,
 	type InsertionInfo,
 	type InsertionType
-} from './insertionTypes';
+} from '../../../lib/bookingAPI/insertionTypes';
 import { MAX_TRAVEL_MS } from '$lib/constants';
 
 const createVehicle = (id: number, events: Event[]): Vehicle => {
@@ -38,7 +38,8 @@ const createEvent = (id: number): Event => {
 		communicated: new Date(),
 		approachDuration: 0,
 		returnDuration: 0,
-		time: new Interval(new Date(), new Date())
+		time: new Interval(new Date(), new Date()),
+		eventGroup: ''
 	};
 };
 

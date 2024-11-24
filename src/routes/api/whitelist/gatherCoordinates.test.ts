@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { type Range } from './capacitySimulation';
+import { type Range } from '../../../lib/bookingAPI/capacitySimulation';
 import { Coordinates } from '$lib/location';
 import type { Vehicle, Company, Event } from '$lib/compositionTypes';
-import { gatherRoutingCoordinates } from './routing';
+import { gatherRoutingCoordinates } from '../../../lib/bookingAPI/routing';
 import { Interval } from '$lib/interval';
 
 const createCompany = (
@@ -43,7 +43,8 @@ const createEvent = (coordinates: Coordinates): Event => {
 		communicated: new Date(),
 		approachDuration: 0,
 		returnDuration: 0,
-		time: new Interval(new Date(), new Date())
+		time: new Interval(new Date(), new Date()),
+		eventGroup: ''
 	};
 };
 

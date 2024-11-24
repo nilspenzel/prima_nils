@@ -18,7 +18,8 @@ function createEventCapacitiesOnly(capacities: Capacities, is_pickup: boolean): 
 		departure: new Date(),
 		communicated: new Date(),
 		approachDuration: 0,
-		returnDuration: 0
+		returnDuration: 0,
+		eventGroup: ''
 	};
 }
 
