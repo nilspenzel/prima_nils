@@ -56,7 +56,7 @@ export async function evaluateRequest(
 			(t) =>
 				new Interval(
 					startFixed ? new Date(t) : new Date(new Date(t).getTime() - MAX_PASSENGER_WAITING_TIME_PICKUP),
-					startFixed ? new Date(new Date(t).getTime() + MAX_PASSENGER_WAITING_TIME_DROPOFF) : t
+					startFixed ? new Date(new Date(t).getTime() + MAX_PASSENGER_WAITING_TIME_DROPOFF) : new Date(t)
 				)
 		)
 	);

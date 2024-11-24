@@ -114,8 +114,8 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 		wheelchairs: 0
 	};
 	const startBusStops = [{
-			coordinates: new Coordinates(51.15490583989987, 14.97189400299564),
-			times: [new Date("2024-11-30T08:55:00")]
+		coordinates: new Coordinates(51.15490583989987, 14.97189400299564),
+		times: [new Date("2024-11-30T08:55:00")]
 	},{
 		coordinates: new Coordinates(51.14999073525618, 14.994267244545114),
 		times: [new Date("2024-11-30T08:55:00")]
@@ -127,7 +127,7 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 
 	const a = await wl(event, goerlitz,koenigshain,startFixed,times,capacities2,startBusStops,targetBusStops);
 	const b= await a.json();
-	console.log(b.target[0][0]);
+	console.log(b.start[0]);
 
 	const companyId = event.locals.user?.company;
 	const zones = await db
