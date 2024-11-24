@@ -8,8 +8,8 @@ import {
 	InsertWhat,
 	InsertWhere,
 	type InsertionType
-} from '../../../lib/bookingAPI/insertionTypes';
-import { getAllowedOperationTimes } from '../../../lib/bookingAPI/durations';
+} from './insertionTypes';
+import { getAllowedOperationTimes } from './durations';
 
 const createVehicle = (availabilities: Interval[]): Vehicle => {
 	return {

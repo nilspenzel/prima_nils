@@ -98,7 +98,10 @@ export const load: PageServerLoad = async (event) => {
 		arrival: new Date(),
 		mergeTourList: []
 	};
-	insertRequest(c1, capacities, exp1, event.locals.user!.id, [], []);
+	//insertRequest(c1, capacities, exp1, event.locals.user!.id, [], []);
+
+	
+
 	const companyId = event.locals.user?.company;
 	const zones = await db
 		.selectFrom('zone')

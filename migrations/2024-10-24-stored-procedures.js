@@ -4,7 +4,7 @@ export async function up(db) {
   await sql`
   CREATE TYPE event_group AS (
       id INTEGER,
-      group TEXT
+      grp TEXT
   );`.execute(db);
 
 	await sql`
@@ -34,7 +34,7 @@ export async function up(db) {
     approach_duration integer,
     return_duration integer,
     address TEXT,
-    event_group TEXT
+    grp TEXT
   );`.execute(db);
 
   await sql`
@@ -44,8 +44,8 @@ export async function up(db) {
     BEGIN
       UPDATE event
       SET event_group = eg.id
-      FROM unnest(p_update_list) AS eg(id, group)
-      WHERE tour = eg.group;
+      FROM unnest(p_update_list) AS eg(id, grp)
+      WHERE tour = eg.grp;
     END;
     $$ LANGUAGE plpgsql;
   `.execute(db);
@@ -73,12 +73,12 @@ export async function up(db) {
       BEGIN
         INSERT INTO event (
           is_pickup, latitude, longitude, scheduled_time, communicated_time,
-          address, tour, customer, request, approach_duration, return_duration, event_group
+          address, tour, customer, request, approach_duration, return_duration, grp
         )
       VALUES (
         p_event.is_pickup, p_event.latitude, p_event.longitude, p_event.scheduled_time,
         p_event.communicated_time, p_event.address, p_tour_id, p_event.customer,
-        p_request_id, p_event.approach_duration, p_event.return_duration, p_event.event_group
+        p_request_id, p_event.approach_duration, p_event.return_duration, p_event.grp
       );
     END;
     $$ LANGUAGE plpgsql;`.execute(db);

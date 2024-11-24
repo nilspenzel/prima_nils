@@ -8,15 +8,6 @@ import { sql } from 'kysely';
 import { insertRequest } from './query';
 import { booking } from './booking';
 
-export type EvNew = {
-	location: Location;
-	scheduledTime: Date;
-	communicatedTime: Date;
-	approachDuration: number;
-	returnDuration: number;
-	customer: string;
-};
-
 export const POST = async (event: RequestEvent) => {
 	const customer = event.locals.user;
 	if (!customer) {

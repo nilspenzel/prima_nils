@@ -2,14 +2,14 @@ import type { Capacities } from '$lib/capacities';
 import { MAX_TRAVEL_MS } from '$lib/constants';
 import { Interval } from '$lib/interval';
 import type { Coordinates } from '$lib/location';
-import { bookingApiQuery } from '../whitelist/query';
+import { bookingApiQuery } from '$lib/bookingAPI/query';
 import type { Transaction } from 'kysely';
 import type { Database } from '$lib/types';
 import type { Event } from '$lib/compositionTypes';
-import { v4 as uuidv4 } from 'uuid';
-import { InsertHow } from '../../../lib/bookingAPI/insertionTypes';
+import { InsertHow } from '$lib/bookingAPI/insertionTypes';
 import type { ExpectedConnection } from '$lib/bookingApiParameters';
 import { evaluateRequest } from '$lib/bookingAPI/evaluateRequest';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function booking(
 	c: ExpectedConnection,

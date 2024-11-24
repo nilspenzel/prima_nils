@@ -2,7 +2,7 @@ import type { Capacities } from '$lib/capacities';
 import { MAX_TRAVEL_MS } from '$lib/constants';
 import { Interval } from '$lib/interval';
 import type { Coordinates } from '$lib/location';
-import { bookingApiQuery } from './query';
+import { bookingApiQuery } from '$lib/bookingAPI/query';
 import type { BusStop } from '$lib/busStop';
 import { evaluateRequest } from '$lib/bookingAPI/evaluateRequest';
 

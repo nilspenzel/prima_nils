@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { type Range } from '../../../lib/bookingAPI/capacitySimulation';
+import { type Range } from './capacitySimulation';
 import { Coordinates } from '$lib/location';
 import type { Vehicle, Company, Event } from '$lib/compositionTypes';
-import { gatherRoutingCoordinates } from '../../../lib/bookingAPI/routing';
+import { gatherRoutingCoordinates } from './routing';
 import { Interval } from '$lib/interval';
 
 const createCompany = (
