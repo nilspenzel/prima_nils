@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types.js';
-import { fail } from '@sveltejs/kit';
+import { fail, type RequestEvent } from '@sveltejs/kit';
 import { db } from '$lib/database';
 import { Coordinates } from '$lib/location.js';
 import { covers, intersects } from '$lib/sqlHelpers.js';
@@ -13,8 +13,11 @@ import {
 	InsertWhere
 } from '../../../lib/bookingAPI/insertionTypes.js';
 import { insertRequest } from '../../api/booking/query.js';
+import type { Capacities } from '$lib/capacities.js';
+import type { BusStop } from '$lib/busStop.js';
+import { wl } from '$lib/api.js';
 
-export const load: PageServerLoad = async (event) => {
+export const load: PageServerLoad = async (event: RequestEvent) => {
 	//clearDatabase();
 	const capacities = {
 		wheelchairs: 0,
@@ -100,7 +103,30 @@ export const load: PageServerLoad = async (event) => {
 	};
 	//insertRequest(c1, capacities, exp1, event.locals.user!.id, [], []);
 
-	
+	const goerlitz = new Coordinates(51.15211908961152, 14.980690499347247);
+	const reichenbach = new Coordinates(51.143223108169025, 14.804599652220105);
+	const startFixed = true;
+	const times = [new Date("2024-11-30T08:47:00")];
+	const capacities2: Capacities = {
+		passengers: 1,
+		luggage: 0,
+		bikes: 0,
+		wheelchairs: 0
+	};
+	const startBusStops = [{
+			coordinates: new Coordinates(51.15490583989987, 14.97189400299564),
+			times: [new Date("2024-11-30T08:55:00")]
+	},{
+		coordinates: new Coordinates(51.14999073525618, 14.994267244545114),
+		times: [new Date("2024-11-30T08:55:00")]
+	}];
+	const targetBusStops = [{
+			coordinates: new Coordinates(51.144001989553544, 14.795203906190494),
+			times: [new Date("2024-11-30T09:10:00")]
+	}];
+
+	const a = await wl(event, goerlitz,reichenbach,startFixed,times,capacities2,startBusStops,targetBusStops);
+	const b= await a.json();
 
 	const companyId = event.locals.user?.company;
 	const zones = await db

@@ -5,6 +5,9 @@ import { coordinatesToPlace, coordinatesToStr } from './motisUtils';
 import { type Duration, type PlanResponse } from './motis/types.gen';
 import { oneToMany as oneToManyMotis, plan as planMotis } from './motis/services.gen';
 import { secondsToMs } from './time_utils';
+import type { Capacities } from './capacities';
+import type { BusStop } from './busStop';
+import { type RequestEvent } from '@sveltejs/kit';
 
 export const getCompany = async (id: number): Promise<Company> => {
 	const response = await fetch(`/api/company?id=${id}`);
@@ -136,8 +139,36 @@ export const oneToMany = async (
 			arriveBy
 		}
 	}).then((res) => {
+		if(res.data == undefined){
+			console.log("oneToMany data was undefined.");
+			return Array(many.length).fill(Number.MAX_VALUE);
+		}
 		return res.data!.map((d: Duration) => {
 			return secondsToMs(d.duration ?? Number.MAX_VALUE);
 		});
+	});
+};
+
+export const wl = async (
+	event: RequestEvent,
+	start: Coordinates,
+	target: Coordinates,
+	startFixed: boolean,
+	times: Date[],
+	capacities: Capacities,
+	startBusStops: BusStop[],
+	targetBusStops: BusStop[]
+) => {
+	return await event.fetch('/api/whitelist', {
+		method: 'POST',
+		body: JSON.stringify({
+			start,
+			target,
+			startBusStops,
+			targetBusStops,
+			times,
+			startFixed,
+			capacities
+		})
 	});
 };

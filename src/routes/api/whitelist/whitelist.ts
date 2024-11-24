@@ -30,6 +30,7 @@ export async function whitelist(
 	}
 	const searchInterval = new Interval(firstTime, lastTime);
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
+	console.log("busstops",busStops);
 
 	return await evaluateRequest(
 		await bookingApiQuery(

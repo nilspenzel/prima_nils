@@ -102,6 +102,8 @@ export async function routing(
 	userChosen: Coordinates,
 	busStops: BusStop[]
 ): Promise<RoutingResults> {
+	//console.log("many: ",coordinates.userChosenBackwardMany);
+	//console.log("many: ",coordinates.userChosenForwardMany);
 	const from = await oneToMany(userChosen, coordinates.userChosenBackwardMany, true);
 	const to = await oneToMany(userChosen, coordinates.userChosenForwardMany, false);
 	const ret = {
@@ -118,6 +120,8 @@ export async function routing(
 		const relevantCompanyCount = companies.filter(
 			(company) => company.busStopFilter[busStopIdx]
 		).length;
+		//console.log("busmany: ",coordinates.busStopBackwardMany);
+		//console.log("busmany: ",coordinates.busStopForwardMany);
 		const from = await oneToMany(
 			busStop.coordinates,
 			coordinates.busStopBackwardMany[busStopIdx],

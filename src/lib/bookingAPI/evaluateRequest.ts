@@ -26,6 +26,9 @@ export async function evaluateRequest(
 	required: Capacities,
 	startFixed: boolean
 ) {
+	if(companies.length==0){
+		return busStops.map((bs)=> bs.times.map((t)=>undefined));
+	}
 	const travelDurations = await oneToMany(
 		userChosen,
 		busStops.map((busStop) => busStop.coordinates),
@@ -41,7 +44,9 @@ export async function evaluateRequest(
 			);
 		})
 	);
-
+	console.log("companies",companies);
+	console.log("inser",insertionRanges);
+	console.log("rc: ",gatherRoutingCoordinates(companies, insertionRanges));
 	const routingResults = await routing(
 		companies,
 		gatherRoutingCoordinates(companies, insertionRanges),
@@ -53,8 +58,8 @@ export async function evaluateRequest(
 		bs.times.map(
 			(t) =>
 				new Interval(
-					startFixed ? t : new Date(t.getTime() - MAX_PASSENGER_WAITING_TIME_PICKUP),
-					startFixed ? new Date(t.getTime() + MAX_PASSENGER_WAITING_TIME_DROPOFF) : t
+					startFixed ? new Date(t) : new Date(new Date(t).getTime() - MAX_PASSENGER_WAITING_TIME_PICKUP),
+					startFixed ? new Date(new Date(t).getTime() + MAX_PASSENGER_WAITING_TIME_DROPOFF) : t
 				)
 		)
 	);
@@ -85,8 +90,5 @@ export async function evaluateRequest(
 		userChosenEvaluations
 	);
 	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
-	console.log(bothEvaluations);
-	console.log(newTourEvaluations);
-	console.log(pairEvaluations);
 	return best;
 }
