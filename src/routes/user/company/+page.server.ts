@@ -128,6 +128,9 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 	const a = await wl(event, goerlitz,koenigshain,startFixed,times,capacities2,startBusStops,targetBusStops);
 	const b= await a.json();
 	console.log(b.start[0]);
+	console.log(b.start[1]);
+	console.log(b.target[0]);
+	console.log(b.target[1]);
 
 	const companyId = event.locals.user?.company;
 	const zones = await db
