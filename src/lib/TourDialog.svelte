@@ -12,7 +12,7 @@
 	import ConfirmationDialog from '$lib/ConfirmationDialog.svelte';
 	import maplibregl from 'maplibre-gl';
 	import { Button } from '$lib/components/ui/button';
-	import { MIN_PREP_MINUTES } from './constants';
+	import { MIN_PREP_MINUTES, MOTIS_BASE_URL } from './constants';
 	import { type PlanResponse } from './motis';
 	import { plan } from '$lib/api.js';
 	import { Coordinates } from './location';
@@ -171,7 +171,7 @@
 			bind:map
 			transformRequest={(url) => {
 				if (url.startsWith('/')) {
-					return { url: `https://europe.motis-project.de/tiles${url}` };
+					return { url: `${MOTIS_BASE_URL}/tiles${url}` };
 				}
 			}}
 			style={getStyle(0)}

@@ -17,6 +17,7 @@
 	import GeoJSON from '$lib/GeoJSON.svelte';
 	import Layer from '$lib/Layer.svelte';
 	import { polylineToGeoJSON } from '$lib/polylineToGeojson.js';
+	import { MOTIS_BASE_URL } from '$lib/constants.js';
 	const { data } = $props();
 
 	let zoom = $state(10);
@@ -205,7 +206,7 @@
 	bind:bounds
 	transformRequest={(url, _resourceType) => {
 		if (url.startsWith('/')) {
-			return { url: `https://europe.motis-project.de/tiles${url}` };
+			return { url: `${MOTIS_BASE_URL}/tiles${url}` };
 		}
 	}}
 	center={[14.889815398274935, 51.33709604007766]}
