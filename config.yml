@@ -1,0 +1,8 @@
+street_routing: true
+osr_footpath: false
+elevators: false
+geocoding: true
+reverse_geocoding: true
+osm: /data/my.osm.pbf
+gtfs: 
+  - /data/GTFS.zip

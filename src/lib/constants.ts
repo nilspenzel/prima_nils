@@ -12,5 +12,6 @@ export const TAXI_DRIVING_TIME_COST_FACTOR = 1;
 export const TAXI_WAITING_TIME_COST_FACTOR = 0.2;
 export const PASSENGER_TIME_COST_FACTOR = 1;
 export const BUFFER_TIME = 4;
-export const MOTIS_BASE_URL = 'https://europe.motis-project.de';
+export const MOTIS_BASE_URL = 'http://localhost:8080';
+//export const MOTIS_BASE_URL = 'https://europe.motis-project.de';
 export const MAX_MATCHING_DISTANCE = 200;

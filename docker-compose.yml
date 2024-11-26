@@ -1,4 +1,3 @@
-version: '3'
 services:
   pg:
     image: postgis/postgis:16-3.4
@@ -10,14 +9,42 @@ services:
       - ./.env
     volumes:
       - type: volume
-        source: data-volume
+        source: pg-data
         target: /var/lib/postgresql/data
+    networks:
+      - motis-network
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 6501:8080
+    networks:
+      - motis-network
+
+  motis-import:
+    image: ghcr.io/motis-project/motis:2.0.0-beta.15
+    volumes:
+      - ./GTFS.zip:/data/GTFS.zip
+      - ./my.osm.pbf:/data/my.osm.pbf
+      - ./config.yml:/data/config.yml
+      - motis-data:/data:rw
+    command: /bin/sh -c "./motis import -c /data/config.yml /data/my.osm.pbf /data/GTFS.zip"
+    networks:
+      - motis-network
+
+  motis-server:
+    image: ghcr.io/motis-project/motis:2.0.0-beta.15
+    depends_on:
+      - motis-import
+    volumes:
+      - ./config.yml:/data/config.yml
+      - motis-data:/data:rw
+    ports:
+      - 8080:8080
+    command: /bin/sh -c "./motis server -d /data"
+    networks:
+      - motis-network
 
   prima:
     image: prima
@@ -29,6 +56,17 @@ services:
       - ORIGIN=http://localhost:7777
     build:
       context: .
+    depends_on:
+      - motis-server
+      - pg
+    networks:
+      - motis-network
 
 volumes:
-  data-volume:
+    pg-data:
+    motis-data:
+
+networks:
+  motis-network:
+    driver: bridge
+    
