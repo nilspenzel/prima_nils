@@ -26,15 +26,14 @@ export async function evaluateRequest(
 	required: Capacities,
 	startFixed: boolean
 ) {
-	if(companies.length==0){
-		return busStops.map((bs)=> bs.times.map((t)=>undefined));
+	if (companies.length == 0) {
+		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
 	const travelDurations = await oneToMany(
 		userChosen,
 		busStops.map((busStop) => busStop.coordinates),
 		startFixed
 	);
-
 	const insertionRanges = new Map<number, Range[]>();
 	companies.forEach((company) =>
 		company.vehicles.forEach((vehicle) => {
@@ -48,32 +47,36 @@ export async function evaluateRequest(
 		companies,
 		gatherRoutingCoordinates(companies, insertionRanges),
 		userChosen,
-		busStops
+		busStops,
+		startFixed
 	);
-
 	const busStopTimes = busStops.map((bs) =>
 		bs.times.map(
 			(t) =>
 				new Interval(
-					startFixed ? new Date(t) : new Date(new Date(t).getTime() - MAX_PASSENGER_WAITING_TIME_PICKUP),
-					startFixed ? new Date(new Date(t).getTime() + MAX_PASSENGER_WAITING_TIME_DROPOFF) : new Date(t)
+					startFixed
+						? new Date(t)
+						: new Date(new Date(t).getTime() - MAX_PASSENGER_WAITING_TIME_PICKUP),
+					startFixed
+						? new Date(new Date(t).getTime() + MAX_PASSENGER_WAITING_TIME_DROPOFF)
+						: new Date(t)
 				)
 		)
-	);
-	const { busStopEvaluations, bothEvaluations, userChosenEvaluations } = evaluateSingleInsertions(
-		companies,
-		startFixed,
-		expandedSearchInterval,
-		insertionRanges,
-		busStopTimes,
-		routingResults,
-		travelDurations
 	);
 	const newTourEvaluations = evaluateNewTours(
 		companies,
 		required,
 		startFixed,
 		expandedSearchInterval,
+		busStopTimes,
+		routingResults,
+		travelDurations
+	);
+	const { busStopEvaluations, bothEvaluations, userChosenEvaluations } = evaluateSingleInsertions(
+		companies,
+		startFixed,
+		expandedSearchInterval,
+		insertionRanges,
 		busStopTimes,
 		routingResults,
 		travelDurations

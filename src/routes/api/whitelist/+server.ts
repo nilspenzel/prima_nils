@@ -40,19 +40,24 @@ export async function POST(event: RequestEvent) {
 			times: parameters.times
 		});
 	}
-	const start = await whitelist(
+	let start = await whitelist(
 		parameters.start,
 		parameters.startBusStops,
 		parameters.capacities,
 		false
 	);
-	const target = await whitelist(
+	let target = await whitelist(
 		parameters.target,
 		parameters.targetBusStops,
 		parameters.capacities,
 		true
 	);
 	const direct = parameters.startFixed ? target[target.length - 1] : start[start.length - 1];
+	if (parameters.startFixed) {
+		target = target.slice(0, target.length - 1);
+	} else {
+		start = start.slice(0, start.length - 1);
+	}
 	const response: WhitelistResponse = {
 		start,
 		target,

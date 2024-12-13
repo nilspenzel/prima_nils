@@ -39,7 +39,7 @@ export type InsertionInfo = {
 	prevEventIdxInRoutingResults: number;
 	nextEventIdxInRoutingResults: number;
 	vehicle: Vehicle;
-	insertionIdx: number;
+	idxInEvents: number;
 	currentRange: Range;
 };
 
@@ -50,37 +50,34 @@ export const INSERTION_TYPES = [
 	InsertHow.INSERT
 ];
 
-export const isCaseValid = (insertionCase: InsertionType): boolean => {
+export const canCaseBeValid = (insertionCase: InsertionType): boolean => {
 	switch (insertionCase.where) {
 		case InsertWhere.BEFORE_FIRST_EVENT:
-			if (insertionCase.how != InsertHow.PREPEND) {
-				return false;
-			}
-			break;
+			return insertionCase.how == InsertHow.PREPEND;
 		case InsertWhere.AFTER_LAST_EVENT:
-			if (insertionCase.how != InsertHow.APPEND) {
-				return false;
-			}
-			break;
+			return insertionCase.how == InsertHow.APPEND;
 		case InsertWhere.BETWEEN_TOURS:
 			return insertionCase.how != InsertHow.INSERT;
 		case InsertWhere.BETWEEN_EVENTS:
 			return insertionCase.how == InsertHow.INSERT;
 	}
+};
+
+export const isCaseValid = (insertionCase: InsertionType): boolean => {
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
 			return (
-				insertionCase.how ==
-				(insertionCase.direction == InsertDirection.TO_BUS_STOP
-					? InsertHow.PREPEND
-					: InsertHow.APPEND)
-			);
-		case InsertWhat.BUS_STOP:
-			return (
-				insertionCase.how ==
+				insertionCase.how !=
 				(insertionCase.direction == InsertDirection.TO_BUS_STOP
 					? InsertHow.APPEND
 					: InsertHow.PREPEND)
+			);
+		case InsertWhat.BUS_STOP:
+			return (
+				insertionCase.how !=
+				(insertionCase.direction == InsertDirection.TO_BUS_STOP
+					? InsertHow.PREPEND
+					: InsertHow.APPEND)
 			);
 		case InsertWhat.BOTH:
 			return true;

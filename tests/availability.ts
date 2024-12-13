@@ -86,7 +86,7 @@ test('Request ride', async ({ page }) => {
 				'table:nth-child(2) > tbody > tr > td:nth-child(4) > .w-full > tbody > tr > td > .w-8'
 			)
 			.first()
-	).toHaveCSS('background-color', 'rgb(251, 146, 60)');
+	).toHaveCSS('background-color', 'rgb(254, 249, 195)');
 	await expect(
 		page.locator(
 			'table:nth-child(2) > tbody > tr > td:nth-child(4) > .w-full > tbody > tr > td:nth-child(2) > .w-8'

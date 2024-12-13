@@ -13,7 +13,7 @@ test('Move tour to other vehicle', async ({ page }) => {
 				'table:nth-child(2) > tbody > tr > td:nth-child(4) > .w-full > tbody > tr > td > .w-8'
 			)
 			.first()
-	).toHaveCSS('background-color', 'rgb(251, 146, 60)');
+	).toHaveCSS('background-color', 'rgb(254, 249, 195)');
 
 	await page.mouse.move(425, 505);
 	await page.mouse.down();

@@ -7,7 +7,6 @@ export type Company = {
 	coordinates: Coordinates;
 	vehicles: Vehicle[];
 	zoneId: number;
-	busStopFilter: boolean[];
 };
 
 export type Vehicle = {

@@ -47,9 +47,9 @@ const withBusStops = (busStops: BusStop[], startFixed: boolean) => {
 					busStops[i].times.map((t, j) => {
 						const startTime = startFixed
 							? t
-							: new Date(t.getTime() - MAX_PASSENGER_WAITING_TIME_DROPOFF);
+							: new Date(new Date(t).getTime() - MAX_PASSENGER_WAITING_TIME_DROPOFF);
 						const endTime = startFixed
-							? new Date(t.getTime() + MAX_PASSENGER_WAITING_TIME_PICKUP)
+							? new Date(new Date(t).getTime() + MAX_PASSENGER_WAITING_TIME_PICKUP)
 							: t;
 						return sql<string>`SELECT
 												cast(${i} as integer) AS busstopindex,

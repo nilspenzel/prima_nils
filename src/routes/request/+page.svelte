@@ -9,7 +9,7 @@
 	import { Card } from '$lib/components/ui/card';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Coordinates } from '$lib/location';
-	import { booking, plan } from '$lib/api';
+	import { booking2, plan } from '$lib/api';
 	import { toTable } from '$lib/toTable';
 	import * as Alert from '$lib/components/ui/alert/index.js';
 	import { CircleAlert, CircleCheckBig } from 'lucide-svelte/icons';
@@ -30,16 +30,18 @@
 	let destination = $state<Coordinates>({
 		lat: 51.505730979747334,
 		lng: 14.638267982988827
-	});  
-	
-	const parsedZones = data.zones.map((zoneString) => {
-    try {
-      return JSON.parse(zoneString.border); // Parse each string to GeoJSON
-    } catch (e) {
-      console.error('Invalid GeoJSON string:', zoneString, e);
-      return null; // Return null for invalid strings
-    }
-  }).filter((zone) => zone !== null); // Filter out invalid zones
+	});
+
+	const parsedZones = data.zones
+		.map((zoneString) => {
+			try {
+				return JSON.parse(zoneString.border); // Parse each string to GeoJSON
+			} catch (e) {
+				console.error('Invalid GeoJSON string:', zoneString, e);
+				return null; // Return null for invalid strings
+			}
+		})
+		.filter((zone) => zone !== null); // Filter out invalid zones
 
 	let query = $derived<{
 		from: Location;
@@ -255,7 +257,7 @@
 							variant="outline"
 							on:click={() => {
 								bookingResponse = [
-									booking(
+									booking2(
 										query.from,
 										query.to,
 										arriveBy,
@@ -271,40 +273,36 @@
 					</div>
 				</div>
 
-
-			{#if data.drawBorders}	
-  {#each parsedZones as zone, index}
-        <GeoJSON id={'zone-' + index} data={zone}>
-          <Layer
-            id={'zone-outline-' + index}
-            type="line"
-            layout={{
-              'line-join': 'round',
-              'line-cap': 'round'
-            }}
-            filter={true}
-            paint={{
-              'line-color': '#ff0000',
-              'line-width': 2,
-              'line-opacity': 0.8
-            }}
-          />
-          <Layer
-            id={'zone-fill-' + index}
-            type="fill"
-        	layout={{}}
-            filter={true}
-            paint={{
-              'fill-color': '#ffcccc',
-              'fill-opacity': 0.3
-            }}
-          />
-        </GeoJSON>
-  {/each}
-  {/if}
-
-
-
+				{#if data.drawBorders}
+					{#each parsedZones as zone, index}
+						<GeoJSON id={'zone-' + index} data={zone}>
+							<Layer
+								id={'zone-outline-' + index}
+								type="line"
+								layout={{
+									'line-join': 'round',
+									'line-cap': 'round'
+								}}
+								filter={true}
+								paint={{
+									'line-color': '#ff0000',
+									'line-width': 2,
+									'line-opacity': 0.8
+								}}
+							/>
+							<Layer
+								id={'zone-fill-' + index}
+								type="fill"
+								layout={{}}
+								filter={true}
+								paint={{
+									'fill-color': '#ffcccc',
+									'fill-opacity': 0.3
+								}}
+							/>
+						</GeoJSON>
+					{/each}
+				{/if}
 
 				<div class="flex flex-col space-y-8 h-[45vh] overflow-y-auto px-4 py-8">
 					{#each bookingResponse as bookingResponse}

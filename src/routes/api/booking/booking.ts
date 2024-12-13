@@ -17,7 +17,7 @@ export async function booking(
 	startFixed: boolean,
 	trx: Transaction<Database>
 ) {
-	const searchInterval = new Interval(c.startTime, c.targetTime);
+	const searchInterval = new Interval(new Date(c.startTime), new Date(c.targetTime));
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
 	const targetCoordinates = [c.target.coordinates];
 	const companies = await bookingApiQuery(
@@ -27,7 +27,6 @@ export async function booking(
 		targetCoordinates,
 		trx
 	);
-
 	const best = (
 		await evaluateRequest(
 			companies,
@@ -41,9 +40,7 @@ export async function booking(
 	if (best == undefined) {
 		return best;
 	}
-	const events = companies
-		.find((c) => c.id == best.company)!
-		.vehicles.find((v) => v.id == best.vehicle)!.events;
+	const events = companies[best.company].vehicles.find((v) => v.id == best.vehicle)!.events;
 	const prevEventIdx = events.findLastIndex((e) => e.communicated <= best.pickupTime);
 	const startEventGroupInfo = handleEventGroups(
 		events,
@@ -58,9 +55,10 @@ export async function booking(
 		prevDropoffEventIdx,
 		best.dropoffCase.how
 	);
-	const eventGroupUpdateList = startEventGroupInfo.updateList.concat(
-		targetEventGroupInfo.updateList
-	);
+	const eventGroupUpdateList = {
+		ids: startEventGroupInfo.updateList.ids.concat(targetEventGroupInfo.updateList.ids),
+		updates: startEventGroupInfo.updateList.updates.concat(targetEventGroupInfo.updateList.updates)
+	};
 
 	const prevEvent = events[prevEventIdx];
 	const nextEvent = events[prevEventIdx + 1];
@@ -89,11 +87,14 @@ export async function booking(
 			mergeTourList.push(nextDropoffEvent.tourId);
 		}
 	}
+
 	return {
 		best,
 		tour,
 		mergeTourList,
-		eventGroupUpdateList
+		eventGroupUpdateList,
+		startEventGroup: startEventGroupInfo.newEventGroup,
+		targetEventGroup: targetEventGroupInfo.newEventGroup
 	};
 }
 
@@ -109,8 +110,8 @@ const samePlace = (c1: Coordinates, c2: Coordinates) => {
 const handleEventGroups = (
 	events: Event[],
 	coordinates: Coordinates,
-	how: InsertHow,
-	prevEventIdx: number
+	prevEventIdx: number,
+	how: InsertHow
 ) => {
 	const prevEvent = events[prevEventIdx];
 	const nextEvent = events[prevEventIdx + 1];
@@ -142,21 +143,31 @@ const getEventGroupUpdates = (
 	prevEventIdx: number,
 	how: InsertHow,
 	newEventGroup: string
-) => {
+): EventGroupUpdateList => {
 	if (how != InsertHow.CONNECT) {
-		return [];
+		return {
+			ids: [],
+			updates: []
+		};
 	}
 	const nextEvent = events[prevEventIdx + 1];
 	const nextTour = nextEvent!.tourId;
-	const updateList: EventGroup[] = [];
+	const idList: number[] = [];
+	const newEventGroupList: string[] = [];
 	for (let i = prevEventIdx + 1; i != events.length; ++i) {
 		if (nextTour != events[i].tourId || !samePlace(events[i].coordinates, coordinates)) {
 			break;
 		}
-		updateList.push({
-			id: events[i].id,
-			group: newEventGroup
-		});
+		idList.push(events[i].id);
+		newEventGroupList.push(newEventGroup);
 	}
-	return updateList;
+	return {
+		ids: idList,
+		updates: newEventGroupList
+	};
+};
+
+export type EventGroupUpdateList = {
+	ids: number[];
+	updates: string[];
 };

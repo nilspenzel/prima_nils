@@ -15,3 +15,4 @@ export const BUFFER_TIME = 4;
 export const MOTIS_BASE_URL = 'http://localhost:8080';
 //export const MOTIS_BASE_URL = 'https://europe.motis-project.de';
 export const MAX_MATCHING_DISTANCE = 200;
+export const COORDINATE_ROUNDING_ERROR_THRESHOLD = 0.00001;

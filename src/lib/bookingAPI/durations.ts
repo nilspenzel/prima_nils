@@ -33,7 +33,7 @@ export const getApproachDuration = (
 	insertionInfo: InsertionInfo,
 	busStopIdx: number | undefined,
 	prev: Event | undefined
-): number => {
+): number|undefined => {
 	if (prev == undefined) {
 		//	return MAX_TRAVEL_MS;
 	}
@@ -55,12 +55,13 @@ export const getApproachDuration = (
 			break;
 	}
 	console.assert(relevantRoutingResults != undefined);
-	return (
-		(comesFromCompany(insertionCase)
-			? relevantRoutingResults.fromCompany[insertionInfo.companyIdx]
-			: relevantRoutingResults.fromPrevEvent[insertionInfo.prevEventIdxInRoutingResults]) +
-		minutesToMs(BUFFER_TIME)
-	);
+	const drivingTime = comesFromCompany(insertionCase)
+		? relevantRoutingResults.company[insertionInfo.companyIdx]
+		: relevantRoutingResults.event[insertionInfo.prevEventIdxInRoutingResults];
+	if(drivingTime == undefined) {
+		return undefined
+	}
+	return drivingTime + drivingTime != 0 ? minutesToMs(BUFFER_TIME) : 0;
 };
 
 export const getReturnDuration = (
@@ -69,7 +70,7 @@ export const getReturnDuration = (
 	insertionInfo: InsertionInfo,
 	busStopIdx: number | undefined,
 	next: Event | undefined
-): number => {
+): number|undefined => {
 	if (next == undefined) {
 		//return MAX_TRAVEL_MS;
 	}
@@ -90,12 +91,13 @@ export const getReturnDuration = (
 			relevantRoutingResults = routingResults.busStops[busStopIdx!];
 			break;
 	}
-	return (
-		(returnsToCompany(insertionCase)
-			? relevantRoutingResults.toCompany[insertionInfo.companyIdx]
-			: relevantRoutingResults.toNextEvent[insertionInfo.nextEventIdxInRoutingResults]) +
-		minutesToMs(PASSENGER_CHANGE_MINUTES + BUFFER_TIME)
-	);
+	const drivingTime = returnsToCompany(insertionCase)
+		? relevantRoutingResults.company[insertionInfo.companyIdx]
+		: relevantRoutingResults.event[insertionInfo.nextEventIdxInRoutingResults];
+		if(drivingTime == undefined) {
+			return undefined
+		}
+	return drivingTime + drivingTime != 0 ? minutesToMs(PASSENGER_CHANGE_MINUTES + BUFFER_TIME) : 0;
 };
 
 export function getAllowedOperationTimes(

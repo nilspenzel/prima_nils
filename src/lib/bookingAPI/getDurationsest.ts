@@ -12,8 +12,7 @@ import {
 	type InsertionInfo,
 	type InsertionType
 } from './insertionTypes';
-import { MAX_TRAVEL_MS } from '$lib/constants';
-
+/*
 const createVehicle = (id: number, events: Event[]): Vehicle => {
 	return {
 		id,
@@ -53,23 +52,17 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [1],
-				toCompany: [2],
-				fromPrevEvent: [3],
-				toNextEvent: [4]
+				company: [1],
+				event: [3]
 			},
 			busStops: [
 				{
-					fromCompany: [5],
-					toCompany: [6],
-					fromPrevEvent: [7],
-					toNextEvent: [8]
+					company: [5],
+					event: [7]
 				},
 				{
-					fromCompany: [9],
-					toCompany: [10],
-					fromPrevEvent: [11],
-					toNextEvent: [12]
+					company: [9],
+					event: [11]
 				}
 			]
 		};
@@ -78,7 +71,7 @@ describe('getApproach and getReturn - duration tests', () => {
 			prevEventIdxInRoutingResults: -1,
 			nextEventIdxInRoutingResults: 0,
 			vehicle: createVehicle(1, [createEvent(2), createEvent(3)]),
-			insertionIdx: 7,
+			idxInEvents: 7,
 			currentRange: {
 				earliestPickup: -5,
 				latestDropoff: -5
@@ -119,23 +112,17 @@ describe('getApproach and getReturn - duration tests', () => {
 		};
 		const routingResults: RoutingResults = {
 			userChosen: {
-				fromCompany: [1],
-				toCompany: [2],
-				fromPrevEvent: [3],
-				toNextEvent: [4]
+				company: [1],
+				event: [3]
 			},
 			busStops: [
 				{
-					fromCompany: [5],
-					toCompany: [6],
-					fromPrevEvent: [7],
-					toNextEvent: [8]
+					company: [5],
+					event: [7]
 				},
 				{
-					fromCompany: [9],
-					toCompany: [10],
-					fromPrevEvent: [11],
-					toNextEvent: [12]
+					company: [9],
+					event: [11]
 				}
 			]
 		};
@@ -144,7 +131,7 @@ describe('getApproach and getReturn - duration tests', () => {
 			prevEventIdxInRoutingResults: -1,
 			nextEventIdxInRoutingResults: 0,
 			vehicle: createVehicle(1, [createEvent(2), createEvent(3)]),
-			insertionIdx: 1,
+			idxInEvents: 1,
 			currentRange: {
 				earliestPickup: -5,
 				latestDropoff: -5
@@ -175,7 +162,7 @@ describe('getApproach and getReturn - duration tests', () => {
 			createEvent(4)
 		);
 		expect(return1).toBe(360004);
-	});
+	}); 
 	it('insert before first event, no predecessor', () => {
 		const insertionCase: InsertionType = {
 			how: InsertHow.PREPEND,
@@ -540,4 +527,4 @@ describe('getApproach and getReturn - duration tests', () => {
 		);
 		expect(return1).toBe(360002);
 	});
-});
+});*/

@@ -91,10 +91,14 @@ const createEvent = (e: DbEvent, t: DbTour): Event => {
 
 const createVehicle = (v: DbVehicle, expandedSearchInterval: Interval) => {
 	const tours = v.tours.filter((tour) =>
-		expandedSearchInterval.overlaps(new Interval(tour.departure, tour.arrival))
+		expandedSearchInterval.overlaps(new Interval(new Date(tour.departure), new Date(tour.arrival)))
 	);
-	const toursBefore = v.tours.filter((tour) => tour.arrival < expandedSearchInterval.startTime);
-	const toursAfter = v.tours.filter((tour) => tour.departure > expandedSearchInterval.endTime);
+	const toursBefore = v.tours.filter(
+		(tour) => new Date(tour.arrival) < expandedSearchInterval.startTime
+	);
+	const toursAfter = v.tours.filter(
+		(tour) => new Date(tour.departure) > expandedSearchInterval.endTime
+	);
 	return {
 		id: v.id,
 		capacities: {
@@ -111,8 +115,8 @@ const createVehicle = (v: DbVehicle, expandedSearchInterval: Interval) => {
 		),
 		tours: tours.map((tour) => {
 			return {
-				arrival: tour.arrival,
-				departure: tour.departure
+				arrival: new Date(tour.arrival),
+				departure: new Date(tour.departure)
 			};
 		}),
 		events: tours.flatMap((t) => t.events.map((e) => createEvent(e, t))),
@@ -161,9 +165,9 @@ const selectAvailabilities = (eb: ExpressionBuilder<Database, 'vehicle'>, interv
 const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 	return jsonArrayFrom(
 		eb
-			.selectFrom('request')
-			.whereRef('request.tour', '=', 'tour.id')
-			.innerJoin('event', 'event.tour', 'tour.id')
+			.selectFrom('event')
+			.whereRef('event.tour', '=', 'tour.id')
+			.innerJoin('request', 'event.request', 'request.id')
 			.select([
 				'event.id',
 				'event.communicated_time',
@@ -264,20 +268,6 @@ const selectCompanies = (
 	).as('companies');
 };
 
-const createBusStopFilter = (
-	busStopZones: {
-		busStopIndex: number;
-		zoneId: number;
-	}[],
-	zoneId: number
-) => {
-	const busStopFilter = new Array<boolean>(busStopZones.length);
-	busStopZones.forEach(
-		(busStopZone) => (busStopFilter[busStopZone.busStopIndex] = zoneId == busStopZone.zoneId)
-	);
-	return busStopFilter;
-};
-
 export const bookingApiQuery = async (
 	start: Coordinates,
 	requiredCapacities: Capacities,
@@ -320,23 +310,20 @@ export const bookingApiQuery = async (
 					.where(
 						sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(cast(busstops.longitude as float), cast(busstops.latitude as float)), ${SRID}))`
 					)
-					.select(['busstops.index as busStopIndex', 'zone.id as zoneId'])
+					.select(['busstops.index as busStopIndex'])
 			).as('busStop')
 		])
 		.executeTakeFirst();
-
 	if (dbResult == undefined) {
 		return [];
 	}
-
 	const companies = dbResult.companies
 		.map((company) => {
 			return {
 				id: company.id,
 				coordinates: new Coordinates(company.latitude!, company.longitude!),
 				zoneId: company.zone!,
-				vehicles: company.vehicles.map((v) => createVehicle(v, expandedSearchInterval)),
-				busStopFilter: createBusStopFilter(dbResult.busStop, company.zone!)
+				vehicles: company.vehicles.map((v) => createVehicle(v, expandedSearchInterval))
 			};
 		})
 		.filter((c) => c.vehicles.length != 0);
@@ -346,15 +333,12 @@ export const bookingApiQuery = async (
 			v.events.sort((e1, e2) => e1.time.startTime.getTime() - e2.time.startTime.getTime());
 		})
 	);
-	const busStopCompanyFilter = new Array<boolean[]>(companies.length);
-	busStops.forEach((_, busStopIdx) => {
-		busStopCompanyFilter[busStopIdx] = new Array<boolean>(busStops.length);
-		companies.forEach((company, companyIdx) => {
-			busStopCompanyFilter[busStopIdx][companyIdx] =
-				dbResult.busStop.find(
-					(busStop) => busStop.zoneId == company.zoneId && busStop.busStopIndex == busStopIdx
-				) != undefined;
-		});
-	});
+	const busStopPerm = new Array<number | undefined>(busStops.length);
+	let counter = 0;
+	for (let i = 0; i != busStops.length; ++i) {
+		if (dbResult.busStop.find((bs) => bs.busStopIndex == i) != undefined) {
+			busStopPerm[i] = counter++;
+		}
+	}
 	return companies;
 };

@@ -1,12 +1,6 @@
 import { sql } from 'kysely';
 
 export async function up(db) {
-  await sql`
-  CREATE TYPE event_group AS (
-      id INTEGER,
-      grp TEXT
-  );`.execute(db);
-
 	await sql`
   CREATE TYPE request_type AS (
       passengers INTEGER,
@@ -39,13 +33,21 @@ export async function up(db) {
 
   await sql`
     CREATE OR REPLACE PROCEDURE update_event_groups(
-      p_update_list event_group[]
+      p_ids_list INTEGER[],
+      p_update_list varchar[]
     ) AS $$
+     DECLARE
+      idx INTEGER;
     BEGIN
-      UPDATE event
-      SET event_group = eg.id
-      FROM unnest(p_update_list) AS eg(id, grp)
-      WHERE tour = eg.grp;
+      IF array_length(p_ids_list,1) <> array_length(p_update_list,1) THEN
+          RAISE EXCEPTION 'In update_event_groups, number of ids must match number of update values.';
+      END IF;
+
+      FOR idx IN 1..COALESCE(array_length(p_ids_list, 1), 0) LOOP
+        UPDATE event
+        SET event_group = p_update_list(idx)
+        WHERE id = p_ids_list(idx);
+      END LOOP;
     END;
     $$ LANGUAGE plpgsql;
   `.execute(db);
@@ -73,7 +75,7 @@ export async function up(db) {
       BEGIN
         INSERT INTO event (
           is_pickup, latitude, longitude, scheduled_time, communicated_time,
-          address, tour, customer, request, approach_duration, return_duration, grp
+          address, tour, customer, request, approach_duration, return_duration, event_group
         )
       VALUES (
         p_event.is_pickup, p_event.latitude, p_event.longitude, p_event.scheduled_time,
@@ -95,8 +97,11 @@ export async function up(db) {
       WHERE tour = ANY(p_merge_tour_list);
 
       UPDATE tour
-      SET arrival = p_arrival, departure = p_departure
+      SET 
+          arrival = CASE WHEN p_arrival IS NOT NULL THEN p_arrival ELSE arrival END,
+          departure = CASE WHEN p_departure IS NOT NULL THEN p_departure ELSE departure END
       WHERE id = p_target_tour_id;
+
 
       DELETE FROM tour
       WHERE id = ANY(p_merge_tour_list);
@@ -123,14 +128,15 @@ export async function up(db) {
       p_event1 event_type,
       p_event2 event_type,
       p_merge_tour_list INTEGER[],
-      p_update_event_group_list event_group[],
+      p_update_event_group_ids INTEGER[],
+      p_update_event_group_updates varchar[],
       p_tour tour_type
     ) AS $$
     DECLARE
       v_request_id INTEGER;
       v_tour_id INTEGER;
     BEGIN
-      CALL update_event_groups(p_update_event_group_list);
+      CALL update_event_groups(p_update_event_group_ids, p_update_event_group_updates);
       IF p_tour.id IS NULL THEN
           CALL insert_tour(p_tour, v_tour_id);
       ELSE

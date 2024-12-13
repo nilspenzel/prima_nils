@@ -43,7 +43,7 @@ export const schemaDefinitions = {
 		capacities: {
 			type: 'object',
 			properties: {
-				passengers: { type: 'integer', minimum: 0 },
+				passengers: { type: 'integer', minimum: 1 },
 				wheelchairs: { type: 'integer', minimum: 0 },
 				bikes: { type: 'integer', minimum: 0 },
 				luggage: { type: 'integer', minimum: 0 }
@@ -62,8 +62,8 @@ export const schemaDefinitions = {
 			properties: {
 				start: { $ref: '#/definitions/location' },
 				target: { $ref: '#/definitions/location' },
-				startAddress: { type: 'string' },
-				targetAddress: { type: 'string' }
+				startTime: { type: 'string', format: 'date-time' },
+				targetTime: { type: 'string', format: 'date-time' }
 			}
 		},
 		busStops: {
@@ -84,7 +84,9 @@ export const bookingSchema = {
 	$schema: 'http://json-schema.org/draft-07/schema#',
 	type: 'object',
 	properties: {
-		connection1: { $ref: '/schemaDefinitions#/definitions/connection' },
+		connection1: {
+			oneOf: [{ $ref: '/schemaDefinitions#/definitions/connection' }, { type: 'null' }]
+		},
 		connection2: {
 			oneOf: [{ $ref: '/schemaDefinitions#/definitions/connection' }, { type: 'null' }]
 		},

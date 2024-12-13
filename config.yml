@@ -4,5 +4,5 @@ elevators: false
 geocoding: true
 reverse_geocoding: true
 osm: /data/my.osm.pbf
-gtfs: 
+gtfs:
   - /data/GTFS.zip

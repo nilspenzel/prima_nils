@@ -1,15 +1,15 @@
 import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { Company } from '$lib/compositionTypes';
+import { COORDINATE_ROUNDING_ERROR_THRESHOLD } from '$lib/constants';
 import { Coordinates } from '$lib/location';
+import { minutesToMs } from '$lib/time_utils';
 import type { Range } from './capacitySimulation';
 import { iterateAllInsertions } from './utils';
 
 export type InsertionRoutingResult = {
-	fromCompany: number[];
-	toCompany: number[];
-	fromPrevEvent: number[];
-	toNextEvent: number[];
+	company: (number|undefined)[];
+	event: (number|undefined)[];
 };
 
 export type RoutingResults = {
@@ -17,122 +17,74 @@ export type RoutingResults = {
 	userChosen: InsertionRoutingResult;
 };
 
-type RoutingCoordinates = {
-	busStopForwardMany: Coordinates[][];
-	busStopBackwardMany: Coordinates[][];
-	userChosenForwardMany: Coordinates[];
-	userChosenBackwardMany: Coordinates[];
-};
-
 export function gatherRoutingCoordinates(
 	companies: Company[],
 	insertionsByVehicle: Map<number, Range[]>
-): RoutingCoordinates {
+) {
 	if (companies.length == 0) {
-		return {
-			busStopBackwardMany: [],
-			busStopForwardMany: [],
-			userChosenBackwardMany: [],
-			userChosenForwardMany: []
-		};
+		return { forward: [], backward: [] };
 	}
-	const userChosenForwardMany = new Array<Coordinates>();
-	const userChosenBackwardMany = new Array<Coordinates>();
-	const busStopForwardMany = new Array<Coordinates[]>(companies[0].busStopFilter.length);
-	const busStopBackwardMany = new Array<Coordinates[]>(companies[0].busStopFilter.length);
-	for (let busStopIdx = 0; busStopIdx != companies[0].busStopFilter.length; ++busStopIdx) {
-		busStopForwardMany[busStopIdx] = new Array<Coordinates>();
-		busStopBackwardMany[busStopIdx] = new Array<Coordinates>();
-	}
+	const backward = new Array<Coordinates>();
+	const forward = new Array<Coordinates>();
 	companies.forEach((company) => {
-		for (let busStopIdx = 0; busStopIdx != companies[0].busStopFilter.length; ++busStopIdx) {
-			if (!company.busStopFilter[busStopIdx]) {
-				continue;
-			}
-			busStopForwardMany[busStopIdx].push(company.coordinates);
-			busStopBackwardMany[busStopIdx].push(company.coordinates);
-		}
-		userChosenForwardMany.push(company.coordinates);
-		userChosenBackwardMany.push(company.coordinates);
+		forward.push(company.coordinates);
+		backward.push(company.coordinates);
 	});
-	iterateAllInsertions(
-		companies,
-		insertionsByVehicle,
-		(insertionInfo, _insertionCounter, busStopFilter) => {
-			const backwardCoordinates = (
-				insertionInfo.insertionIdx != 0
-					? insertionInfo.vehicle.events[insertionInfo.insertionIdx - 1]
-					: insertionInfo.vehicle.lastEventBefore
-			)?.coordinates;
-			const forwardCoordinates = (
-				insertionInfo.insertionIdx != insertionInfo.vehicle.events.length
-					? insertionInfo.vehicle.events[insertionInfo.insertionIdx]
-					: insertionInfo.vehicle.firstEventAfter
-			)?.coordinates;
-			if (backwardCoordinates != undefined) {
-				userChosenBackwardMany.push(backwardCoordinates);
-			}
-			if (forwardCoordinates != undefined) {
-				userChosenForwardMany.push(forwardCoordinates);
-			}
-			for (let busStopIdx = 0; busStopIdx != busStopFilter.length; ++busStopIdx) {
-				if (!busStopFilter[busStopIdx]) {
-					continue;
-				}
-				if (backwardCoordinates != undefined) {
-					busStopBackwardMany[busStopIdx].push(backwardCoordinates);
-				}
-				if (forwardCoordinates != undefined) {
-					busStopForwardMany[busStopIdx].push(forwardCoordinates);
-				}
-			}
+	iterateAllInsertions(companies, insertionsByVehicle, (insertionInfo, _insertionCounter) => {
+		const vehicle = insertionInfo.vehicle;
+		const idxInEvents = insertionInfo.idxInEvents;
+		if (idxInEvents != 0) {
+			backward.push(vehicle.events[idxInEvents - 1].coordinates);
+		} else if (vehicle.lastEventBefore != undefined) {
+			backward.push(vehicle.lastEventBefore.coordinates);
 		}
-	);
-	return {
-		busStopForwardMany,
-		busStopBackwardMany,
-		userChosenForwardMany,
-		userChosenBackwardMany
-	};
+		if (idxInEvents != vehicle.events.length) {
+			forward.push(vehicle.events[idxInEvents].coordinates);
+		} else if (vehicle.firstEventAfter != undefined) {
+			forward.push(vehicle.firstEventAfter.coordinates);
+		}
+	});
+	return { forward, backward };
 }
 
 export async function routing(
 	companies: Company[],
-	coordinates: RoutingCoordinates,
+	many: { forward: Coordinates[]; backward: Coordinates[] },
 	userChosen: Coordinates,
-	busStops: BusStop[]
+	busStops: BusStop[],
+	startFixed: boolean
 ): Promise<RoutingResults> {
-	const from = await oneToMany(userChosen, coordinates.userChosenBackwardMany, true);
-	const to = await oneToMany(userChosen, coordinates.userChosenForwardMany, false);
+	const findMatchingPlaces = (coordinates: Coordinates, many: Coordinates[], routingResult: (number|undefined)[]) => {
+		console.assert(many.length == routingResult.length);
+		for(let i=0;i!=many.length;++i){
+			if(Math.abs(coordinates.lat - many[i].lng)<COORDINATE_ROUNDING_ERROR_THRESHOLD||Math.abs(coordinates.lng - many[i].lng)){
+				routingResult[i] = 0;
+			}
+		}
+	}
+
+	const userChosenResult = await oneToMany(
+		userChosen,
+		startFixed ? many.backward : many.forward,
+		!startFixed
+	);
 	const ret = {
 		userChosen: {
-			fromCompany: from.slice(0, busStops.length),
-			fromPrevEvent: from.slice(busStops.length),
-			toCompany: to.slice(0, busStops.length),
-			toNextEvent: to.slice(busStops.length)
+			company: userChosenResult.slice(0, companies.length),
+			event: userChosenResult.slice(companies.length)
 		},
 		busStops: new Array<InsertionRoutingResult>(busStops.length)
 	};
 	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
-		const busStop = busStops[busStopIdx];
-		const relevantCompanyCount = companies.filter(
-			(company) => company.busStopFilter[busStopIdx]
-		).length;
-		const from = await oneToMany(
-			busStop.coordinates,
-			coordinates.busStopBackwardMany[busStopIdx],
-			true
+		const busStopResult = await oneToMany(
+			busStops[busStopIdx].coordinates,
+			!startFixed ? many.backward : many.forward,
+			startFixed
 		);
-		const to = await oneToMany(
-			busStop.coordinates,
-			coordinates.busStopForwardMany[busStopIdx],
-			false
-		);
+		findMatchingPlaces(busStops[busStopIdx].coordinates, !startFixed ? many.backward : many.forward, busStopResult);
 		ret.busStops[busStopIdx] = {
-			fromCompany: from.slice(0, relevantCompanyCount),
-			fromPrevEvent: from.slice(relevantCompanyCount),
-			toCompany: to.slice(0, relevantCompanyCount),
-			toNextEvent: to.slice(relevantCompanyCount)
+			company: busStopResult.slice(0, companies.length),
+			event: busStopResult.slice(companies.length)
 		};
 	}
 	return ret;

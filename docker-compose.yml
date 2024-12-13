@@ -63,10 +63,9 @@ services:
       - motis-network
 
 volumes:
-    pg-data:
-    motis-data:
+  pg-data:
+  motis-data:
 
 networks:
   motis-network:
     driver: bridge
-    

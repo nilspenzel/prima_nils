@@ -5,7 +5,7 @@ import type { InsertionInfo } from './insertionTypes';
 export function iterateAllInsertions(
 	companies: Company[],
 	insertions: Map<number, Range[]>,
-	insertionFn: (info: InsertionInfo, insertionCounter: number, busStopFilter: boolean[]) => void
+	insertionFn: (info: InsertionInfo, insertionCounter: number) => void
 ) {
 	let prevEventIdxInRoutingResults = 0;
 	let nextEventIdxInRoutingResults = 0;
@@ -19,14 +19,14 @@ export function iterateAllInsertions(
 					++idxInEvents
 				) {
 					const info = {
-						insertionIdx: idxInEvents,
+						idxInEvents,
 						companyIdx,
 						vehicle,
 						prevEventIdxInRoutingResults,
 						nextEventIdxInRoutingResults,
 						currentRange: insertion
 					};
-					insertionFn(info, insertionIdx, company.busStopFilter);
+					insertionFn(info, insertionIdx);
 					if (idxInEvents != 0 || vehicle.lastEventBefore != undefined) {
 						prevEventIdxInRoutingResults++;
 					}

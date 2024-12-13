@@ -13,3 +13,7 @@ export function hoursToMs(hours: number) {
 export function yearsToMs(years: number) {
 	return years * 365 * 3600000 * 24;
 }
+
+export function msToMinutes(ms: number) {
+	return ms/60000;
+}

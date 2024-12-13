@@ -77,6 +77,38 @@ export const addAvailability = async (vehicleId: number, from: Date, to: Date) =
 };
 
 export const booking = async (
+	event: RequestEvent,
+	from: Location,
+	to: Location,
+	startFixed: boolean,
+	timeStamp: Date,
+	numPassengers: number,
+	numWheelchairs: number,
+	numBikes: number,
+	luggage: number
+) => {
+	const connection = {
+		start: from,
+		target: to,
+		startTime: timeStamp,
+		targetTime: timeStamp
+	};
+	return await event.fetch('/api/booking', {
+		method: 'POST',
+		body: JSON.stringify({
+			connection1: startFixed ? connection : null,
+			connection2: !startFixed ? connection : null,
+			capacities: {
+				wheelchairs: numWheelchairs,
+				bikes: numBikes,
+				passengers: numPassengers,
+				luggage
+			}
+		})
+	});
+};
+
+export const booking2 = async (
 	from: Location,
 	to: Location,
 	startFixed: boolean,
@@ -128,7 +160,7 @@ export const oneToMany = async (
 	one: Coordinates,
 	many: Coordinates[],
 	arriveBy: boolean
-): Promise<number[]> => {
+): Promise<(number|undefined)[]> => {
 	return await oneToManyMotis({
 		baseUrl: MOTIS_BASE_URL,
 		querySerializer: { array: { explode: false } } as QuerySerializerOptions,
@@ -141,12 +173,12 @@ export const oneToMany = async (
 			arriveBy
 		}
 	}).then((res) => {
-		if(res.data == undefined){
-			console.log("oneToMany data was undefined.");
-			return Array(many.length).fill(Number.MAX_VALUE);
+		if (res.data == undefined) {
+			console.log('oneToMany data was undefined.');
+			return Array(many.length).fill(undefined);
 		}
 		return res.data!.map((d: Duration) => {
-			return secondsToMs(d.duration ?? Number.MAX_VALUE);
+			return d.duration != undefined && d.duration != null ? secondsToMs(d.duration) : undefined;
 		});
 	});
 };
