@@ -61,7 +61,7 @@ export const getApproachDuration = (
 	if(drivingTime == undefined) {
 		return undefined
 	}
-	return drivingTime + drivingTime != 0 ? minutesToMs(BUFFER_TIME) : 0;
+	return drivingTime + (drivingTime != 0 ? minutesToMs(BUFFER_TIME) : 0);
 };
 
 export const getReturnDuration = (
@@ -97,7 +97,7 @@ export const getReturnDuration = (
 		if(drivingTime == undefined) {
 			return undefined
 		}
-	return drivingTime + drivingTime != 0 ? minutesToMs(PASSENGER_CHANGE_MINUTES + BUFFER_TIME) : 0;
+	return drivingTime + (drivingTime != 0 ? minutesToMs(PASSENGER_CHANGE_MINUTES + BUFFER_TIME) : 0);
 };
 
 export function getAllowedOperationTimes(
@@ -132,10 +132,10 @@ export function getAllowedOperationTimes(
 	const relevantAvailabilities = (() => {
 		switch (insertionCase.how) {
 			case InsertHow.APPEND:
-				return vehicle.availabilities.filter((availability) => availability.covers(windowEndTime));
+				return vehicle.availabilities.filter((availability) => availability.covers(windowStartTime));
 			case InsertHow.PREPEND:
 				return vehicle.availabilities.filter((availability) =>
-					availability.covers(windowStartTime)
+					availability.covers(windowEndTime)
 				);
 			case InsertHow.CONNECT:
 				return vehicle.availabilities.filter((availability) =>

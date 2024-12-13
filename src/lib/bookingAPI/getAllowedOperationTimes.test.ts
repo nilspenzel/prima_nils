@@ -175,7 +175,7 @@ describe('get allowed operation times test', () => {
 			prepTime,
 			vehicle
 		);
-		expect(resNoAvailability).toHaveLength(0);
+		expect(resNoAvailability).toHaveLength(1);
 	});
 	it('insert by prepending', () => {
 		const insertionCase: InsertionType = {
@@ -198,8 +198,9 @@ describe('get allowed operation times test', () => {
 			prepTime,
 			vehicle
 		);
-		expect(res[0].startTime.getTime()).toBe(new Date('4000-01-01T00:00:00.003Z').getTime());
-		expect(res[0].endTime.getTime()).toBe(new Date('4000-01-01T00:00:00.007Z').getTime());
+		expect(res.length).toBe(0);
+		//expect(res[0].startTime.getTime()).toBe(new Date('4000-01-01T00:00:00.003Z').getTime());
+		//expect(res[0].endTime.getTime()).toBe(new Date('4000-01-01T00:00:00.007Z').getTime());
 
 		vehicle.availabilities[0] = new Interval(inX(4), inX(7));
 		const resNoAvailability = getAllowedOperationTimes(

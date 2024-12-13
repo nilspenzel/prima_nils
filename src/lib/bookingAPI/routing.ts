@@ -1,11 +1,9 @@
 import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { Company } from '$lib/compositionTypes';
-import { COORDINATE_ROUNDING_ERROR_THRESHOLD } from '$lib/constants';
 import { Coordinates } from '$lib/location';
-import { minutesToMs } from '$lib/time_utils';
 import type { Range } from './capacitySimulation';
-import { iterateAllInsertions } from './utils';
+import { iterateAllInsertions, samePlace } from './utils';
 
 export type InsertionRoutingResult = {
 	company: (number|undefined)[];
@@ -57,7 +55,7 @@ export async function routing(
 	const findMatchingPlaces = (coordinates: Coordinates, many: Coordinates[], routingResult: (number|undefined)[]) => {
 		console.assert(many.length == routingResult.length);
 		for(let i=0;i!=many.length;++i){
-			if(Math.abs(coordinates.lat - many[i].lng)<COORDINATE_ROUNDING_ERROR_THRESHOLD||Math.abs(coordinates.lng - many[i].lng)){
+			if(samePlace(coordinates, many[i])){
 				routingResult[i] = 0;
 			}
 		}

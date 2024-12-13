@@ -133,7 +133,7 @@ export function evaluateBothInsertion(
 			: next == undefined || next.tourId == prev.tourId
 				? prev.returnDuration
 				: prev.returnDuration + next.approachDuration);
-	const taxiWaitingTime = getTaxiWaitingTime(insertionCase, approachDuration, prev, next);
+	let taxiWaitingTime = getTaxiWaitingTime(insertionCase, approachDuration, prev, next);
 	const pickupTime =
 		insertionCase.direction == InsertDirection.FROM_BUS_STOP
 			? arrivalWindow.startTime
@@ -150,6 +150,9 @@ export function evaluateBothInsertion(
 						minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES)
 				)
 			: arrivalWindow.endTime;
+	if(insertionCase.how == InsertHow.APPEND) {
+		taxiWaitingTime = dropoffTime.getTime() - prev!.communicated.getTime() - approachDuration;
+	}
 	return {
 		pickupTime,
 		dropoffTime,

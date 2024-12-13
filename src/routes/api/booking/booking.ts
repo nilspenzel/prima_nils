@@ -10,6 +10,7 @@ import { InsertHow } from '$lib/bookingAPI/insertionTypes';
 import type { ExpectedConnection } from '$lib/bookingApiParameters';
 import { evaluateRequest } from '$lib/bookingAPI/evaluateRequest';
 import { v4 as uuidv4 } from 'uuid';
+import { samePlace } from '$lib/bookingAPI/utils';
 
 export async function booking(
 	c: ExpectedConnection,
@@ -37,6 +38,7 @@ export async function booking(
 			startFixed
 		)
 	)[0][0];
+	console.log(best);
 	if (best == undefined) {
 		return best;
 	}
@@ -101,10 +103,6 @@ export async function booking(
 export type EventGroup = {
 	id: number;
 	group: string;
-};
-
-const samePlace = (c1: Coordinates, c2: Coordinates) => {
-	return c1.lat == c2.lat && c1.lng == c2.lng;
 };
 
 const handleEventGroups = (

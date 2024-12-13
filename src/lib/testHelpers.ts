@@ -94,6 +94,7 @@ export const clearTours = async () => {
 export const getTours = async () => {
 	return await db
 		.selectFrom('tour')
+		.selectAll()
 		.select((eb) => [
 			jsonArrayFrom(
 				eb
