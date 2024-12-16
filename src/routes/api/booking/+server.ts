@@ -8,6 +8,7 @@ import { insertRequest } from './query';
 import { booking } from './booking';
 
 export const POST = async (event: RequestEvent) => {
+	console.log("================================================");
 	const customer = event.locals.user;
 	if (!customer) {
 		return error(403);

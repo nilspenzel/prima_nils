@@ -38,7 +38,7 @@ export async function booking(
 			startFixed
 		)
 	)[0][0];
-	console.log(best);
+	console.log("best",best);
 	if (best == undefined) {
 		return best;
 	}

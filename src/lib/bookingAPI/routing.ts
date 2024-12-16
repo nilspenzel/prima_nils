@@ -73,16 +73,20 @@ export async function routing(
 		},
 		busStops: new Array<InsertionRoutingResult>(busStops.length)
 	};
+	const busStopQueries = new Array<Promise<(number|undefined)[]>>(busStops.length);
 	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
-		const busStopResult = await oneToMany(
+		busStopQueries[busStopIdx] = oneToMany(
 			busStops[busStopIdx].coordinates,
 			!startFixed ? many.backward : many.forward,
 			startFixed
 		);
-		findMatchingPlaces(busStops[busStopIdx].coordinates, !startFixed ? many.backward : many.forward, busStopResult);
+	}
+	const busStopResults = await Promise.all(busStopQueries);
+	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
+		findMatchingPlaces(busStops[busStopIdx].coordinates, !startFixed ? many.backward : many.forward, busStopResults[busStopIdx]);
 		ret.busStops[busStopIdx] = {
-			company: busStopResult.slice(0, companies.length),
-			event: busStopResult.slice(companies.length)
+			company: busStopResults[busStopIdx].slice(0, companies.length),
+			event: busStopResults[busStopIdx].slice(companies.length)
 		};
 	}
 	return ret;

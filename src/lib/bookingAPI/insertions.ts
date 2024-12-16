@@ -151,8 +151,31 @@ export function evaluateBothInsertion(
 				)
 			: arrivalWindow.endTime;
 	if(insertionCase.how == InsertHow.APPEND) {
-		taxiWaitingTime = dropoffTime.getTime() - prev!.communicated.getTime() - approachDuration;
+		const oldWaitingTime = prev!.arrival.getTime() - prev!.communicated.getTime() - prev!.returnDuration;
+		taxiWaitingTime = dropoffTime.getTime() - prev!.communicated.getTime() - approachDuration - oldWaitingTime;
 	}
+	if(insertionCase.how==InsertHow.APPEND){
+		console.log("APPEND");
+		console.log(approachDuration/60000);
+		console.log(returnDuration/60000);
+	}
+	if(insertionCase.how == InsertHow.CONNECT) {
+		console.log("CONNECT");
+		const oldWaitingTime1 = prev!.arrival.getTime() - prev!.communicated.getTime() - prev!.returnDuration;
+		const oldWaitingTime2 = next!.communicated.getTime() - next!.departure.getTime() - next!.approachDuration;
+		taxiWaitingTime = next!.communicated.getTime() - prev!.communicated.getTime() - approachDuration - travelDuration - minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES) - returnDuration - oldWaitingTime1 - oldWaitingTime2;
+		console.log((next!.communicated.getTime() - prev!.communicated.getTime())/60000);
+		console.log(approachDuration/60000);
+		console.log((travelDuration+minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES))/60000);
+		console.log(returnDuration/60000);
+		console.log(oldWaitingTime1/60000);
+		console.log(oldWaitingTime2/60000);
+		console.log(taxiWaitingTime/60000);
+		console.log(windows);
+		console.log(arrivalWindow);
+		console.log("bus",busStopWindow);
+	}
+	
 	return {
 		pickupTime,
 		dropoffTime,
@@ -391,6 +414,9 @@ export function evaluateSingleInsertions(
 							prev,
 							next
 						);
+						if(insertionCase.how == InsertHow.CONNECT){
+							console.log(resultBoth);
+						}
 						if (
 							resultBoth != undefined &&
 							(bothEvaluations[busStopIdx][busTimeIdx] == undefined ||

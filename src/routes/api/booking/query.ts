@@ -15,6 +15,7 @@ export async function insertRequest(
 	startEventGroup: string,
 	targetEventGroup: string
 ) {
+	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
 	await sql`
         CALL create_and_merge_tours(
             ROW(${capacities.passengers}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}),

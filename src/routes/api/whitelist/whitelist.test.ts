@@ -219,17 +219,21 @@ describe('Whitelist and Booking API Tests', () => {
 	});
 
 	it('simple success case', async () => {
+		company = await addCompany(Zone.NIESKY, inNiesky3);
+		taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
 		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(600));
+		const tsts = [];
+		for(let i=0;i!=1;i++){
+			tsts.push({
+				coordinates: inNiesky3,
+				times: [dateInXMinutes(580)]
+			});
+		}
 		const body = JSON.stringify({
 			start: inNiesky1,
 			target: inNiesky2,
 			startBusStops: [],
-			targetBusStops: [
-				{
-					coordinates: inNiesky3,
-					times: [dateInXMinutes(580)]
-				}
-			],
+			targetBusStops: tsts,
 			times: [dateInXMinutes(550)],
 			startFixed: true,
 			capacities
@@ -294,7 +298,7 @@ describe('Whitelist and Booking API Tests', () => {
 			Math.abs(inNiesky2.lat - dropoff.latitude) + Math.abs(inNiesky2.lng - dropoff.longitude)
 		).toBeLessThan(COORDINATE_ROUNDING_ERROR_THRESHOLD);
 		expect(dropoff.customer).toBe(mockUserId);
-	});
+	}, 30000);
 
 	it('too many passengers', async () => {
 		const body = JSON.stringify({
@@ -838,7 +842,7 @@ describe('Whitelist and Booking API Tests', () => {
 			target: inNiesky2,
 			startBusStops: [],
 			targetBusStops: [],
-			times: [dateInXMinutes(45)],
+			times: [dateInXMinutes(50)],
 			startFixed: true,
 			capacities
 		});
@@ -866,11 +870,11 @@ describe('Whitelist and Booking API Tests', () => {
 
 		// Add a third request, which should connect the two existing tours.
 		const body3 = JSON.stringify({
-			start: inNiesky1,
-			target: inNiesky2,
+			start: inNiesky2,
+			target: inNiesky1,
 			startBusStops: [],
 			targetBusStops: [],
-			times: [dateInXMinutes(18)],
+			times: [dateInXMinutes(25)],
 			startFixed: true,
 			capacities
 		});

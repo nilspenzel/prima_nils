@@ -13,16 +13,14 @@ import type { InsertionRoutingResult, RoutingResults } from './routing';
 
 export const returnsToCompany = (insertionCase: InsertionType): boolean => {
 	return (
-		insertionCase.how === InsertHow.CONNECT ||
-		insertionCase.how === InsertHow.APPEND ||
+		insertionCase.how == InsertHow.APPEND ||
 		insertionCase.how == InsertHow.NEW_TOUR
 	);
 };
 
 export const comesFromCompany = (insertionCase: InsertionType): boolean => {
 	return (
-		insertionCase.how === InsertHow.CONNECT ||
-		insertionCase.how === InsertHow.PREPEND ||
+		insertionCase.how == InsertHow.PREPEND ||
 		insertionCase.how == InsertHow.NEW_TOUR
 	);
 };

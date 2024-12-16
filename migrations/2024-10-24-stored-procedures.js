@@ -45,8 +45,8 @@ export async function up(db) {
 
       FOR idx IN 1..COALESCE(array_length(p_ids_list, 1), 0) LOOP
         UPDATE event
-        SET event_group = p_update_list(idx)
-        WHERE id = p_ids_list(idx);
+        SET event_group = p_update_list[idx]
+        WHERE id = p_ids_list[idx];
       END LOOP;
     END;
     $$ LANGUAGE plpgsql;
