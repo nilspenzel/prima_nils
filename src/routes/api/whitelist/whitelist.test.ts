@@ -783,7 +783,7 @@ describe('Whitelist and Booking API Tests', () => {
 		events2.forEach((e)=> eventGroups.add(e.event_group));
 		expect(eventGroups.size).toBe(3);
 	});
-/*
+
 	it('successful connect', async () => {
 		const body = JSON.stringify({
 			start: inNiesky1,
@@ -876,5 +876,5 @@ describe('Whitelist and Booking API Tests', () => {
 		await new Promise((resolve) => setTimeout(resolve, 400));
 		const tours3 = await getTours();
 		expect(tours3.length).toBe(1);
-	});*/
+	});
 });
