@@ -152,12 +152,15 @@ export function evaluateBothInsertion(
 			: arrivalWindow.endTime;
 	if(insertionCase.how == InsertHow.APPEND) {
 		const oldWaitingTime = prev!.arrival.getTime() - prev!.communicated.getTime() - prev!.returnDuration;
-		taxiWaitingTime = dropoffTime.getTime() - prev!.communicated.getTime() - approachDuration - oldWaitingTime;
+		taxiWaitingTime = dropoffTime.getTime() - prev!.communicated.getTime() - approachDuration - travelDuration - minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES) - oldWaitingTime;
 	}
 	if(insertionCase.how==InsertHow.APPEND){
 		console.log("APPEND");
 		console.log(approachDuration/60000);
 		console.log(returnDuration/60000);
+		const oldWaitingTime1 = prev!.arrival.getTime() - prev!.communicated.getTime() - prev!.returnDuration;
+		console.log((dropoffTime.getTime() - prev!.communicated.getTime() - approachDuration - travelDuration - minutesToMs(BUFFER_TIME + PASSENGER_CHANGE_MINUTES) - oldWaitingTime1)/60000);
+		console.log(oldWaitingTime1/60000)
 	}
 	if(insertionCase.how == InsertHow.CONNECT) {
 		console.log("CONNECT");
