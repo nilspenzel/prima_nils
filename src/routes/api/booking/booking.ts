@@ -28,17 +28,18 @@ export async function booking(
 		targetCoordinates,
 		trx
 	);
+	const userChosen = !startFixed ? c.start.coordinates : c.target.coordinates;
+	const busStop = startFixed ? c.start.coordinates : c.target.coordinates;
 	const best = (
 		await evaluateRequest(
 			companies,
 			expandedSearchInterval,
-			c.start.coordinates,
-			[{ coordinates: c.target.coordinates, times: [c.targetTime] }],
+			userChosen,
+			[{ coordinates: busStop, times: [c.targetTime] }],
 			required,
 			startFixed
 		)
 	)[0][0];
-	console.log("best",best);
 	if (best == undefined) {
 		return best;
 	}

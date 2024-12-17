@@ -20,7 +20,7 @@ export type WhitelistRequest = {
 };
 
 export type BookingRequest = {
-	connection1: ExpectedConnection;
+	connection1: ExpectedConnection | null;
 	connection2: ExpectedConnection | null;
 	capacities: Capacities;
 };

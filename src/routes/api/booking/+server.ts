@@ -8,7 +8,6 @@ import { insertRequest } from './query';
 import { booking } from './booking';
 
 export const POST = async (event: RequestEvent) => {
-	console.log("================================================");
 	const customer = event.locals.user;
 	if (!customer) {
 		return error(403);
@@ -26,7 +25,6 @@ export const POST = async (event: RequestEvent) => {
 		);
 	}
 	const parameters: BookingRequest = p;
-
 	let message: string | undefined = undefined;
 	let success = false;
 	await db.transaction().execute(async (trx) => {

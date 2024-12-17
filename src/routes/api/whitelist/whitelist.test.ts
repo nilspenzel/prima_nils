@@ -784,8 +784,12 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(eventGroups.size).toBe(3);
 	});
 
-	it('successful connect', async () => {
-		const body = JSON.stringify({
+	it.only('successful connect', async () => {
+		company = await addCompany(Zone.NIESKY, inNiesky3);
+		taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(600));
+		const distance = 22;
+		const bodyObj = {
 			start: inNiesky1,
 			target: inNiesky2,
 			startBusStops: [],
@@ -793,7 +797,8 @@ describe('Whitelist and Booking API Tests', () => {
 			times: [dateInXMinutes(10)],
 			startFixed: true,
 			capacities
-		});
+		};
+		const body = JSON.stringify(bodyObj);
 		const whiteResponse = await white(body).then((r) => r.json());
 
 		const connection1: ExpectedConnection = {
@@ -803,40 +808,32 @@ describe('Whitelist and Booking API Tests', () => {
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
 		const bookingBody = JSON.stringify({
-			connection1,
-			connection2: null,
+			connection1: null,
+			connection2: connection1,
 			capacities
 		});
-
 		await booking(bookingBody);
 		await new Promise((resolve) => setTimeout(resolve, 200));
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 
 		// Add an other request, which should be accepted by creating a new tour.
-		const body2 = JSON.stringify({
-			start: inNiesky1,
-			target: inNiesky2,
-			startBusStops: [],
-			targetBusStops: [],
-			times: [dateInXMinutes(50)],
-			startFixed: true,
-			capacities
-		});
+		bodyObj.times = [dateInXMinutes(10+(2*distance))];
+		const body2 = JSON.stringify(bodyObj);
 
 		const whiteResponse2 = await white(body2).then((r) => r.json());
 		expect(whiteResponse2.direct.length).toBe(1);
 		expect(whiteResponse2.direct[0]).not.toBe(null);
 
 		const connection2: ExpectedConnection = {
-			start: new Location(inNiesky2, 'start address'),
-			target: new Location(inNiesky1, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse2.direct[0].pickupTime,
 			targetTime: whiteResponse2.direct[0].dropoffTime
 		};
 		const bookingBody2 = JSON.stringify({
-			connection1: connection2,
-			connection2: null,
+			connection1: null,
+			connection2: connection2,
 			capacities
 		});
 
@@ -851,11 +848,11 @@ describe('Whitelist and Booking API Tests', () => {
 			target: inNiesky1,
 			startBusStops: [],
 			targetBusStops: [],
-			times: [dateInXMinutes(25)],
+			times: [dateInXMinutes(10+9)],
 			startFixed: true,
 			capacities
 		});
-
+		
 		const whiteResponse3 = await white(body3).then((r) => r.json());
 		expect(whiteResponse3.direct.length).toBe(1);
 		expect(whiteResponse3.direct[0]).not.toBe(null);
@@ -867,8 +864,8 @@ describe('Whitelist and Booking API Tests', () => {
 			targetTime: whiteResponse3.direct[0].dropoffTime
 		};
 		const bookingBody3 = JSON.stringify({
-			connection1: connection3,
-			connection2: null,
+			connection1: null,
+			connection2: connection3,
 			capacities
 		});
 

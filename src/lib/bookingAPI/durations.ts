@@ -115,7 +115,6 @@ export function getAllowedOperationTimes(
 	if (windowEndTime < prepTime) {
 		return [];
 	}
-
 	let windowStartTime =
 		prev == undefined
 			? expandedSearchInterval.startTime
@@ -153,37 +152,6 @@ export function getAllowedOperationTimes(
 	return relevantAvailabilities
 		.map((availability) => availability.intersect(window))
 		.filter((availability) => availability != undefined);
-}
-
-export function getTaxiWaitingTime(
-	insertionCase: InsertionType,
-	taxiDuration: number,
-	prev: Event | undefined,
-	next: Event | undefined
-) {
-	/*
-	console.assert(
-		!(prev == undefined && next == undefined),
-		'Insertion neither has previous nor successor event.'
-	);
-	*/
-	console.assert(
-		!(
-			(InsertHow.CONNECT == insertionCase.how || insertionCase.how == InsertHow.INSERT) &&
-			(prev == undefined || next == undefined)
-		),
-		'Either previous or successor event were undefined, in INSERT or CONNECT case.'
-	);
-	let fullDuration = 0;
-	if (insertionCase.how == InsertHow.CONNECT || insertionCase.how == InsertHow.INSERT) {
-		fullDuration =
-			insertionCase.how == InsertHow.CONNECT
-				? next!.departure.getTime() - prev!.arrival.getTime()
-				: next!.communicated.getTime() - prev!.communicated.getTime();
-	}
-	return insertionCase.how == InsertHow.CONNECT || insertionCase.how == InsertHow.INSERT
-		? fullDuration - taxiDuration
-		: 0;
 }
 
 export function getArrivalWindow(

@@ -63,5 +63,6 @@ export async function POST(event: RequestEvent) {
 		target,
 		direct
 	};
+	console.log("WHITELIST END");
 	return json(response);
 }
