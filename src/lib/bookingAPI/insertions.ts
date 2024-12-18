@@ -81,7 +81,8 @@ export function evaluateBothInsertion(
 	insertionInfo: InsertionInfo,
 	busStopIdx: number | undefined,
 	prev: Event | undefined,
-	next: Event | undefined
+	next: Event | undefined,
+	userChosenTime?: Date
 ) {
 	const getOldDrivingTime = (insertionCase: InsertionType, prev: Event|undefined, next: Event|undefined): number => {
 		if(insertionCase.how == InsertHow.NEW_TOUR) {
@@ -128,7 +129,7 @@ export function evaluateBothInsertion(
 		approachDuration,
 		returnDuration
 	);
-	if (arrivalWindow == undefined) {
+	if (arrivalWindow == undefined || (userChosenTime != undefined && !arrivalWindow.covers(userChosenTime))) {
 		return undefined;
 	}
 	const taxiDurationDelta =
@@ -249,7 +250,8 @@ export function evaluateNewTours(
 	expandedSearchInterval: Interval,
 	busStopTimes: Interval[][],
 	routingResults: RoutingResults,
-	travelDurations: (number|undefined)[]
+	travelDurations: (number|undefined)[],
+	userChosenTime?: Date
 ): (InsertionEvaluation | undefined)[][] {
 	const bestEvaluations: (InsertionEvaluation | undefined)[][] = new Array<
 		(InsertionEvaluation | undefined)[]
@@ -325,7 +327,8 @@ export function evaluateSingleInsertions(
 	insertionRanges: Map<number, Range[]>,
 	busStopTimes: Interval[][],
 	routingResults: RoutingResults,
-	travelDurations: (number|undefined)[]
+	travelDurations: (number|undefined)[],
+	userChosenTime?: Date
 ): Evaluations {
 	const bothEvaluations: (InsertionEvaluation | undefined)[][] = [];
 	const userChosenEvaluations: (SingleInsertionEvaluation | undefined)[] = [];
@@ -393,7 +396,8 @@ export function evaluateSingleInsertions(
 							insertionInfo,
 							busStopIdx,
 							prev,
-							next
+							next,
+							userChosenTime
 						);
 						if (
 							resultBoth != undefined &&

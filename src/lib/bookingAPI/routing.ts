@@ -60,12 +60,12 @@ export async function routing(
 			}
 		}
 	}
-
 	const userChosenResult = await oneToMany(
 		userChosen,
 		startFixed ? many.backward : many.forward,
 		!startFixed
 	);
+	findMatchingPlaces(userChosen, startFixed ? many.backward : many.forward, userChosenResult);
 	const ret = {
 		userChosen: {
 			company: userChosenResult.slice(0, companies.length),

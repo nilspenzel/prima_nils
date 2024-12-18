@@ -24,10 +24,9 @@ export async function evaluateRequest(
 	userChosen: Coordinates,
 	busStops: BusStop[],
 	required: Capacities,
-	startFixed: boolean
+	startFixed: boolean,
+	userChosenTime?: Date
 ) {
-	console.log("user: ", userChosen);
-	console.log("bus: ", busStops);
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
@@ -45,8 +44,6 @@ export async function evaluateRequest(
 			);
 		})
 	);
-	//console.log(gatherRoutingCoordinates(companies, insertionRanges));
-	//console.log(busStops);
 	const routingResults = await routing(
 		companies,
 		gatherRoutingCoordinates(companies, insertionRanges),
@@ -54,7 +51,6 @@ export async function evaluateRequest(
 		busStops,
 		startFixed
 	);
-	//console.log(routingResults);
 	const busStopTimes = busStops.map((bs) =>
 		bs.times.map(
 			(t) =>
@@ -75,7 +71,8 @@ export async function evaluateRequest(
 		expandedSearchInterval,
 		busStopTimes,
 		routingResults,
-		travelDurations
+		travelDurations,
+		userChosenTime
 	);
 	const { busStopEvaluations, bothEvaluations, userChosenEvaluations } = evaluateSingleInsertions(
 		companies,
@@ -84,7 +81,8 @@ export async function evaluateRequest(
 		insertionRanges,
 		busStopTimes,
 		routingResults,
-		travelDurations
+		travelDurations,
+		userChosenTime
 	);
 	const pairEvaluations = evaluatePairInsertions(
 		companies,

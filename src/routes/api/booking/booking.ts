@@ -29,15 +29,18 @@ export async function booking(
 		trx
 	);
 	const userChosen = !startFixed ? c.start.coordinates : c.target.coordinates;
+	const userChosenTime = !startFixed ? c.startTime : c.targetTime;
 	const busStop = startFixed ? c.start.coordinates : c.target.coordinates;
+	const busTime = startFixed ? c.startTime : c.targetTime;
 	const best = (
 		await evaluateRequest(
 			companies,
 			expandedSearchInterval,
 			userChosen,
-			[{ coordinates: busStop, times: [c.targetTime] }],
+			[{ coordinates: busStop, times: [busTime] }],
 			required,
-			startFixed
+			startFixed,
+			userChosenTime
 		)
 	)[0][0];
 	if (best == undefined) {
