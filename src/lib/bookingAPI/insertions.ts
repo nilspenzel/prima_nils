@@ -403,11 +403,12 @@ export function evaluateSingleInsertions(
 							resultBoth != undefined &&
 							(bothEvaluations[busStopIdx][busTimeIdx] == undefined ||
 								resultBoth.cost < bothEvaluations[busStopIdx][busTimeIdx]!.cost)
-						) {bothEvaluations[busStopIdx][busTimeIdx] = {
+						) {
+							bothEvaluations[busStopIdx][busTimeIdx] = {
 								...resultBoth,
 								company: insertionInfo.companyIdx,
 								vehicle: insertionInfo.vehicle.id,
-								tour: insertionCase.how == InsertHow.APPEND ? prev?.tourId : next?.tourId
+								tour: insertionCase.how == InsertHow.APPEND ? prev!.tourId : next!.tourId
 							};
 						}
 

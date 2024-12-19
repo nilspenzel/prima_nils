@@ -14,7 +14,7 @@ export async function insertRequest(
 	mergeTourList: number[],
 	startEventGroup: string,
 	targetEventGroup: string,
-	trx: Transaction<Database>
+	trx:  Transaction<Database>
 ) {
 	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
 	await sql`

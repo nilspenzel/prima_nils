@@ -8,6 +8,14 @@ import { insertRequest } from './query';
 import { booking } from './booking';
 
 export const POST = async (event: RequestEvent) => {
+	const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
+		for (const e of l1) {
+			if (l2.has(e)) {
+				return e;
+			}
+		}
+		return undefined;
+	}
 	const customer = event.locals.user;
 	if (!customer) {
 		return error(403);
@@ -45,6 +53,13 @@ export const POST = async (event: RequestEvent) => {
 				return;
 			}
 		}
+		if(parameters.connection1 != null && parameters.connection2 != null && firstConnection!.tour != undefined && secondConnection!.tour != undefined) {
+			const newTour = getCommonTour(firstConnection!.mergeTourList, secondConnection!.mergeTourList);
+			if(newTour != undefined){
+				firstConnection!.tour = newTour;
+				secondConnection!.tour = newTour;
+			}
+		}
 		if (parameters.connection1 != null) {
 			insertRequest(
 				firstConnection!.best,
@@ -52,7 +67,7 @@ export const POST = async (event: RequestEvent) => {
 				parameters.connection1,
 				customer.id,
 				firstConnection!.eventGroupUpdateList,
-				firstConnection!.mergeTourList,
+				[...firstConnection!.mergeTourList],
 				firstConnection!.startEventGroup,
 				firstConnection!.targetEventGroup,
 				trx
@@ -65,7 +80,7 @@ export const POST = async (event: RequestEvent) => {
 				parameters.connection2,
 				customer.id,
 				secondConnection!.eventGroupUpdateList,
-				secondConnection!.mergeTourList,
+				[...secondConnection!.mergeTourList],
 				secondConnection!.startEventGroup,
 				secondConnection!.targetEventGroup,
 				trx

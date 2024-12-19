@@ -666,6 +666,9 @@ describe('Whitelist and Booking API Tests', () => {
 	});
 
 	it('successful append', async () => {
+		//company = await addCompany(Zone.NIESKY, inNiesky3);
+		//taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		//await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(600));
 		const body = JSON.stringify({
 			start: inNiesky1,
 			target: inNiesky2,
@@ -956,6 +959,9 @@ describe('Whitelist and Booking API Tests', () => {
 	}, 30000);
 
 	it('successful prepend', async () => {
+		//company = await addCompany(Zone.NIESKY, inNiesky3);
+		//taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		//await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(600));
 		const body = JSON.stringify({
 			start: inNiesky1,
 			target: inNiesky2,
