@@ -1,13 +1,19 @@
 import type { BusStop, RequestBusStop } from './busStop';
 import type { Capacities } from './capacities';
 import { Coordinates, type Location } from './location';
-import { coordinatesToPlace } from './motisUtils';
 
-export type ExpectedConnection = {
+export type RequestExpectedConnection = {
 	start: Location;
 	target: Location;
 	startTime: string;
 	targetTime: string;
+};
+
+export type ExpectedConnection = {
+	start: Location;
+	target: Location;
+	startTime: Date;
+	targetTime: Date;
 };
 
 export type WhitelistRequest = {
@@ -53,10 +59,31 @@ export function toWhitelistParameters(r: WhitelistRequest) {
 }
 
 export type BookingRequest = {
+	connection1: RequestExpectedConnection | null;
+	connection2: RequestExpectedConnection | null;
+	capacities: Capacities;
+};
+
+export type BookingParameters = {
 	connection1: ExpectedConnection | null;
 	connection2: ExpectedConnection | null;
 	capacities: Capacities;
-};
+}
+
+export function toBookingParameters(r: BookingRequest): BookingParameters {
+	const toExpectedConnection = (r: RequestExpectedConnection|null) => {
+		return r == null ? null : {
+			...r,
+			startTime: new Date(r.startTime),
+			targetTime: new Date(r.targetTime)
+		}
+	};
+	return {
+		...r,
+		connection1: toExpectedConnection(r.connection1),
+		connection2: toExpectedConnection(r.connection2)
+	}
+}
 
 export const schemaDefinitions = {
 	$schema: 'http://json-schema.org/draft-07/schema#',

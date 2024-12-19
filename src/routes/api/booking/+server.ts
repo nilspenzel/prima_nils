@@ -1,6 +1,6 @@
 import type { RequestEvent } from './$types';
 import { Validator } from 'jsonschema';
-import { bookingSchema, schemaDefinitions, type BookingRequest } from '$lib/bookingApiParameters';
+import { bookingSchema, schemaDefinitions, toBookingParameters, type BookingParameters, type BookingRequest } from '$lib/bookingApiParameters';
 import { error, json } from '@sveltejs/kit';
 import { db } from '$lib/database';
 import { sql } from 'kysely';
@@ -24,7 +24,7 @@ export const POST = async (event: RequestEvent) => {
 			{ status: 400 }
 		);
 	}
-	const parameters: BookingRequest = p;
+	const parameters: BookingParameters = toBookingParameters(p);
 	let message: string | undefined = undefined;
 	let success = false;
 	await db.transaction().execute(async (trx) => {

@@ -18,7 +18,7 @@ export async function booking(
 	startFixed: boolean,
 	trx: Transaction<Database>
 ) {
-	const searchInterval = new Interval(new Date(c.startTime), new Date(c.targetTime));
+	const searchInterval = new Interval(c.startTime, c.targetTime);
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
 	const targetCoordinates = [c.target.coordinates];
 	const companies = await bookingApiQuery(
@@ -29,7 +29,7 @@ export async function booking(
 		trx
 	);
 	const userChosen = !startFixed ? c.start.coordinates : c.target.coordinates;
-	const userChosenTime = new Date(!startFixed ? c.startTime : c.targetTime);
+	const userChosenTime = !startFixed ? c.startTime : c.targetTime;
 	const busStop = startFixed ? c.start.coordinates : c.target.coordinates;
 	const busTime = startFixed ? c.startTime : c.targetTime;
 	const best = (
@@ -37,7 +37,7 @@ export async function booking(
 			companies,
 			expandedSearchInterval,
 			userChosen,
-			[{ coordinates: busStop, times: [new Date(busTime)] }],
+			[{ coordinates: busStop, times: [busTime] }],
 			required,
 			startFixed,
 			userChosenTime
