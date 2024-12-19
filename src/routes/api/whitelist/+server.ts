@@ -3,7 +3,9 @@ import type { RequestEvent } from './$types';
 import { Validator } from 'jsonschema';
 import {
 	schemaDefinitions,
+	toWhitelistParameters,
 	whitelistSchema,
+	type WhitelistParameters,
 	type WhitelistRequest
 } from '$lib/bookingApiParameters';
 import { json } from '@sveltejs/kit';
@@ -28,7 +30,7 @@ export async function POST(event: RequestEvent) {
 			{ status: 400 }
 		);
 	}
-	const parameters: WhitelistRequest = p;
+	const parameters: WhitelistParameters = toWhitelistParameters(p);
 	if (parameters.startFixed) {
 		parameters.targetBusStops.push({
 			coordinates: parameters.start,

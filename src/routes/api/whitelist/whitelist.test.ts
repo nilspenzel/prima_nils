@@ -268,7 +268,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBody);
-		await new Promise((resolve) => setTimeout(resolve, 200));
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 		expect(tours[0].requests.length).toBe(1);
@@ -482,7 +481,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBody);
-		await new Promise((resolve) => setTimeout(resolve, 200));
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 		expect(tours[0].requests.length).toBe(1);
@@ -703,7 +701,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBody);
-		await new Promise((resolve) => setTimeout(resolve, 200));
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 		expect(tours[0].requests.length).toBe(1);
@@ -770,7 +767,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBodyAppend);
-		await new Promise((resolve) => setTimeout(resolve, 400));
 		const tours2 = await getTours();
 		expect(tours2.length).toBe(1);
 		expect(new Date(tours2[0].departure).getTime()).toBe(new Date(tours[0].departure).getTime());
@@ -816,12 +812,11 @@ describe('Whitelist and Booking API Tests', () => {
 			capacities
 		});
 		await booking(bookingBody);
-		await new Promise((resolve) => setTimeout(resolve, 200));
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 
 		// Add an other request, which should be accepted by creating a new tour.
-		bodyObj.times = [dateInXMinutes(10+25)];
+		bodyObj.times = [dateInXMinutes(10+30)];
 		const body2 = JSON.stringify(bodyObj);
 
 		const whiteResponse2 = await white(body2).then((r) => r.json());
@@ -841,7 +836,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBody2);
-		await new Promise((resolve) => setTimeout(resolve, 400));
 		const tours2 = await getTours();
 		expect(tours2.length).toBe(2);
 
@@ -851,7 +845,7 @@ describe('Whitelist and Booking API Tests', () => {
 			target: inNiesky1,
 			startBusStops: [],
 			targetBusStops: [],
-			times: [dateInXMinutes(10+9)],
+			times: [dateInXMinutes(10+10)],
 			startFixed: true,
 			capacities
 		});
@@ -873,7 +867,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBody3);
-		await new Promise((resolve) => setTimeout(resolve, 400));
 		const tours3 = await getTours();
 		expect(tours3.length).toBe(1);
 
@@ -931,7 +924,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBody);
-		await new Promise((resolve) => setTimeout(resolve, 200));
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 		expect(tours[0].requests.length).toBe(1);
@@ -999,7 +991,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBody);
-		await new Promise((resolve) => setTimeout(resolve, 200));
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 		expect(tours[0].requests.length).toBe(1);
@@ -1066,7 +1057,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 
 		await booking(bookingBodyAppend);
-		await new Promise((resolve) => setTimeout(resolve, 400));
 		const tours2 = await getTours();
 		expect(tours2.length).toBe(1);
 		expect(new Date(tours2[0].departure).getTime()).not.toBe(new Date(tours[0].departure).getTime());

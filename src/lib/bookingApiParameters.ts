@@ -1,15 +1,26 @@
-import type { BusStop } from './busStop';
+import type { BusStop, RequestBusStop } from './busStop';
 import type { Capacities } from './capacities';
-import type { Coordinates, Location } from './location';
+import { Coordinates, type Location } from './location';
+import { coordinatesToPlace } from './motisUtils';
 
 export type ExpectedConnection = {
 	start: Location;
 	target: Location;
-	startTime: Date;
-	targetTime: Date;
+	startTime: string;
+	targetTime: string;
 };
 
 export type WhitelistRequest = {
+	start: Coordinates;
+	target: Coordinates;
+	startBusStops: RequestBusStop[];
+	targetBusStops: RequestBusStop[];
+	times: string[];
+	startFixed: boolean;
+	capacities: Capacities;
+};
+
+export type WhitelistParameters = {
 	start: Coordinates;
 	target: Coordinates;
 	startBusStops: BusStop[];
@@ -17,7 +28,29 @@ export type WhitelistRequest = {
 	times: Date[];
 	startFixed: boolean;
 	capacities: Capacities;
-};
+}
+
+export function toWhitelistParameters(r: WhitelistRequest) {
+	const stringsToDates = (strings: string[]): Date[] => {
+		return strings.map((s) => new Date(s));
+	}
+	return {
+		...r,
+		startBusStops: r.startBusStops.map((bs) => {
+			return {
+				coordinates: bs.coordinates,
+				times: stringsToDates(bs.times)
+			};
+		}),
+		targetBusStops: r.targetBusStops.map((bs) => {
+			return {
+				coordinates: bs.coordinates,
+				times: stringsToDates(bs.times)
+			};
+		}),
+		times: stringsToDates(r.times)
+	}
+}
 
 export type BookingRequest = {
 	connection1: ExpectedConnection | null;

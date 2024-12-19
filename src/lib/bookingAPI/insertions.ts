@@ -480,6 +480,7 @@ export function evaluatePairInsertions(
 		companies,
 		insertionRanges,
 		(insertionInfo: InsertionInfo, insertionCounter: number) => {
+			const events = insertionInfo.vehicle.events;
 			const pickupIdx = insertionCounter;
 			for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
 				for (let timeIdx = 0; timeIdx != busStopTimes[busStopIdx].length; ++timeIdx) {
@@ -513,6 +514,7 @@ export function evaluatePairInsertions(
 							bestEvaluations[busStopIdx][timeIdx] == undefined ||
 							cost < bestEvaluations[busStopIdx][timeIdx]!.cost
 						) {
+							const tour = events[pickupIdx].tourId;
 							bestEvaluations[busStopIdx][timeIdx] = {
 								pickupTime: pickup.time,
 								dropoffTime: dropoff.time,
@@ -524,7 +526,7 @@ export function evaluatePairInsertions(
 								cost,
 								company: insertionInfo.companyIdx,
 								vehicle: insertionInfo.vehicle.id,
-								tour: 1, // TODO,
+								tour,
 								departure: comesFromCompany(pickup.case)
 									? new Date(pickup.time.getTime() - pickup.approachDuration)
 									: undefined,

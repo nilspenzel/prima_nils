@@ -54,7 +54,8 @@ export const POST = async (event: RequestEvent) => {
 				firstConnection!.eventGroupUpdateList,
 				firstConnection!.mergeTourList,
 				firstConnection!.startEventGroup,
-				firstConnection!.targetEventGroup
+				firstConnection!.targetEventGroup,
+				trx
 			);
 		}
 		if (parameters.connection2 != null) {
@@ -66,7 +67,8 @@ export const POST = async (event: RequestEvent) => {
 				secondConnection!.eventGroupUpdateList,
 				secondConnection!.mergeTourList,
 				secondConnection!.startEventGroup,
-				secondConnection!.targetEventGroup
+				secondConnection!.targetEventGroup,
+				trx
 			);
 		}
 		message = 'Die Anfrage wurde erfolgreich bearbeitet.';

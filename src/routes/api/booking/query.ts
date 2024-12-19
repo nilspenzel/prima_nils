@@ -1,9 +1,9 @@
-import { sql } from 'kysely';
-import { db } from '$lib/database';
+import { sql, Transaction } from 'kysely';
 import type { Capacities } from '$lib/capacities';
 import type { InsertionEvaluation } from '../../../lib/bookingAPI/insertions';
 import type { ExpectedConnection } from '$lib/bookingApiParameters';
 import type { EventGroupUpdateList } from './booking';
+import type { Database } from '$lib/types';
 
 export async function insertRequest(
 	connection: InsertionEvaluation,
@@ -13,7 +13,8 @@ export async function insertRequest(
 	updateEventGroupList: EventGroupUpdateList,
 	mergeTourList: number[],
 	startEventGroup: string,
-	targetEventGroup: string
+	targetEventGroup: string,
+	trx: Transaction<Database>
 ) {
 	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
 	await sql`
@@ -25,7 +26,7 @@ export async function insertRequest(
 			${updateEventGroupList.ids},
 			${updateEventGroupList.updates},
             ROW(${connection.departure}, ${connection.arrival}, ${connection.vehicle}, ${connection.tour})
-        )`.execute(db);
+        )`.execute(trx);
 }
 //TODOS:
 // communicated/scheduled times
