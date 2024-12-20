@@ -9,7 +9,6 @@ import { MAX_TRAVEL_MS, SRID } from '$lib/constants';
 import type { Company, Vehicle } from '$lib/compositionTypes';
 import type { Capacities } from '$lib/capacities';
 import type { Event } from '$lib/compositionTypes';
-import pg from 'pg';
 
 export type BookingApiQueryResult = {
 	companies: Company[];
@@ -285,8 +284,6 @@ export const bookingApiQuery = async (
 	const twiceExpandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
 	if (trx == null) {
 		trx = db;
-	} else{
-		pg.types.setTypeParser(pg.types.builtins.TIMESTAMP, (value: string) => new Date(value));
 	}
 	const dbResult = await trx
 		.with('busstops', (db) => {
@@ -320,7 +317,7 @@ export const bookingApiQuery = async (
 	if (dbResult == undefined) {
 		return [];
 	}
-	console.log(dbResult.companies.map((c) => c.vehicles.flatMap((v) => v.tours.map((t) => t.arrival.getTime()))));
+	
 	const companies = dbResult.companies
 		.map((company) => {
 			return {
