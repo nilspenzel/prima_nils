@@ -1,6 +1,11 @@
 import type { RequestEvent } from './$types';
 import { Validator } from 'jsonschema';
-import { bookingSchema, schemaDefinitions, toBookingParameters, type BookingParameters, type BookingRequest } from '$lib/bookingApiParameters';
+import {
+	bookingSchema,
+	schemaDefinitions,
+	toBookingParameters,
+	type BookingParameters
+} from '$lib/bookingApiParameters';
 import { error, json } from '@sveltejs/kit';
 import { db } from '$lib/database';
 import { sql } from 'kysely';
@@ -15,7 +20,7 @@ export const POST = async (event: RequestEvent) => {
 			}
 		}
 		return undefined;
-	}
+	};
 	const customer = event.locals.user;
 	if (!customer) {
 		return error(403);
@@ -53,9 +58,17 @@ export const POST = async (event: RequestEvent) => {
 				return;
 			}
 		}
-		if(parameters.connection1 != null && parameters.connection2 != null && firstConnection!.tour != undefined && secondConnection!.tour != undefined) {
-			const newTour = getCommonTour(firstConnection!.mergeTourList, secondConnection!.mergeTourList);
-			if(newTour != undefined){
+		if (
+			parameters.connection1 != null &&
+			parameters.connection2 != null &&
+			firstConnection!.tour != undefined &&
+			secondConnection!.tour != undefined
+		) {
+			const newTour = getCommonTour(
+				firstConnection!.mergeTourList,
+				secondConnection!.mergeTourList
+			);
+			if (newTour != undefined) {
 				firstConnection!.tour = newTour;
 				secondConnection!.tour = newTour;
 			}
@@ -70,6 +83,7 @@ export const POST = async (event: RequestEvent) => {
 				[...firstConnection!.mergeTourList],
 				firstConnection!.startEventGroup,
 				firstConnection!.targetEventGroup,
+				firstConnection!.neighbourIds,
 				trx
 			);
 		}
@@ -83,6 +97,7 @@ export const POST = async (event: RequestEvent) => {
 				[...secondConnection!.mergeTourList],
 				secondConnection!.startEventGroup,
 				secondConnection!.targetEventGroup,
+				secondConnection!.neighbourIds,
 				trx
 			);
 		}

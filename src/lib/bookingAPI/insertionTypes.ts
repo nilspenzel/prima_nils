@@ -34,6 +34,36 @@ export type InsertionType = {
 	what: InsertWhat;
 };
 
+export function printInsertionType (t: InsertionType) {
+	let ret = "how: ";
+	switch(t.how) {
+		case InsertHow.APPEND: ret += "APPEND";break;
+		case InsertHow.PREPEND: ret += "PREPEND";break;
+		case InsertHow.CONNECT: ret += "CONNECT";break;
+		case InsertHow.NEW_TOUR: ret += "NEW_TOUR";break;
+		case InsertHow.INSERT: ret += "INSERT";break;
+	}
+	ret += ", where: ";
+	switch(t.where) {
+		case InsertWhere.AFTER_LAST_EVENT: ret += "AFTER_LAST_EVENT";break;
+		case InsertWhere.BEFORE_FIRST_EVENT: ret += "BEFORE_FIRST_EVENT";break;
+		case InsertWhere.BETWEEN_EVENTS: ret += "BETWEEN_EVENTS";break;
+		case InsertWhere.BETWEEN_TOURS: ret += "BETWEEN_TOURS";break;
+	}
+	ret += ", what: ";
+	switch(t.what) {
+		case InsertWhat.BOTH: ret+= "BOTH";break;
+		case InsertWhat.BUS_STOP: ret+= "BUS_STOP";break;
+		case InsertWhat.USER_CHOSEN: ret+= "USER_CHOSEN";break;
+	}
+	ret += ", direction: ";
+	switch(t.direction) {
+		case InsertDirection.FROM_BUS_STOP: ret+= "FROM_BUS_STOP";break;
+		case InsertDirection.TO_BUS_STOP: ret+= "TO_BUS_STOP";break;
+	}
+	return ret;
+}
+
 export type InsertionInfo = {
 	companyIdx: number;
 	prevEventIdxInRoutingResults: number;

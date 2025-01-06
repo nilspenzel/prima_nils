@@ -21,13 +21,19 @@ export async function booking(
 	const searchInterval = new Interval(c.startTime, c.targetTime);
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
 	const targetCoordinates = [c.target.coordinates];
-	const companies = await bookingApiQuery(
+	const { companies, busStopPerm } = await bookingApiQuery(
 		c.start.coordinates,
 		required,
 		searchInterval,
 		targetCoordinates,
 		trx
 	);
+	if (companies.length == 0) {
+		return undefined;
+	}
+	if (busStopPerm[0] == undefined) {
+		return undefined;
+	}
 	const userChosen = !startFixed ? c.start.coordinates : c.target.coordinates;
 	const userChosenTime = !startFixed ? c.startTime : c.targetTime;
 	const busStop = startFixed ? c.start.coordinates : c.target.coordinates;
@@ -43,19 +49,18 @@ export async function booking(
 			new Date(userChosenTime)
 		)
 	)[0][0];
-	//console.log("BEST: ", best);
+	console.log("BEST: ", best);
 	if (best == undefined) {
-		return best;
+		return undefined;
 	}
 	const events = companies[best.company].vehicles.find((v) => v.id == best.vehicle)!.events;
-	const prevEventIdx = events.findLastIndex((e) => e.communicated <= best.pickupTime);
+	const prevPickupEventIdx = events.findLastIndex((e) => e.communicated <= best.pickupTime);
 	const startEventGroupInfo = handleEventGroups(
 		events,
 		c.start.coordinates,
-		prevEventIdx,
+		prevPickupEventIdx,
 		best.pickupCase.how
 	);
-	const prevPickupEventIdx = events.findLastIndex((e) => e.communicated <= best.pickupTime);
 	const prevDropoffEventIdx = events.findLastIndex((e) => e.communicated <= best.dropoffTime);
 	const targetEventGroupInfo = handleEventGroups(
 		events,
@@ -68,48 +73,69 @@ export async function booking(
 		updates: startEventGroupInfo.updateList.updates.concat(targetEventGroupInfo.updateList.updates)
 	};
 
-	const prevEvent = events[prevEventIdx];
-	const nextEvent = events[prevEventIdx + 1];
+	const prevPickupEvent = events[prevPickupEventIdx];
+	const nextPickupEvent = events[prevPickupEventIdx + 1];
+	const prevDropoffEvent = events[prevDropoffEventIdx];
+	const nextDropoffEvent = events[prevDropoffEventIdx + 1];
 	const tour = (() => {
 		switch (best.pickupCase.how) {
 			case InsertHow.NEW_TOUR:
 				return undefined;
 			case InsertHow.PREPEND:
-				return nextEvent!.tourId;
+				return nextPickupEvent!.tourId;
 			default:
-				return prevEvent!.tourId;
+				return prevPickupEvent!.tourId;
 		}
 	})();
-	const mergeTourList = getMergeTourList(events, best.pickupCase.how, best.dropoffCase.how, prevPickupEventIdx, prevDropoffEventIdx);
+
+	const mergeTourList = getMergeTourList(
+		events,
+		best.pickupCase.how,
+		best.dropoffCase.how,
+		prevPickupEventIdx,
+		prevDropoffEventIdx
+	);
 	return {
 		best,
 		tour,
 		mergeTourList,
 		eventGroupUpdateList,
 		startEventGroup: startEventGroupInfo.newEventGroup,
-		targetEventGroup: targetEventGroupInfo.newEventGroup
+		targetEventGroup: targetEventGroupInfo.newEventGroup,
+		neighbourIds: {
+			prevPickup: prevPickupEvent?.id,
+			nextPickup: nextPickupEvent?.id,
+			prevDropoff: prevDropoffEvent?.id,
+			nextDropoff: nextDropoffEvent?.id
+		}
 	};
 }
 
-const getMergeTourList = (events: Event[], pickupHow: InsertHow, dropoffHow: InsertHow, pickupIdx: number, dropoffIdx: number): Set<number> => {
-	if(events.length == 0){
+const getMergeTourList = (
+	events: Event[],
+	pickupHow: InsertHow,
+	dropoffHow: InsertHow,
+	pickupIdx: number,
+	dropoffIdx: number
+): Set<number> => {
+	if (events.length == 0) {
 		return new Set<number>();
 	}
 	const tours = new Set<number>();
-	if((pickupHow==InsertHow.CONNECT)){
+	if (pickupHow == InsertHow.CONNECT) {
 		tours.add(events[pickupIdx].tourId);
 	}
-	if((dropoffHow==InsertHow.CONNECT)){
-		tours.add(events[dropoffIdx+1].tourId);
+	if (dropoffHow == InsertHow.CONNECT) {
+		tours.add(events[dropoffIdx + 1].tourId);
 	}
-	events.slice(pickupIdx, dropoffIdx+1).forEach((ev) => {
+	events.slice(pickupIdx + 1, dropoffIdx).forEach((ev) => {
 		tours.add(ev.tourId);
 	});
-	if(tours.size == 1){
+	if (tours.size == 1) {
 		return new Set<number>();
 	}
 	return tours;
-}
+};
 
 export type EventGroup = {
 	id: number;

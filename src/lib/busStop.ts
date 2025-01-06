@@ -8,4 +8,4 @@ export type BusStop = {
 export type RequestBusStop = {
 	coordinates: Coordinates;
 	times: string[];
-}
+};

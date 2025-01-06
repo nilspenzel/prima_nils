@@ -114,8 +114,12 @@ export class Interval {
 		return merged;
 	};
 
+	hasCommonPoint(other: Interval) {
+		return this.startTime <= other.endTime && this.endTime >= other.startTime;
+	}
+
 	intersect(other: Interval): Interval | undefined {
-		if (this.overlaps(other)) {
+		if (this.hasCommonPoint(other)) {
 			return new Interval(
 				new Date(Math.max(this.startTime.getTime(), other.startTime.getTime())),
 				new Date(Math.min(this.endTime.getTime(), other.endTime.getTime()))

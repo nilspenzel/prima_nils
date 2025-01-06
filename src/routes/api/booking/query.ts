@@ -1,6 +1,6 @@
 import { sql, Transaction } from 'kysely';
 import type { Capacities } from '$lib/capacities';
-import type { InsertionEvaluation } from '../../../lib/bookingAPI/insertions';
+import type { InsertionEvaluation, NeighbourIds } from '$lib/bookingAPI/insertions';
 import type { ExpectedConnection } from '$lib/bookingApiParameters';
 import type { EventGroupUpdateList } from './booking';
 import type { Database } from '$lib/types';
@@ -14,8 +14,17 @@ export async function insertRequest(
 	mergeTourList: number[],
 	startEventGroup: string,
 	targetEventGroup: string,
-	trx:  Transaction<Database>
+	neighbourIds: NeighbourIds,
+	trx: Transaction<Database>
 ) {
+	console.log(neighbourIds.prevPickup ?? -1);
+	console.log(connection.pickupApproachDuration);
+	console.log((neighbourIds.nextDropoff == neighbourIds.nextPickup ? -1 : neighbourIds.nextPickup) ?? -1);
+	console.log(connection.pickupReturnDuration);
+	console.log((neighbourIds.prevDropoff == neighbourIds.prevPickup ? -1 : neighbourIds.prevDropoff) ?? -1);
+	console.log(connection.dropoffApproachDuration);
+	console.log(neighbourIds.nextDropoff ?? -1);
+	console.log(connection.dropoffReturnDuration);
 	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
 	await sql`
         CALL create_and_merge_tours(
@@ -25,7 +34,15 @@ export async function insertRequest(
             ${mergeTourList},
 			${updateEventGroupList.ids},
 			${updateEventGroupList.updates},
-            ROW(${connection.departure}, ${connection.arrival}, ${connection.vehicle}, ${connection.tour})
+            ROW(${connection.departure}, ${connection.arrival}, ${connection.vehicle}, ${connection.tour}),
+			${neighbourIds.prevPickup ?? -1},
+			${connection.pickupApproachDuration},
+			${(neighbourIds.nextDropoff == neighbourIds.nextPickup ? -1 : neighbourIds.nextPickup) ?? -1},
+			${connection.pickupReturnDuration},
+			${(neighbourIds.prevDropoff == neighbourIds.prevPickup ? -1 : neighbourIds.prevDropoff) ?? -1},
+			${connection.dropoffApproachDuration},
+			${neighbourIds.nextDropoff ?? -1},
+			${connection.dropoffReturnDuration}
         )`.execute(trx);
 }
 //TODOS:

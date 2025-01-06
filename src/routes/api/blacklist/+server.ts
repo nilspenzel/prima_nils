@@ -3,7 +3,10 @@ import { getViableBusStops, type BlacklistingResult } from './viableBusStops';
 import type { RequestEvent } from './$types';
 import { json } from '@sveltejs/kit';
 import { schemaDefinitions, whitelistSchema } from '$lib/bookingApiParameters';
-import type { WhitelistRequest as BlacklistRequest } from '$lib/bookingApiParameters';
+import {
+	toWhitelistParameters as toBlacklistParameters,
+	type WhitelistParameters as BlacklistParameters
+} from '$lib/bookingApiParameters';
 import type { BusStop } from '$lib/busStop';
 
 export const POST = async (event: RequestEvent) => {
@@ -19,7 +22,7 @@ export const POST = async (event: RequestEvent) => {
 			{ status: 400 }
 		);
 	}
-	const parameters: BlacklistRequest = p;
+	const parameters: BlacklistParameters = toBlacklistParameters(p);
 	const directAsBusStop = {
 		coordinates: parameters.startFixed ? parameters.start : parameters.target,
 		times: parameters.times

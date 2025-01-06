@@ -32,15 +32,27 @@ export async function up(db) {
   );`.execute(db);
 
   await sql`
-    CREATE OR REPLACE PROCEDURE update_event_groups(
+    CREATE OR REPLACE PROCEDURE update_events(
       p_ids_list INTEGER[],
-      p_update_list varchar[]
+      p_update_list varchar[],
+      p_prev_pickup_id INTEGER,
+      p_prev_pickup_return_duration INTEGER,
+      p_after_pickup_id INTEGER,
+      p_after_pickup_approach_duration INTEGER,
+      p_prev_dropoff_id INTEGER,
+      p_prev_dropoff_return_duration INTEGER,
+      p_after_dropoff_id INTEGER,
+      p_after_dropoff_approach_duration INTEGER
     ) AS $$
      DECLARE
       idx INTEGER;
+      v_prev_id1 INTEGER := p_prev_pickup_id;
+      v_prev_id2 INTEGER := p_after_pickup_id;
+      v_next_id1 INTEGER := p_prev_dropoff_id;
+      v_next_id2 INTEGER := p_after_dropoff_id;
     BEGIN
       IF array_length(p_ids_list,1) <> array_length(p_update_list,1) THEN
-          RAISE EXCEPTION 'In update_event_groups, number of ids must match number of update values.';
+          RAISE EXCEPTION 'In update_events, number of ids must match number of update values.';
       END IF;
 
       FOR idx IN 1..COALESCE(array_length(p_ids_list, 1), 0) LOOP
@@ -48,6 +60,30 @@ export async function up(db) {
         SET event_group = p_update_list[idx]
         WHERE id = p_ids_list[idx];
       END LOOP;
+
+      IF v_prev_id1 IS NOT NULL THEN
+        UPDATE event
+        SET return_duration = p_prev_pickup_return_duration
+        WHERE id = v_prev_id1;
+      END IF;
+
+      IF v_prev_id2 IS NOT NULL THEN
+        UPDATE event
+        SET approach_duration = p_after_pickup_approach_duration
+        WHERE id = v_prev_id2;
+      END IF;
+
+      IF v_next_id1 IS NOT NULL THEN
+        UPDATE event
+        SET return_duration = p_prev_dropoff_return_duration
+        WHERE id = v_next_id1;
+      END IF;
+
+      IF v_next_id2 IS NOT NULL THEN
+        UPDATE event
+        SET approach_duration = p_after_dropoff_approach_duration
+        WHERE id = v_next_id2;
+      END IF;
     END;
     $$ LANGUAGE plpgsql;
   `.execute(db);
@@ -130,13 +166,21 @@ export async function up(db) {
       p_merge_tour_list INTEGER[],
       p_update_event_group_ids INTEGER[],
       p_update_event_group_updates varchar[],
-      p_tour tour_type
+      p_tour tour_type,
+      p_prev_pickup_id INTEGER,
+      p_prev_pickup_return_duration INTEGER,
+      p_after_pickup_id INTEGER,
+      p_after_pickup_approach_duration INTEGER,
+      p_prev_dropoff_id INTEGER,
+      p_prev_dropoff_return_duration INTEGER,
+      p_after_dropoff_id INTEGER,
+      p_after_dropoff_approach_duration INTEGER
     ) AS $$
     DECLARE
       v_request_id INTEGER;
       v_tour_id INTEGER;
     BEGIN
-      CALL update_event_groups(p_update_event_group_ids, p_update_event_group_updates);
+      CALL update_events(p_update_event_group_ids, p_update_event_group_updates, p_prev_pickup_id, p_prev_pickup_return_duration, p_after_pickup_id, p_after_pickup_approach_duration, p_prev_dropoff_id, p_prev_dropoff_return_duration, p_after_dropoff_id, p_after_dropoff_approach_duration);
       IF p_tour.id IS NULL THEN
           CALL insert_tour(p_tour, v_tour_id);
       ELSE

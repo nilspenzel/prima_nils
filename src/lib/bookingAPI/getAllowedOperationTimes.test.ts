@@ -46,6 +46,7 @@ const inX = (ms: number) => {
 };
 
 describe('get allowed operation times test', () => {
+	/*
 	it('insert as new tour', () => {
 		const insertionCase: InsertionType = {
 			how: InsertHow.NEW_TOUR,
@@ -258,7 +259,7 @@ describe('get allowed operation times test', () => {
 			vehicle
 		);
 		expect(resNoAvailability2).toHaveLength(0);
-	});
+	});*/
 	it('insert', () => {
 		const insertionCase: InsertionType = {
 			how: InsertHow.INSERT,

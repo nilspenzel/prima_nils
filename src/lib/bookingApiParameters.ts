@@ -34,12 +34,12 @@ export type WhitelistParameters = {
 	times: Date[];
 	startFixed: boolean;
 	capacities: Capacities;
-}
+};
 
 export function toWhitelistParameters(r: WhitelistRequest) {
 	const stringsToDates = (strings: string[]): Date[] => {
 		return strings.map((s) => new Date(s));
-	}
+	};
 	return {
 		...r,
 		startBusStops: r.startBusStops.map((bs) => {
@@ -55,7 +55,7 @@ export function toWhitelistParameters(r: WhitelistRequest) {
 			};
 		}),
 		times: stringsToDates(r.times)
-	}
+	};
 }
 
 export type BookingRequest = {
@@ -68,21 +68,23 @@ export type BookingParameters = {
 	connection1: ExpectedConnection | null;
 	connection2: ExpectedConnection | null;
 	capacities: Capacities;
-}
+};
 
 export function toBookingParameters(r: BookingRequest): BookingParameters {
-	const toExpectedConnection = (r: RequestExpectedConnection|null) => {
-		return r == null ? null : {
-			...r,
-			startTime: new Date(r.startTime),
-			targetTime: new Date(r.targetTime)
-		}
+	const toExpectedConnection = (r: RequestExpectedConnection | null) => {
+		return r == null
+			? null
+			: {
+					...r,
+					startTime: new Date(r.startTime),
+					targetTime: new Date(r.targetTime)
+				};
 	};
 	return {
 		...r,
 		connection1: toExpectedConnection(r.connection1),
 		connection2: toExpectedConnection(r.connection2)
-	}
+	};
 }
 
 export const schemaDefinitions = {

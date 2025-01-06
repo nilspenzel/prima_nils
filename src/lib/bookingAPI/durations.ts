@@ -1,28 +1,23 @@
 import type { Event, Vehicle } from '$lib/compositionTypes';
 import { BUFFER_TIME, MAX_TRAVEL_MS, PASSENGER_CHANGE_MINUTES } from '$lib/constants';
 import { Interval } from '$lib/interval';
-import { minutesToMs } from '$lib/time_utils';
+import { addBuffer, addPassengerChangeTime, minutesToMs } from '$lib/time_utils';
 import {
 	InsertDirection,
 	InsertHow,
 	InsertWhat,
+	InsertWhere,
 	type InsertionInfo,
 	type InsertionType
 } from './insertionTypes';
 import type { InsertionRoutingResult, RoutingResults } from './routing';
 
 export const returnsToCompany = (insertionCase: InsertionType): boolean => {
-	return (
-		insertionCase.how == InsertHow.APPEND ||
-		insertionCase.how == InsertHow.NEW_TOUR
-	);
+	return insertionCase.how == InsertHow.APPEND || insertionCase.how == InsertHow.NEW_TOUR;
 };
 
 export const comesFromCompany = (insertionCase: InsertionType): boolean => {
-	return (
-		insertionCase.how == InsertHow.PREPEND ||
-		insertionCase.how == InsertHow.NEW_TOUR
-	);
+	return insertionCase.how == InsertHow.PREPEND || insertionCase.how == InsertHow.NEW_TOUR;
 };
 
 export const getApproachDuration = (
@@ -31,7 +26,7 @@ export const getApproachDuration = (
 	insertionInfo: InsertionInfo,
 	busStopIdx: number | undefined,
 	prev: Event | undefined
-): number|undefined => {
+): number | undefined => {
 	if (prev == undefined) {
 		//	return MAX_TRAVEL_MS;
 	}
@@ -56,10 +51,10 @@ export const getApproachDuration = (
 	const drivingTime = comesFromCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
 		: relevantRoutingResults.event[insertionInfo.prevEventIdxInRoutingResults];
-	if(drivingTime == undefined) {
-		return undefined
+	if (drivingTime == undefined || drivingTime > MAX_TRAVEL_MS) {
+		return undefined;
 	}
-	return drivingTime + (drivingTime != 0 ? minutesToMs(BUFFER_TIME) : 0);
+	return addBuffer(drivingTime);
 };
 
 export const getReturnDuration = (
@@ -68,7 +63,7 @@ export const getReturnDuration = (
 	insertionInfo: InsertionInfo,
 	busStopIdx: number | undefined,
 	next: Event | undefined
-): number|undefined => {
+): number | undefined => {
 	if (next == undefined) {
 		//return MAX_TRAVEL_MS;
 	}
@@ -92,10 +87,10 @@ export const getReturnDuration = (
 	const drivingTime = returnsToCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
 		: relevantRoutingResults.event[insertionInfo.nextEventIdxInRoutingResults];
-		if(drivingTime == undefined) {
-			return undefined
-		}
-	return drivingTime + (drivingTime != 0 ? minutesToMs(PASSENGER_CHANGE_MINUTES + BUFFER_TIME) : 0);
+	if (drivingTime == undefined || drivingTime > MAX_TRAVEL_MS) {
+		return undefined;
+	}
+	return addPassengerChangeTime(addBuffer(drivingTime));
 };
 
 export function getAllowedOperationTimes(
@@ -129,11 +124,11 @@ export function getAllowedOperationTimes(
 	const relevantAvailabilities = (() => {
 		switch (insertionCase.how) {
 			case InsertHow.APPEND:
-				return vehicle.availabilities.filter((availability) => availability.covers(windowStartTime));
-			case InsertHow.PREPEND:
 				return vehicle.availabilities.filter((availability) =>
-					availability.covers(windowEndTime)
+					availability.covers(windowStartTime)
 				);
+			case InsertHow.PREPEND:
+				return vehicle.availabilities.filter((availability) => availability.covers(windowEndTime));
 			case InsertHow.CONNECT:
 				return vehicle.availabilities.filter((availability) =>
 					availability.contains(new Interval(windowStartTime, windowEndTime))
@@ -162,11 +157,7 @@ export function getArrivalWindow(
 	approachDuration: number,
 	returnDuration: number
 ): Interval | undefined {
-	if (
-		approachDuration > MAX_TRAVEL_MS ||
-		returnDuration > MAX_TRAVEL_MS ||
-		travelDuration > MAX_TRAVEL_MS
-	) {
+	if (travelDuration > MAX_TRAVEL_MS) {
 		return undefined;
 	}
 	console.assert(!(busStopWindow != undefined && InsertWhat.USER_CHOSEN == insertionCase.what));

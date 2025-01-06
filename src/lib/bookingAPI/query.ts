@@ -274,7 +274,7 @@ export const bookingApiQuery = async (
 	searchInterval: Interval,
 	busStops: Coordinates[],
 	trx: Transaction<Database> | Kysely<Database> | null
-): Promise<Company[]> => {
+): Promise<{ companies: Company[]; busStopPerm: (number | undefined)[] }> => {
 	interface CoordinateTable {
 		index: number;
 		longitude: number;
@@ -315,9 +315,12 @@ export const bookingApiQuery = async (
 		])
 		.executeTakeFirst();
 	if (dbResult == undefined) {
-		return [];
+		return {
+			companies: [],
+			busStopPerm: []
+		};
 	}
-	
+
 	const companies = dbResult.companies
 		.map((company) => {
 			return {
@@ -341,5 +344,8 @@ export const bookingApiQuery = async (
 			busStopPerm[i] = counter++;
 		}
 	}
-	return companies;
+	return {
+		companies,
+		busStopPerm
+	};
 };

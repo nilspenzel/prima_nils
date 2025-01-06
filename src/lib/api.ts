@@ -9,6 +9,7 @@ import type { Capacities } from './capacities';
 import type { BusStop } from './busStop';
 import { type RequestEvent } from '@sveltejs/kit';
 import type { QuerySerializerOptions } from '@hey-api/client-fetch';
+import { samePlace } from './bookingAPI/utils';
 
 export const getCompany = async (id: number): Promise<Company> => {
 	const response = await fetch(`/api/company?id=${id}`);
@@ -160,7 +161,33 @@ export const oneToMany = async (
 	one: Coordinates,
 	many: Coordinates[],
 	arriveBy: boolean
-): Promise<(number|undefined)[]> => {
+): Promise<(number | undefined)[]> => {
+	const inNiesky1 = new Coordinates(51.29468377345111, 14.833542206420248);
+	const inNiesky2 = new Coordinates(51.29544187321241, 14.820560314788537);
+	const inNiesky3 = new Coordinates(51.294046423258095, 14.820774891510126);
+	const nieskies = [inNiesky1, inNiesky2, inNiesky3];
+	const getString=(c:Coordinates)=>{
+		const n = nieskies.map((nn) => samePlace(nn, c));
+		const n2 = ["inNiesky1", "inNiesky2", "inNiesky3"];
+		console.assert(n.filter((nn) => nn).length < 2);
+		const m = n.indexOf(true);
+		if(m==undefined){
+			return "undef";
+		}
+		return n2[m];
+	};/*
+	console.log((await oneToManyMotis({
+		baseUrl: MOTIS_BASE_URL,
+		querySerializer: { array: { explode: false } } as QuerySerializerOptions,
+		query: {
+			one: coordinatesToStr(one),
+			many: many.map(coordinatesToStr),
+			max: MAX_TRAVEL_SECONDS,
+			maxMatchingDistance: MAX_MATCHING_DISTANCE,
+			mode: 'CAR',
+			arriveBy
+		}
+	})).request.url);*/
 	return await oneToManyMotis({
 		baseUrl: MOTIS_BASE_URL,
 		querySerializer: { array: { explode: false } } as QuerySerializerOptions,
@@ -176,6 +203,9 @@ export const oneToMany = async (
 		if (res.data == undefined) {
 			console.log('oneToMany data was undefined.');
 			return Array(many.length).fill(undefined);
+		}
+		for(let i=0;i!=many.length;++i){
+			//console.log((arriveBy ? ""+getString(many[i])+"->"+getString(one):""+getString(one)+"->"+getString(many[i]))+ "   "+ res.data[i].duration)
 		}
 		return res.data!.map((d: Duration) => {
 			return d.duration != undefined && d.duration != null ? secondsToMs(d.duration) : undefined;

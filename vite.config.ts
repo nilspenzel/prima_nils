@@ -15,6 +15,12 @@ export default defineConfig({
 		sveltekit()
 	],
 	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}']
+		include: ['src/**/*.{test,spec}.{js,ts}'],
+		poolOptions: {
+			threads: {
+				maxThreads: 1,
+				minThreads: 1
+			}
+		}, // Disable parallel threads
 	}
 });

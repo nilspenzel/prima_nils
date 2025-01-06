@@ -129,7 +129,6 @@ export const getViableBusStops = async (
 	if (busStops.length == 0 || !busStops.some((b) => b.times.length != 0)) {
 		return [];
 	}
-
 	const dbResult = withBusStops(busStops, startFixed)
 		.selectFrom('zone')
 		.where((eb) => eb.and([eb('zone.is_community', '=', false), covers(eb, userChosen)]))

@@ -11,6 +11,7 @@ import {
 	evaluateNewTours,
 	evaluatePairInsertions,
 	evaluateSingleInsertions,
+	printInsertionEvaluation,
 	takeBest
 } from './insertions';
 import { gatherRoutingCoordinates, routing } from './routing';
@@ -27,6 +28,10 @@ export async function evaluateRequest(
 	startFixed: boolean,
 	userChosenTime?: Date
 ) {
+	//console.log("expandedSearchInterval",expandedSearchInterval);
+	//console.log("userChosen",userChosen);
+	//console.log("busStops",busStops);
+	//console.log("userChosenTime",userChosenTime);
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
@@ -84,6 +89,8 @@ export async function evaluateRequest(
 		travelDurations,
 		userChosenTime
 	);
+	//console.log("busStopEvaluations",busStopEvaluations[0][0]);
+	//console.log("userChosenEvaluations",userChosenEvaluations);
 	const pairEvaluations = evaluatePairInsertions(
 		companies,
 		startFixed,
@@ -92,6 +99,9 @@ export async function evaluateRequest(
 		busStopEvaluations,
 		userChosenEvaluations
 	);
+	//console.log("NEWTOUR: ", newTourEvaluations.map((t) => t.map((e) => e == undefined ? "undefined" : printInsertionEvaluation(e!)))[0][0]);
+	//console.log("SINGLE: ", bothEvaluations.map((t) => t.map((e) => e == undefined ? "undefined" : printInsertionEvaluation(e!)))[0][0]);
+	//console.log("PAIR: ", pairEvaluations.map((t) => t.map((e) => e == undefined ? "undefined" : printInsertionEvaluation(e!)))[0][0]);
 	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
 	return best;
 }

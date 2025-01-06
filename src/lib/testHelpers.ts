@@ -4,8 +4,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { Coordinates } from './location';
 
-let plate = 1;
-
 export enum Zone {
 	ALTKREIS_BAUTZEN = 1,
 	WEIßWASSER = 2,
@@ -15,7 +13,10 @@ export enum Zone {
 	ZITTAU = 6
 }
 
-export const addCompany = async (zone: Zone, coordinates: Coordinates = new Coordinates(1,1)): Promise<number> => {
+export const addCompany = async (
+	zone: Zone,
+	coordinates: Coordinates = new Coordinates(1, 1)
+): Promise<number> => {
 	return (
 		await db
 			.insertInto('company')

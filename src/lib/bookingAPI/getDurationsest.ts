@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+/*import { describe, it, expect } from 'vitest';
 import { Coordinates } from '$lib/location';
 import type { Vehicle, Event } from '$lib/compositionTypes';
 import { type RoutingResults } from './routing';
@@ -12,7 +12,6 @@ import {
 	type InsertionInfo,
 	type InsertionType
 } from './insertionTypes';
-/*
 const createVehicle = (id: number, events: Event[]): Vehicle => {
 	return {
 		id,
