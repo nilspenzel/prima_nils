@@ -6,6 +6,7 @@ import { bookingApiQuery } from '$lib/bookingAPI/query';
 import type { BusStop } from '$lib/busStop';
 import { evaluateRequest } from '$lib/bookingAPI/evaluateRequest';
 import type { InsertionEvaluation } from '$lib/bookingAPI/insertions';
+import { InsertHow, printInsertionType } from '$lib/bookingAPI/insertionTypes';
 
 export async function whitelist(
 	userChosen: Coordinates,
@@ -16,6 +17,7 @@ export async function whitelist(
 	if (busStops.length == 0) {
 		return [];
 	}
+	console.log('WLS');
 	let lastTime = new Date(0);
 	let firstTime = new Date('5000-01-01T00:00:00.0Z');
 	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
@@ -65,5 +67,27 @@ export async function whitelist(
 			ret[i] = bestEvals[busStopPerm[i]!];
 		}
 	}
+	console.log('WLE');
 	return ret;
+}
+
+export function printMsg(b: InsertionEvaluation|undefined) {
+	if(b==undefined){
+		console.log("    not possible");
+		return;
+	}
+	if(b.pickupIdx == undefined) {
+		console.assert(b.dropoffIdx == undefined, "dropoffIdx==undefined unexpectedly");
+		console.assert(b.pickupCase.how == b.dropoffCase.how && b.pickupCase.how == InsertHow.NEW_TOUR, "undefined pickupIdx doesn't yield NEW_TOUR");
+		console.log("    accepted as new tour");
+		return;
+	}
+	console.assert(b.pickupIdx != undefined && b.dropoffIdx != undefined && b.pickupCase.how != InsertHow.NEW_TOUR && b.dropoffCase.how != InsertHow.NEW_TOUR, "defined pickupIdx has unexpected behaviour");
+	if(b.pickupIdx == b.dropoffIdx) {
+		console.log("    inserted at same position as: ", printInsertionType(b.pickupCase), "   idx: ", b.pickupIdx);
+		return;
+	}
+	console.log("    inserted at different positions");
+	console.log("    pickup: ", printInsertionType(b.pickupCase), "   idx: ", b.pickupIdx);
+	console.log("    dropoff: ", printInsertionType(b.dropoffCase), "   idx: ", b.dropoffIdx);
 }

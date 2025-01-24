@@ -141,6 +141,7 @@ export interface EventTable {
 	approach_duration: number;
 	return_duration: number;
 	event_group: string;
+	direct_driving_duration: number | null;
 }
 
 export type Event = Selectable<EventTable>;

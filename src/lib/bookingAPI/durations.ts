@@ -6,7 +6,6 @@ import {
 	InsertDirection,
 	InsertHow,
 	InsertWhat,
-	InsertWhere,
 	type InsertionInfo,
 	type InsertionType
 } from './insertionTypes';
@@ -157,7 +156,10 @@ export function getArrivalWindow(
 	approachDuration: number,
 	returnDuration: number
 ): Interval | undefined {
-	if (travelDuration > MAX_TRAVEL_MS) {
+	if (
+		travelDuration - (minutesToMs(BUFFER_TIME) + minutesToMs(PASSENGER_CHANGE_MINUTES)) >
+		MAX_TRAVEL_MS
+	) {
 		return undefined;
 	}
 	console.assert(!(busStopWindow != undefined && InsertWhat.USER_CHOSEN == insertionCase.what));
@@ -165,12 +167,8 @@ export function getArrivalWindow(
 	if (insertionCase.what == InsertWhat.BOTH) {
 		arrivalWindows = arrivalWindows.map((window) =>
 			window?.shrink(
-				insertionCase.direction == InsertDirection.TO_BUS_STOP
-					? travelDuration + minutesToMs(BUFFER_TIME) + minutesToMs(PASSENGER_CHANGE_MINUTES)
-					: 0,
-				insertionCase.direction == InsertDirection.FROM_BUS_STOP
-					? travelDuration + minutesToMs(BUFFER_TIME) + minutesToMs(PASSENGER_CHANGE_MINUTES)
-					: 0
+				insertionCase.direction == InsertDirection.TO_BUS_STOP ? travelDuration : 0,
+				insertionCase.direction == InsertDirection.FROM_BUS_STOP ? travelDuration : 0
 			)
 		);
 	}

@@ -37,6 +37,7 @@ type DbEvent = {
 	approach_duration: number;
 	return_duration: number;
 	event_group: string;
+	direct_driving_duration: number | null;
 };
 
 type DbTour = {
@@ -181,7 +182,8 @@ const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 				'event.is_pickup',
 				'event.approach_duration',
 				'event.return_duration',
-				'event.event_group'
+				'event.event_group',
+				'event.direct_driving_duration'
 			])
 	).as('events');
 };

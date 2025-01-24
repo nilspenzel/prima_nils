@@ -114,6 +114,13 @@ export class Interval {
 		return merged;
 	};
 
+	shift(shiftByMs: number): Interval {
+		return new Interval(
+			new Date(this.startTime.getTime() + shiftByMs),
+			new Date(this.endTime.getTime() + shiftByMs)
+		);
+	}
+
 	hasCommonPoint(other: Interval) {
 		return this.startTime <= other.endTime && this.endTime >= other.startTime;
 	}

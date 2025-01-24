@@ -37,4 +37,5 @@ export type Event = {
 	approachDuration: number;
 	returnDuration: number;
 	eventGroup: string;
+	direct_driving_duration: number | null;
 };

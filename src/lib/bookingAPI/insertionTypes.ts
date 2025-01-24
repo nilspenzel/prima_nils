@@ -27,6 +27,13 @@ export enum InsertDirection {
 	FROM_BUS_STOP
 }
 
+export const INSERT_HOW_OPTIONS = [
+	InsertHow.CONNECT,
+	InsertHow.APPEND,
+	InsertHow.PREPEND,
+	InsertHow.INSERT
+];
+
 export type InsertionType = {
 	how: InsertHow;
 	direction: InsertDirection;
@@ -34,51 +41,63 @@ export type InsertionType = {
 	what: InsertWhat;
 };
 
-export function printInsertionType (t: InsertionType) {
-	let ret = "how: ";
-	switch(t.how) {
-		case InsertHow.APPEND: ret += "APPEND";break;
-		case InsertHow.PREPEND: ret += "PREPEND";break;
-		case InsertHow.CONNECT: ret += "CONNECT";break;
-		case InsertHow.NEW_TOUR: ret += "NEW_TOUR";break;
-		case InsertHow.INSERT: ret += "INSERT";break;
+export function printInsertionType(t: InsertionType) {
+	let ret = 'how: ';
+	switch (t.how) {
+		case InsertHow.APPEND:
+			ret += 'APPEND';
+			break;
+		case InsertHow.PREPEND:
+			ret += 'PREPEND';
+			break;
+		case InsertHow.CONNECT:
+			ret += 'CONNECT';
+			break;
+		case InsertHow.NEW_TOUR:
+			ret += 'NEW_TOUR';
+			break;
+		case InsertHow.INSERT:
+			ret += 'INSERT';
+			break;
 	}
-	ret += ", where: ";
-	switch(t.where) {
-		case InsertWhere.AFTER_LAST_EVENT: ret += "AFTER_LAST_EVENT";break;
-		case InsertWhere.BEFORE_FIRST_EVENT: ret += "BEFORE_FIRST_EVENT";break;
-		case InsertWhere.BETWEEN_EVENTS: ret += "BETWEEN_EVENTS";break;
-		case InsertWhere.BETWEEN_TOURS: ret += "BETWEEN_TOURS";break;
+	ret += ', where: ';
+	switch (t.where) {
+		case InsertWhere.AFTER_LAST_EVENT:
+			ret += 'AFTER_LAST_EVENT';
+			break;
+		case InsertWhere.BEFORE_FIRST_EVENT:
+			ret += 'BEFORE_FIRST_EVENT';
+			break;
+		case InsertWhere.BETWEEN_EVENTS:
+			ret += 'BETWEEN_EVENTS';
+			break;
+		case InsertWhere.BETWEEN_TOURS:
+			ret += 'BETWEEN_TOURS';
+			break;
 	}
-	ret += ", what: ";
-	switch(t.what) {
-		case InsertWhat.BOTH: ret+= "BOTH";break;
-		case InsertWhat.BUS_STOP: ret+= "BUS_STOP";break;
-		case InsertWhat.USER_CHOSEN: ret+= "USER_CHOSEN";break;
+	ret += ', what: ';
+	switch (t.what) {
+		case InsertWhat.BOTH:
+			ret += 'BOTH';
+			break;
+		case InsertWhat.BUS_STOP:
+			ret += 'BUS_STOP';
+			break;
+		case InsertWhat.USER_CHOSEN:
+			ret += 'USER_CHOSEN';
+			break;
 	}
-	ret += ", direction: ";
-	switch(t.direction) {
-		case InsertDirection.FROM_BUS_STOP: ret+= "FROM_BUS_STOP";break;
-		case InsertDirection.TO_BUS_STOP: ret+= "TO_BUS_STOP";break;
+	ret += ', direction: ';
+	switch (t.direction) {
+		case InsertDirection.FROM_BUS_STOP:
+			ret += 'FROM_BUS_STOP';
+			break;
+		case InsertDirection.TO_BUS_STOP:
+			ret += 'TO_BUS_STOP';
+			break;
 	}
 	return ret;
 }
-
-export type InsertionInfo = {
-	companyIdx: number;
-	prevEventIdxInRoutingResults: number;
-	nextEventIdxInRoutingResults: number;
-	vehicle: Vehicle;
-	idxInEvents: number;
-	currentRange: Range;
-};
-
-export const INSERTION_TYPES = [
-	InsertHow.CONNECT,
-	InsertHow.APPEND,
-	InsertHow.PREPEND,
-	InsertHow.INSERT
-];
 
 export const canCaseBeValid = (insertionCase: InsertionType): boolean => {
 	switch (insertionCase.where) {
@@ -112,4 +131,17 @@ export const isCaseValid = (insertionCase: InsertionType): boolean => {
 		case InsertWhat.BOTH:
 			return true;
 	}
+};
+
+export const isEarlierBetter = (insertionCase: InsertionType) => {
+	return (insertionCase.direction == InsertDirection.FROM_BUS_STOP) == (insertionCase.what == InsertWhat.BUS_STOP);
+}
+
+export type InsertionInfo = {
+	companyIdx: number;
+	prevEventIdxInRoutingResults: number;
+	nextEventIdxInRoutingResults: number;
+	vehicle: Vehicle;
+	idxInEvents: number;
+	currentRange: Range;
 };

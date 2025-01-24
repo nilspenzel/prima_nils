@@ -11,6 +11,8 @@ import type { ExpectedConnection } from '$lib/bookingApiParameters';
 import { evaluateRequest } from '$lib/bookingAPI/evaluateRequest';
 import { v4 as uuidv4 } from 'uuid';
 import { samePlace } from '$lib/bookingAPI/utils';
+import { oneToMany } from '$lib/api';
+import { printMsg } from '../whitelist/whitelist';
 
 export async function booking(
 	c: ExpectedConnection,
@@ -18,11 +20,12 @@ export async function booking(
 	startFixed: boolean,
 	trx: Transaction<Database>
 ) {
+	console.log("BS");
 	const searchInterval = new Interval(c.startTime, c.targetTime);
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL_MS * 6, MAX_TRAVEL_MS * 6);
-	const targetCoordinates = [c.target.coordinates];
+	const targetCoordinates = [c.dropoff.coordinates];
 	const { companies, busStopPerm } = await bookingApiQuery(
-		c.start.coordinates,
+		c.pickup.coordinates,
 		required,
 		searchInterval,
 		targetCoordinates,
@@ -34,9 +37,8 @@ export async function booking(
 	if (busStopPerm[0] == undefined) {
 		return undefined;
 	}
-	const userChosen = !startFixed ? c.start.coordinates : c.target.coordinates;
-	const userChosenTime = !startFixed ? c.startTime : c.targetTime;
-	const busStop = startFixed ? c.start.coordinates : c.target.coordinates;
+	const userChosen = !startFixed ? c.pickup.coordinates : c.dropoff.coordinates;
+	const busStop = startFixed ? c.pickup.coordinates : c.dropoff.coordinates;
 	const busTime = startFixed ? c.startTime : c.targetTime;
 	const best = (
 		await evaluateRequest(
@@ -46,10 +48,12 @@ export async function booking(
 			[{ coordinates: busStop, times: [busTime] }],
 			required,
 			startFixed,
-			new Date(userChosenTime)
+			{
+				pickup: new Date(c.startTime),
+				dropoff: new Date(c.targetTime)
+			}
 		)
 	)[0][0];
-	console.log("BEST: ", best);
 	if (best == undefined) {
 		return undefined;
 	}
@@ -57,14 +61,14 @@ export async function booking(
 	const prevPickupEventIdx = events.findLastIndex((e) => e.communicated <= best.pickupTime);
 	const startEventGroupInfo = handleEventGroups(
 		events,
-		c.start.coordinates,
+		c.pickup.coordinates,
 		prevPickupEventIdx,
 		best.pickupCase.how
 	);
 	const prevDropoffEventIdx = events.findLastIndex((e) => e.communicated <= best.dropoffTime);
 	const targetEventGroupInfo = handleEventGroups(
 		events,
-		c.target.coordinates,
+		c.dropoff.coordinates,
 		prevDropoffEventIdx,
 		best.dropoffCase.how
 	);
@@ -95,6 +99,60 @@ export async function booking(
 		prevPickupEventIdx,
 		prevDropoffEventIdx
 	);
+	let directPickup = null;
+	let directDropoff = null;
+	const directUpdates = new Array<{ id: number; direct: number | null }>();
+	if (best.pickupCase.how == InsertHow.NEW_TOUR) {
+		if(prevPickupEvent != undefined) {
+			directPickup =
+				(await oneToMany(prevPickupEvent.coordinates, [c.pickup.coordinates], false))[0] ?? null;
+		}
+		if(nextDropoffEvent != undefined) {
+			directUpdates.push({
+				id: prevDropoffEventIdx + 1,
+				direct:
+					(await oneToMany(c.dropoff.coordinates, [nextDropoffEvent.coordinates], false))[0] ?? null
+			});
+		}
+	}
+	if (prevPickupEventIdx == prevDropoffEventIdx) {
+		if (best.pickupCase.how == InsertHow.APPEND) {
+			directPickup =
+				(await oneToMany(prevPickupEvent.coordinates, [c.pickup.coordinates], false))[0] ?? null;
+		}
+		if (best.dropoffCase.how == InsertHow.PREPEND) {
+			directUpdates.push({
+				id: prevDropoffEventIdx + 1,
+				direct:
+					(await oneToMany(c.dropoff.coordinates, [nextDropoffEvent.coordinates], false))[0] ?? null
+			});
+		}
+	} else {
+		if (best.pickupCase.how == InsertHow.APPEND) {
+			directPickup =
+				(await oneToMany(prevPickupEvent.coordinates, [c.pickup.coordinates], false))[0] ?? null;
+		}
+		if (best.pickupCase.how == InsertHow.PREPEND) {
+			directUpdates.push({
+				id: prevPickupEventIdx + 1,
+				direct:
+					(await oneToMany(c.pickup.coordinates, [nextPickupEvent.coordinates], false))[0] ?? null
+			});
+		}
+		if (best.dropoffCase.how == InsertHow.APPEND) {
+			directDropoff =
+				(await oneToMany(prevDropoffEvent.coordinates, [c.dropoff.coordinates], false))[0] ?? null;
+		}
+		if (best.dropoffCase.how == InsertHow.PREPEND) {
+			directUpdates.push({
+				id: prevDropoffEventIdx + 1,
+				direct:
+					(await oneToMany(c.dropoff.coordinates, [nextDropoffEvent.coordinates], false))[0] ?? null
+			});
+		}
+	}
+	printMsg(best);
+	console.log("BE");
 	return {
 		best,
 		tour,
@@ -107,7 +165,10 @@ export async function booking(
 			nextPickup: nextPickupEvent?.id,
 			prevDropoff: prevDropoffEvent?.id,
 			nextDropoff: nextDropoffEvent?.id
-		}
+		},
+		directPickup,
+		directDropoff,
+		directUpdates
 	};
 }
 
@@ -128,7 +189,7 @@ const getMergeTourList = (
 	if (dropoffHow == InsertHow.CONNECT) {
 		tours.add(events[dropoffIdx + 1].tourId);
 	}
-	events.slice(pickupIdx + 1, dropoffIdx).forEach((ev) => {
+	events.slice(pickupIdx + 1, dropoffIdx + 1).forEach((ev) => {
 		tours.add(ev.tourId);
 	});
 	if (tours.size == 1) {

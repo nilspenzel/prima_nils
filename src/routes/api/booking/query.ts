@@ -15,22 +15,17 @@ export async function insertRequest(
 	startEventGroup: string,
 	targetEventGroup: string,
 	neighbourIds: NeighbourIds,
+	directPickup: number | null,
+	directDropoff: number | null,
+	directUpdates: { id: number; direct: number | null }[],
 	trx: Transaction<Database>
 ) {
-	console.log(neighbourIds.prevPickup ?? -1);
-	console.log(connection.pickupApproachDuration);
-	console.log((neighbourIds.nextDropoff == neighbourIds.nextPickup ? -1 : neighbourIds.nextPickup) ?? -1);
-	console.log(connection.pickupReturnDuration);
-	console.log((neighbourIds.prevDropoff == neighbourIds.prevPickup ? -1 : neighbourIds.prevDropoff) ?? -1);
-	console.log(connection.dropoffApproachDuration);
-	console.log(neighbourIds.nextDropoff ?? -1);
-	console.log(connection.dropoffReturnDuration);
 	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
 	await sql`
         CALL create_and_merge_tours(
             ROW(${capacities.passengers}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}),
-            ROW(${true}, ${c.start.coordinates.lat}, ${c.start.coordinates.lng}, ${connection.pickupTime}, ${connection.pickupTime}, ${customer}, ${connection.pickupApproachDuration}, ${connection.pickupReturnDuration},${c.start.address},${startEventGroup}),
-            ROW(${false}, ${c.target.coordinates.lat}, ${c.target.coordinates.lng}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${customer}, ${connection.dropoffApproachDuration}, ${connection.dropoffReturnDuration},${c.target.address},${targetEventGroup}),
+            ROW(${true}, ${c.pickup.coordinates.lat}, ${c.pickup.coordinates.lng}, ${connection.pickupTime}, ${connection.pickupTime}, ${customer}, ${connection.pickupApproachDuration}, ${connection.pickupReturnDuration},${directPickup},${c.pickup.address},${startEventGroup}),
+            ROW(${false}, ${c.dropoff.coordinates.lat}, ${c.dropoff.coordinates.lng}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${customer}, ${connection.dropoffApproachDuration}, ${connection.dropoffReturnDuration},${directDropoff},${c.dropoff.address},${targetEventGroup}),
             ${mergeTourList},
 			${updateEventGroupList.ids},
 			${updateEventGroupList.updates},
@@ -42,9 +37,10 @@ export async function insertRequest(
 			${(neighbourIds.prevDropoff == neighbourIds.prevPickup ? -1 : neighbourIds.prevDropoff) ?? -1},
 			${connection.dropoffApproachDuration},
 			${neighbourIds.nextDropoff ?? -1},
-			${connection.dropoffReturnDuration}
+			${connection.dropoffReturnDuration},
+			${directUpdates.map((u) => u.id)},
+			${directUpdates.map((u) => u.direct)}
         )`.execute(trx);
 }
 //TODOS:
 // communicated/scheduled times
-// approach/return duration

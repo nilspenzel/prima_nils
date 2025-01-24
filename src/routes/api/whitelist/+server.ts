@@ -17,7 +17,6 @@ export type WhitelistResponse = {
 };
 
 export async function POST(event: RequestEvent) {
-	console.log('WHITELIST START');
 	const p = await event.request.json();
 	const validator = new Validator();
 	validator.addSchema(schemaDefinitions, '/schemaDefinitions');
@@ -65,6 +64,5 @@ export async function POST(event: RequestEvent) {
 		target,
 		direct
 	};
-	console.log('WHITELIST END');
 	return json(response);
 }

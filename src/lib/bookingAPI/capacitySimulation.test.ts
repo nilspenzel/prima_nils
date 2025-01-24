@@ -19,6 +19,7 @@ function createEventCapacitiesOnly(capacities: Capacities, is_pickup: boolean): 
 		communicated: new Date(),
 		approachDuration: 0,
 		returnDuration: 0,
+		direct_driving_duration: null,
 		eventGroup: ''
 	};
 }

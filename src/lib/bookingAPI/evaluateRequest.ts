@@ -11,13 +11,13 @@ import {
 	evaluateNewTours,
 	evaluatePairInsertions,
 	evaluateSingleInsertions,
-	printInsertionEvaluation,
 	takeBest
 } from './insertions';
 import { gatherRoutingCoordinates, routing } from './routing';
 import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { Company } from '$lib/compositionTypes';
+import type { PromisedTimes } from './promisedTimes';
 
 export async function evaluateRequest(
 	companies: Company[],
@@ -26,12 +26,8 @@ export async function evaluateRequest(
 	busStops: BusStop[],
 	required: Capacities,
 	startFixed: boolean,
-	userChosenTime?: Date
+	promisedTimes?: PromisedTimes
 ) {
-	//console.log("expandedSearchInterval",expandedSearchInterval);
-	//console.log("userChosen",userChosen);
-	//console.log("busStops",busStops);
-	//console.log("userChosenTime",userChosenTime);
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
@@ -77,7 +73,7 @@ export async function evaluateRequest(
 		busStopTimes,
 		routingResults,
 		travelDurations,
-		userChosenTime
+		promisedTimes
 	);
 	const { busStopEvaluations, bothEvaluations, userChosenEvaluations } = evaluateSingleInsertions(
 		companies,
@@ -87,10 +83,10 @@ export async function evaluateRequest(
 		busStopTimes,
 		routingResults,
 		travelDurations,
-		userChosenTime
+		promisedTimes
 	);
-	//console.log("busStopEvaluations",busStopEvaluations[0][0]);
-	//console.log("userChosenEvaluations",userChosenEvaluations);
+	//console.log(busStopEvaluations.map((m) => m.map((r) => r.map((k)=>k==undefined ? "undef":printInsertionType(k.case)))));
+	//console.log("userc: ", userChosenEvaluations.map((m) => m==undefined ? "undef":printInsertionType(m.case)));
 	const pairEvaluations = evaluatePairInsertions(
 		companies,
 		startFixed,
@@ -99,9 +95,14 @@ export async function evaluateRequest(
 		busStopEvaluations,
 		userChosenEvaluations
 	);
-	//console.log("NEWTOUR: ", newTourEvaluations.map((t) => t.map((e) => e == undefined ? "undefined" : printInsertionEvaluation(e!)))[0][0]);
-	//console.log("SINGLE: ", bothEvaluations.map((t) => t.map((e) => e == undefined ? "undefined" : printInsertionEvaluation(e!)))[0][0]);
-	//console.log("PAIR: ", pairEvaluations.map((t) => t.map((e) => e == undefined ? "undefined" : printInsertionEvaluation(e!)))[0][0]);
+	//console.log("Single");
+	//console.log(bothEvaluations.map((c) => c.map((o)=>o==undefined?"undef":printInsertionType(o.pickupCase))));
+	//console.log("Pair");
+	//console.log(pairEvaluations.map((c) => c.map((o)=>o==undefined?"undef":""+printInsertionType(o.pickupCase)+"    "+printInsertionType(o.dropoffCase))));
 	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
+	if (best[0][0]) {
+		//console.log("BESTp: ", printInsertionType(best[0][0].pickupCase));
+		//console.log("BESTd: ", printInsertionType(best[0][0].dropoffCase));
+	}
 	return best;
 }

@@ -1,4 +1,4 @@
-import { BUFFER_TIME, PASSENGER_CHANGE_MINUTES } from "./constants";
+import { BUFFER_TIME, PASSENGER_CHANGE_MINUTES } from './constants';
 
 export function secondsToMs(minutes: number) {
 	return minutes * 1000;

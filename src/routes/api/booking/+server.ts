@@ -84,6 +84,9 @@ export const POST = async (event: RequestEvent) => {
 				firstConnection!.startEventGroup,
 				firstConnection!.targetEventGroup,
 				firstConnection!.neighbourIds,
+				firstConnection!.directPickup,
+				firstConnection!.directDropoff,
+				firstConnection!.directUpdates,
 				trx
 			);
 		}
@@ -98,6 +101,9 @@ export const POST = async (event: RequestEvent) => {
 				secondConnection!.startEventGroup,
 				secondConnection!.targetEventGroup,
 				secondConnection!.neighbourIds,
+				secondConnection!.directPickup,
+				secondConnection!.directDropoff,
+				secondConnection!.directUpdates,
 				trx
 			);
 		}

@@ -2,6 +2,7 @@ import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { Company } from '$lib/compositionTypes';
 import { Coordinates } from '$lib/location';
+import type { VehicleId } from '$lib/typeAliases';
 import type { Range } from './capacitySimulation';
 import { iterateAllInsertions, samePlace } from './utils';
 
@@ -17,7 +18,7 @@ export type RoutingResults = {
 
 export function gatherRoutingCoordinates(
 	companies: Company[],
-	insertionsByVehicle: Map<number, Range[]>
+	insertionsByVehicle: Map<VehicleId, Range[]>
 ) {
 	if (companies.length == 0) {
 		return { forward: [], backward: [] };
@@ -91,29 +92,5 @@ export async function routing(
 			event: busStopResults[busStopIdx].slice(companies.length)
 		};
 	}
-	const inNiesky1 = new Coordinates(51.29468377345111, 14.833542206420248);
-	const inNiesky2 = new Coordinates(51.29544187321241, 14.820560314788537);
-	const inNiesky3 = new Coordinates(51.294046423258095, 14.820774891510126);
-	const nieskies = [inNiesky1, inNiesky2, inNiesky3];
-	const getString=(c:Coordinates)=>{
-		const n = nieskies.map((nn) => samePlace(nn, c));
-		const n2 = ["inNiesky1", "inNiesky2", "inNiesky3"];
-		console.assert(n.filter((nn) => nn).length < 2);
-		const m = n.indexOf(true);
-		if(m==undefined){
-			return "undef";
-		}
-		return n2[m];
-	};
-	//console.log(getString(userChosen), " user company ", ret.userChosen.company);
-	//console.log(getString(busStops[0].coordinates), " bus company ", ret.userChosen.company);
-	//console.log("USER: ", getString(userChosen), startFixed);
-	//for(let i=0;i!=userChosenMany.length;++i){
-	//	console.log(getString(userChosenMany[i]), " ",i==0?ret.userChosen.company:ret.userChosen.event[i-1]);
-	//}
-	//console.log("BUS: ", getString(busStops[0].coordinates), !startFixed);
-	//for(let i=0;i!=busStopMany.length;++i){
-	//	console.log(getString(busStopMany[i]), " ",i==0?ret.busStops[0].company:ret.busStops[0].event[i-1]);
-	//}
 	return ret;
 }

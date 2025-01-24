@@ -35,6 +35,7 @@ const createEvent = (departure: number, communicated: number, arrival: number): 
 		communicated: inX(communicated),
 		approachDuration: 0,
 		returnDuration: 0,
+		direct_driving_duration: null,
 		time: new Interval(new Date(), new Date()),
 		eventGroup: ''
 	};

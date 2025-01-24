@@ -100,6 +100,7 @@ export async function up(db) {
         .addColumn('approach_duration', 'integer', (col) => col.notNull())
         .addColumn('return_duration', 'integer', (col) => col.notNull())
         .addColumn('event_group', 'varchar', (col) => col.notNull())
+        .addColumn('direct_driving_duration', 'integer')
         .addColumn('request', 'integer', (col) =>
             col.references('request.id').notNull(),
         )
