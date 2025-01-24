@@ -129,34 +129,56 @@ export const getViableBusStops = async (
 	if (busStops.length == 0 || !busStops.some((b) => b.times.length != 0)) {
 		return [];
 	}
-	const dbResult = withBusStops(busStops, startFixed)
-		.selectFrom('zone')
-		.where((eb) => eb.and([eb('zone.is_community', '=', false), covers(eb, userChosen)]))
-		.innerJoinLateral(
-			(eb) =>
-				eb
-					.selectFrom('busstops')
-					.where(
-						sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(busstops.longitude, busstops.latitude), ${SRID}))`
-					)
-					.selectAll()
-					.as('busstopzone'),
-			(join) => join.onTrue()
-		)
-		.innerJoinLateral(
-			(eb) =>
-				eb
-					.selectFrom('times')
-					.whereRef('times.busstopindex', '=', 'busstopzone.index')
-					.selectAll()
-					.as('busstoptimes'),
-			(join) => join.onTrue()
-		)
-		.where((eb) => doesCompanyExist(eb, capacities))
-		.select(['busstoptimes.index as timeIndex', 'busstoptimes.busstopindex'])
-		.execute();
+	const createBatchQuery  = (
+		userChosen: Coordinates,
+		busStops: BusStop[],
+		startFixed: boolean,
+		capacities: Capacities
+	): Promise<BlacklistingResult[]> => {
+		return withBusStops(busStops, startFixed)
+			.selectFrom('zone')
+			.where((eb) => eb.and([eb('zone.is_community', '=', false), covers(eb, userChosen)]))
+			.innerJoinLateral(
+				(eb) =>
+					eb
+						.selectFrom('busstops')
+						.where(
+							sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(busstops.longitude, busstops.latitude), ${SRID}))`
+						)
+						.selectAll()
+						.as('busstopzone'),
+				(join) => join.onTrue()
+			)
+			.innerJoinLateral(
+				(eb) =>
+					eb
+						.selectFrom('times')
+						.whereRef('times.busstopindex', '=', 'busstopzone.index')
+						.selectAll()
+						.as('busstoptimes'),
+				(join) => join.onTrue()
+			)
+			.where((eb) => doesCompanyExist(eb, capacities))
+			.select(['busstoptimes.index as timeIndex', 'busstoptimes.busstopindex']).execute();
+	};
 
-	return dbResult;
+	const batches = [];
+	const batchSize = 50;
+	let currentPos = 0;
+	while(currentPos<busStops.length) {
+		batches.push(createBatchQuery(userChosen, busStops.slice(currentPos, Math.min(currentPos + batchSize, busStops.length)),startFixed, capacities));
+		currentPos+=batchSize;
+	}
+	const batchResponses = (await Promise.all(batches));
+	let response: BlacklistingResult[] = [];
+	batchResponses.forEach((batchResponse, idx) => {
+		response = response.concat(batchResponse.map((r) => {return {timeIndex: r.timeIndex, busstopindex: r.busstopindex + idx * batchSize}}));
+	});
+	let len = 0;
+	for(let i=0;i!=busStops.length;++i){
+		len += busStops[i].times.length;
+	}
+	return response;
 };
 
 export type BlacklistingResult = {
