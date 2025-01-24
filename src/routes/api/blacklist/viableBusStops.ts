@@ -129,7 +129,7 @@ export const getViableBusStops = async (
 	if (busStops.length == 0 || !busStops.some((b) => b.times.length != 0)) {
 		return [];
 	}
-	const createBatchQuery  = (
+	const createBatchQuery = (
 		userChosen: Coordinates,
 		busStops: BusStop[],
 		startFixed: boolean,
@@ -159,25 +159,33 @@ export const getViableBusStops = async (
 				(join) => join.onTrue()
 			)
 			.where((eb) => doesCompanyExist(eb, capacities))
-			.select(['busstoptimes.index as timeIndex', 'busstoptimes.busstopindex']).execute();
+			.select(['busstoptimes.index as timeIndex', 'busstoptimes.busstopindex'])
+			.execute();
 	};
 
 	const batches = [];
 	const batchSize = 50;
 	let currentPos = 0;
-	while(currentPos<busStops.length) {
-		batches.push(createBatchQuery(userChosen, busStops.slice(currentPos, Math.min(currentPos + batchSize, busStops.length)),startFixed, capacities));
-		currentPos+=batchSize;
+	while (currentPos < busStops.length) {
+		batches.push(
+			createBatchQuery(
+				userChosen,
+				busStops.slice(currentPos, Math.min(currentPos + batchSize, busStops.length)),
+				startFixed,
+				capacities
+			)
+		);
+		currentPos += batchSize;
 	}
-	const batchResponses = (await Promise.all(batches));
+	const batchResponses = await Promise.all(batches);
 	let response: BlacklistingResult[] = [];
 	batchResponses.forEach((batchResponse, idx) => {
-		response = response.concat(batchResponse.map((r) => {return {timeIndex: r.timeIndex, busstopindex: r.busstopindex + idx * batchSize}}));
+		response = response.concat(
+			batchResponse.map((r) => {
+				return { timeIndex: r.timeIndex, busstopindex: r.busstopindex + idx * batchSize };
+			})
+		);
 	});
-	let len = 0;
-	for(let i=0;i!=busStops.length;++i){
-		len += busStops[i].times.length;
-	}
 	return response;
 };
 

@@ -24,8 +24,8 @@ export async function insertRequest(
 	await sql`
         CALL create_and_merge_tours(
             ROW(${capacities.passengers}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}),
-            ROW(${true}, ${c.pickup.coordinates.lat}, ${c.pickup.coordinates.lng}, ${connection.pickupTime}, ${connection.pickupTime}, ${customer}, ${connection.pickupApproachDuration}, ${connection.pickupReturnDuration},${directPickup},${c.pickup.address},${startEventGroup}),
-            ROW(${false}, ${c.dropoff.coordinates.lat}, ${c.dropoff.coordinates.lng}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${customer}, ${connection.dropoffApproachDuration}, ${connection.dropoffReturnDuration},${directDropoff},${c.dropoff.address},${targetEventGroup}),
+            ROW(${true}, ${c.start.coordinates.lat}, ${c.start.coordinates.lng}, ${connection.pickupTime}, ${connection.pickupTime}, ${customer}, ${connection.pickupApproachDuration}, ${connection.pickupReturnDuration},${directPickup},${c.start.address},${startEventGroup}),
+            ROW(${false}, ${c.target.coordinates.lat}, ${c.target.coordinates.lng}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${customer}, ${connection.dropoffApproachDuration}, ${connection.dropoffReturnDuration},${directDropoff},${c.target.address},${targetEventGroup}),
             ${mergeTourList},
 			${updateEventGroupList.ids},
 			${updateEventGroupList.updates},

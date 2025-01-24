@@ -34,8 +34,6 @@ import {
 	returnsToCompany
 } from './durations';
 import type { PromisedTimes } from './promisedTimes';
-import { oneToMany } from '$lib/api';
-import type { Coordinates } from '$lib/location';
 
 type Evaluations = {
 	busStopEvaluations: (SingleInsertionEvaluation | undefined)[][][];
@@ -48,8 +46,8 @@ export type InsertionEvaluation = {
 	dropoffTime: Date;
 	pickupCase: InsertionType;
 	dropoffCase: InsertionType;
-	pickupIdx: number|undefined;
-	dropoffIdx: number|undefined;
+	pickupIdx: number | undefined;
+	dropoffIdx: number | undefined;
 	taxiWaitingTime: number;
 	taxiDuration: number;
 	passengerDuration: number;
@@ -288,9 +286,7 @@ export function evaluateSingleInsertion(
 	const taxiDuration =
 		approachDuration + returnDuration - getOldDrivingTime(insertionCase, prev, next);
 	console.assert(insertionCase.what != InsertWhat.BOTH);
-	const time = isEarlierBetter(insertionCase)
-			? arrivalWindow.startTime
-			: arrivalWindow.endTime;
+	const time = isEarlierBetter(insertionCase) ? arrivalWindow.startTime : arrivalWindow.endTime;
 	const taxiWaitingTime = getTaxiWaitingDelta(
 		approachDuration + returnDuration,
 		insertionCase,
@@ -544,58 +540,6 @@ export function evaluateSingleInsertions(
 	return { busStopEvaluations, userChosenEvaluations, bothEvaluations };
 }
 
-export type CompanyIdx = number;
-export type VehicleIdx = number;
-export type EventIdx = number;
-
-type RR = {
-	cIdx: number;
-	vIdx: number;
-	eIdx: number;
-	coordinates1: Coordinates;
-	coordinates2: Coordinates;
-};
-
-async function routeTourGaps(companies: Company[]) {
-	const ret = new Map<CompanyIdx, Map<VehicleIdx, Map<EventIdx, number | undefined>>>();
-	companies.forEach((c, cIdx) => {
-		ret.set(cIdx, new Map<VehicleIdx, Map<EventIdx, number>>());
-		c.vehicles.forEach((v, vIdx) => {
-			ret.get(cIdx)!.set(vIdx, new Map<EventIdx, number>());
-			v.events.forEach((_, eIdx) => ret.get(cIdx)!.get(vIdx)!.set(eIdx, 0));
-		});
-	});
-	const routingRequests: RR[] = [];
-	for (let cIdx = 0; cIdx != companies.length; ++cIdx) {
-		const company = companies[cIdx];
-		for (let vIdx = 0; vIdx != companies[vIdx].vehicles.length; ++vIdx) {
-			const events = company.vehicles[vIdx].events;
-			for (let eIdx = 1; eIdx != events.length; ++eIdx) {
-				const e1 = events[eIdx - 1];
-				const e2 = events[eIdx];
-				if (e1.tourId != e2.tourId) {
-					routingRequests.push({
-						cIdx,
-						vIdx,
-						eIdx,
-						coordinates1: e1.coordinates,
-						coordinates2: e2.coordinates
-					});
-				}
-			}
-		}
-	}
-	const promises = routingRequests.map((rr) =>
-		oneToMany(rr.coordinates1, [rr.coordinates2], false)
-	);
-	const result = await Promise.all(promises);
-	for (let i = 0; i != routingRequests.length; ++i) {
-		const rr = routingRequests[i];
-		ret.get(rr.cIdx)!.get(rr.vIdx)!.set(rr.eIdx, result[0][i]);
-	}
-	return ret;
-}
-
 export function evaluatePairInsertions(
 	companies: Company[],
 	startFixed: boolean,
@@ -613,7 +557,7 @@ export function evaluatePairInsertions(
 	iterateAllInsertions(
 		companies,
 		insertionRanges,
-		(insertionInfo: InsertionInfo, insertionCounter: number) => {
+		(insertionInfo: InsertionInfo, _insertionCounter: number) => {
 			const events = insertionInfo.vehicle.events;
 			const pickupIdx = insertionInfo.idxInEvents;
 			let cumulatedTaxiDrivingDelta = 0;

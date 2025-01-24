@@ -134,8 +134,11 @@ export const isCaseValid = (insertionCase: InsertionType): boolean => {
 };
 
 export const isEarlierBetter = (insertionCase: InsertionType) => {
-	return (insertionCase.direction == InsertDirection.FROM_BUS_STOP) == (insertionCase.what == InsertWhat.BUS_STOP);
-}
+	return (
+		(insertionCase.direction == InsertDirection.FROM_BUS_STOP) ==
+		(insertionCase.what == InsertWhat.BUS_STOP)
+	);
+};
 
 export type InsertionInfo = {
 	companyIdx: number;

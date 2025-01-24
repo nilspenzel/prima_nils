@@ -71,23 +71,37 @@ export async function whitelist(
 	return ret;
 }
 
-export function printMsg(b: InsertionEvaluation|undefined) {
-	if(b==undefined){
-		console.log("    not possible");
+export function printMsg(b: InsertionEvaluation | undefined) {
+	if (b == undefined) {
+		console.log('    not possible');
 		return;
 	}
-	if(b.pickupIdx == undefined) {
-		console.assert(b.dropoffIdx == undefined, "dropoffIdx==undefined unexpectedly");
-		console.assert(b.pickupCase.how == b.dropoffCase.how && b.pickupCase.how == InsertHow.NEW_TOUR, "undefined pickupIdx doesn't yield NEW_TOUR");
-		console.log("    accepted as new tour");
+	if (b.pickupIdx == undefined) {
+		console.assert(b.dropoffIdx == undefined, 'dropoffIdx==undefined unexpectedly');
+		console.assert(
+			b.pickupCase.how == b.dropoffCase.how && b.pickupCase.how == InsertHow.NEW_TOUR,
+			"undefined pickupIdx doesn't yield NEW_TOUR"
+		);
+		console.log('    accepted as new tour');
 		return;
 	}
-	console.assert(b.pickupIdx != undefined && b.dropoffIdx != undefined && b.pickupCase.how != InsertHow.NEW_TOUR && b.dropoffCase.how != InsertHow.NEW_TOUR, "defined pickupIdx has unexpected behaviour");
-	if(b.pickupIdx == b.dropoffIdx) {
-		console.log("    inserted at same position as: ", printInsertionType(b.pickupCase), "   idx: ", b.pickupIdx);
+	console.assert(
+		b.pickupIdx != undefined &&
+			b.dropoffIdx != undefined &&
+			b.pickupCase.how != InsertHow.NEW_TOUR &&
+			b.dropoffCase.how != InsertHow.NEW_TOUR,
+		'defined pickupIdx has unexpected behaviour'
+	);
+	if (b.pickupIdx == b.dropoffIdx) {
+		console.log(
+			'    inserted at same position as: ',
+			printInsertionType(b.pickupCase),
+			'   idx: ',
+			b.pickupIdx
+		);
 		return;
 	}
-	console.log("    inserted at different positions");
-	console.log("    pickup: ", printInsertionType(b.pickupCase), "   idx: ", b.pickupIdx);
-	console.log("    dropoff: ", printInsertionType(b.dropoffCase), "   idx: ", b.dropoffIdx);
+	console.log('    inserted at different positions');
+	console.log('    pickup: ', printInsertionType(b.pickupCase), '   idx: ', b.pickupIdx);
+	console.log('    dropoff: ', printInsertionType(b.dropoffCase), '   idx: ', b.dropoffIdx);
 }

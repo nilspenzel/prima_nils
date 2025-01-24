@@ -3,15 +3,15 @@ import type { Capacities } from './capacities';
 import { Coordinates, type Location } from './location';
 
 export type RequestExpectedConnection = {
-	pickup: Location;
-	dropoff: Location;
+	start: Location;
+	target: Location;
 	startTime: string;
 	targetTime: string;
 };
 
 export type ExpectedConnection = {
-	pickup: Location;
-	dropoff: Location;
+	start: Location;
+	target: Location;
 	startTime: Date;
 	targetTime: Date;
 };

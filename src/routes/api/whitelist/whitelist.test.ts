@@ -23,7 +23,6 @@ import type { BusStop } from '$lib/busStop';
 import type { InsertionEvaluation } from '$lib/bookingAPI/insertions';
 import type { WhitelistResponse } from './+server';
 import { realWorldQueryExample } from '$lib/bookingAPI/testy';
-import type { BlacklistingResult } from '../blacklist/viableBusStops';
 
 let taxi: number;
 let company: number;
@@ -69,11 +68,11 @@ const booking = async (body: string) => {
 
 type TourL = {
 	vehicle: number;
-    id: number;
-    departure: Date;
-    arrival: Date;
-    fare: number | null;
-    requests: {
+	id: number;
+	departure: Date;
+	arrival: Date;
+	fare: number | null;
+	requests: {
 		tour: number;
 		vehicle: number;
 		id: number;
@@ -84,7 +83,7 @@ type TourL = {
 		wheelchairs: number;
 		bikes: number;
 		luggage: number;
-        events: {
+		events: {
 			tour: number;
 			vehicle: number;
 			request: number;
@@ -97,26 +96,34 @@ type TourL = {
 			bikes: number;
 			luggage: number;
 			communicated_time: Date;
-        }[];
-    }[];
+		}[];
+	}[];
 };
 
 const doWhitelistTimesMatchBooking = (bestEval: InsertionEvaluation, tours: TourL[]) => {
-	const times = tours.flatMap((t) => t.requests.flatMap((r) => {
-		r.events.sort((e1,e2) => new Date(e1.communicated_time).getTime() - new Date(e2.communicated_time).getTime());
-		return {
-			pickup: new Date(r.events[0].communicated_time),
-			dropoff: new Date(r.events[1].communicated_time)
-		}
-	}));
+	const times = tours.flatMap((t) =>
+		t.requests.flatMap((r) => {
+			r.events.sort(
+				(e1, e2) =>
+					new Date(e1.communicated_time).getTime() - new Date(e2.communicated_time).getTime()
+			);
+			return {
+				pickup: new Date(r.events[0].communicated_time),
+				dropoff: new Date(r.events[1].communicated_time)
+			};
+		})
+	);
 	let found = false;
 	times.forEach((t) => {
-		if(t.pickup.getTime() == new Date(bestEval.pickupTime).getTime() && t.dropoff.getTime() == new Date(bestEval.dropoffTime).getTime()) {
+		if (
+			t.pickup.getTime() == new Date(bestEval.pickupTime).getTime() &&
+			t.dropoff.getTime() == new Date(bestEval.dropoffTime).getTime()
+		) {
 			found = true;
 		}
 	});
 	expect(found).toBe(true);
-}
+};
 
 const capacities = {
 	passengers: 1,
@@ -377,8 +384,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse.direct[0]).not.toBe(null);
 
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -424,19 +431,23 @@ describe('Whitelist and Booking API Tests', () => {
 		company = await addCompany(Zone.GÖRLITZ, inGoerlitz);
 		taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
 		const bt = '2025-01-23T07:59:00Z';
-		await setAvailability(taxi, new Date(new Date(bt).getTime() - minutesToMs(120)), new Date(new Date(bt).getTime() + minutesToMs(120)));
+		await setAvailability(
+			taxi,
+			new Date(new Date(bt).getTime() - minutesToMs(120)),
+			new Date(new Date(bt).getTime() + minutesToMs(120))
+		);
 		const q = realWorldQueryExample;
 		const body = JSON.stringify(q);
 
 		const blackResponse = await black(body).then((r) => r.json());
 		blackResponse.target.forEach((element: boolean[], idx: number) => {
-			expect(element.length).toBe(realWorldQueryExample.targetBusStops[idx].times.length)
+			expect(element.length).toBe(realWorldQueryExample.targetBusStops[idx].times.length);
 		});
 		blackResponse.start.forEach((element: boolean[], idx: number) => {
-			expect(element.length).toBe(realWorldQueryExample.startBusStops[idx].times.length)
+			expect(element.length).toBe(realWorldQueryExample.startBusStops[idx].times.length);
 		});
 		expect(blackResponse.direct.length).toBe(realWorldQueryExample.times.length);
-/*
+		/*
 		const whiteResponse = await white(body).then((r) => r.json());
 		whiteResponse.target.forEach((element: number[], idx: number) => {
 			expect(element.length).toBe(realWorldQueryExample.targetBusStops[idx].times.length)
@@ -683,8 +694,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse.direct[0]).not.toBe(null);
 
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -906,8 +917,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse.direct[0]).not.toBe(null);
 
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -972,8 +983,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse2.direct[0]).not.toBe(null);
 
 		const appendConnection: ExpectedConnection = {
-			pickup: new Location(inNiesky2, 'start address'),
-			dropoff: new Location(inNiesky1, 'target address'),
+			start: new Location(inNiesky2, 'start address'),
+			target: new Location(inNiesky1, 'target address'),
 			startTime: whiteResponse2.direct[0].pickupTime,
 			targetTime: whiteResponse2.direct[0].dropoffTime
 		};
@@ -1017,8 +1028,8 @@ describe('Whitelist and Booking API Tests', () => {
 		const whiteResponse = await white(body).then((r) => r.json());
 
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -1040,8 +1051,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse2.direct[0]).not.toBe(null);
 
 		const connection2: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse2.direct[0].pickupTime,
 			targetTime: whiteResponse2.direct[0].dropoffTime
 		};
@@ -1071,8 +1082,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse3.direct[0]).not.toBe(null);
 
 		const connection3: ExpectedConnection = {
-			pickup: new Location(inNiesky2, 'start address'),
-			dropoff: new Location(inNiesky1, 'target address'),
+			start: new Location(inNiesky2, 'start address'),
+			target: new Location(inNiesky1, 'target address'),
 			startTime: whiteResponse3.direct[0].pickupTime,
 			targetTime: whiteResponse3.direct[0].dropoffTime
 		};
@@ -1151,8 +1162,8 @@ describe('Whitelist and Booking API Tests', () => {
 		const whiteResponse = await white(body).then((r) => r.json());
 
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inBiehain, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inBiehain, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -1181,8 +1192,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse2.direct[0]).not.toBe(null);
 
 		const connection2: ExpectedConnection = {
-			pickup: new Location(inHorka, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inHorka, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse2.direct[0].pickupTime,
 			targetTime: whiteResponse2.direct[0].dropoffTime
 		};
@@ -1212,8 +1223,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse3.direct[0]).not.toBe(null);
 
 		const connection3: ExpectedConnection = {
-			pickup: new Location(inMoholz, 'start address'),
-			dropoff: new Location(inHorscha, 'target address'),
+			start: new Location(inMoholz, 'start address'),
+			target: new Location(inHorscha, 'target address'),
 			startTime: whiteResponse3.direct[0].pickupTime,
 			targetTime: whiteResponse3.direct[0].dropoffTime
 		};
@@ -1241,8 +1252,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse4.direct.length).toBe(1);
 		expect(whiteResponse4.direct[0]).not.toBe(null);
 		const connection4: ExpectedConnection = {
-			pickup: new Location(betweenHorkaBiehain, 'start address'),
-			dropoff: new Location(betweenNieskyMoholz, 'target address'),
+			start: new Location(betweenHorkaBiehain, 'start address'),
+			target: new Location(betweenNieskyMoholz, 'target address'),
 			startTime: whiteResponse4.direct[0].pickupTime,
 			targetTime: whiteResponse4.direct[0].dropoffTime
 		};
@@ -1300,8 +1311,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse.direct[0]).not.toBe(null);
 
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -1370,8 +1381,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse.direct[0]).not.toBe(null);
 
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -1436,8 +1447,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse2.direct[0]).not.toBe(null);
 
 		const appendConnection: ExpectedConnection = {
-			pickup: new Location(inNiesky2, 'start address'),
-			dropoff: new Location(inNiesky1, 'target address'),
+			start: new Location(inNiesky2, 'start address'),
+			target: new Location(inNiesky1, 'target address'),
 			startTime: whiteResponse2.direct[0].pickupTime,
 			targetTime: whiteResponse2.direct[0].dropoffTime
 		};
@@ -1504,8 +1515,8 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse.direct[0]).not.toBe(null);
 
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inBiehain, 'start address'),
-			dropoff: new Location(inHorscha, 'target address'),
+			start: new Location(inBiehain, 'start address'),
+			target: new Location(inHorscha, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -1659,8 +1670,8 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 		const whiteResponse = await white(body).then((r) => r.json());
 		const connection1: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse.direct[0].pickupTime,
 			targetTime: whiteResponse.direct[0].dropoffTime
 		};
@@ -1688,8 +1699,8 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 		const whiteResponse2 = await white(body2).then((r) => r.json());
 		const appendConnection: ExpectedConnection = {
-			pickup: new Location(inNiesky2, 'start address'),
-			dropoff: new Location(inNiesky1, 'target address'),
+			start: new Location(inNiesky2, 'start address'),
+			target: new Location(inNiesky1, 'target address'),
 			startTime: whiteResponse2.direct[0].pickupTime,
 			targetTime: whiteResponse2.direct[0].dropoffTime
 		};
@@ -1716,8 +1727,8 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 		const whiteResponse3: WhitelistResponse = await white(body3).then((r) => r.json());
 		const appendConnection2: ExpectedConnection = {
-			pickup: new Location(inNiesky1, 'start address'),
-			dropoff: new Location(inNiesky2, 'target address'),
+			start: new Location(inNiesky1, 'start address'),
+			target: new Location(inNiesky2, 'target address'),
 			startTime: whiteResponse3.direct[0]!.pickupTime,
 			targetTime: whiteResponse3.direct[0]!.dropoffTime
 		};
@@ -1728,7 +1739,6 @@ describe('Whitelist and Booking API Tests', () => {
 		});
 		await booking(bookingBodyAppend2);
 		const tours3 = await getTours();
-		const aa = tours3[0].requests[0].events[0];
 		expect(tours3.length).toBe(1);
 		expect(tours3[0].requests.length).toBe(3);
 
