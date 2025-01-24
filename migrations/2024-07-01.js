@@ -4,6 +4,8 @@ export async function up(db) {
     await sql`CREATE EXTENSION postgis`.execute(db);
     await sql`CREATE TABLE zone(id SERIAL PRIMARY KEY, area geography(MULTIPOLYGON,4326) NOT NULL, name varchar NOT NULL, is_community bool NOT NULL)`.execute(db);
 
+    await sql`CREATE INDEX zone_area_idx ON zone USING GIST(area)`.execute(db); 
+
     await db.schema
         .createTable('company')
         .addColumn('id', 'serial', (col) => col.primaryKey())
@@ -45,6 +47,8 @@ export async function up(db) {
         )
         .execute();
 
+    await sql`CREATE INDEX availability_vehicle_start_end_time_idx ON availability (vehicle, start_time, end_time)`.execute(db);
+
     await db.schema
         .createTable('tour')
         .addColumn('id', 'serial', (col) => col.primaryKey())
@@ -54,6 +58,8 @@ export async function up(db) {
             col.references('vehicle.id').notNull(),
         )
         .execute();
+
+    await sql`CREATE INDEX tour_vehicle_departure_arrival_idx ON tour (vehicle, departure, arrival)`.execute(db);
 
     await db.schema
         .createTable('auth_user')
