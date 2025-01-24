@@ -21,6 +21,6 @@ export default defineConfig({
 				maxThreads: 1,
 				minThreads: 1
 			}
-		}, // Disable parallel threads
+		} // Disable parallel threads
 	}
 });

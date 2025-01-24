@@ -10,7 +10,11 @@ export default defineConfig({
 	use: {
 		baseURL: 'http://localhost:5173/',
 		locale: 'de-DE',
-		timezoneId: 'Europe/Berlin'
+		timezoneId: 'Europe/Berlin',
+		screenshot: 'only-on-failure',
+		launchOptions: {
+			slowMo: 0
+		}
 	},
 	//webServer: {
 	//	command: 'docker compose up prima',
