@@ -14,7 +14,7 @@ import {
 	takeBest
 } from './insertions';
 import { gatherRoutingCoordinates, routing } from './routing';
-import { oneToMany } from '$lib/api';
+import { batchOneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { Company } from '$lib/compositionTypes';
 import type { PromisedTimes } from './promisedTimes';
@@ -31,7 +31,7 @@ export async function evaluateRequest(
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
-	const travelDurations = await oneToMany(
+	const travelDurations = await batchOneToMany(
 		userChosen,
 		busStops.map((busStop) => busStop.coordinates),
 		startFixed

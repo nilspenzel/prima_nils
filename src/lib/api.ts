@@ -206,3 +206,25 @@ export const wl = async (
 		})
 	});
 };
+
+export const batchOneToMany = async (one: Coordinates, many: Coordinates[], startFixed: boolean) => {
+	const batches = [];
+	const batchSize = 100;
+	let currentPos = 0;
+	while (currentPos < many.length) {
+		batches.push(
+			oneToMany(
+				one,
+				many.slice(currentPos, Math.min(currentPos + batchSize, many.length)),
+				startFixed
+			)
+		);
+		currentPos += batchSize;
+	}
+	const batchResponses = await Promise.all(batches);
+	let response: (number|undefined)[] = [];
+	batchResponses.forEach((batchResponse) => {
+		response = response.concat(batchResponse);
+	});
+	return response;
+}

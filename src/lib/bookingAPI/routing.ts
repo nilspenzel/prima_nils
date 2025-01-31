@@ -1,4 +1,4 @@
-import { oneToMany } from '$lib/api';
+import { batchOneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { Company } from '$lib/compositionTypes';
 import { Coordinates } from '$lib/location';
@@ -67,7 +67,7 @@ export async function routing(
 	}; //startFixed == many to one
 	const userChosenMany = startFixed ? many.backward : many.forward;
 	const busStopMany = !startFixed ? many.backward : many.forward;
-	const userChosenResult = await oneToMany(userChosen, userChosenMany, !startFixed);
+	const userChosenResult = await batchOneToMany(userChosen, userChosenMany, !startFixed);
 	findMatchingPlaces(userChosen, userChosenMany, userChosenResult);
 	const ret = {
 		userChosen: {
@@ -78,7 +78,7 @@ export async function routing(
 	};
 	const busStopQueries = new Array<Promise<(number | undefined)[]>>(busStops.length);
 	for (let busStopIdx = 0; busStopIdx != busStops.length; ++busStopIdx) {
-		busStopQueries[busStopIdx] = oneToMany(
+		busStopQueries[busStopIdx] = batchOneToMany(
 			busStops[busStopIdx].coordinates,
 			busStopMany,
 			startFixed
