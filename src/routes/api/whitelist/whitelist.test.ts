@@ -468,7 +468,7 @@ describe('Whitelist and Booking API Tests', () => {
 			expect(element.length).toBe(realWorldQueryExample.startBusStops[idx].times.length);
 		});
 		expect(blackResponse.direct.length).toBe(realWorldQueryExample.times.length);
-		/*
+		
 		const whiteResponse = await white(body).then((r) => r.json());
 		whiteResponse.target.forEach((element: number[], idx: number) => {
 			expect(element.length).toBe(realWorldQueryExample.targetBusStops[idx].times.length)
@@ -477,7 +477,6 @@ describe('Whitelist and Booking API Tests', () => {
 			expect(element.length).toBe(realWorldQueryExample.startBusStops[idx].times.length)
 		});
 		expect(whiteResponse.direct.length).toBe(realWorldQueryExample.times.length);
-*/
 	}, 30000);
 
 	it('start and target in different zones', async () => {
