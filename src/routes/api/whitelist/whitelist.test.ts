@@ -22,7 +22,7 @@ import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { InsertionEvaluation } from '$lib/bookingAPI/insertions';
 import type { WhitelistResponse } from './+server';
-import { realWorldQueryExample } from '$lib/bookingAPI/testy';
+import { realWorldQueryExample } from '$lib/bookingAPI/realisitcQuery';
 
 let taxi: number;
 let company: number;
@@ -162,7 +162,28 @@ let sessionCookie: Cookie;
 beforeAll(async () => {
 	await clearDatabase();
 	await addTestUser();
-
+	/*
+		const createCompanies = async () => {
+			const nCompanies = 30;
+			const nVehicles = 20;
+			const nAvailabilities = 30;
+			for(let i=0;i!=nCompanies;++i){
+				company = await addCompany(Zone.NIESKY, inBiehain);
+				for(let j=0;j!=nVehicles;++j){
+					taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+					const bt = '2025-01-23T07:59:00Z';
+					for(let k=0;k!=nAvailabilities;++k){
+						await setAvailability(
+							taxi,
+							new Date(new Date(bt).getTime() - minutesToMs(120)),
+							new Date(new Date(bt).getTime() + minutesToMs(120))
+						);
+					}
+				}
+			}
+		};
+		await createCompanies();
+*/
 	const session = await lucia.createSession(mockUserId, {});
 	sessionCookie = lucia.createSessionCookie(session.id);
 
@@ -200,7 +221,7 @@ beforeAll(async () => {
 			times: [dateInXMinutes(100)]
 		};
 	}
-});
+}, 50000);
 
 beforeEach(async () => {
 	await clearTours();

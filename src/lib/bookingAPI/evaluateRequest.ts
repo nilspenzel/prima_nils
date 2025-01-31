@@ -85,8 +85,6 @@ export async function evaluateRequest(
 		travelDurations,
 		promisedTimes
 	);
-	//console.log(busStopEvaluations.map((m) => m.map((r) => r.map((k)=>k==undefined ? "undef":printInsertionType(k.case)))));
-	//console.log("userc: ", userChosenEvaluations.map((m) => m==undefined ? "undef":printInsertionType(m.case)));
 	const pairEvaluations = evaluatePairInsertions(
 		companies,
 		startFixed,
@@ -95,14 +93,6 @@ export async function evaluateRequest(
 		busStopEvaluations,
 		userChosenEvaluations
 	);
-	//console.log("Single");
-	//console.log(bothEvaluations.map((c) => c.map((o)=>o==undefined?"undef":printInsertionType(o.pickupCase))));
-	//console.log("Pair");
-	//console.log(pairEvaluations.map((c) => c.map((o)=>o==undefined?"undef":""+printInsertionType(o.pickupCase)+"    "+printInsertionType(o.dropoffCase))));
 	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
-	if (best[0][0]) {
-		//console.log("BESTp: ", printInsertionType(best[0][0].pickupCase));
-		//console.log("BESTd: ", printInsertionType(best[0][0].dropoffCase));
-	}
 	return best;
 }

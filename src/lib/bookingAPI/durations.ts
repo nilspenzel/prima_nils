@@ -1,7 +1,7 @@
 import type { Event, Vehicle } from '$lib/compositionTypes';
-import { BUFFER_TIME, MAX_TRAVEL_MS, PASSENGER_CHANGE_MINUTES } from '$lib/constants';
+import { MAX_TRAVEL_MS } from '$lib/constants';
 import { Interval } from '$lib/interval';
-import { addBuffer, addPassengerChangeTime, minutesToMs } from '$lib/time_utils';
+import { addBuffer, addPassengerChangeTime } from '$lib/time_utils';
 import {
 	InsertDirection,
 	InsertHow,
@@ -156,36 +156,20 @@ export function getArrivalWindow(
 	approachDuration: number,
 	returnDuration: number
 ): Interval | undefined {
-	if (
-		travelDuration - (minutesToMs(BUFFER_TIME) + minutesToMs(PASSENGER_CHANGE_MINUTES)) >
-		MAX_TRAVEL_MS
-	) {
-		return undefined;
-	}
-	console.assert(!(busStopWindow != undefined && InsertWhat.USER_CHOSEN == insertionCase.what));
-	let arrivalWindows = windows.map((window) => window.shrink(approachDuration, returnDuration));
-	if (insertionCase.what == InsertWhat.BOTH) {
-		arrivalWindows = arrivalWindows.map((window) =>
-			window?.shrink(
-				insertionCase.direction == InsertDirection.TO_BUS_STOP ? travelDuration : 0,
-				insertionCase.direction == InsertDirection.FROM_BUS_STOP ? travelDuration : 0
-			)
-		);
-	}
-	let arrivalWindows2 = arrivalWindows.filter((window) => window != undefined);
+	const fullApproachDuration = approachDuration + (insertionCase.direction == InsertDirection.TO_BUS_STOP ? travelDuration : 0);
+	const fullReturnDuration = returnDuration + (insertionCase.direction == InsertDirection.FROM_BUS_STOP ? travelDuration : 0);
+	let arrivalWindows = windows.map((window) => window.shrink(fullApproachDuration, fullReturnDuration)).filter((window) => window != undefined);
 	if (busStopWindow != undefined) {
-		arrivalWindows2 = arrivalWindows2
-			.map((window) => window.intersect(busStopWindow))
-			.filter((window) => window != undefined);
+		arrivalWindows = arrivalWindows
+			.map((window) => busStopWindow.intersect(window)).filter((window) => window != undefined);
 	}
-	if (arrivalWindows2.length == 0) {
+	if(arrivalWindows.length == 0) {
 		return undefined;
 	}
-	const arrivalWindow =
+	const arrivalWindow = 
 		insertionCase.direction == InsertDirection.FROM_BUS_STOP
-			? arrivalWindows2.reduce((current, best) => (current.endTime > best.endTime ? current : best))
-			: arrivalWindows2.reduce((current, best) =>
-					current.startTime < best.startTime ? current : best
-				);
+			? arrivalWindows.reduce((current, best) => current.endTime > best.endTime ? current : best)
+			: arrivalWindows.reduce((current, best) =>
+				current.endTime < best.endTime ? current : best);
 	return arrivalWindow;
 }

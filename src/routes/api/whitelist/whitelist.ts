@@ -101,7 +101,4 @@ export function printMsg(b: InsertionEvaluation | undefined) {
 		);
 		return;
 	}
-	console.log('    inserted at different positions');
-	console.log('    pickup: ', printInsertionType(b.pickupCase), '   idx: ', b.pickupIdx);
-	console.log('    dropoff: ', printInsertionType(b.dropoffCase), '   idx: ', b.dropoffIdx);
 }
