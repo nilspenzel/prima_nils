@@ -4,7 +4,7 @@ import type { Company } from '$lib/compositionTypes';
 import { Coordinates } from '$lib/location';
 import type { VehicleId } from '$lib/typeAliases';
 import type { Range } from './capacitySimulation';
-import { iterateAllInsertions, samePlace } from './utils';
+import { iterateAllInsertions, isSamePlace } from './utils';
 
 export type InsertionRoutingResult = {
 	company: (number | undefined)[];
@@ -60,7 +60,7 @@ export async function routing(
 	) => {
 		console.assert(many.length == routingResult.length);
 		for (let i = 0; i != many.length; ++i) {
-			if (samePlace(coordinates, many[i])) {
+			if (isSamePlace(coordinates, many[i])) {
 				routingResult[i] = 0;
 			}
 		}

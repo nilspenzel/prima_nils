@@ -41,7 +41,7 @@ export const POST = async (event: RequestEvent) => {
 	let message: string | undefined = undefined;
 	let success = false;
 	await db.transaction().execute(async (trx) => {
-		sql`LOCK TABLE tour, request, event, availability IN ACCESS EXCLUSIVE MODE;`.execute(trx);
+		await sql`LOCK TABLE tour, request, event, availability IN ACCESS EXCLUSIVE MODE;`.execute(trx);
 		let firstConnection = undefined;
 		let secondConnection = undefined;
 		if (parameters.connection1 != null) {
@@ -81,12 +81,10 @@ export const POST = async (event: RequestEvent) => {
 				customer.id,
 				firstConnection!.eventGroupUpdateList,
 				[...firstConnection!.mergeTourList],
-				firstConnection!.startEventGroup,
-				firstConnection!.targetEventGroup,
+				firstConnection!.pickupEventGroup,
+				firstConnection!.dropoffEventGroup,
 				firstConnection!.neighbourIds,
-				firstConnection!.directPickup,
-				firstConnection!.directDropoff,
-				firstConnection!.directUpdates,
+				firstConnection!.directDurations,
 				trx
 			);
 		}
@@ -98,12 +96,10 @@ export const POST = async (event: RequestEvent) => {
 				customer.id,
 				secondConnection!.eventGroupUpdateList,
 				[...secondConnection!.mergeTourList],
-				secondConnection!.startEventGroup,
-				secondConnection!.targetEventGroup,
+				secondConnection!.pickupEventGroup,
+				secondConnection!.dropoffEventGroup,
 				secondConnection!.neighbourIds,
-				secondConnection!.directPickup,
-				secondConnection!.directDropoff,
-				secondConnection!.directUpdates,
+				secondConnection!.directDurations,
 				trx
 			);
 		}

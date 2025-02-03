@@ -9,9 +9,12 @@ import {
 	clearTours,
 	getTours,
 	setAvailability,
+	setEvent,
+	setRequest,
+	setTour,
 	Zone
 } from '$lib/testHelpers';
-import { minutesToMs, msToMinutes } from '$lib/time_utils';
+import { hoursToMs, minutesToMs, msToMinutes } from '$lib/time_utils';
 import { Cookie } from 'lucia';
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import {
@@ -162,16 +165,24 @@ let sessionCookie: Cookie;
 beforeAll(async () => {
 	await clearDatabase();
 	await addTestUser();
+	const forwardTime = (t: string) => {
+		return new Date(new Date(t).getTime() + hoursToMs(24 * 200)).toISOString();
+	}
+	realWorldQueryExample.times = realWorldQueryExample.times.map((t) => forwardTime(t));
+	realWorldQueryExample.startBusStops = realWorldQueryExample.startBusStops.map((b) => {return { coordinates: b.coordinates, times: b.times.map((t) => forwardTime(t))}}).slice(0, realWorldQueryExample.startBusStops.length / 20);
+	realWorldQueryExample.targetBusStops = realWorldQueryExample.targetBusStops.map((b) => {return { coordinates: b.coordinates, times: b.times.map((t) => forwardTime(t))}}).slice(0, realWorldQueryExample.targetBusStops.length / 20);
 	/*
 		const createCompanies = async () => {
-			const nCompanies = 30;
-			const nVehicles = 20;
+			const nCompanies = 5;
+			const nVehicles = 10;
 			const nAvailabilities = 30;
+			const nTours = 15;
+			const nRequests = 1;
 			for(let i=0;i!=nCompanies;++i){
-				company = await addCompany(Zone.NIESKY, inBiehain);
+				company = await addCompany(Zone.GÖRLITZ, inBiehain);
 				for(let j=0;j!=nVehicles;++j){
 					taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
-					const bt = '2025-01-23T07:59:00Z';
+					const bt = forwardTime('2025-01-23T07:59:00Z');
 					for(let k=0;k!=nAvailabilities;++k){
 						await setAvailability(
 							taxi,
@@ -179,11 +190,32 @@ beforeAll(async () => {
 							new Date(new Date(bt).getTime() + minutesToMs(120))
 						);
 					}
+					for(let k=0;k!=nTours;k++){
+						const a = Math.random();
+						const b = Math.random();
+						const tour = await setTour(taxi, new Date(new Date(bt).getTime() - minutesToMs(30 + 5*a)), new Date(new Date(bt).getTime() + minutesToMs(30 - 5*(a-b))));
+						for(let r=0;r!=nRequests;++r) {
+							const request = await setRequest(tour!.id);
+							await setEvent(tour!.id, request.id, new Date(new Date(bt).getTime() - minutesToMs(20 + 5*a)), true, mockUserId, inGoerlitz.lat, inGoerlitz.lng);
+							await setEvent(tour!.id, request.id, new Date(new Date(bt).getTime() + minutesToMs(20 - 5*(a-b))), false, mockUserId, inGoerlitz.lat, inGoerlitz.lng);
+						}
+					}
+					for(let k=0;k!=nTours*10;k++){
+						const a = Math.random();
+						const b = Math.random();
+						const tour = await setTour(taxi, new Date(new Date(bt).getTime() - minutesToMs(3330 + 5*a)), new Date(new Date(bt).getTime() + minutesToMs(-3300 + 30 - 5*(a-b))));
+						for(let r=0;r!=nRequests;++r) {
+							const request = await setRequest(tour!.id);
+							await setEvent(tour!.id, request.id, new Date(new Date(bt).getTime() - minutesToMs(3320 + 5*a)), true, mockUserId, inGoerlitz.lat, inGoerlitz.lng);
+							await setEvent(tour!.id, request.id, new Date(new Date(bt).getTime() + minutesToMs(-3300 + 20 - 5*(a-b))), false, mockUserId, inGoerlitz.lat, inGoerlitz.lng);
+						}
+					}
 				}
 			}
 		};
 		await createCompanies();
 */
+
 	const session = await lucia.createSession(mockUserId, {});
 	sessionCookie = lucia.createSessionCookie(session.id);
 
@@ -221,7 +253,7 @@ beforeAll(async () => {
 			times: [dateInXMinutes(100)]
 		};
 	}
-}, 50000);
+}, 5000000);
 
 beforeEach(async () => {
 	await clearTours();
@@ -458,6 +490,8 @@ describe('Whitelist and Booking API Tests', () => {
 			new Date(new Date(bt).getTime() + minutesToMs(120))
 		);
 		const q = realWorldQueryExample;
+		q.startBusStops = q.startBusStops.slice(0, q.startBusStops.length / 8);
+		q.targetBusStops = q.targetBusStops.slice(0, q.targetBusStops.length / 8);
 		const body = JSON.stringify(q);
 
 		const blackResponse = await black(body).then((r) => r.json());

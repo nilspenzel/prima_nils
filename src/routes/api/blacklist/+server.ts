@@ -36,15 +36,13 @@ export const POST = async (event: RequestEvent) => {
 		parameters.start,
 		parameters.startBusStops,
 		false,
-		parameters.capacities,
-		true
+		parameters.capacities
 	);
 	const target = await getViableBusStops(
 		parameters.target,
 		parameters.targetBusStops,
 		true,
-		parameters.capacities,
-		false
+		parameters.capacities
 	);
 	const createResponse = (allowedConnections: BlacklistingResult[], busStops: BusStop[]) => {
 		const response = new Array<boolean[]>(busStops.length);

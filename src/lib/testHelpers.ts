@@ -58,8 +58,16 @@ export const setAvailability = async (vehicle: number, start_time: Date, end_tim
 };
 
 export const setTour = async (vehicle: number, departure: Date, arrival: Date) => {
-	await db.insertInto('tour').values({ vehicle, arrival, departure }).execute();
+	return await db.insertInto('tour').values({ vehicle, arrival, departure }).returning('tour.id').executeTakeFirst();
 };
+
+export const setRequest = async(tourId: number) => {
+	return await db.insertInto('request').values({passengers: 1, bikes: 0, luggage: 0, wheelchairs: 0, tour: tourId}).returning('id').executeTakeFirstOrThrow();
+}
+
+export const setEvent = async(tourId: number, requestId: number, t: Date, isPickup: boolean, customer: string, latitude: number, longitude: number) => {
+	await db.insertInto('event').values({tour: tourId, request: requestId, communicated_time: t, scheduled_time: t, approach_duration: 0, return_duration: 0, event_group: "", customer, latitude, longitude, is_pickup: isPickup, address: ""}).execute();
+}
 
 export const addTestUser = async () => {
 	await db
