@@ -20,28 +20,28 @@ export async function insertRequest(
 	trx: Transaction<Database>
 ) {
 	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
-	const approachDurations = new Array<{id: number, approach_duration: number}>();
-	if(neighbourIds.nextDropoff != neighbourIds.nextPickup && neighbourIds.nextPickup) {
+	const approachDurations = new Array<{ id: number; approach_duration: number }>();
+	if (neighbourIds.nextDropoff != neighbourIds.nextPickup && neighbourIds.nextPickup) {
 		approachDurations.push({
 			id: neighbourIds.nextPickup,
 			approach_duration: connection.pickupReturnDuration
 		});
 	}
-	if(neighbourIds.nextDropoff) {
+	if (neighbourIds.nextDropoff) {
 		approachDurations.push({
 			id: neighbourIds.nextDropoff,
 			approach_duration: connection.dropoffReturnDuration
 		});
 	}
 
-	const returnDurations = new Array<{id: number, return_duration: number}>();
-	if(neighbourIds.prevPickup) {
+	const returnDurations = new Array<{ id: number; return_duration: number }>();
+	if (neighbourIds.prevPickup) {
 		returnDurations.push({
 			id: neighbourIds.prevPickup,
 			return_duration: connection.pickupApproachDuration
 		});
 	}
-	if(neighbourIds.prevDropoff != neighbourIds.prevPickup && neighbourIds.prevDropoff) {
+	if (neighbourIds.prevDropoff != neighbourIds.prevPickup && neighbourIds.prevDropoff) {
 		returnDurations.push({
 			id: neighbourIds.prevDropoff,
 			return_duration: connection.dropoffApproachDuration

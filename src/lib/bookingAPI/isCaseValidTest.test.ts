@@ -166,14 +166,6 @@ describe('is case valid test', () => {
 		for (let i = 0; i != appendValid.length; ++i) {
 			expect(canCaseBeValid(appendValid[i])).toBe(true);
 			expect(canCaseBeValid(prependValid[i])).toBe(true);
-		} /*
-		for (let i = 0; i != appendInvalid.length; ++i) {
-			expect(canCaseBeValid(appendInvalid[i])).toBe(
-				appendInvalid[i].where != InsertWhere.AFTER_LAST_EVENT
-			);
-			expect(canCaseBeValid(prependInvalid[i])).toBe(
-				prependInvalid[i].where != InsertWhere.BEFORE_FIRST_EVENT
-			);
-		}*/
+		}
 	});
 });

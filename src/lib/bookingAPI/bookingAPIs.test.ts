@@ -9,9 +9,6 @@ import {
 	clearTours,
 	getTours,
 	setAvailability,
-	setEvent,
-	setRequest,
-	setTour,
 	Zone
 } from '$lib/testHelpers';
 import { hoursToMs, minutesToMs, msToMinutes } from '$lib/time_utils';
@@ -24,8 +21,8 @@ import {
 import { oneToMany } from '$lib/api';
 import type { BusStop } from '$lib/busStop';
 import type { InsertionEvaluation } from '$lib/bookingAPI/insertions';
-import type { WhitelistResponse } from './+server';
 import { realWorldQueryExample } from '$lib/bookingAPI/realisitcQuery';
+import type { WhitelistResponse } from '../../routes/api/whitelist/+server';
 
 let taxi: number;
 let company: number;
@@ -167,10 +164,18 @@ beforeAll(async () => {
 	await addTestUser();
 	const forwardTime = (t: string) => {
 		return new Date(new Date(t).getTime() + hoursToMs(24 * 200)).toISOString();
-	}
+	};
 	realWorldQueryExample.times = realWorldQueryExample.times.map((t) => forwardTime(t));
-	realWorldQueryExample.startBusStops = realWorldQueryExample.startBusStops.map((b) => {return { coordinates: b.coordinates, times: b.times.map((t) => forwardTime(t))}}).slice(0, realWorldQueryExample.startBusStops.length / 20);
-	realWorldQueryExample.targetBusStops = realWorldQueryExample.targetBusStops.map((b) => {return { coordinates: b.coordinates, times: b.times.map((t) => forwardTime(t))}}).slice(0, realWorldQueryExample.targetBusStops.length / 20);
+	realWorldQueryExample.startBusStops = realWorldQueryExample.startBusStops
+		.map((b) => {
+			return { coordinates: b.coordinates, times: b.times.map((t) => forwardTime(t)) };
+		})
+		.slice(0, realWorldQueryExample.startBusStops.length / 20);
+	realWorldQueryExample.targetBusStops = realWorldQueryExample.targetBusStops
+		.map((b) => {
+			return { coordinates: b.coordinates, times: b.times.map((t) => forwardTime(t)) };
+		})
+		.slice(0, realWorldQueryExample.targetBusStops.length / 20);
 	/*
 		const createCompanies = async () => {
 			const nCompanies = 5;
@@ -502,13 +507,13 @@ describe('Whitelist and Booking API Tests', () => {
 			expect(element.length).toBe(realWorldQueryExample.startBusStops[idx].times.length);
 		});
 		expect(blackResponse.direct.length).toBe(realWorldQueryExample.times.length);
-		
+
 		const whiteResponse = await white(body).then((r) => r.json());
 		whiteResponse.target.forEach((element: number[], idx: number) => {
-			expect(element.length).toBe(realWorldQueryExample.targetBusStops[idx].times.length)
+			expect(element.length).toBe(realWorldQueryExample.targetBusStops[idx].times.length);
 		});
 		whiteResponse.start.forEach((element: number[], idx: number) => {
-			expect(element.length).toBe(realWorldQueryExample.startBusStops[idx].times.length)
+			expect(element.length).toBe(realWorldQueryExample.startBusStops[idx].times.length);
 		});
 		expect(whiteResponse.direct.length).toBe(realWorldQueryExample.times.length);
 	}, 30000);

@@ -7,8 +7,7 @@ import { isSamePlace } from '$lib/bookingAPI/utils';
 export type EventGroupUpdate = {
 	id: number;
 	event_group: string;
-}
-
+};
 
 export const getEventGroupInfo = (
 	events: Event[],

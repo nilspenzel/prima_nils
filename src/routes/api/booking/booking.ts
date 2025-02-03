@@ -53,7 +53,7 @@ export async function booking(
 	}
 	const events = companies[best.company].vehicles.find((v) => v.id == best.vehicle)!.events;
 	let prevPickupEventIdx = best.pickupIdx == undefined ? undefined : best.pickupIdx - 1;
-	if(best.pickupCase.how == InsertHow.NEW_TOUR) {
+	if (best.pickupCase.how == InsertHow.NEW_TOUR) {
 		prevPickupEventIdx = events.findLastIndex((e) => e.communicated <= best.pickupTime);
 	}
 	const pickupEventGroupInfo = getEventGroupInfo(
@@ -75,8 +75,14 @@ export async function booking(
 	const nextPickupEvent = best.pickupIdx == undefined ? undefined : events[best.pickupIdx];
 	const prevDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx - 1];
 	const nextDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx];
-	const prevEventIdxOtherTour = best.pickupCase.how == InsertHow.NEW_TOUR ? events.findLastIndex((e) => e.communicated <= best.pickupTime) : prevPickupEventIdx;
-	const prevEventInOtherTour = (prevEventIdxOtherTour == undefined || prevEventIdxOtherTour == -1) ? undefined : events[prevEventIdxOtherTour];
+	const prevEventIdxOtherTour =
+		best.pickupCase.how == InsertHow.NEW_TOUR
+			? events.findLastIndex((e) => e.communicated <= best.pickupTime)
+			: prevPickupEventIdx;
+	const prevEventInOtherTour =
+		prevEventIdxOtherTour == undefined || prevEventIdxOtherTour == -1
+			? undefined
+			: events[prevEventIdxOtherTour];
 	const directDurations = await getDirectDurations(
 		best,
 		prevEventInOtherTour,

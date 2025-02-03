@@ -207,7 +207,11 @@ export const wl = async (
 	});
 };
 
-export const batchOneToMany = async (one: Coordinates, many: Coordinates[], startFixed: boolean) => {
+export const batchOneToMany = async (
+	one: Coordinates,
+	many: Coordinates[],
+	startFixed: boolean
+) => {
 	const batches = [];
 	const batchSize = 100;
 	let currentPos = 0;
@@ -222,9 +226,9 @@ export const batchOneToMany = async (one: Coordinates, many: Coordinates[], star
 		currentPos += batchSize;
 	}
 	const batchResponses = await Promise.all(batches);
-	let response: (number|undefined)[] = [];
+	let response: (number | undefined)[] = [];
 	batchResponses.forEach((batchResponse) => {
 		response = response.concat(batchResponse);
 	});
 	return response;
-}
+};

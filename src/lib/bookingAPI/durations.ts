@@ -156,20 +156,26 @@ export function getArrivalWindow(
 	approachDuration: number,
 	returnDuration: number
 ): Interval | undefined {
-	const fullApproachDuration = approachDuration + (insertionCase.direction == InsertDirection.TO_BUS_STOP ? travelDuration : 0);
-	const fullReturnDuration = returnDuration + (insertionCase.direction == InsertDirection.FROM_BUS_STOP ? travelDuration : 0);
-	let arrivalWindows = windows.map((window) => window.shrink(fullApproachDuration, fullReturnDuration)).filter((window) => window != undefined);
+	const fullApproachDuration =
+		approachDuration +
+		(insertionCase.direction == InsertDirection.TO_BUS_STOP ? travelDuration : 0);
+	const fullReturnDuration =
+		returnDuration +
+		(insertionCase.direction == InsertDirection.FROM_BUS_STOP ? travelDuration : 0);
+	let arrivalWindows = windows
+		.map((window) => window.shrink(fullApproachDuration, fullReturnDuration))
+		.filter((window) => window != undefined);
 	if (busStopWindow != undefined) {
 		arrivalWindows = arrivalWindows
-			.map((window) => busStopWindow.intersect(window)).filter((window) => window != undefined);
+			.map((window) => busStopWindow.intersect(window))
+			.filter((window) => window != undefined);
 	}
-	if(arrivalWindows.length == 0) {
+	if (arrivalWindows.length == 0) {
 		return undefined;
 	}
-	const arrivalWindow = 
+	const arrivalWindow =
 		insertionCase.direction == InsertDirection.FROM_BUS_STOP
-			? arrivalWindows.reduce((current, best) => current.endTime > best.endTime ? current : best)
-			: arrivalWindows.reduce((current, best) =>
-				current.endTime < best.endTime ? current : best);
+			? arrivalWindows.reduce((current, best) => (current.endTime > best.endTime ? current : best))
+			: arrivalWindows.reduce((current, best) => (current.endTime < best.endTime ? current : best));
 	return arrivalWindow;
 }
