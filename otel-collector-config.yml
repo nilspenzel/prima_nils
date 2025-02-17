@@ -1,0 +1,28 @@
+receivers:
+  filelog:
+    include: ["/var/lib/docker/containers/*/*.log"]
+    start_at: end
+    operators:
+      - type: json_parser
+        parse_from: attributes.log
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S.%fZ'
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    labels:
+      job: "otel-logs"
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [loki]

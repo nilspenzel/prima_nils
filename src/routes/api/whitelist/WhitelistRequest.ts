@@ -51,7 +51,8 @@ export const schemaDefinitions = {
 		},
 		times: {
 			type: 'array',
-			items: { type: 'integer' }
+			items: { type: 'integer' },
+			minItems: 1
 		},
 		capacities: {
 			type: 'object',
