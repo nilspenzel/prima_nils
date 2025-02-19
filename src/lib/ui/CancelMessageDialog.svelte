@@ -29,8 +29,8 @@
 		}
 		if (tour != undefined) {
 			await cancelTour(tour.tourId, reason);
-			tour = undefined;
 			await invalidateAll();
+			isDialogOpen = false;
 		}
 	}
 </script>

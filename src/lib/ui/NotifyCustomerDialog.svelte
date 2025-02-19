@@ -9,8 +9,15 @@
 	} from '$lib/shadcn/dialog';
 	import { Button } from '$lib/shadcn/button';
 	import * as Table from '$lib/shadcn/table';
+	import type { TourEvent } from '$lib/server/db/getTours';
 
 	let { tour = $bindable() } = $props();
+	const customerNames: Set<string> = $derived(
+		new Set(tour.events.map((e: TourEvent) => e.customerName))
+	);
+	const customerPhones: Set<string> = $derived(
+		new Set(tour.events.map((e: TourEvent) => e.customerPhone))
+	);
 	let isDialogOpen = $state(false);
 
     async function handleConfirmNotify() {
@@ -35,16 +42,16 @@
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each tour.events as t}
+				{#each requests as r}
 					<Table.Row>
-						<Table.Cell>{t.customerName}</Table.Cell>
-						<Table.Cell>{t.customerPhone}</Table.Cell>
+						<Table.Cell>{r.customerName}</Table.Cell>
+						<Table.Cell>{r.customerPhone}</Table.Cell>
 					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>
 		<DialogFooter>
-			<Button variant="default" onclick={handleConfirmNotify}>Stornieren bestätigen</Button>
+			<Button variant="default" onclick={handleConfirmNotify}>Kunden informiert</Button>
 		</DialogFooter>
 	</DialogContent>
 </Dialog>
