@@ -5,6 +5,7 @@
 	import { t } from '$lib/i18n/translation';
 	import TourDialog from '$lib/ui/TourDialog.svelte';
 	import { getTourInfoShort } from '$lib/util/getTourInfoShort';
+	import { invalidateAll } from '$app/navigation';
 
 	let {
 		isAdmin,
@@ -49,7 +50,7 @@
 			{#each tours as tour}
 				<Table.Row
 					onclick={() => (selectedTour = { tours: [tour], isAdmin })}
-					class={`cursor-pointer ${tour.cancelled ? 'bg-red-500' : 'bg-white-0'}`}
+					class={`cursor-pointer ${!tour.cancelled ? 'bg-primary-background' : (tour.informed ? 'bg-yellow-600' : 'bg-red-500') }`}
 				>
 					{#if isAdmin}
 						<Table.Cell>{tour.companyName}</Table.Cell>

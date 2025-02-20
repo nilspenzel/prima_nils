@@ -77,6 +77,7 @@ export async function up(db) {
 		.addColumn('fare', 'integer')
 		.addColumn('cancelled', 'boolean', (col) => col.notNull())
 		.addColumn('message', 'varchar')
+		.addColumn('informed', 'boolean', (col) => col.notNull().defaultTo(false))
 		.execute();
 
 	await db.schema
@@ -91,6 +92,7 @@ export async function up(db) {
 		.addColumn('ticket_code', 'varchar', (col) => col.notNull())
 		.addColumn('ticket_checked', 'boolean', (col) => col.notNull())
 		.addColumn('cancelled', 'boolean', (col) => col.notNull())
+		.addColumn('informed', 'boolean', (col) => col.notNull().defaultTo(false))
 		.execute();
 
 	await db.schema
@@ -472,6 +474,48 @@ BEGIN
 	UPDATE event e
 	SET cancelled = TRUE
 	WHERE e.request IN (SELECT id FROM request WHERE tour = p_tour_id);
+END;
+$$ LANGUAGE plpgsql;
+`.execute(db);
+
+await sql`
+CREATE OR REPLACE PROCEDURE update_informed_customer(
+	p_tour_id INTEGER,
+	p_company_id INTEGER,
+	p_customer_id INTEGER,
+	p_informed BOOLEAN
+) AS $$
+DECLARE
+	v_all_customers_informed BOOLEAN;
+BEGIN
+	IF NOT EXISTS (
+	    SELECT 1
+	    FROM tour t
+	    JOIN vehicle v ON v.id = t.vehicle
+	    WHERE t.id = p_tour_id
+	    AND v.company = p_company_id
+	) THEN
+	    RETURN;
+	END IF;
+
+	UPDATE request r
+	SET informed = p_informed
+	WHERE r.tour = p_tour_id
+	AND r.customer = p_customer_id;
+
+	SELECT bool_and(informed) INTO v_all_customers_informed
+	FROM request
+	WHERE tour = p_tour_id;
+
+	IF v_all_customers_informed THEN
+		UPDATE tour
+		SET informed = TRUE
+		WHERE id = p_tour_id;
+	ELSE
+		UPDATE tour
+		SET informed = FALSE
+		WHERE id = p_tour_id;
+	END IF;
 END;
 $$ LANGUAGE plpgsql;
 `.execute(db);

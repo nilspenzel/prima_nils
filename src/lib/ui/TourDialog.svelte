@@ -6,6 +6,7 @@
 	import * as Dialog from '$lib/shadcn/dialog';
 	import * as Table from '$lib/shadcn/table';
 	import * as Card from '$lib/shadcn/card';
+	import Checkbox from '$lib/shadcn/checkbox/checkbox.svelte';
 
 	import maplibregl from 'maplibre-gl';
 	import { getStyle } from '$lib/map/style';
@@ -23,6 +24,8 @@
 	import { PUBLIC_MOTIS_URL } from '$env/static/public';
 	import CancelMessageDialog from './CancelMessageDialog.svelte';
 	import NotifyCustomerDialog from './NotifyCustomerDialog.svelte';
+	import InformedCustomerCheckbox from './InformedCustomerCheckbox.svelte';
+	import { invalidate, invalidateAll } from '$app/navigation';
 
 	const {
 		open = $bindable()
@@ -234,13 +237,16 @@
 						<Table.Head>Kunde</Table.Head>
 						<Table.Head>Tel. Kunde</Table.Head>
 						<Table.Head>Ein-/Ausstieg</Table.Head>
+						{#if tour?.cancelled}
+							<Table.Head>Kunde informiert</Table.Head>
+						{/if}
 					</Table.Row>
 				</Table.Header>
 
 				<Table.Body>
 					{#if tour?.events}
-						{#each tour!.events as event}
-							<Table.Row class={`${tour.cancelled ? 'bg-red-500' : 'bg-primary-background'}`}>
+						{#each tour!.events as event, i}
+							<Table.Row class={`${!tour.cancelled ? 'bg-primary-background' : (event.informed ? 'bg-yellow-600' : 'bg-red-500') }`}>
 								<Table.Cell>
 									{new Date(getScheduledEventTime(event))
 										.toLocaleString('de-DE')
@@ -261,6 +267,11 @@
 								{:else}
 									<Table.Cell class="text-red-500">
 										<ArrowLeft class="h-4 w-4" />
+									</Table.Cell>
+								{/if}
+								{#if tour.cancelled}
+									<Table.Cell>
+										<InformedCustomerCheckbox bind:event={tour.events[i]}/>
 									</Table.Cell>
 								{/if}
 							</Table.Row>

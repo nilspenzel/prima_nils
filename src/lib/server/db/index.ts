@@ -55,6 +55,7 @@ export interface Database {
 		directDuration: number | null;
 		cancelled: boolean;
 		message: string | null;
+		informed: boolean;
 	};
 	availability: {
 		id: Generated<number>;
@@ -88,6 +89,7 @@ export interface Database {
 		ticketCode: string;
 		ticketChecked: boolean;
 		cancelled: boolean;
+		informed: boolean;
 	};
 	journey: {
 		id: Generated<number>;
