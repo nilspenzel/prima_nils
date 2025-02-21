@@ -6,67 +6,15 @@ import {
 import { db, type Database } from '$lib/server/db';
 import { covers } from '$lib/server/db/covers';
 import type { ExpressionBuilder } from 'kysely';
-import { sql, type RawBuilder } from 'kysely';
+import { sql } from 'kysely';
 import type { Coordinates } from '$lib/util/Coordinates';
 import type { Capacities } from '$lib/server/booking/Capacities';
 import type { BusStop } from '$lib/server/booking/BusStop';
 import { getAllowedTimes } from '$lib/server/booking/evaluateRequest';
 import { Interval } from '$lib/server/util/interval';
+import { v4 as uuidv4 } from 'uuid';
 
-interface CoordinatesTable {
-	busStopIndex: number;
-	lat: number;
-	lng: number;
-}
-
-type TimesTable = {
-	busStopIndex: number;
-	timeIndex: number;
-	startTime: number;
-	endTime: number;
-};
-
-type TmpDatabase = Database & { busstopzone: CoordinatesTable } & { times: TimesTable };
-
-const withBusStops = (busStops: BusStop[], busStopIntervals: Interval[][]) => {
-	return db
-		.with('busstops', (db) => {
-			const busStopsSelect = busStops.map(
-				(busStop, i) =>
-					sql<string>`SELECT
-									cast(${i} as INTEGER) AS bus_stop_index,
-									cast(${busStop.lat} as decimal) AS lat,
-									cast(${busStop.lng} as decimal) AS lng`
-			);
-			return db
-				.selectFrom(
-					sql<CoordinatesTable>`(${sql.join(busStopsSelect, sql<string>` UNION ALL `)})`.as(
-						'busstops'
-					)
-				)
-				.selectAll();
-		})
-		.with('times', (db) => {
-			const busStopIntervalSelect: RawBuilder<string>[] = busStopIntervals.flatMap((busStop, i) =>
-				busStop.map((t, j) => {
-					return sql<string>`SELECT
-					 cast(${i} as INTEGER) AS bus_stop_index,
-					 cast(${j} as INTEGER) AS time_index,
-					 cast(${t.startTime} as BIGINT) AS start_time,
-					 cast(${t.endTime} as BIGINT) AS end_time`;
-				})
-			);
-			return db
-				.selectFrom(
-					sql<TimesTable>`(${sql.join(busStopIntervalSelect, sql<string>` UNION ALL `)})`.as(
-						'times'
-					)
-				)
-				.selectAll();
-		});
-};
-
-const doesAvailabilityExist = (eb: ExpressionBuilder<TmpDatabase, 'vehicle' | 'times'>) => {
+const doesAvailabilityExist = (eb: ExpressionBuilder<Database, 'vehicle' | 'times'>) => {
 	return eb.exists(
 		eb
 			.selectFrom('availability')
@@ -76,7 +24,7 @@ const doesAvailabilityExist = (eb: ExpressionBuilder<TmpDatabase, 'vehicle' | 't
 	);
 };
 
-const doesTourExist = (eb: ExpressionBuilder<TmpDatabase, 'vehicle' | 'times'>) => {
+const doesTourExist = (eb: ExpressionBuilder<Database, 'vehicle' | 'times'>) => {
 	return eb.exists(
 		eb
 			.selectFrom('tour')
@@ -92,7 +40,7 @@ const doesTourExist = (eb: ExpressionBuilder<TmpDatabase, 'vehicle' | 'times'>) 
 };
 
 const doesVehicleExist = (
-	eb: ExpressionBuilder<TmpDatabase, 'company' | 'zone' | 'busstopzone' | 'times'>,
+	eb: ExpressionBuilder<Database, 'company' | 'zone' | 'bus' | 'times'>,
 	capacities: Capacities
 ) => {
 	return eb.exists((eb) =>
@@ -112,7 +60,7 @@ const doesVehicleExist = (
 };
 
 const doesCompanyExist = (
-	eb: ExpressionBuilder<TmpDatabase, 'zone' | 'busstopzone' | 'times'>,
+	eb: ExpressionBuilder<Database, 'zone' | 'bus' | 'times'>,
 	capacities: Capacities
 ) => {
 	return eb.exists(
@@ -133,32 +81,6 @@ export const getViableBusStops = async (
 	if (busStops.length == 0 || !busStops.some((b) => b.times.length != 0)) {
 		return [];
 	}
-
-	const createBatchQuery = (
-		userChosen: Coordinates,
-		busStops: BusStop[],
-		busStopIntervals: Interval[][],
-		capacities: Capacities
-	): Promise<BlacklistingResult[]> => {
-		return withBusStops(busStops, busStopIntervals)
-			.selectFrom('zone')
-			.where(covers(userChosen))
-			.innerJoinLateral(
-				(eb) =>
-					eb
-						.selectFrom('busstops')
-						.where(
-							sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(busstops.lng, busstops.lat), ${WGS84}))`
-						)
-						.selectAll()
-						.as('busstopzone'),
-				(join) => join.onTrue()
-			)
-			.innerJoin('times', 'times.busStopIndex', 'busstopzone.busStopIndex')
-			.where((eb) => doesCompanyExist(eb, capacities))
-			.select(['times.timeIndex as timeIndex', 'times.busStopIndex as busStopIndex'])
-			.execute();
-	};
 
 	// Find the smallest Interval containing all availabilities and tours of the companies received as a parameter.
 	let earliest = Number.MAX_VALUE;
@@ -197,28 +119,49 @@ export const getViableBusStops = async (
 		})
 	);
 
-	const batches = [];
-	const batchSize = 50;
-	let currentPos = 0;
-	while (currentPos < busStops.length) {
-		batches.push(
-			createBatchQuery(
-				userChosen,
-				busStops.slice(currentPos, Math.min(currentPos + batchSize, busStops.length)),
-				busStopIntervals.slice(currentPos, Math.min(currentPos + batchSize, busStops.length)),
-				capacities
-			)
-		);
-		currentPos += batchSize;
-	}
-	const batchResponses = await Promise.all(batches);
-	const response = batchResponses.flatMap((batchResponse, idx) =>
-		batchResponse.map((r) => {
-			return { timeIndex: r.timeIndex, busStopIndex: r.busStopIndex + idx * batchSize };
-		})
+	const queryId = uuidv4();
+	await db.insertInto('bus').values(
+		busStops.map((busStop, i) => ({
+			queryId: queryId,
+			busIdx: i,
+			lat: busStop.lat,
+			lng: busStop.lng
+		}))
+	).execute();
+
+	const t = busStopIntervals.flatMap((busStop, i) =>
+		busStop.map((interval, j) => ({
+			queryId: queryId,
+			busIdx: i,
+			timeIdx: j,             
+			startTime: interval.startTime,
+			endTime: interval.endTime     
+		}))
 	);
-	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
-	return response;
+	const n = 1000;
+	for(let i=0;i<busStopIntervals.length;i+=n) {
+		await db.insertInto('times').values(t.slice(i, i+n)).execute();
+	}
+
+	return db.selectFrom('zone')
+		.where(covers(userChosen))
+		.innerJoinLateral(
+			(eb) =>
+				eb
+					.selectFrom('bus')
+					.where('bus.queryId', '=', queryId)
+					.where(
+						sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(bus.lng, bus.lat), ${WGS84}))`
+					)
+					.selectAll()
+					.as('bus'),
+			(join) => join.onTrue()
+		)
+		.innerJoin('times', 'times.busIdx', 'bus.busIdx')
+		.where('times.queryId', '=', queryId)
+		.where((eb) => doesCompanyExist(eb, capacities))
+		.select(['times.timeIdx as timeIndex', 'times.busIdx as busStopIndex'])
+		.execute();
 };
 
 export type BlacklistingResult = {

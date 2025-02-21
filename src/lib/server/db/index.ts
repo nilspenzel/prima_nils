@@ -98,6 +98,21 @@ export interface Database {
 		rating: number | null;
 		comment: string | null;
 	};
+	bus: {
+		id: Generated<number>;
+		lat: number;
+		lng: number;
+		busIdx: number;
+		queryId: string;
+	};
+	times: {
+		id: Generated<number>;
+		queryId: string;
+		startTime: number;
+		endTime: number;
+		busIdx: number;
+		timeIdx: number;
+	};
 }
 
 export const pool = new pg.Pool({ connectionString: env.DATABASE_URL });

@@ -122,12 +122,40 @@ export async function up(db) {
 		.addColumn('comment', 'varchar')
 		.execute();
 
+	await db.schema
+		.createTable('bus')
+		.addColumn('id', 'serial', (col) => col.primaryKey())
+		.addColumn('lat', 'real', (col) => col.notNull())
+		.addColumn('lng', 'real', (col) => col.notNull())
+		.addColumn('bus_idx', 'integer', (col) => col.notNull())
+		.addColumn('query_id', 'varchar', (col) => col.notNull())
+  		.addUniqueConstraint('unique_bus_query', ['query_id', 'bus_idx'])
+		.execute();
+
+	await db.schema
+		.createTable('times')
+		.addColumn('id', 'serial', (col) => col.primaryKey())
+		.addColumn('start_time', 'bigint', (col) => col.notNull())
+		.addColumn('end_time', 'bigint', (col) => col.notNull())
+		.addColumn('time_idx', 'integer', (col) => col.notNull())
+		.addColumn('bus_idx', 'integer', (col) => col.notNull())
+		.addColumn('query_id', 'varchar', (col) => col.notNull())
+		.addForeignKeyConstraint(
+		  'fk_times_bus',
+		  ['bus_idx', 'query_id'],
+		  'bus',
+		  ['bus_idx', 'query_id'],
+		)
+		.execute();
+
 	// =======
 	// Indices
 	// -------
 	await sql`CREATE INDEX zone_area_idx ON zone USING GIST(area)`.execute(db);
 	await sql`CREATE INDEX availability_vehicle_start_end_time_idx ON availability (vehicle, start_time, end_time)`.execute(db);
 	await sql`CREATE INDEX tour_vehicle_departure_arrival_idx ON tour (vehicle, departure, arrival)`.execute(db);
+	await sql`CREATE INDEX bus_query ON bus (query_id, bus_idx)`.execute(db);
+	await sql`CREATE INDEX times_query ON times (query_id)`.execute(db);
 
 
 	// =================
