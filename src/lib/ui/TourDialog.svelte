@@ -6,7 +6,6 @@
 	import * as Dialog from '$lib/shadcn/dialog';
 	import * as Table from '$lib/shadcn/table';
 	import * as Card from '$lib/shadcn/card';
-	import Checkbox from '$lib/shadcn/checkbox/checkbox.svelte';
 
 	import maplibregl from 'maplibre-gl';
 	import { getStyle } from '$lib/map/style';
@@ -23,9 +22,7 @@
 	import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 	import { PUBLIC_MOTIS_URL } from '$env/static/public';
 	import CancelMessageDialog from './CancelMessageDialog.svelte';
-	import NotifyCustomerDialog from './NotifyCustomerDialog.svelte';
 	import InformedCustomerCheckbox from './InformedCustomerCheckbox.svelte';
-	import { invalidate, invalidateAll } from '$app/navigation';
 
 	const {
 		open = $bindable()
@@ -117,6 +114,9 @@
 				{@render overview()}
 				{@render mapView()}
 				<div class="col-span-2">{@render details()}</div>
+				{#if tour?.cancelled}
+					<div class="col-span-2">{@render informCustomerMessage(tour!.informed)}</div>
+				{/if}
 				{#if tour?.message != null}
 					<div class="col-span-2">{@render message()}</div>
 				{/if}
@@ -133,8 +133,6 @@
 				{#if tour && !isAdmin && tour.endTime > Date.now()}
 					{#if !tour.cancelled}
 						<CancelMessageDialog bind:tour={open.tours![tourIndex]} />
-					{:else}
-						<NotifyCustomerDialog bind:tour={open.tours![tourIndex]} />
 					{/if}
 				{/if}
 			</div>
@@ -279,6 +277,22 @@
 					{/if}
 				</Table.Body>
 			</Table.Root>
+		</Card.Content>
+	</Card.Root>
+{/snippet}
+
+{#snippet informCustomerMessage(informed: boolean)}
+	<Card.Root class="max-h-80 overflow-y-auto">
+		<Card.Header>
+			<Card.Title class={informed ? "bg-primary-background" : "text-red-500"}>
+				{#if informed}
+					Vielen Dank, dass Sie die Kunden benachrichtigt haben.
+				{:else}
+					Bitte informieren Sie die Kunden in obiger Liste.
+				{/if}
+			</Card.Title>
+		</Card.Header>
+		<Card.Content>
 		</Card.Content>
 	</Card.Root>
 {/snippet}

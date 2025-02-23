@@ -5,7 +5,6 @@
 	import { t } from '$lib/i18n/translation';
 	import TourDialog from '$lib/ui/TourDialog.svelte';
 	import { getTourInfoShort } from '$lib/util/getTourInfoShort';
-	import { invalidateAll } from '$app/navigation';
 
 	let {
 		isAdmin,
@@ -20,11 +19,20 @@
 		isAdmin: boolean;
 	}>({ tours: undefined, isAdmin });
 
+	let tourIdx = $state(-1);
+
 	const getCustomerCount = (tour: Tour) => {
 		let customers: Set<number> = new Set<number>();
 		tour.events.forEach((e: TourEvent) => customers.add(e.customer));
 		return customers.size;
 	};
+
+	$effect(() => {
+		selectedTour = {
+			tours: [tours[tourIdx]],
+			isAdmin
+		}
+	});
 </script>
 
 <Panel title={t.menu.completedTours} subtitle={t.admin.completedToursSubtitle}>
@@ -47,9 +55,9 @@
 			</Table.Row>
 		</Table.Header>
 		<Table.Body>
-			{#each tours as tour}
+			{#each tours as tour, i}
 				<Table.Row
-					onclick={() => (selectedTour = { tours: [tour], isAdmin })}
+					onclick={() => (tourIdx = i, selectedTour = { tours: [tour], isAdmin })}
 					class={`cursor-pointer ${!tour.cancelled ? 'bg-primary-background' : (tour.informed ? 'bg-yellow-600' : 'bg-red-500') }`}
 				>
 					{#if isAdmin}
@@ -71,4 +79,4 @@
 	</Table.Root>
 </Panel>
 
-<TourDialog bind:open={selectedTour} />
+<TourDialog bind:open={selectedTour}/>
