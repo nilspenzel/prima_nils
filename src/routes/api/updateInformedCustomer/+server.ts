@@ -9,6 +9,8 @@ export const POST = async (event: RequestEvent) => {
 	if (!company || !p.tourId || !p.customer) {
 		return json({});
 	}
-	await sql`CALL update_informed_customer(${p.tourId}, ${company}, ${p.customer}, ${p.informed})`.execute(db);
+	await sql`CALL update_informed_customer(${p.tourId}, ${company}, ${p.customer}, ${p.informed})`.execute(
+		db
+	);
 	return json({});
 };

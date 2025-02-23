@@ -1,5 +1,5 @@
 export async function updateInformedCustomer(tourId: number, customer: number, informed: boolean) {
-	console.log("informed: ",informed)
+	console.log('informed: ', informed);
 	await fetch('http://localhost:5173/api/updateInformedCustomer', {
 		method: 'POST',
 		headers: {
@@ -8,7 +8,7 @@ export async function updateInformedCustomer(tourId: number, customer: number, i
 		body: JSON.stringify({
 			tourId,
 			customer,
-            informed
+			informed
 		})
 	});
 }

@@ -31,7 +31,7 @@
 		selectedTour = {
 			tours: [tours[tourIdx]],
 			isAdmin
-		}
+		};
 	});
 </script>
 
@@ -57,8 +57,8 @@
 		<Table.Body>
 			{#each tours as tour, i}
 				<Table.Row
-					onclick={() => (tourIdx = i, selectedTour = { tours: [tour], isAdmin })}
-					class={`cursor-pointer ${!tour.cancelled ? 'bg-primary-background' : (tour.informed ? 'bg-yellow-600' : 'bg-red-500') }`}
+					onclick={() => ((tourIdx = i), (selectedTour = { tours: [tour], isAdmin }))}
+					class={`cursor-pointer ${!tour.cancelled ? 'bg-primary-background' : tour.informed ? 'bg-yellow-600' : 'bg-red-500'}`}
 				>
 					{#if isAdmin}
 						<Table.Cell>{tour.companyName}</Table.Cell>
@@ -79,4 +79,4 @@
 	</Table.Root>
 </Panel>
 
-<TourDialog bind:open={selectedTour}/>
+<TourDialog bind:open={selectedTour} />

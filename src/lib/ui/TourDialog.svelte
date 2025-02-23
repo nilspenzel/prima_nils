@@ -244,7 +244,9 @@
 				<Table.Body>
 					{#if tour?.events}
 						{#each tour!.events as event, i}
-							<Table.Row class={`${!tour.cancelled ? 'bg-primary-background' : (event.informed ? 'bg-yellow-600' : 'bg-red-500') }`}>
+							<Table.Row
+								class={`${!tour.cancelled ? 'bg-primary-background' : event.informed ? 'bg-yellow-600' : 'bg-red-500'}`}
+							>
 								<Table.Cell>
 									{new Date(getScheduledEventTime(event))
 										.toLocaleString('de-DE')
@@ -269,7 +271,7 @@
 								{/if}
 								{#if tour.cancelled}
 									<Table.Cell>
-										<InformedCustomerCheckbox bind:event={tour.events[i]}/>
+										<InformedCustomerCheckbox bind:event={tour.events[i]} />
 									</Table.Cell>
 								{/if}
 							</Table.Row>
@@ -284,7 +286,7 @@
 {#snippet informCustomerMessage(informed: boolean)}
 	<Card.Root class="max-h-80 overflow-y-auto">
 		<Card.Header>
-			<Card.Title class={informed ? "bg-primary-background" : "text-red-500"}>
+			<Card.Title class={informed ? 'bg-primary-background' : 'text-red-500'}>
 				{#if informed}
 					Vielen Dank, dass Sie die Kunden benachrichtigt haben.
 				{:else}
@@ -292,8 +294,7 @@
 				{/if}
 			</Card.Title>
 		</Card.Header>
-		<Card.Content>
-		</Card.Content>
+		<Card.Content></Card.Content>
 	</Card.Root>
 {/snippet}
 
