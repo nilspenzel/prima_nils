@@ -104,6 +104,11 @@ export async function getCompanyCosts() {
 	availabilitiesPerVehicle.forEach((availabilities, vehicle) =>
 		availabilitiesPerVehicle.set(vehicle, Interval.merge(availabilities))
 	);
+
+	// get list of all merged availabilities
+	const allAvailabilities = Array.from(availabilitiesPerVehicle).flatMap(([vehicleId, intervals]) =>
+		intervals.map((interval) => ({ vehicleId, interval }))
+	);
 	allAvailabilities.sort((a1, a2) => a1.interval.startTime - a2.interval.startTime);
 	// cumulate the total duration of availability on every relevant day for each vehicle
 	const availabilitiesPerDayAndVehicle = iterateIntervalArrays(
@@ -133,14 +138,17 @@ export async function getCompanyCosts() {
 		(
 			idx1,
 			v2,
-			maps: Map<VehicleId, { taxameter: number; customerCount: number; timestamp: UnixtimeMs }>[]
+			maps: Map<VehicleId, { taxameter: number; customerCount: number; timestamp: UnixtimeMs, verifiedCustomerCount: number }>[]
 		) => {
 			maps[idx1].set(v2.vehicleId, {
 				taxameter: (maps[idx1].get(v2.vehicleId)?.taxameter ?? 0) + (v2.fare ?? 0),
 				customerCount:
 					(maps[idx1].get(v2.vehicleId)?.customerCount ?? 0) +
 					v2.requests.reduce((acc, current) => current.passengers + acc, 0),
-				timestamp: v2.startTime
+				timestamp: v2.startTime,
+				verifiedCustomerCount:
+					(maps[idx1].get(v2.vehicleId)?.verifiedCustomerCount ?? 0) +
+					v2.requests.reduce((acc, current) => (current.ticketChecked ? current.passengers : 0) + acc, 0)
 			});
 		}
 	);
