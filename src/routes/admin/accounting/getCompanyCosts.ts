@@ -8,6 +8,41 @@ import { DAY, HOUR } from '$lib/util/time';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 
 export async function getCompanyCosts() {
+	const iterateIntervalArrays = <T, U>(
+		arr1: Interval[],
+		arr2: T[],
+		toInterval: (t: T) => Interval,
+		onOverlap: (idx1: number, v2: T, maps: Map<VehicleId, U>[]) => void
+	) => {
+		const maps = new Array<Map<VehicleId, U>>(arr1.length);
+		if (arr1.length === 0 || arr2.length === 0) {
+			return maps;
+		}
+		let idx1 = 0;
+		let idx2 = 0;
+		let v1 = arr1[0];
+		let v2 = arr2[0];
+		let interval = toInterval(v2);
+		maps[0] = new Map<VehicleId, U>();
+		while (idx1 < arr1.length && idx2 < arr2.length) {
+			if (v1.overlaps(interval)) {
+				onOverlap(idx1, v2, maps);
+			}
+			if (v1.endTime < interval.endTime) {
+				v1 = arr1[++idx1];
+				if (idx1 < arr1.length) {
+					maps[idx1] = new Map<VehicleId, U>();
+				}
+			} else {
+				v2 = arr2[++idx2];
+				if (idx2 < arr2.length) {
+					interval = toInterval(v2);
+				}
+			}
+		}
+		return maps;
+	};
+
 	const tours: (TourWithRequests & { interval: Interval })[] = (
 		await getToursWithRequests()
 	).map((t) => {
@@ -69,49 +104,46 @@ export async function getCompanyCosts() {
 	availabilitiesPerVehicle.forEach((availabilities, vehicle) =>
 		availabilitiesPerVehicle.set(vehicle, Interval.merge(availabilities))
 	);
+	allAvailabilities.sort((a1, a2) => a1.interval.startTime - a2.interval.startTime);
 	// cumulate the total duration of availability on every relevant day for each vehicle
-	const availabilitiesPerDayAndVehicle = new Array<Map<number, number>>(days.length);
-	days.forEach((day, dayIdx) => {
-		availabilitiesPerDayAndVehicle[dayIdx] = new Map<number, number>();
-		availabilitiesPerVehicle.forEach((availabilities, vehicle) =>
-			availabilities.forEach((availability) => {
-				if (day.overlaps(availability)) {
-					availabilitiesPerDayAndVehicle[dayIdx].set(
-						vehicle,
-						(availabilitiesPerDayAndVehicle[dayIdx].get(vehicle) ?? 0) +
-							availability.getDurationMs()
-					);
-				}
-			})
-		);
-	});
+	const availabilitiesPerDayAndVehicle = iterateIntervalArrays(
+		days,
+		allAvailabilities,
+		(a) => a.interval,
+		(
+			dayIdx: number,
+			availability: {
+				vehicleId: number;
+				interval: Interval;
+			},
+			maps: Map<VehicleId, number>[]
+		) =>
+			maps[dayIdx].set(
+				availability.vehicleId,
+				(maps[dayIdx].get(availability.vehicleId) ?? 0) +
+					(days[dayIdx].intersect(availability.interval)?.getDurationMs() ?? 0)
+			)
+	);
 
 	// cumulate the total taxameter readings on every relevant day for each vehicle
-	const taxameterPerDayAndVehicle = new Array<
-		Map<number, { taxameter: number; customerCount: number; timestamp: UnixtimeMs, verifiedCustomerCount: number }>
-	>(days.length);
-	days.forEach((day, dayIdx) => {
-		taxameterPerDayAndVehicle[dayIdx] = new Map<
-			number,
-			{ taxameter: number; customerCount: number; timestamp: UnixtimeMs, verifiedCustomerCount: number }
-		>();
-		tours.forEach((tour) => {
-			if (day.overlaps(tour.interval)) {
-				taxameterPerDayAndVehicle[dayIdx].set(tour.vehicleId, {
-					taxameter:
-						(taxameterPerDayAndVehicle[dayIdx].get(tour.vehicleId)?.taxameter ?? 0) +
-						(tour.fare ?? 0),
-					customerCount:
-						(taxameterPerDayAndVehicle[dayIdx].get(tour.vehicleId)?.customerCount ?? 0) +
-						tour.requests.reduce((acc, current) => current.passengers + acc, 0),
-					timestamp: tour.startTime,
-					verifiedCustomerCount: 
-						(taxameterPerDayAndVehicle[dayIdx].get(tour.vehicleId)?.verifiedCustomerCount ?? 0) +
-						tour.requests.reduce((acc, current) => (current.ticketChecked ? current.passengers : 0) + acc, 0)
-				});
-			}
-		});
-	});
+	const taxameterPerDayAndVehicle = iterateIntervalArrays(
+		days,
+		tours,
+		(t: TourWithRequests & { interval: Interval }) => t.interval,
+		(
+			idx1,
+			v2,
+			maps: Map<VehicleId, { taxameter: number; customerCount: number; timestamp: UnixtimeMs }>[]
+		) => {
+			maps[idx1].set(v2.vehicleId, {
+				taxameter: (maps[idx1].get(v2.vehicleId)?.taxameter ?? 0) + (v2.fare ?? 0),
+				customerCount:
+					(maps[idx1].get(v2.vehicleId)?.customerCount ?? 0) +
+					v2.requests.reduce((acc, current) => current.passengers + acc, 0),
+				timestamp: v2.startTime
+			});
+		}
+	);
 	const costPerDayAndVehicle = new Array<
 		Map<
 			VehicleId,
