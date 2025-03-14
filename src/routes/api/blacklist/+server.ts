@@ -2,58 +2,44 @@ import { Validator } from 'jsonschema';
 import { getViableBusStops, type BlacklistingResult } from './viableBusStops';
 import type { RequestEvent } from './$types';
 import { json } from '@sveltejs/kit';
-import {
-	toWhitelistRequestWithISOStrings,
-	whitelistSchema
-} from '../whitelist/WhitelistRequest';
-import { type WhitelistRequest as BlacklistRequest } from '../whitelist/WhitelistRequest';
-import type { BusStop } from '$lib/server/booking/BusStop';
 import { assertArraySizes } from '$lib/testHelpers';
 import { schemaDefinitions } from '$lib/server/booking/jsonSchemaDefinitions';
+import { blacklistSchema, toBlacklistRequestWithISOStrings, type BlacklistRequest } from './blacklistParameters';
+import type { Coordinates } from '$lib/util/Coordinates';
 
 export const POST = async (event: RequestEvent) => {
 	// Validate parameters.
 	const parameters: BlacklistRequest = await event.request.json();
 	const validator = new Validator();
 	validator.addSchema(schemaDefinitions, '/schemaDefinitions');
-	const result = validator.validate(parameters, whitelistSchema);
+	const result = validator.validate(parameters, blacklistSchema);
 	if (!result.valid) {
 		return json({ message: result.errors }, { status: 400 });
 	}
 
 	console.log(
 		'BLACKLIST PARAMS: ',
-		JSON.stringify(toWhitelistRequestWithISOStrings(parameters), null, '\t')
+		JSON.stringify(toBlacklistRequestWithISOStrings(parameters), null, '\t')
 	);
 
 	// Add direct lookup to either start or target.
-	const directAsBusStop = {
-		...(parameters.startFixed ? parameters.start : parameters.target),
-		times: parameters.directTimes
-	};
 	if (parameters.startFixed) {
-		parameters.targetBusStops.push(directAsBusStop);
+		parameters.targetBusStops.push(parameters.start);
 	} else {
-		parameters.startBusStops.push(directAsBusStop);
+		parameters.startBusStops.push(parameters.target);
 	}
 
 	// Database lookup.
 	const [start, target] = await Promise.all([
-		getViableBusStops(parameters.start, parameters.startBusStops, false, parameters.capacities),
-		getViableBusStops(parameters.target, parameters.targetBusStops, true, parameters.capacities)
+		getViableBusStops(parameters.start, parameters.startBusStops, false, parameters.capacities, parameters.earliest , parameters.latest),
+		getViableBusStops(parameters.target, parameters.targetBusStops, true, parameters.capacities, parameters.earliest , parameters.latest)
 	]);
 
 	// Convert response.
-	const createResponse = (allowedConnections: BlacklistingResult[], busStops: BusStop[]) => {
-		const response = new Array<boolean[]>(busStops.length);
-		for (let i = 0; i != response.length; ++i) {
-			response[i] = new Array<boolean>(busStops[i].times.length);
-			for (let j = 0; j != response[i].length; ++j) {
-				response[i][j] = false;
-			}
-		}
+	const createResponse = (allowedConnections: BlacklistingResult[], busStops: Coordinates[]) => {
+		const response = new Array<boolean>(busStops.length);
 		allowedConnections.forEach((s) => {
-			response[s.busStopIndex][s.timeIndex] = true;
+			response[s.busStopIndex] = true;
 		});
 		return response;
 	};
