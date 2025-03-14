@@ -3,11 +3,11 @@ import { Validator } from 'jsonschema';
 import { json } from '@sveltejs/kit';
 import { whitelist } from './whitelist';
 import {
-	schemaDefinitions,
 	toWhitelistRequestWithISOStrings,
 	whitelistSchema,
 	type WhitelistRequest
 } from './WhitelistRequest';
+import { schemaDefinitions } from '$lib/server/booking/jsonSchemaDefinitions';
 import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
 import { assertArraySizes } from '$lib/testHelpers';
 

@@ -3,13 +3,13 @@ import { getViableBusStops, type BlacklistingResult } from './viableBusStops';
 import type { RequestEvent } from './$types';
 import { json } from '@sveltejs/kit';
 import {
-	schemaDefinitions,
 	toWhitelistRequestWithISOStrings,
 	whitelistSchema
 } from '../whitelist/WhitelistRequest';
 import { type WhitelistRequest as BlacklistRequest } from '../whitelist/WhitelistRequest';
 import type { BusStop } from '$lib/server/booking/BusStop';
 import { assertArraySizes } from '$lib/testHelpers';
+import { schemaDefinitions } from '$lib/server/booking/jsonSchemaDefinitions';
 
 export const POST = async (event: RequestEvent) => {
 	// Validate parameters.
