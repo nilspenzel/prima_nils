@@ -8,12 +8,14 @@ import {
 import { db, type Database } from '$lib/server/db';
 import { covers } from '$lib/server/db/covers';
 import type { ExpressionBuilder } from 'kysely';
-import { sql } from 'kysely';
+import { sql, type RawBuilder } from 'kysely';
 import type { Coordinates } from '$lib/util/Coordinates';
 import type { Capacities } from '$lib/server/booking/Capacities';
+import type { BusStop } from '$lib/server/booking/BusStop';
 import { Interval } from '$lib/util/interval';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
+import { jsonArrayFrom } from 'kysely/helpers/postgres';
 
 interface CoordinatesTable {
 	busStopIndex: number;
@@ -118,24 +120,23 @@ export const getViableBusStops = async (
 	const response = withBusStops(busStops)
 		.selectFrom('zone')
 		.where(covers(userChosen))
-		.innerJoinLateral(
-			(eb) =>
-				eb
-					.selectFrom('busstops')
-					.where(
-						sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(busstops.lng, busstops.lat), ${WGS84}))`
-					)
-					.selectAll()
-					.as('busstopzone'),
-			(join) => join.onTrue()
-		)
-		.where((eb) => doesCompanyExist(eb, capacities))
-		.select(['busstopzone.busStopIndex'])
+		.select((eb) => [
+			jsonArrayFrom(eb.selectFrom('busstops')
+				.where(
+					sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(busstops.lng, busstops.lat), ${WGS84}))`
+				)
+			)
+		])
+
+
+
+		.select([''])
 		.execute();
 	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
 	return response;
 };
 
 export type BlacklistingResult = {
+	timeIndex: number;
 	busStopIndex: number;
 };
