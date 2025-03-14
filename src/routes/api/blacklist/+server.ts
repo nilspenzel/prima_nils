@@ -4,7 +4,11 @@ import type { RequestEvent } from './$types';
 import { json } from '@sveltejs/kit';
 import { assertArraySizes } from '$lib/testHelpers';
 import { schemaDefinitions } from '$lib/server/booking/jsonSchemaDefinitions';
-import { blacklistSchema, toBlacklistRequestWithISOStrings, type BlacklistRequest } from './blacklistParameters';
+import {
+	blacklistSchema,
+	toBlacklistRequestWithISOStrings,
+	type BlacklistRequest
+} from './blacklistParameters';
 import type { Coordinates } from '$lib/util/Coordinates';
 
 export const POST = async (event: RequestEvent) => {
@@ -31,8 +35,22 @@ export const POST = async (event: RequestEvent) => {
 
 	// Database lookup.
 	const [start, target] = await Promise.all([
-		getViableBusStops(parameters.start, parameters.startBusStops, false, parameters.capacities, parameters.earliest , parameters.latest),
-		getViableBusStops(parameters.target, parameters.targetBusStops, true, parameters.capacities, parameters.earliest , parameters.latest)
+		getViableBusStops(
+			parameters.start,
+			parameters.startBusStops,
+			false,
+			parameters.capacities,
+			parameters.earliest,
+			parameters.latest
+		),
+		getViableBusStops(
+			parameters.target,
+			parameters.targetBusStops,
+			true,
+			parameters.capacities,
+			parameters.earliest,
+			parameters.latest
+		)
 	]);
 
 	// Convert response.

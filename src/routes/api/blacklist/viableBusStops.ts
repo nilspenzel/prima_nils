@@ -3,7 +3,8 @@ import {
 	MAX_PASSENGER_WAITING_TIME_DROPOFF,
 	WGS84,
 	EARLIEST_SHIFT_START,
-	LATEST_SHIFT_END
+	LATEST_SHIFT_END,
+	MIN_PREP
 } from '$lib/constants';
 import { db, type Database } from '$lib/server/db';
 import { covers } from '$lib/server/db/covers';
@@ -23,90 +24,28 @@ interface CoordinatesTable {
 	lng: number;
 }
 
-type TmpDatabase = Database & { busstopzone: CoordinatesTable };
-
 const withBusStops = (busStops: Coordinates[]) => {
-	return db
-		.with('busstops', (db) => {
-			const busStopsSelect = busStops.map(
-				(busStop, i) =>
-					sql<string>`SELECT
+	return db.with('busstops', (db) => {
+		const busStopsSelect = busStops.map(
+			(busStop, i) =>
+				sql<string>`SELECT
 									cast(${i} as INTEGER) AS bus_stop_index,
 									cast(${busStop.lat} as decimal) AS lat,
 									cast(${busStop.lng} as decimal) AS lng`
-			);
-			return db
-				.selectFrom(
-					sql<CoordinatesTable>`(${sql.join(busStopsSelect, sql<string>` UNION ALL `)})`.as(
-						'busstops'
-					)
+		);
+		return db
+			.selectFrom(
+				sql<CoordinatesTable>`(${sql.join(busStopsSelect, sql<string>` UNION ALL `)})`.as(
+					'busstops'
 				)
-				.selectAll();
-		});
-};
-
-const doesAvailabilityExist = (eb: ExpressionBuilder<TmpDatabase, 'vehicle' | 'times'>) => {
-	return eb.exists(
-		eb
-			.selectFrom('availability')
-			.whereRef('availability.vehicle', '=', 'vehicle.id')
-			.whereRef('availability.startTime', '<=', 'times.endTime')
-			.whereRef('availability.endTime', '>=', 'times.startTime')
-	);
-};
-
-const doesTourExist = (eb: ExpressionBuilder<TmpDatabase, 'vehicle' | 'times'>) => {
-	return eb.exists(
-		eb
-			.selectFrom('tour')
-			.whereRef('tour.vehicle', '=', 'vehicle.id')
-			.where((eb) =>
-				eb.and([
-					eb('tour.cancelled', '=', false),
-					sql<boolean>`tour.departure <= times.end_time`,
-					sql<boolean>`tour.arrival >= times.start_time`
-				])
 			)
-	);
-};
-
-const doesVehicleExist = (
-	eb: ExpressionBuilder<TmpDatabase, 'company' | 'zone' | 'busstopzone' | 'times'>,
-	capacities: Capacities
-) => {
-	return eb.exists((eb) =>
-		eb
-			.selectFrom('vehicle')
-			.whereRef('vehicle.company', '=', 'company.id')
-			.where((eb) =>
-				eb.and([
-					eb('vehicle.passengers', '>=', capacities.passengers),
-					eb('vehicle.bikes', '>=', capacities.bikes),
-					eb('vehicle.wheelchairs', '>=', capacities.wheelchairs),
-					sql<boolean>`"vehicle"."luggage" >= cast(${capacities.luggage} as integer) + cast(${capacities.passengers} as integer) - cast(${eb.ref('vehicle.passengers')} as integer)`,
-					eb.or([doesAvailabilityExist(eb), doesTourExist(eb)])
-				])
-			)
-	);
-};
-
-const doesCompanyExist = (
-	eb: ExpressionBuilder<TmpDatabase, 'zone' | 'busstopzone' | 'times'>,
-	capacities: Capacities
-) => {
-	return eb.exists(
-		eb
-			.selectFrom('company')
-			.where((eb) =>
-				eb.and([eb('company.zone', '=', eb.ref('zone.id')), doesVehicleExist(eb, capacities)])
-			)
-	);
+			.selectAll();
+	});
 };
 
 export const getViableBusStops = async (
 	userChosen: Coordinates,
 	busStops: Coordinates[],
-	startFixed: boolean,
 	capacities: Capacities,
 	earliest: UnixtimeMs,
 	latest: UnixtimeMs
@@ -115,40 +54,50 @@ export const getViableBusStops = async (
 		return [];
 	}
 
-	const allowedTimes = getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END);
-	const searchIntervals = allowedTimes.map((allowed) => allowed.intersect(new Interval(earliest, latest))).filter((i) => i != undefined);
-	const response = withBusStops(busStops)
+	const lastValidTime = 8640000000000000;
+	const afterPreptime = new Interval(Date.now() + MIN_PREP, lastValidTime);
+	const allowedTimes = Interval.intersect(getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END), [afterPreptime]);
+	const response = await withBusStops(busStops)
 		.selectFrom('zone')
 		.where(covers(userChosen))
 		.select((eb) => [
-			jsonArrayFrom(eb.selectFrom('busstops')
-				.where(
-					sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(busstops.lng, busstops.lat), ${WGS84}))`
-				)
-				.select((eb) => [
-					'busstops.bus_stop_index',
-					jsonArrayFrom(
-						eb.selectFrom('company')
-						.innerJoin('vehicle', 'vehicle.company', 'company.id')
-						.innerJoin('availability', 'vehicle.id', 'availability.vehicle')
-						.whereRef('company.zone', '=', 'zone.id')
-						.where('availability.startTime', '<=', latest)
-						.where('availability.endTime', '>=', earliest)
-						.select(['availability.startTime', 'availability.endTime'])
-					).as('intervals')
-				])
+			jsonArrayFrom(
+				eb
+					.selectFrom('busstops')
+					.where(
+						sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(busstops.lng, busstops.lat), ${WGS84}))`
+					)
+					.select((eb) => [
+						'busstops.busStopIndex',
+						jsonArrayFrom(
+							eb
+								.selectFrom('company')
+								.innerJoin('vehicle', 'vehicle.company', 'company.id')
+								.innerJoin('availability', 'vehicle.id', 'availability.vehicle')
+								.whereRef('company.zone', '=', 'zone.id')
+								.where('vehicle.passengers', '>=', capacities.passengers)
+								.where('vehicle.bikes', '>=', capacities.bikes)
+								.where('vehicle.wheelchairs', '>=', capacities.wheelchairs)
+								.where(sql<boolean>`"vehicle"."luggage" >= cast(${capacities.luggage} as integer) + cast(${capacities.passengers} as integer) - cast(${'vehicle.passengers'} as integer)`)
+								.where('availability.startTime', '<=', latest)
+								.where('availability.endTime', '>=', earliest)
+								.select(['availability.startTime', 'availability.endTime'])
+						).as('intervals')
+					])
 			).as('valid_busstops')
 		])
-
-
-
-		.select([''])
-		.execute();
+		.executeTakeFirst();
+	if (response === undefined) {
+		return [];
+	}
 	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
-	return response;
+	return response.valid_busstops.map((r) => { return {
+		...r,
+		intervals: Interval.intersect(Interval.merge(r.intervals.map((i) => new Interval(i.startTime, i.endTime))), allowedTimes)
+	}});
 };
 
 export type BlacklistingResult = {
-	timeIndex: number;
 	busStopIndex: number;
+	intervals: { startTime: number; endTime: number }[];
 };
