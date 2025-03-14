@@ -125,7 +125,19 @@ export const getViableBusStops = async (
 				.where(
 					sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(busstops.lng, busstops.lat), ${WGS84}))`
 				)
-			)
+				.select((eb) => [
+					'busstops.bus_stop_index',
+					jsonArrayFrom(
+						eb.selectFrom('company')
+						.innerJoin('vehicle', 'vehicle.company', 'company.id')
+						.innerJoin('availability', 'vehicle.id', 'availability.vehicle')
+						.whereRef('company.zone', '=', 'zone.id')
+						.where('availability.startTime', '<=', latest)
+						.where('availability.endTime', '>=', earliest)
+						.select(['availability.startTime', 'availability.endTime'])
+					).as('intervals')
+				])
+			).as('valid_busstops')
 		])
 
 
