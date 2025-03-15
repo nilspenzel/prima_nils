@@ -22,8 +22,9 @@ export const POST = async (event: RequestEvent) => {
 	}
 
 	console.log(
-		'BLACKLIST PARAMS: ',
-		JSON.stringify(toWhitelistRequestWithISOStrings(parameters), null, '\t')
+		'BLACKLIST PARAMS: START',
+		JSON.stringify(toWhitelistRequestWithISOStrings(parameters), null, '\t'),
+		'BLACKLIST PARAMS: END'
 	);
 
 	// Add direct lookup to either start or target.
@@ -84,6 +85,10 @@ export const POST = async (event: RequestEvent) => {
 		);
 	}
 
-	console.log('BLACKLIST RESPONSE: ', { startResponse, targetResponse, directResponse });
+	console.log(
+		'BLACKLIST RESPONSE: START',
+		JSON.stringify({ startResponse, targetResponse, directResponse }),
+		'BLACKLIST RESPONSE: END'
+	);
 	return json({ start: startResponse, target: targetResponse, direct: directResponse });
 };

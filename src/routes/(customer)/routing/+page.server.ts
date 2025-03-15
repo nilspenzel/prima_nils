@@ -50,29 +50,33 @@ export const actions = {
 		const startTime2 = readInt(formData.get('startTime2'));
 		const endTime2 = readInt(formData.get('endTime2'));
 
-		console.log('BOOKING PARAMS =', {
-			passengers,
-			luggage,
-			wheelchairs,
-			startFixed1,
-			startFixed2,
-			fromAddress1,
-			toAddress1,
-			fromAddress2,
-			toAddress2,
-			fromLat1,
-			fromLng1,
-			toLat1,
-			toLng1,
-			startTime1,
-			endTime1,
-			fromLat2,
-			fromLng2,
-			toLat2,
-			toLng2,
-			startTime2,
-			endTime2
-		});
+		console.log(
+			'BOOKING PARAMS =START',
+			JSON.stringify({
+				passengers,
+				luggage,
+				wheelchairs,
+				startFixed1,
+				startFixed2,
+				fromAddress1,
+				toAddress1,
+				fromAddress2,
+				toAddress2,
+				fromLat1,
+				fromLng1,
+				toLat1,
+				toLng1,
+				startTime1,
+				endTime1,
+				fromLat2,
+				fromLng2,
+				toLat2,
+				toLng2,
+				startTime2,
+				endTime2
+			}),
+			'BOOKING PARAMS =END'
+		);
 
 		if (
 			typeof json !== 'string' ||
@@ -127,12 +131,14 @@ export const actions = {
 				};
 
 		console.log(
-			'BOOKING: C1=',
-			JSON.stringify(toExpectedConnectionWithISOStrings(connection1), null, '\t')
+			'BOOKING: C1=START',
+			JSON.stringify(toExpectedConnectionWithISOStrings(connection1), null, '\t'),
+			'BOOKING: C1=END'
 		);
 		console.log(
-			'BOOKING: C2=',
-			JSON.stringify(toExpectedConnectionWithISOStrings(connection2), null, '\t')
+			'BOOKING: C2=START',
+			JSON.stringify(toExpectedConnectionWithISOStrings(connection2), null, '\t'),
+			'BOOKING: C2=END'
 		);
 
 		let success = false;

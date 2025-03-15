@@ -62,8 +62,8 @@ export type NeighbourIds = {
 	nextDropoff: number | undefined;
 };
 
-export function toInsertionWithISOStrings(i: Insertion | undefined) {
-	return i === undefined
+export function toInsertionWithISOStrings(i: Insertion | undefined | null) {
+	return i === undefined || i === null
 		? undefined
 		: {
 				...i,

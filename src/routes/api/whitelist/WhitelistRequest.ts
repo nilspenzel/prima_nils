@@ -4,6 +4,7 @@ import {
 	type BusStopWithISOStrings
 } from '$lib/server/booking/BusStop';
 import type { Capacities } from '$lib/server/booking/Capacities';
+import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
 import type { Coordinates } from '$lib/util/Coordinates';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 
@@ -16,6 +17,20 @@ export type WhitelistRequest = {
 	startFixed: boolean;
 	capacities: Capacities;
 };
+
+export type WhitelistResponse = {
+	start: (Insertion | undefined)[][];
+	target: (Insertion | undefined)[][];
+	direct: (Insertion | undefined)[];
+};
+
+export function toWhitelistResponseWithISOStrings(r: WhitelistResponse) {
+	return {
+		start: r.start.map((i) => i.map((j) => toInsertionWithISOStrings(j))),
+		target: r.target.map((i) => i.map((j) => toInsertionWithISOStrings(j))),
+		direct: r.direct.map((j) => toInsertionWithISOStrings(j))
+	};
+}
 
 export type WhitelistRequestWithISOStrings = {
 	start: Coordinates;
