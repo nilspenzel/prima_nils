@@ -7,8 +7,8 @@
 		blacklistResponse = $bindable(),
         whitelistResponse = $bindable()
 	}: {
-		blacklistResponse: { blr: boolean; time: Date }[] | undefined;
-		whitelistResponse: (undefined | { requestedTime: Date, pickupTime: Date; dropoffTime: Date })[] | undefined;
+		blacklistResponse: { blr: boolean; time: string }[] | undefined;
+		whitelistResponse: (undefined | { requestedTime: string, pickupTime?: string; dropoffTime?: string })[] | undefined;
 	} = $props();
 </script>
 

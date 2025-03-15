@@ -38,7 +38,7 @@ export const actions = {
 		const blacklistResponse: {
 			startResponse: boolean[][];
 			targetResponse: boolean[][];
-			directResponse: boolean[][];
+			directResponse: boolean[];
 		} = readData[5];
 		const whitelistParams: WhitelistRequestWithISOStrings = toWhitelistRequestWithISOStrings(
 			readData[4]
@@ -79,7 +79,12 @@ export const actions = {
 					}),
 					wlr: whitelistResponse.target[
 						whitelistParams.targetBusStops.findIndex((b) => isSamePlace(b, bs))
-					]
+					]?.map((b, i) => {
+						return {
+							...b,
+							requestedTime: whitelistParams.targetBusStops[whitelistParams.targetBusStops.findIndex((b) => isSamePlace(b, bs))]?.times[i] ?? undefined
+						}
+					}),
 				};
 			}),
 			directTimesBlack: blacklistParams.directTimes.map((t, ti) => {
@@ -95,7 +100,7 @@ export const actions = {
 				}
 			})
 		};
-		return { info };
+		return { info, booking1 };
 	}
 };
 

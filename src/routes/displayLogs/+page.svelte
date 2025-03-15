@@ -10,30 +10,51 @@
 	import Layer from '$lib/map/Layer.svelte';
 	import { PUBLIC_MOTIS_URL } from '$env/static/public';
 	import MarkerDialog from './markerDialog.svelte';
+	import BookingDialog from './bookingDialog.svelte';
 
 	const { data, form } = $props();
 
 	let map = $state<maplibregl.Map>();
 	let info = $derived(form?.info);
+	let booking1 = $derived(form?.booking1);
 
 	let init = false;
 	let startMarker: maplibregl.Marker | null = null;
 	let targetMarker: maplibregl.Marker | null = null;
+	let booking1Marker: maplibregl.Marker | null = null;
 
-	let blacklistResponse = $state(undefined);
-	let whitelistResponse = $state(undefined);
+	let blacklistResponse: undefined | {
+	    time: string;
+	    blr: boolean;
+	}[] = $state(undefined);
+	let whitelistResponse: undefined | (undefined | { requestedTime: string, pickupTime?: string; dropoffTime?: string })[] = $state(undefined);
+
+
+	let expectedStart: string | undefined = $state(undefined)
+    let expectedTarget: string | undefined = $state(undefined)
+    let start: string | undefined = $state(undefined)
+    let target: string | undefined = $state(undefined)
 	$effect(() => {
 		if (map && info != undefined) {
 			startMarker = new maplibregl.Marker({ draggable: false, color: 'green' }).setLngLat([info.start.lng, info.start.lat]).addTo(map);
-			startMarker.b = info.directTimesBlack;
-			startMarker.w = info.directTimesWhite;
 			startMarker.getElement().addEventListener('click', () => {
-				blacklistResponse = startMarker!.b;
-				whitelistResponse = startMarker!.w;
+				blacklistResponse = info.directTimesBlack;
+				whitelistResponse = info.directTimesWhite;
 			});
 
 			targetMarker = new maplibregl.Marker({ draggable: false, color: 'red' });
 			targetMarker.setLngLat([info.target.lng, info.target.lat]).addTo(map);
+
+			if(booking1){
+				booking1Marker = new maplibregl.Marker({ draggable: false, color: 'orange' }).setLngLat([booking1.start.lng, booking1.start.lat]).addTo(map);
+				booking1Marker.getElement().addEventListener('click', () => {
+					expectedStart = booking1.startTime;
+        			expectedTarget = booking1.targetTime;
+        			start = undefined;
+        			target = undefined;
+				});
+				booking1Marker = new maplibregl.Marker({ draggable: false, color: 'purple' }).setLngLat([booking1.target.lng, booking1.target.lat]).addTo(map);
+			}
 
 			for (let bs of info.startBusStops) {
 				const marker = new maplibregl.Marker({
@@ -42,27 +63,35 @@
 						? 'blue'
 						: bs.wlr != undefined && bs.wlr.some((r) => r)
 							? 'yellow'
-							: 'white'
+							: 'pink'
 				}).setLngLat({
 					lat: bs.lat!,
 					lng: bs.lng!
 				}).addTo(map);
-				marker.b = bs.responses;
-				marker.w = bs.wlr;
 
 				marker.getElement().addEventListener('click', () => {
-					blacklistResponse = marker.b;
-					whitelistResponse = marker.w;
+					blacklistResponse = bs.responses;
+					whitelistResponse = bs.wlr;
 				});
 			}
 
 			for (let bs of info.targetBusStops) {
-				new maplibregl.Marker({ draggable: false, color: 'orange' })
-					.setLngLat({
-						lat: bs.lat!,
-						lng: bs.lng!
-					})
-					.addTo(map);
+				const marker = new maplibregl.Marker({
+					draggable: false,
+					color: !bs.responses.some((r) => r.blr)
+						? 'white'
+						: bs.wlr != undefined && bs.wlr.some((r) => r)
+							? 'grey'
+							: 'black'
+				}).setLngLat({
+					lat: bs.lat!,
+					lng: bs.lng!
+				}).addTo(map);
+			
+				marker.getElement().addEventListener('click', () => {
+					blacklistResponse = bs.responses;
+					whitelistResponse = bs.wlr;
+				});
 			}
 			init = true;
 		}
@@ -70,6 +99,7 @@
 </script>
 
 <MarkerDialog bind:blacklistResponse bind:whitelistResponse></MarkerDialog>
+<BookingDialog bind:expectedStart bind:start bind:expectedTarget bind:target></BookingDialog>
 <Map
 	bind:map
 	transformRequest={(url, _resourceType) => {
