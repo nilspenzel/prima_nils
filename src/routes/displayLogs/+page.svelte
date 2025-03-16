@@ -46,7 +46,7 @@
 			targetMarker.setLngLat([info.target.lng, info.target.lat]).addTo(map);
 
 			if(booking1){
-				booking1Marker = new maplibregl.Marker({ draggable: false, color: 'orange' }).setLngLat([booking1.start.lng, booking1.start.lat]).addTo(map);
+				booking1Marker = new maplibregl.Marker({ draggable: true, color: 'orange' }).setLngLat([booking1.start.lng, booking1.start.lat]).addTo(map);
 				booking1Marker.getElement().addEventListener('click', () => {
 					expectedStart = booking1.startTime;
         			expectedTarget = booking1.targetTime;
