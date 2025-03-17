@@ -1,17 +1,32 @@
 import { Validator } from 'jsonschema';
 import { sql } from 'kysely';
-import { bookingSchema, schemaDefinitions } from '../whitelist/WhitelistRequest';
 import { db } from '$lib/server/db';
 import type { RequestEvent } from './$types';
 import { bookRide, type ExpectedConnection } from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/server/booking/Capacities';
 import { insertRequest } from './query';
 import { json } from '@sveltejs/kit';
+import { schemaDefinitions } from '$lib/server/booking/jsonSchemaDefinitions';
 
 export type BookingParameters = {
 	connection1: ExpectedConnection | null;
 	connection2: ExpectedConnection | null;
 	capacities: Capacities;
+};
+
+export const bookingSchema = {
+	$schema: 'http://json-schema.org/draft-07/schema#',
+	type: 'object',
+	properties: {
+		connection1: {
+			oneOf: [{ $ref: '/schemaDefinitions#/definitions/connection' }, { type: 'null' }]
+		},
+		connection2: {
+			oneOf: [{ $ref: '/schemaDefinitions#/definitions/connection' }, { type: 'null' }]
+		},
+		capacities: { $ref: '/schemaDefinitions#/definitions/capacities' }
+	},
+	required: ['capacities']
 };
 
 const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
