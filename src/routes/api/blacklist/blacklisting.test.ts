@@ -8,10 +8,6 @@ import {
 	setTour,
 	Zone
 } from '$lib/testHelpers';
-import {
-	MAX_PASSENGER_WAITING_TIME_DROPOFF,
-	MAX_PASSENGER_WAITING_TIME_PICKUP
-} from '$lib/constants';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { MINUTE } from '$lib/util/time';
 import type { Capacities } from '$lib/server/booking/Capacities';
@@ -30,7 +26,7 @@ const dateInXMinutesYMs = (x: number, y: number): UnixtimeMs => {
 describe('blacklisting test', () => {
 	beforeEach(async () => await clearDatabase());
 
-	it('blacklisting success', async () => {
+	it('1 availability', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 0,
@@ -41,19 +37,22 @@ describe('blacklisting test', () => {
 		const taxi = await addTaxi(company, capacities);
 
 		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
 		expect(res).toHaveLength(1);
+		expect(res[0].busStopIndex).toBe(0);
+		expect(res[0].intervals.length).toBe(1);
+		expect(res[0].intervals[0].startTime).toBe(dateInXMinutes(0));
+		expect(res[0].intervals[0].endTime).toBe(dateInXMinutes(90));
 	});
 
-	it('blacklisting success with availability', async () => {
+	it('2 busstops 1 availability', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -62,66 +61,30 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-
 		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
-			startFixed: true,
-			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
-		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(1);
-	});
-
-	it('blacklisting success with tour', async () => {
-		const capacities: Capacities = {
-			passengers: 3,
-			bikes: 3,
-			wheelchairs: 3,
-			luggage: 3
-		};
-		const company = await addCompany(Zone.NIESKY);
-		const taxi = await addTaxi(company, capacities);
-
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(90));
-
-		const r = {
-			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
-			startFixed: true,
-			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
-		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(1);
-	});
-
-	it('blacklisting success, 2 busstops with 2 times each', async () => {
-		const capacities: Capacities = {
-			passengers: 3,
-			bikes: 3,
-			wheelchairs: 3,
-			luggage: 3
-		};
-		const company = await addCompany(Zone.NIESKY);
-		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
-
-		const r = {
-			userChosen: inNiesky,
 			busStops: [
-				{ times: [dateInXMinutes(50), dateInXMinutes(10)], ...inNiesky },
-				{ times: [dateInXMinutes(70), dateInXMinutes(100)], ...inNiesky }
+				inNiesky,
+				inNiesky
 			],
 			startFixed: true,
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(4);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res).toHaveLength(2);
+		expect(res[0].busStopIndex).toBe(0);
+		expect(res[0].intervals.length).toBe(1);
+		expect(res[0].intervals[0].startTime).toBe(dateInXMinutes(0));
+		expect(res[0].intervals[0].endTime).toBe(dateInXMinutes(90));
+		expect(res[1].busStopIndex).toBe(1);
+		expect(res[1].intervals.length).toBe(1);
+		expect(res[1].intervals[0].startTime).toBe(dateInXMinutes(0));
+		expect(res[1].intervals[0].endTime).toBe(dateInXMinutes(90));
 	});
 
-	it('blacklisting success, luggage on passengers', async () => {
+	it('luggage on seats', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -130,19 +93,21 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
-			startFixed: true,
+			busStops: [inNiesky],
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 2 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(1);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res[0].busStopIndex).toBe(0);
+		expect(res[0].intervals.length).toBe(1);
+		expect(res[0].intervals[0].startTime).toBe(dateInXMinutes(0));
+		expect(res[0].intervals[0].endTime).toBe(dateInXMinutes(90));
 	});
 
-	it('blacklisting fail, wrong busStop Zone', async () => {
+	it('wrong busStop Zone', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -151,19 +116,18 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inZittau }],
-			startFixed: true,
+			busStops: [inZittau],
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
 		expect(res).toHaveLength(0);
 	});
 
-	it('blacklisting fail, wrong user chosen Zone', async () => {
+	it('wrong user chosen Zone', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -172,19 +136,19 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inZittau,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
 		expect(res).toHaveLength(0);
 	});
 
-	it('blacklisting fail, too many passengers', async () => {
+	it('too many passengers', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -193,19 +157,20 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 4, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res).toHaveLength(1);
+		expect(res[0].intervals).toHaveLength(0);
 	});
 
-	it('blacklisting fail, too many bikes', async () => {
+	it('too many bikes', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -214,19 +179,20 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 4, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res).toHaveLength(1);
+		expect(res[0].intervals).toHaveLength(0);
 	});
 
-	it('blacklisting fail, too many wheelchairs', async () => {
+	it('too many wheelchairs', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -235,19 +201,20 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 4, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res).toHaveLength(1);
+		expect(res[0].intervals).toHaveLength(0);
 	});
 
-	it('blacklisting fail, too much luggage', async () => {
+	it('too much luggage', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -256,43 +223,46 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 7 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res).toHaveLength(1);
+		expect(res[0].intervals).toHaveLength(0);
 	});
 
-	it('blacklisting fail, no vehicle', async () => {
+	it('no vehicle', async () => {
 		await addCompany(Zone.NIESKY);
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res).toHaveLength(1);
+		expect(res[0].intervals).toHaveLength(0);
 	});
 
-	it('blacklisting fail, no company', async () => {
+	it('no company', async () => {
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res).toHaveLength(1);
+		expect(res[0].intervals).toHaveLength(0);
 	});
 
-	it('blacklisting fail, no availability or tour', async () => {
+	it('no availability or tour', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -303,15 +273,16 @@ describe('blacklisting test', () => {
 		await addTaxi(company, capacities);
 		const r = {
 			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(50)], ...inNiesky }],
+			busStops: [inNiesky],
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		expect(res).toHaveLength(1);
+		expect(res[0].intervals).toHaveLength(0);
 	});
 
-	it('blacklisting, 1 busStop fails, other is succesful', async () => {
+	it('1 busStop fails, other is succesful', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 3,
@@ -320,44 +291,20 @@ describe('blacklisting test', () => {
 		};
 		const company = await addCompany(Zone.NIESKY);
 		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
+		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [
-				{ times: [dateInXMinutes(50)], ...inZittau },
-				{ times: [dateInXMinutes(50)], ...inNiesky }
-			],
+			busStops: [inZittau, inNiesky],
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
 		expect(res).toHaveLength(1);
 		expect(res[0].busStopIndex).toBe(1);
-		expect(res[0].timeIndex).toBe(0);
-	});
-
-	it('blacklisting, 1 busStopTime fails, other is succesful', async () => {
-		const capacities: Capacities = {
-			passengers: 3,
-			bikes: 3,
-			wheelchairs: 3,
-			luggage: 3
-		};
-		const company = await addCompany(Zone.NIESKY);
-		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
-
-		const r = {
-			userChosen: inNiesky,
-			busStops: [{ times: [dateInXMinutes(1000), dateInXMinutes(50)], ...inNiesky }],
-			startFixed: true,
-			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
-		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(1);
-		expect(res[0].busStopIndex).toBe(0);
-		expect(res[0].timeIndex).toBe(1);
+		expect(res[0].intervals.length).toBe(1);
+		expect(res[0].intervals[0].startTime).toBe(dateInXMinutes(0));
+		expect(res[0].intervals[0].endTime).toBe(dateInXMinutes(90));
 	});
 
 	it('blacklisting, no busStops', async () => {
@@ -367,56 +314,11 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
 		expect(res).toHaveLength(0);
 	});
 
-	it('blacklisting, 1 busStop has not times and fails, other is succesful', async () => {
-		const capacities: Capacities = {
-			passengers: 3,
-			bikes: 3,
-			wheelchairs: 3,
-			luggage: 3
-		};
-		const company = await addCompany(Zone.NIESKY);
-		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
-		const r = {
-			userChosen: inNiesky,
-			busStops: [
-				{ times: [], ...inNiesky },
-				{ times: [dateInXMinutes(50)], ...inNiesky }
-			],
-			startFixed: true,
-			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
-		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(1);
-		expect(res[0].busStopIndex).toBe(1);
-		expect(res[0].timeIndex).toBe(0);
-	});
-
-	it('blacklisting, no times', async () => {
-		const capacities: Capacities = {
-			passengers: 3,
-			bikes: 3,
-			wheelchairs: 3,
-			luggage: 3
-		};
-		const company = await addCompany(Zone.NIESKY);
-		const taxi = await addTaxi(company, capacities);
-		await setTour(taxi, dateInXMinutes(0), dateInXMinutes(900));
-		const r = {
-			userChosen: inNiesky,
-			busStops: [{ times: [], ...inNiesky }],
-			startFixed: true,
-			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
-		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
-	});
-
-	it('blacklisting success, availability barely overlaps (startfixed=false)', async () => {
+	it('availability barely overlaps', async () => {
 		const capacities: Capacities = {
 			passengers: 3,
 			bikes: 0,
@@ -430,94 +332,12 @@ describe('blacklisting test', () => {
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [
-				{
-					times: [dateInXMinutesYMs(90, MAX_PASSENGER_WAITING_TIME_DROPOFF)],
-					...inNiesky
-				}
-			],
+			busStops: [inNiesky],
 			startFixed: false,
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
+		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
 		expect(res).toHaveLength(1);
-	});
-
-	it('blacklisting success, availability barely does not overlap (startfixed=false)', async () => {
-		const capacities: Capacities = {
-			passengers: 3,
-			bikes: 0,
-			wheelchairs: 0,
-			luggage: 0
-		};
-		const company = await addCompany(Zone.NIESKY);
-		const taxi = await addTaxi(company, capacities);
-
-		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
-
-		const r = {
-			userChosen: inNiesky,
-			busStops: [
-				{
-					times: [dateInXMinutesYMs(91, MAX_PASSENGER_WAITING_TIME_DROPOFF)],
-					...inNiesky
-				}
-			],
-			startFixed: false,
-			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
-		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
-	});
-
-	it('blacklisting success, availability barely overlaps (startfixed=true)', async () => {
-		const capacities: Capacities = {
-			passengers: 3,
-			bikes: 0,
-			wheelchairs: 0,
-			luggage: 0
-		};
-		const company = await addCompany(Zone.NIESKY);
-		const taxi = await addTaxi(company, capacities);
-
-		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
-
-		const r = {
-			userChosen: inNiesky,
-			busStops: [
-				{ times: [dateInXMinutesYMs(0, -MAX_PASSENGER_WAITING_TIME_PICKUP)], ...inNiesky }
-			],
-			startFixed: true,
-			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
-		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(1);
-	});
-
-	it('blacklisting success, availability barely does not overlap (startfixed=true)', async () => {
-		const capacities: Capacities = {
-			passengers: 3,
-			bikes: 0,
-			wheelchairs: 0,
-			luggage: 0
-		};
-		const company = await addCompany(Zone.NIESKY);
-		const taxi = await addTaxi(company, capacities);
-
-		await setAvailability(taxi, dateInXMinutes(0), dateInXMinutes(90));
-
-		const r = {
-			userChosen: inNiesky,
-			busStops: [
-				{
-					times: [dateInXMinutesYMs(-1, -MAX_PASSENGER_WAITING_TIME_PICKUP)],
-					...inNiesky
-				}
-			],
-			startFixed: true,
-			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
-		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.startFixed, r.capacities);
-		expect(res).toHaveLength(0);
+		expect(res[0].intervals).toHaveLength(1);
 	});
 });

@@ -2,7 +2,6 @@ import { Validator } from 'jsonschema';
 import { getViableBusStops, type BlacklistingResult } from './viableBusStops';
 import type { RequestEvent } from './$types';
 import { json } from '@sveltejs/kit';
-import { assertArraySizes } from '$lib/testHelpers';
 import { schemaDefinitions } from '$lib/server/booking/jsonSchemaDefinitions';
 import {
 	blacklistSchema,
@@ -10,6 +9,7 @@ import {
 	type BlacklistRequest
 } from './blacklistParameters';
 import type { Coordinates } from '$lib/util/Coordinates';
+import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 
 export const POST = async (event: RequestEvent) => {
 	// Validate parameters.
@@ -38,7 +38,6 @@ export const POST = async (event: RequestEvent) => {
 		getViableBusStops(
 			parameters.start,
 			parameters.startBusStops,
-			false,
 			parameters.capacities,
 			parameters.earliest,
 			parameters.latest
@@ -46,7 +45,6 @@ export const POST = async (event: RequestEvent) => {
 		getViableBusStops(
 			parameters.target,
 			parameters.targetBusStops,
-			true,
 			parameters.capacities,
 			parameters.earliest,
 			parameters.latest
@@ -55,17 +53,14 @@ export const POST = async (event: RequestEvent) => {
 
 	// Convert response.
 	const createResponse = (allowedConnections: BlacklistingResult[], busStops: Coordinates[]) => {
-		const response = new Array<boolean>(busStops.length);
+		const response = Array.from({length: busStops.length}, () => Array<{startTime: UnixtimeMs, endTime: UnixtimeMs}>());
 		allowedConnections.forEach((s) => {
-			response[s.busStopIndex] = true;
+			response[s.busStopIndex] = s.intervals;
 		});
 		return response;
 	};
 	let startResponse = createResponse(start, parameters.startBusStops);
 	let targetResponse = createResponse(target, parameters.targetBusStops);
-
-	assertArraySizes(targetResponse, parameters.targetBusStops, 'Blacklist', true);
-	assertArraySizes(startResponse, parameters.startBusStops, 'Blacklist', true);
 
 	// Extract direct response.
 	const directResponse = parameters.startFixed
@@ -75,17 +70,6 @@ export const POST = async (event: RequestEvent) => {
 		targetResponse = targetResponse.slice(0, targetResponse.length - 1);
 	} else {
 		startResponse = startResponse.slice(0, startResponse.length - 1);
-	}
-
-	console.assert(
-		directResponse.length === parameters.directTimes.length,
-		'Array size mismatch in Blacklist - direct.'
-	);
-	for (let i = 0; i != directResponse.length; ++i) {
-		console.assert(
-			directResponse[i] != null && directResponse[i] != undefined,
-			'Undefined in Blacklist Response. - direct'
-		);
 	}
 
 	console.log('BLACKLIST RESPONSE: ', { startResponse, targetResponse, directResponse });

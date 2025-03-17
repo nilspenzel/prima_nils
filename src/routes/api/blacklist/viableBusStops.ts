@@ -53,10 +53,6 @@ export const getViableBusStops = async (
 	if (busStops.length == 0) {
 		return [];
 	}
-
-	const lastValidTime = 8640000000000000;
-	const afterPreptime = new Interval(Date.now() + MIN_PREP, lastValidTime);
-	const allowedTimes = Interval.intersect(getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END), [afterPreptime]);
 	const response = await withBusStops(busStops)
 		.selectFrom('zone')
 		.where(covers(userChosen))
@@ -78,20 +74,23 @@ export const getViableBusStops = async (
 								.where('vehicle.passengers', '>=', capacities.passengers)
 								.where('vehicle.bikes', '>=', capacities.bikes)
 								.where('vehicle.wheelchairs', '>=', capacities.wheelchairs)
-								.where(sql<boolean>`"vehicle"."luggage" >= cast(${capacities.luggage} as integer) + cast(${capacities.passengers} as integer) - cast(${'vehicle.passengers'} as integer)`)
+								.where(sql<boolean>`"vehicle"."luggage" >= cast(${capacities.luggage} as integer) + cast(${capacities.passengers} as integer) - cast("vehicle"."passengers" as integer)`)
 								.where('availability.startTime', '<=', latest)
 								.where('availability.endTime', '>=', earliest)
 								.select(['availability.startTime', 'availability.endTime'])
 						).as('intervals')
 					])
-			).as('valid_busstops')
+			).as('valid')
 		])
 		.executeTakeFirst();
-	if (response === undefined) {
+	if (response === undefined || response.valid.length === 0) {
 		return [];
 	}
+	const lastValidTime = 8640000000000000;
+	const afterPreptime = new Interval(Date.now() + MIN_PREP, lastValidTime);
+	const allowedTimes = Interval.intersect(getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END), [afterPreptime]);
 	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
-	return response.valid_busstops.map((r) => { return {
+	return response.valid.map((r) => { return {
 		...r,
 		intervals: Interval.intersect(Interval.merge(r.intervals.map((i) => new Interval(i.startTime, i.endTime))), allowedTimes)
 	}});
