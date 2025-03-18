@@ -60,7 +60,6 @@ export const getViableBusStops = async (
 							eb
 								.selectFrom('company')
 								.innerJoin('vehicle', 'vehicle.company', 'company.id')
-								.innerJoin('availability', 'vehicle.id', 'availability.vehicle')
 								.whereRef('company.zone', '=', 'zone.id')
 								.where('vehicle.passengers', '>=', capacities.passengers)
 								.where('vehicle.bikes', '>=', capacities.bikes)
@@ -68,9 +67,24 @@ export const getViableBusStops = async (
 								.where(
 									sql<boolean>`"vehicle"."luggage" >= cast(${capacities.luggage} as integer) + cast(${capacities.passengers} as integer) - cast("vehicle"."passengers" as integer)`
 								)
-								.where('availability.startTime', '<=', latest)
-								.where('availability.endTime', '>=', earliest)
-								.select(['availability.startTime', 'availability.endTime'])
+								.select((eb) => [
+									jsonArrayFrom(
+										eb
+											.selectFrom('availability')
+											.whereRef('availability.vehicle', '=', 'vehicle.id')
+											.where('availability.startTime', '<=', latest)
+											.where('availability.endTime', '>=', earliest)
+											.select(['availability.startTime', 'availability.endTime'])
+									).as('availabilities'),
+									jsonArrayFrom(
+										eb
+											.selectFrom('tour')
+											.whereRef('tour.vehicle', '=', 'vehicle.id')
+											.where('tour.departure', '<=', latest)
+											.where('tour.arrival', '>=', earliest)
+											.select(['tour.departure as startTime', 'tour.arrival as endTime'])
+									).as('tours')
+								])
 						).as('intervals')
 					])
 			).as('valid')
@@ -90,7 +104,13 @@ export const getViableBusStops = async (
 		return {
 			...r,
 			intervals: Interval.intersect(
-				Interval.merge(r.intervals.map((i) => new Interval(i.startTime, i.endTime))),
+				Interval.merge(
+					r.intervals.flatMap((i) =>
+						i.availabilities
+							.map((a) => new Interval(a.startTime, a.endTime))
+							.concat(i.tours.map((t) => new Interval(t.startTime, t.endTime)))
+					)
+				),
 				allowedTimes
 			)
 		};
