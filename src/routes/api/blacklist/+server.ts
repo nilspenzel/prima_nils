@@ -53,7 +53,9 @@ export const POST = async (event: RequestEvent) => {
 
 	// Convert response.
 	const createResponse = (allowedConnections: BlacklistingResult[], busStops: Coordinates[]) => {
-		const response = Array.from({length: busStops.length}, () => Array<{startTime: UnixtimeMs, endTime: UnixtimeMs}>());
+		const response = Array.from({ length: busStops.length }, () =>
+			Array<{ startTime: UnixtimeMs; endTime: UnixtimeMs }>()
+		);
 		allowedConnections.forEach((s) => {
 			response[s.busStopIndex] = s.intervals;
 		});

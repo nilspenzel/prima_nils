@@ -14,7 +14,7 @@ export type BookingParameters = {
 	capacities: Capacities;
 };
 
-export const bookingSchema = {
+const bookingSchema = {
 	$schema: 'http://json-schema.org/draft-07/schema#',
 	type: 'object',
 	properties: {

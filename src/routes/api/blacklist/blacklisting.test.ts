@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getViableBusStops } from './viableBusStops';
-import {
-	addCompany,
-	addTaxi,
-	clearDatabase,
-	setAvailability,
-	setTour,
-	Zone
-} from '$lib/testHelpers';
+import { addCompany, addTaxi, clearDatabase, setAvailability, Zone } from '$lib/testHelpers';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { MINUTE } from '$lib/util/time';
 import type { Capacities } from '$lib/server/booking/Capacities';
@@ -18,9 +11,6 @@ const inZittau = { lat: 50.89857713197384, lng: 14.8098212004343 };
 const BASE_DATE_MS = new Date('2050-09-23T17:00Z').getTime();
 const dateInXMinutes = (x: number): UnixtimeMs => {
 	return BASE_DATE_MS + x * MINUTE;
-};
-const dateInXMinutesYMs = (x: number, y: number): UnixtimeMs => {
-	return BASE_DATE_MS + x * MINUTE + y;
 };
 
 describe('blacklisting test', () => {
@@ -44,7 +34,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].busStopIndex).toBe(0);
 		expect(res[0].intervals.length).toBe(1);
@@ -65,14 +61,17 @@ describe('blacklisting test', () => {
 
 		const r = {
 			userChosen: inNiesky,
-			busStops: [
-				inNiesky,
-				inNiesky
-			],
+			busStops: [inNiesky, inNiesky],
 			startFixed: true,
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(2);
 		expect(res[0].busStopIndex).toBe(0);
 		expect(res[0].intervals.length).toBe(1);
@@ -100,7 +99,13 @@ describe('blacklisting test', () => {
 			busStops: [inNiesky],
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 2 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res[0].busStopIndex).toBe(0);
 		expect(res[0].intervals.length).toBe(1);
 		expect(res[0].intervals[0].startTime).toBe(dateInXMinutes(0));
@@ -123,7 +128,13 @@ describe('blacklisting test', () => {
 			busStops: [inZittau],
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(0);
 	});
 
@@ -144,7 +155,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(0);
 	});
 
@@ -165,7 +182,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 4, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].intervals).toHaveLength(0);
 	});
@@ -187,7 +210,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 4, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].intervals).toHaveLength(0);
 	});
@@ -209,7 +238,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 4, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].intervals).toHaveLength(0);
 	});
@@ -231,7 +266,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 7 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].intervals).toHaveLength(0);
 	});
@@ -245,7 +286,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].intervals).toHaveLength(0);
 	});
@@ -257,7 +304,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].intervals).toHaveLength(0);
 	});
@@ -277,7 +330,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].intervals).toHaveLength(0);
 	});
@@ -299,7 +358,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].busStopIndex).toBe(1);
 		expect(res[0].intervals.length).toBe(1);
@@ -314,7 +379,13 @@ describe('blacklisting test', () => {
 			startFixed: true,
 			capacities: { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(0);
 	});
 
@@ -336,7 +407,13 @@ describe('blacklisting test', () => {
 			startFixed: false,
 			capacities: { passengers: 1, bikes: 0, wheelchairs: 0, luggage: 0 }
 		};
-		const res = await getViableBusStops(r.userChosen, r.busStops, r.capacities, dateInXMinutes(-100), dateInXMinutes(6000));
+		const res = await getViableBusStops(
+			r.userChosen,
+			r.busStops,
+			r.capacities,
+			dateInXMinutes(-100),
+			dateInXMinutes(6000)
+		);
 		expect(res).toHaveLength(1);
 		expect(res[0].intervals).toHaveLength(1);
 	});

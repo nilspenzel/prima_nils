@@ -1,18 +1,9 @@
-import {
-	MAX_PASSENGER_WAITING_TIME_PICKUP,
-	MAX_PASSENGER_WAITING_TIME_DROPOFF,
-	WGS84,
-	EARLIEST_SHIFT_START,
-	LATEST_SHIFT_END,
-	MIN_PREP
-} from '$lib/constants';
-import { db, type Database } from '$lib/server/db';
+import { WGS84, EARLIEST_SHIFT_START, LATEST_SHIFT_END, MIN_PREP } from '$lib/constants';
+import { db } from '$lib/server/db';
 import { covers } from '$lib/server/db/covers';
-import type { ExpressionBuilder } from 'kysely';
-import { sql, type RawBuilder } from 'kysely';
+import { sql } from 'kysely';
 import type { Coordinates } from '$lib/util/Coordinates';
 import type { Capacities } from '$lib/server/booking/Capacities';
-import type { BusStop } from '$lib/server/booking/BusStop';
 import { Interval } from '$lib/util/interval';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
@@ -74,7 +65,9 @@ export const getViableBusStops = async (
 								.where('vehicle.passengers', '>=', capacities.passengers)
 								.where('vehicle.bikes', '>=', capacities.bikes)
 								.where('vehicle.wheelchairs', '>=', capacities.wheelchairs)
-								.where(sql<boolean>`"vehicle"."luggage" >= cast(${capacities.luggage} as integer) + cast(${capacities.passengers} as integer) - cast("vehicle"."passengers" as integer)`)
+								.where(
+									sql<boolean>`"vehicle"."luggage" >= cast(${capacities.luggage} as integer) + cast(${capacities.passengers} as integer) - cast("vehicle"."passengers" as integer)`
+								)
 								.where('availability.startTime', '<=', latest)
 								.where('availability.endTime', '>=', earliest)
 								.select(['availability.startTime', 'availability.endTime'])
@@ -88,12 +81,20 @@ export const getViableBusStops = async (
 	}
 	const lastValidTime = 8640000000000000;
 	const afterPreptime = new Interval(Date.now() + MIN_PREP, lastValidTime);
-	const allowedTimes = Interval.intersect(getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END), [afterPreptime]);
+	const allowedTimes = Interval.intersect(
+		getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END),
+		[afterPreptime]
+	);
 	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
-	return response.valid.map((r) => { return {
-		...r,
-		intervals: Interval.intersect(Interval.merge(r.intervals.map((i) => new Interval(i.startTime, i.endTime))), allowedTimes)
-	}});
+	return response.valid.map((r) => {
+		return {
+			...r,
+			intervals: Interval.intersect(
+				Interval.merge(r.intervals.map((i) => new Interval(i.startTime, i.endTime))),
+				allowedTimes
+			)
+		};
+	});
 };
 
 export type BlacklistingResult = {
