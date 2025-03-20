@@ -1,5 +1,5 @@
 import type { Transaction } from 'kysely';
-import { db, type Database } from '$lib/server/db';
+import { type Database } from '$lib/server/db';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 
@@ -7,14 +7,14 @@ export async function updateDirectDurations(
 	oldVehicleId: number,
 	tourId: number,
 	departure: number,
-	trx?: Transaction<Database>,
+	trx: Transaction<Database>,
 	newVehicleId?: number
 ) {
 	const vehicleIds = [oldVehicleId];
 	if (newVehicleId) {
 		vehicleIds.push(newVehicleId);
 	}
-	const vehicles = await (trx ?? db)
+	const vehicles = await trx
 		.selectFrom('vehicle')
 		.where('vehicle.id', 'in', vehicleIds)
 		.select((eb) => [
@@ -87,7 +87,7 @@ export async function updateDirectDurations(
 		oldVehicle.nexttour[0]?.events &&
 		oldVehicle.nexttour[0].events.length != 0
 	) {
-		await (trx ?? db)
+		await trx
 			.updateTable('tour')
 			.set({
 				directDuration:
@@ -112,7 +112,7 @@ export async function updateDirectDurations(
 		const newVehicle = vehicles[0].id === newVehicleId ? vehicles[0] : vehicles[1];
 		const events = newVehicle.moved[0].events;
 		events.sort((e) => e.scheduledTimeStart);
-		await (trx ?? db)
+		await trx
 			.updateTable('tour')
 			.set({
 				directDuration:
@@ -124,7 +124,7 @@ export async function updateDirectDurations(
 			.executeTakeFirst();
 
 		if (newVehicle.nexttour && newVehicle.nexttour.length != 0) {
-			await (trx ?? db)
+			await trx
 				.updateTable('tour')
 				.set({
 					directDuration:

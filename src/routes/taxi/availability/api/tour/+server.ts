@@ -81,7 +81,6 @@ export const POST = async (event) => {
 				message: 'Keine Fahrzeug-id angegeben'
 			});
 		}
-		const newVehicle = await trx
 		if (vehicleId === movedTour.vehicle) {
 			error(400, {
 				message: 'Neue Fahrzeug-id stimmt mit alter überein.'
