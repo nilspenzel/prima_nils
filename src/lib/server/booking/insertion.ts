@@ -53,6 +53,24 @@ export type InsertionEvaluation = {
 	dropoffNextLegDuration: number;
 };
 
+type SingleInsertionEvaluation = {
+	time: Date;
+	window: Interval;
+	approachDuration: number;
+	returnDuration: number;
+	case: InsertionType;
+	taxiWaitingTime: number;
+	taxiDuration: number;
+	passengerDuration: number;
+	cost: number;
+};
+
+type Evaluations = {
+	busStopEvaluations: (SingleInsertionEvaluation | undefined)[][][];
+	userChosenEvaluations: (SingleInsertionEvaluation | undefined)[];
+	bothEvaluations: (InsertionEvaluation | undefined)[][];
+};
+
 export type Insertion = InsertionEvaluation & {
 	pickupIdx: number | undefined;
 	dropoffIdx: number | undefined;
@@ -322,16 +340,16 @@ export function evaluateSingleInsertions(
 	promisedTimes?: PromisedTimes
 ): Evaluations {
 	const bothEvaluations: (Insertion | undefined)[][] = [];
-	const userChosenEvaluations: (InsertionEvaluation | undefined)[] = [];
-	const busStopEvaluations: (InsertionEvaluation | undefined)[][][] = new Array<
-		(InsertionEvaluation | undefined)[][]
+	const userChosenEvaluations: (SingleInsertionEvaluation | undefined)[] = [];
+	const busStopEvaluations: (SingleInsertionEvaluation | undefined)[][][] = new Array<
+		(SingleInsertionEvaluation | undefined)[][]
 	>(busStopTimes.length);
 	for (let i = 0; i != busStopTimes.length; ++i) {
-		busStopEvaluations[i] = new Array<(InsertionEvaluation | undefined)[]>(
+		busStopEvaluations[i] = new Array<(SingleInsertionEvaluation | undefined)[]>(
 			busStopTimes[i].length
 		);
 		for (let j = 0; j != busStopTimes[i].length; ++j) {
-			busStopEvaluations[i][j] = new Array<InsertionEvaluation | undefined>();
+			busStopEvaluations[i][j] = new Array<SingleInsertionEvaluation | undefined>();
 		}
 		bothEvaluations[i] = new Array<Insertion | undefined>(busStopTimes[i].length);
 	}
