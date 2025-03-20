@@ -99,5 +99,23 @@ export async function evaluateRequest(
 		allowedTimes,
 		promisedTimes
 	);
+	const { busStopEvaluations, bothEvaluations, userChosenEvaluations } = evaluateSingleInsertions(
+		companies,
+		startFixed,
+		expandedSearchInterval,
+		insertionRanges,
+		busStopTimes,
+		routingResults,
+		travelDurations,
+		promisedTimes
+	);
+	const pairEvaluations = evaluatePairInsertions(
+		companies,
+		startFixed,
+		insertionRanges,
+		busStopTimes,
+		busStopEvaluations,
+		userChosenEvaluations
+	);
 	return newTourEvaluations;
 }
