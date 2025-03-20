@@ -58,6 +58,14 @@ export type InsertionEvaluation = {
 	dropoffNextLegDuration: number;
 };
 
+export type Insertion = InsertionEvaluation & {
+	pickupIdx: number | undefined;
+	dropoffIdx: number | undefined;
+	company: number;
+	vehicle: number;
+	tour: number | undefined;
+};
+
 type SingleInsertionEvaluation = {
 	time: number;
 	window: Interval;
@@ -74,14 +82,6 @@ type Evaluations = {
 	busStopEvaluations: (SingleInsertionEvaluation | undefined)[][][];
 	userChosenEvaluations: (SingleInsertionEvaluation | undefined)[];
 	bothEvaluations: (InsertionEvaluation | undefined)[][];
-};
-
-export type Insertion = InsertionEvaluation & {
-	pickupIdx: number | undefined;
-	dropoffIdx: number | undefined;
-	company: number;
-	vehicle: number;
-	tour: number | undefined;
 };
 
 export type NeighbourIds = {
@@ -176,15 +176,13 @@ export function evaluateSingleInsertion(
 		insertionCase,
 		routingResults,
 		insertionInfo,
-		busStopIdx,
-		prev
+		busStopIdx
 	);
 	const returnDuration = getNextLegDuration(
 		insertionCase,
 		routingResults,
 		insertionInfo,
-		busStopIdx,
-		next
+		busStopIdx
 	);
 	if (approachDuration == undefined || returnDuration == undefined) {
 		return undefined;
@@ -575,12 +573,12 @@ export function evaluatePairInsertions(
 	busStopTimes: Interval[][],
 	busStopEvaluations: (SingleInsertionEvaluation | undefined)[][][],
 	userChosenEvaluations: (SingleInsertionEvaluation | undefined)[]
-): (InsertionEvaluation | undefined)[][] {
-	const bestEvaluations: (InsertionEvaluation | undefined)[][] = new Array<
-		(InsertionEvaluation | undefined)[]
+): (Insertion | undefined)[][] {
+	const bestEvaluations: (Insertion | undefined)[][] = new Array<
+		(Insertion | undefined)[]
 	>(busStopTimes.length);
 	for (let i = 0; i != busStopTimes.length; ++i) {
-		bestEvaluations[i] = new Array<InsertionEvaluation | undefined>(busStopTimes[i].length);
+		bestEvaluations[i] = new Array<Insertion | undefined>(busStopTimes[i].length);
 	}
 	iterateAllInsertions(
 		companies,
@@ -649,10 +647,10 @@ export function evaluatePairInsertions(
 								arrival: returnsToCompany(dropoff.case)
 									? new Date(dropoff.time + dropoff.returnDuration).getTime()
 									: undefined,
-								pickupApproachDuration: pickup.approachDuration,
-								pickupReturnDuration: pickup.returnDuration,
-								dropoffApproachDuration: dropoff.approachDuration,
-								dropoffReturnDuration: dropoff.returnDuration
+								pickupPrevLegDuration: pickup.approachDuration,
+								pickupNextLegDuration: pickup.returnDuration,
+								dropoffPrevLegDuration: dropoff.approachDuration,
+								dropoffNextLegDuration: dropoff.returnDuration
 							};
 						}
 					}
@@ -662,17 +660,17 @@ export function evaluatePairInsertions(
 					dropoffIdx != events.length &&
 					events[prevDropoffIdx].tourId != events[dropoffIdx].tourId
 				) {
-					const drivingTime = events[dropoffIdx].direct_driving_duration;
+					const drivingTime = events[dropoffIdx].directDuration;
 					if (drivingTime == null) {
 						return;
 					}
 					cumulatedTaxiDrivingDelta +=
 						drivingTime -
-						events[dropoffIdx].returnDuration -
-						events[prevDropoffIdx].approachDuration;
+						events[dropoffIdx].nextLegDuration -
+						events[prevDropoffIdx].prevLegDuration;
 					cumulatedTaxiWaitingDelta +=
-						events[dropoffIdx].communicated.getTime() -
-						events[prevDropoffIdx].communicated.getTime() -
+						events[dropoffIdx].communicatedTime -
+						events[prevDropoffIdx].communicatedTime -
 						drivingTime;
 				}
 			}
