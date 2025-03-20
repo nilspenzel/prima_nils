@@ -46,7 +46,7 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 						.innerJoin('user', 'user.companyId', 'company.id')
 						.where('request.id', '=', requestId)
 						.where('user.isTaxiOwner', '=', true)
-						.select(['user.name', 'user.email'])
+						.select(['user.name', 'user.email', 'company.lat', 'company.lng'])
 				).as('companyOwners')
 			])
 			.executeTakeFirst();
@@ -68,7 +68,12 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 		) {
 			await updateDirectDurations(tour.vehicle, tour.id, tour.departure, trx);
 		}
-		updateLegDurations(tour.events, requestId, trx);
+		updateLegDurations(
+			tour.events,
+			{ lat: tour.companyOwners[0].lat!, lng: tour.companyOwners[0].lng! },
+			requestId,
+			trx
+		);
 		for (const companyOwner of tour.companyOwners) {
 			try {
 				await sendMail(CancelNotificationCompany, 'Stornierte Buchung', companyOwner.email, {
@@ -99,10 +104,13 @@ async function updateLegDurations(
 		tourid: number;
 		eventid: number;
 	}[],
+	company: maplibregl.LngLatLike,
 	requestId: number,
-	trx: Transaction<Database>,
+	trx: Transaction<Database>
 ) {
-	const update = async (idx: number, 
+	const update = async (
+		idx1: number,
+		idx2: number,
 		events: {
 			cancelled: boolean;
 			scheduledTimeStart: number;
@@ -113,21 +121,47 @@ async function updateLegDurations(
 			tourid: number;
 			eventid: number;
 		}[],
-		trx: Transaction<Database>,
+		company: maplibregl.LngLatLike,
+		trx: Transaction<Database>
 	) => {
-		const duration = (await oneToManyCarRouting(events[idx - 1], [events[idx + 1]], false))[0];
-		await trx.updateTable('event').set({nextLegDuration: duration}).where('event.id', '=', events[idx - 1].eventid).executeTakeFirst();
-		await trx.updateTable('event').set({prevLegDuration: duration}).where('event.id', '=', events[idx + 1].eventid).executeTakeFirst();
-	}
+		if (idx1 === -1) {
+			await trx
+				.updateTable('event')
+				.set({ prevLegDuration: (await oneToManyCarRouting(events[idx2], [company], false))[0] })
+				.where('event.id', '=', events[idx2].eventid)
+				.executeTakeFirst();
+			return;
+		}
+		if (idx2 === events.length) {
+			await trx
+				.updateTable('event')
+				.set({ prevLegDuration: (await oneToManyCarRouting(events[idx1], [company], true))[0] })
+				.where('event.id', '=', events[idx1].eventid)
+				.executeTakeFirst();
+			return;
+		}
+		const duration = (await oneToManyCarRouting(events[idx1], [events[idx2]], false))[0];
+		await trx
+			.updateTable('event')
+			.set({ nextLegDuration: duration })
+			.where('event.id', '=', events[idx1].eventid)
+			.executeTakeFirst();
+		await trx
+			.updateTable('event')
+			.set({ prevLegDuration: duration })
+			.where('event.id', '=', events[idx2].eventid)
+			.executeTakeFirst();
+	};
 
 	events.filter((e) => e.requestid === requestId || e.cancelled === false);
 	events.sort((e) => e.scheduledTimeStart);
 	const cancelled1Idx = events.findIndex((e) => e.requestid === requestId);
 	const cancelled2Idx = events.findLastIndex((e) => e.requestid === requestId);
-	if(cancelled1Idx != 0) {
-		await update(cancelled1Idx, events, trx);
+	console.assert(cancelled1Idx != -1 && cancelled2Idx != -1 && cancelled1Idx < cancelled2Idx);
+	if (cancelled1Idx === cancelled2Idx - 1) {
+		await update(cancelled1Idx - 1, cancelled2Idx + 1, events, company, trx);
+		return;
 	}
-	if(cancelled2Idx != events.length - 1) {
-		await update(cancelled2Idx, events, trx);
-	}
+	await update(cancelled1Idx - 1, cancelled1Idx + 1, events, company, trx);
+	await update(cancelled2Idx - 1, cancelled2Idx + 1, events, company, trx);
 }
