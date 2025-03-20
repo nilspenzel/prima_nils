@@ -1,5 +1,8 @@
 import {
+	EARLIEST_SHIFT_START,
+	LATEST_SHIFT_END,
 	MIN_PREP,
+	PASSENGER_CHANGE_DURATION,
 	PASSENGER_TIME_COST_FACTOR,
 	TAXI_DRIVING_TIME_COST_FACTOR,
 	TAXI_WAITING_TIME_COST_FACTOR
@@ -14,6 +17,7 @@ import {
 	type InsertionType,
 	canCaseBeValid,
 	isCaseValid,
+	isEarlierBetter,
 	printInsertionType
 } from './insertionTypes';
 import {
@@ -35,6 +39,7 @@ import { roundToUnit, MINUTE } from '$lib/util/time';
 import { iterateAllInsertions } from './iterateAllInsertions';
 import { minutesToMs } from '$lib/time_utils';
 import { type Range } from '$lib/util/booking/getPossibleInsertions'
+import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 
 export type InsertionEvaluation = {
 	pickupTime: number;
@@ -54,7 +59,7 @@ export type InsertionEvaluation = {
 };
 
 type SingleInsertionEvaluation = {
-	time: Date;
+	time: number;
 	window: Interval;
 	approachDuration: number;
 	returnDuration: number;
@@ -152,6 +157,85 @@ export function printInsertionEvaluation(e: Insertion) {
 		e.dropoffNextLegDuration +
 		'\n'
 	);
+}
+
+export function evaluateSingleInsertion(
+	insertionCase: InsertionType,
+	windows: Interval[],
+	busStopWindow: Interval | undefined,
+	routingResults: RoutingResults,
+	insertionInfo: InsertionInfo,
+	busStopIdx: number | undefined,
+	prev: Event | undefined,
+	next: Event | undefined,
+	allowedTimes: Interval[],
+	promisedTimes?: PromisedTimes
+): SingleInsertionEvaluation | undefined {
+	console.assert(insertionCase.what != InsertWhat.BOTH);
+	const approachDuration = getPrevLegDuration(
+		insertionCase,
+		routingResults,
+		insertionInfo,
+		busStopIdx,
+		prev
+	);
+	const returnDuration = getNextLegDuration(
+		insertionCase,
+		routingResults,
+		insertionInfo,
+		busStopIdx,
+		next
+	);
+	if (approachDuration == undefined || returnDuration == undefined) {
+		return undefined;
+	}
+	const arrivalWindow = getArrivalWindow(
+		insertionCase,
+		windows,
+		0,
+		busStopWindow,
+		approachDuration,
+		returnDuration,
+		allowedTimes
+	);
+	if (arrivalWindow == undefined) {
+		return undefined;
+	}
+	const passengerDuration =
+		(insertionCase.what == InsertWhat.BUS_STOP) ==
+		(insertionCase.direction == InsertDirection.BUS_STOP_PICKUP)
+			? returnDuration - minutesToMs(PASSENGER_CHANGE_DURATION)
+			: approachDuration;
+	if (
+		promisedTimes != undefined &&
+		!keepsPromises(insertionCase, arrivalWindow, passengerDuration, promisedTimes)
+	) {
+		return undefined;
+	}
+	const taxiDuration =
+		approachDuration + returnDuration - getOldDrivingTime(insertionCase, prev, next);
+	console.assert(insertionCase.what != InsertWhat.BOTH);
+	const time = isEarlierBetter(insertionCase) ? arrivalWindow.startTime : arrivalWindow.endTime;
+	const taxiWaitingTime = getTaxiWaitingDelta(
+		approachDuration + returnDuration,
+		insertionCase,
+		new Date(time - approachDuration).getTime(),
+		new Date(time + returnDuration).getTime(),
+		prev,
+		next
+	);
+	const sie: SingleInsertionEvaluation = {
+		time,
+		window: arrivalWindow,
+		approachDuration: approachDuration,
+		returnDuration: returnDuration,
+		case: structuredClone(insertionCase),
+		passengerDuration,
+		taxiDuration,
+		taxiWaitingTime,
+		cost: computeCost(passengerDuration, taxiDuration, taxiWaitingTime)
+	};
+	return sie;
 }
 
 export function evaluateBothInsertion(
@@ -382,6 +466,7 @@ export function evaluateSingleInsertions(
 					what: InsertWhat.BUS_STOP,
 					direction
 				};
+				const allowedTimes = getAllowedTimes(0, 1, EARLIEST_SHIFT_START, LATEST_SHIFT_END);
 				if (!canCaseBeValid(insertionCase)) {
 					return undefined;
 				}
@@ -437,6 +522,7 @@ export function evaluateSingleInsertions(
 							busStopIdx,
 							prev,
 							next,
+							allowedTimes,
 							insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
 								? promisedTimes?.pickup
 								: promisedTimes?.dropoff
@@ -464,6 +550,7 @@ export function evaluateSingleInsertions(
 					undefined,
 					prev,
 					next,
+					allowedTimes,
 					insertionCase.direction != InsertDirection.BUS_STOP_PICKUP
 						? promisedTimes?.pickup
 						: promisedTimes?.dropoff
@@ -530,7 +617,7 @@ export function evaluatePairInsertions(
 						if (dropoff == undefined) {
 							continue;
 						}
-						const passengerDuration = dropoff.time!.getTime() - pickup.time!.getTime();
+						const passengerDuration = dropoff.time! - pickup.time!;
 
 						const taxiDuration =
 							pickup.taxiDuration + dropoff.taxiDuration + cumulatedTaxiDrivingDelta;
@@ -557,10 +644,10 @@ export function evaluatePairInsertions(
 								vehicle: insertionInfo.vehicle.id,
 								tour,
 								departure: comesFromCompany(pickup.case)
-									? new Date(pickup.time.getTime() - pickup.approachDuration).getTime()
+									? new Date(pickup.time - pickup.approachDuration).getTime()
 									: undefined,
 								arrival: returnsToCompany(dropoff.case)
-									? new Date(dropoff.time.getTime() + dropoff.returnDuration).getTime()
+									? new Date(dropoff.time + dropoff.returnDuration).getTime()
 									: undefined,
 								pickupApproachDuration: pickup.approachDuration,
 								pickupReturnDuration: pickup.returnDuration,
