@@ -5,12 +5,15 @@ import {
 	TAXI_WAITING_TIME_COST_FACTOR
 } from '$lib/constants';
 import {
+	INSERT_HOW_OPTIONS,
 	InsertDirection,
 	InsertHow,
 	InsertWhat,
 	InsertWhere,
 	type InsertionInfo,
 	type InsertionType,
+	canCaseBeValid,
+	isCaseValid,
 	printInsertionType
 } from './insertionTypes';
 import {
@@ -29,6 +32,9 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import { isValid } from '$lib/util/booking/getPossibleInsertions';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { roundToUnit, MINUTE } from '$lib/util/time';
+import { iterateAllInsertions } from './iterateAllInsertions';
+import { minutesToMs } from '$lib/time_utils';
+import { type Range } from '$lib/util/booking/getPossibleInsertions'
 
 export type InsertionEvaluation = {
 	pickupTime: number;
@@ -302,6 +308,271 @@ export function evaluateNewTours(
 			}
 		});
 	});
+	return bestEvaluations;
+}
+
+export function evaluateSingleInsertions(
+	companies: Company[],
+	startFixed: boolean,
+	expandedSearchInterval: Interval,
+	insertionRanges: Map<number, Range[]>,
+	busStopTimes: Interval[][],
+	routingResults: RoutingResults,
+	travelDurations: (number | undefined)[],
+	promisedTimes?: PromisedTimes
+): Evaluations {
+	const bothEvaluations: (Insertion | undefined)[][] = [];
+	const userChosenEvaluations: (InsertionEvaluation | undefined)[] = [];
+	const busStopEvaluations: (InsertionEvaluation | undefined)[][][] = new Array<
+		(InsertionEvaluation | undefined)[][]
+	>(busStopTimes.length);
+	for (let i = 0; i != busStopTimes.length; ++i) {
+		busStopEvaluations[i] = new Array<(InsertionEvaluation | undefined)[]>(
+			busStopTimes[i].length
+		);
+		for (let j = 0; j != busStopTimes[i].length; ++j) {
+			busStopEvaluations[i][j] = new Array<InsertionEvaluation | undefined>();
+		}
+		bothEvaluations[i] = new Array<Insertion | undefined>(busStopTimes[i].length);
+	}
+	const prepTime = new Date(Date.now() + minutesToMs(MIN_PREP)).getTime();
+	const direction = startFixed ? InsertDirection.BUS_STOP_PICKUP : InsertDirection.BUS_STOP_DROPOFF;
+
+	iterateAllInsertions(
+		companies,
+		insertionRanges,
+		(insertionInfo: InsertionInfo, insertionCounter: number) => {
+			const prev: Event | undefined =
+				insertionInfo.idxInEvents == 0
+					? insertionInfo.vehicle.lastEventBefore
+					: insertionInfo.vehicle.events[insertionInfo.idxInEvents - 1];
+			const next: Event | undefined =
+				insertionInfo.idxInEvents == insertionInfo.vehicle.events.length
+					? insertionInfo.vehicle.firstEventAfter
+					: insertionInfo.vehicle.events[insertionInfo.idxInEvents];
+			INSERT_HOW_OPTIONS.forEach((insertHow) => {
+				const insertionCase = {
+					how: insertHow,
+					where:
+						insertionInfo.idxInEvents == 0
+							? InsertWhere.BEFORE_FIRST_EVENT
+							: insertionInfo.idxInEvents == insertionInfo.vehicle.events.length
+								? InsertWhere.AFTER_LAST_EVENT
+								: prev!.tourId != next!.tourId
+									? InsertWhere.BETWEEN_TOURS
+									: InsertWhere.BETWEEN_EVENTS,
+					what: InsertWhat.BUS_STOP,
+					direction
+				};
+				if (!canCaseBeValid(insertionCase)) {
+					return undefined;
+				}
+				const windows = getAllowedOperationTimes(
+					insertionCase,
+					prev,
+					next,
+					expandedSearchInterval,
+					prepTime,
+					insertionInfo.vehicle
+				);
+				for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
+					for (let busTimeIdx = 0; busTimeIdx != busStopTimes[busStopIdx].length; ++busTimeIdx) {
+						insertionCase.what = InsertWhat.BOTH;
+						const resultBoth = evaluateBothInsertion(
+							insertionCase,
+							windows,
+							travelDurations[busStopIdx],
+							busStopTimes[busStopIdx][busTimeIdx],
+							routingResults,
+							insertionInfo,
+							busStopIdx,
+							prev,
+							next,
+							allowedTimes,
+							promisedTimes
+						);
+						if (
+							resultBoth != undefined &&
+							(bothEvaluations[busStopIdx][busTimeIdx] == undefined ||
+								resultBoth.cost < bothEvaluations[busStopIdx][busTimeIdx]!.cost)
+						) {
+							bothEvaluations[busStopIdx][busTimeIdx] = {
+								...resultBoth,
+								company: insertionInfo.companyIdx,
+								vehicle: insertionInfo.vehicle.id,
+								tour: insertionCase.how == InsertHow.APPEND ? prev!.tourId : next!.tourId,
+								pickupIdx: insertionInfo.idxInEvents,
+								dropoffIdx: insertionInfo.idxInEvents
+							};
+						}
+
+						insertionCase.what = InsertWhat.BUS_STOP;
+						if (!isCaseValid(insertionCase)) {
+							continue;
+						}
+						const resultBus = evaluateSingleInsertion(
+							insertionCase,
+							windows,
+							busStopTimes[busStopIdx][busTimeIdx],
+							routingResults,
+							insertionInfo,
+							busStopIdx,
+							prev,
+							next,
+							insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
+								? promisedTimes?.pickup
+								: promisedTimes?.dropoff
+						);
+						if (
+							resultBus != undefined &&
+							(busStopEvaluations[busStopIdx][busTimeIdx] == undefined ||
+								busStopEvaluations[busStopIdx][busTimeIdx][insertionCounter] == undefined ||
+								resultBus.cost < busStopEvaluations[busStopIdx][busTimeIdx][insertionCounter]!.cost)
+						) {
+							busStopEvaluations[busStopIdx][busTimeIdx][insertionCounter] = resultBus;
+						}
+					}
+				}
+				insertionCase.what = InsertWhat.USER_CHOSEN;
+				if (!isCaseValid(insertionCase)) {
+					return;
+				}
+				const resultUserChosen = evaluateSingleInsertion(
+					insertionCase,
+					windows,
+					undefined,
+					routingResults,
+					insertionInfo,
+					undefined,
+					prev,
+					next,
+					insertionCase.direction != InsertDirection.BUS_STOP_PICKUP
+						? promisedTimes?.pickup
+						: promisedTimes?.dropoff
+				);
+				if (
+					resultUserChosen != undefined &&
+					(userChosenEvaluations[insertionCounter] == undefined ||
+						resultUserChosen.cost < userChosenEvaluations[insertionCounter].cost)
+				) {
+					userChosenEvaluations[insertionCounter] = resultUserChosen;
+				}
+			});
+		}
+	);
+	return { busStopEvaluations, userChosenEvaluations, bothEvaluations };
+}
+
+export function evaluatePairInsertions(
+	companies: Company[],
+	startFixed: boolean,
+	insertionRanges: Map<number, Range[]>,
+	busStopTimes: Interval[][],
+	busStopEvaluations: (SingleInsertionEvaluation | undefined)[][][],
+	userChosenEvaluations: (SingleInsertionEvaluation | undefined)[]
+): (InsertionEvaluation | undefined)[][] {
+	const bestEvaluations: (InsertionEvaluation | undefined)[][] = new Array<
+		(InsertionEvaluation | undefined)[]
+	>(busStopTimes.length);
+	for (let i = 0; i != busStopTimes.length; ++i) {
+		bestEvaluations[i] = new Array<InsertionEvaluation | undefined>(busStopTimes[i].length);
+	}
+	iterateAllInsertions(
+		companies,
+		insertionRanges,
+		(insertionInfo: InsertionInfo, _insertionCounter: number) => {
+			const events = insertionInfo.vehicle.events;
+			const pickupIdx = insertionInfo.idxInEvents;
+			let cumulatedTaxiDrivingDelta = 0;
+			let cumulatedTaxiWaitingDelta = 0;
+			let pickupInvalid = false;
+			for (
+				let dropoffIdx = pickupIdx + 1;
+				dropoffIdx != insertionInfo.currentRange.latestDropoff + 1;
+				++dropoffIdx
+			) {
+				if (pickupInvalid) {
+					break;
+				}
+				for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
+					if (pickupInvalid) {
+						break;
+					}
+					for (let timeIdx = 0; timeIdx != busStopTimes[busStopIdx].length; ++timeIdx) {
+						const pickup = startFixed
+							? busStopEvaluations[busStopIdx][timeIdx][pickupIdx]
+							: userChosenEvaluations[pickupIdx];
+						if (pickup == undefined) {
+							pickupInvalid = true;
+							break;
+						}
+						const dropoff = startFixed
+							? userChosenEvaluations[dropoffIdx]
+							: busStopEvaluations[busStopIdx][timeIdx][dropoffIdx];
+						if (dropoff == undefined) {
+							continue;
+						}
+						const passengerDuration = dropoff.time!.getTime() - pickup.time!.getTime();
+
+						const taxiDuration =
+							pickup.taxiDuration + dropoff.taxiDuration + cumulatedTaxiDrivingDelta;
+						const taxiWaitingTime =
+							dropoff.taxiWaitingTime + pickup.taxiWaitingTime + cumulatedTaxiWaitingDelta;
+						const cost = computeCost(passengerDuration, taxiDuration, taxiWaitingTime);
+						if (
+							bestEvaluations[busStopIdx][timeIdx] == undefined ||
+							cost < bestEvaluations[busStopIdx][timeIdx]!.cost
+						) {
+							const tour = events[pickupIdx].tourId;
+							bestEvaluations[busStopIdx][timeIdx] = {
+								pickupTime: pickup.time,
+								dropoffTime: dropoff.time,
+								pickupCase: pickup.case,
+								dropoffCase: dropoff.case,
+								pickupIdx,
+								dropoffIdx,
+								taxiWaitingTime,
+								taxiDuration,
+								passengerDuration,
+								cost,
+								company: insertionInfo.companyIdx,
+								vehicle: insertionInfo.vehicle.id,
+								tour,
+								departure: comesFromCompany(pickup.case)
+									? new Date(pickup.time.getTime() - pickup.approachDuration).getTime()
+									: undefined,
+								arrival: returnsToCompany(dropoff.case)
+									? new Date(dropoff.time.getTime() + dropoff.returnDuration).getTime()
+									: undefined,
+								pickupApproachDuration: pickup.approachDuration,
+								pickupReturnDuration: pickup.returnDuration,
+								dropoffApproachDuration: dropoff.approachDuration,
+								dropoffReturnDuration: dropoff.returnDuration
+							};
+						}
+					}
+				}
+				const prevDropoffIdx = dropoffIdx - 1;
+				if (
+					dropoffIdx != events.length &&
+					events[prevDropoffIdx].tourId != events[dropoffIdx].tourId
+				) {
+					const drivingTime = events[dropoffIdx].direct_driving_duration;
+					if (drivingTime == null) {
+						return;
+					}
+					cumulatedTaxiDrivingDelta +=
+						drivingTime -
+						events[dropoffIdx].returnDuration -
+						events[prevDropoffIdx].approachDuration;
+					cumulatedTaxiWaitingDelta +=
+						events[dropoffIdx].communicated.getTime() -
+						events[prevDropoffIdx].communicated.getTime() -
+						drivingTime;
+				}
+			}
+		}
+	);
 	return bestEvaluations;
 }
 
