@@ -107,6 +107,7 @@ export interface Database {
 		target: string;
 		targetLat: number;
 		targetLng: number;
+		counter: number;
 	};
 }
 

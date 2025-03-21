@@ -21,14 +21,15 @@ export async function load(event: PageServerLoadEvent) {
 		favs: await db
 			.selectFrom('favourites')
 			.where('favourites.user', '=', userId)
-			.orderBy('favourites.id', 'asc')
+			.orderBy('favourites.counter', 'desc')
 			.select([
 				'favourites.start',
 				'favourites.target',
 				'favourites.startLat',
 				'favourites.startLng',
 				'favourites.targetLat',
-				'favourites.targetLng'
+				'favourites.targetLng',
+				'favourites.counter'
 			])
 			.execute()
 	};
@@ -232,6 +233,29 @@ export const actions = {
 
 			console.log('INSERTION DONE, SETTING SUCCESS=TRUE - REQUIESTS:', { request1, request2 });
 
+			const counter = (await db.selectFrom('favourites')
+			.where('favourites.startLat', '=', start1.lat)
+			.where('favourites.startLng', '=', start1.lng)
+			.where('favourites.targetLat', '=', target1.lat)
+			.where('favourites.targetLng', '=', target1.lng)
+			.where('favourites.user', '=', user)
+			.select(['favourites.counter'])
+			.executeTakeFirst())?.counter;
+			if(!counter) {
+			await db
+				.insertInto('favourites')
+				.values({ start: start1.address, target: target1.address, user, startLat: start1.lat, startLng: start1.lng, targetLat: target1.lat, targetLng: target1.lng, counter: 1 })
+				.execute();
+			} else{
+				await db.updateTable('favourites')
+					.set({counter: counter + 1})
+					.where('favourites.startLat', '=', start1.lat)
+					.where('favourites.startLng', '=', start1.lng)
+					.where('favourites.targetLat', '=', target1.lat)
+					.where('favourites.targetLng', '=', target1.lng)
+					.where('favourites.user', '=', user)
+					.execute()
+			}
 			success = true;
 			return;
 		});
@@ -272,44 +296,9 @@ export const actions = {
 			} catch {
 				/* nothing we can do about this */
 			}
-
 			return redirect(302, `/bookings/${id}`);
 		}
 
 		return { msg: message! };
-	},
-	fav: async ({ request, locals }) => {
-		const user = locals.session?.userId;
-		if (!user) {
-			return { msg: msg('accountDoesNotExist') };
-		}
-		const formData = await request.formData();
-		const from = formData.get('from');
-		const to = formData.get('to');
-		const sLat = formData.get('fromLat');
-		const sLng = formData.get('fromLng');
-		const tLat = formData.get('toLat');
-		const tLng = formData.get('toLng');
-		if (typeof from !== 'string' || typeof sLat !== 'string' || typeof sLng !== 'string') {
-			return { msg: msg('invalidFrom') };
-		}
-		if (typeof to !== 'string' || typeof tLat !== 'string' || typeof tLng !== 'string') {
-			return { msg: msg('invalidTo') };
-		}
-		const startLat = parseFloat(sLat);
-		const startLng = parseFloat(sLng);
-		const targetLat = parseFloat(tLat);
-		const targetLng = parseFloat(tLng);
-		if (typeof startLat !== 'number' || typeof startLng !== 'number') {
-			return { msg: msg('invalidFrom') };
-		}
-		if (typeof targetLat !== 'number' || typeof targetLng !== 'number') {
-			return { msg: msg('invalidTo') };
-		}
-		await db
-			.insertInto('favourites')
-			.values({ start: from, target: to, user, startLat, startLng, targetLat, targetLng })
-			.execute();
-		return {};
 	}
 };

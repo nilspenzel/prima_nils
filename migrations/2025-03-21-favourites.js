@@ -11,6 +11,7 @@ export async function up(db) {
         .addColumn('target', 'varchar', (col) => col.notNull())
         .addColumn('target_lat', 'real', (col) => col.notNull())
         .addColumn('target_lng', 'real', (col) => col.notNull())
+        .addColumn('counter', 'integer', (col) => col.notNull())
         .execute();
 }
 

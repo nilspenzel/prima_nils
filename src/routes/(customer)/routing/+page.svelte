@@ -40,7 +40,7 @@
 	import { updateStartDest } from '$lib/util/updateStartDest';
 	import { odmPrice } from '$lib/util/odmPrice';
 	import BookingSummary from '$lib/ui/BookingSummary.svelte';
-	import { LocateFixed, Star } from 'lucide-svelte';
+	import { LocateFixed } from 'lucide-svelte';
 	import { posToLocation } from '$lib/map/Location';
 	import { MAX_MATCHING_DISTANCE } from '$lib/constants';
 	import SortableTable from '$lib/ui/SortableTable.svelte';
@@ -171,7 +171,7 @@
 	];
 
 	let selectedFav:
-		| {
+		{
 				start: string;
 				target: string;
 				startLat: number;
@@ -404,30 +404,6 @@
 				</Button>
 			</div>
 			<div class="flex gap-2">
-				{#if data.favs.length != 0}
-					<Dialog.Root bind:open={isFavsOpen}>
-						<Dialog.Trigger
-							title={t.displayFavsList}
-							class={cn(buttonVariants({ variant: 'default' }))}
-						>
-							<Star /><ChevronDown />
-						</Dialog.Trigger>
-						<Dialog.Content class="flex-col sm:max-w-[425px]">
-							{@render favs()}
-						</Dialog.Content>
-					</Dialog.Root>
-				{/if}
-				{#if from.label && to.label && !displayingFavourite() && data.isLoggedIn}
-					<form method="post" action="?/fav" use:enhance>
-						<input type="hidden" name="from" value={from.label} />
-						<input type="hidden" name="fromLat" value={from.value.match?.lat} />
-						<input type="hidden" name="fromLng" value={from.value.match?.lon} />
-						<input type="hidden" name="to" value={to.label} />
-						<input type="hidden" name="toLat" value={to.value.match?.lat} />
-						<input type="hidden" name="toLng" value={to.value.match?.lon} />
-						<Button type="submit" title={t.addToFavs}><Star /></Button>
-					</form>
-				{/if}
 				<Dialog.Root>
 					<Dialog.Trigger class={cn(buttonVariants({ variant: 'default' }), 'grow')}>
 						{t.atDateTime(
@@ -518,6 +494,7 @@
 					</Dialog.Content>
 				</Dialog.Root>
 			</div>
+			{#if routingResponses.length !== 0}
 			<div bind:this={connectionsEl} class="flex grow flex-col gap-4">
 				<ItineraryList
 					{baseQuery}
@@ -530,6 +507,9 @@
 					updateStartDest={updateStartDest(from, to)}
 				/>
 			</div>
+			{:else if data.favs.length != 0}
+				{@render favs()}
+			{/if}
 		</div>
 	</div>
 </div>
