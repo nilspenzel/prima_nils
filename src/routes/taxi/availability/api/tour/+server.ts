@@ -167,7 +167,7 @@ export const POST = async (event) => {
 				.set({ vehicle: vehicleId })
 				.where('id', '=', tourId)
 				.executeTakeFirst();
-				
+
 			await updateDirectDurations(
 				movedTour.vehicle,
 				movedTour.id,
