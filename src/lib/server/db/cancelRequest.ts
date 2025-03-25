@@ -6,6 +6,7 @@ import { lockTablesStatement } from './lockTables';
 import { updateDirectDurations } from '$lib/server/booking/updateDirectDuration';
 import { db, type Database } from '$lib/server/db';
 import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
+import { HOUR } from '$lib/util/time';
 
 export const cancelRequest = async (requestId: number, userId: number) => {
 	console.log(
@@ -156,22 +157,58 @@ async function updateLegDurations(
 		trx: Transaction<Database>
 	) => {
 		if (prevIdx === -1) {
+			const routingResult = await oneToManyCarRouting(events[nextIdx], [company], false, HOUR * 10);
+			if (
+				routingResult === undefined ||
+				routingResult.length != 0 ||
+				routingResult[0] === undefined
+			) {
+				console.log(
+					`unable to update prevLegDuration for event ${events[nextIdx].eventid}, routing result was undefined.`
+				);
+				return;
+			}
+			console.log({ routingResult });
 			await trx
 				.updateTable('event')
-				.set({ prevLegDuration: (await oneToManyCarRouting(events[nextIdx], [company], false))[0] })
+				.set({ prevLegDuration: routingResult[0] })
 				.where('event.id', '=', events[nextIdx].eventid)
 				.executeTakeFirst();
 			return;
 		}
 		if (nextIdx === events.length) {
+			const routingResult = await oneToManyCarRouting(events[nextIdx], [company], false, HOUR * 10);
+			if (
+				routingResult === undefined ||
+				routingResult.length != 0 ||
+				routingResult[0] === undefined
+			) {
+				console.log(
+					`unable to update prevLegDuration for event ${events[prevIdx].eventid}, routing result was undefined.`
+				);
+				return;
+			}
 			await trx
 				.updateTable('event')
-				.set({ prevLegDuration: (await oneToManyCarRouting(events[prevIdx], [company], true))[0] })
+				.set({ nextLegDuration: (await oneToManyCarRouting(events[prevIdx], [company], true))[0] })
 				.where('event.id', '=', events[prevIdx].eventid)
 				.executeTakeFirst();
 			return;
 		}
-		const duration = (await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false))[0];
+		const duration = (
+			await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false, HOUR * 10)
+		)[0];
+		const routingResult = await oneToManyCarRouting(events[nextIdx], [company], false, HOUR * 10);
+		if (
+			routingResult === undefined ||
+			routingResult.length != 0 ||
+			routingResult[0] === undefined
+		) {
+			console.log(
+				`unable to update prevLegDuration for event ${events[prevIdx].eventid} and nextLegDuration for event ${events[nextIdx].eventid}, routing result was undefined.`
+			);
+			return;
+		}
 		await trx
 			.updateTable('event')
 			.set({ nextLegDuration: duration })
