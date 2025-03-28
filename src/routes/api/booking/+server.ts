@@ -12,6 +12,7 @@ export type BookingParameters = {
 	connection1: ExpectedConnection | null;
 	connection2: ExpectedConnection | null;
 	capacities: Capacities;
+	test?: boolean;
 };
 
 const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
@@ -49,7 +50,7 @@ export const POST = async (event: RequestEvent) => {
 		let firstConnection = undefined;
 		let secondConnection = undefined;
 		if (p.connection1 != null) {
-			firstConnection = await bookRide(p.connection1, p.capacities, false, trx);
+			firstConnection = await bookRide(p.connection1, p.capacities, false, trx, undefined, p.test);
 			if (firstConnection == undefined) {
 				message = 'Die Anfrage für die erste Meile kann nicht erfüllt werden.';
 				return;
@@ -60,7 +61,7 @@ export const POST = async (event: RequestEvent) => {
 			if (firstConnection != undefined) {
 				blockedVehicleId = firstConnection.best.vehicle;
 			}
-			secondConnection = await bookRide(p.connection2, p.capacities, true, trx, blockedVehicleId, true);
+			secondConnection = await bookRide(p.connection2, p.capacities, true, trx, blockedVehicleId, p.test);
 			if (secondConnection == undefined) {
 				message = 'Die Anfrage für die zweite Meile kann nicht erfüllt werden.';
 				return;
