@@ -51,7 +51,7 @@ def create_database_connection(env_vars):
             user=user,
             password=password
         )
-        
+        connection.autocommit = True
         return connection
     
     except psycopg2.Error as e:
@@ -66,24 +66,41 @@ def get_uncancelled_tour_id(connection):
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id 
+                    SELECT tour.id as tour_id, tour.vehicle as vehicle_id
                     FROM tour 
                     WHERE cancelled = false 
                     LIMIT 1
                 """)
                 result = cursor.fetchone()
-                return result[0] if result else None
+                return result if result else None
         except psycopg2.Error as e:
             print(f"Error executing tour ID query: {e}")
             return None
     return None
 
-def send_request(endpoint, payload, session_token="ftigbfqqu27a5gy7let2lwczwjy3xn6s"):
+def get_other_vehicle(connection, blocked_id):
+    if connection:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id
+                    FROM vehicle 
+                    WHERE id != %s
+                    LIMIT 1
+                """, (blocked_id,))
+                result = cursor.fetchone()
+                return result if result else None
+        except psycopg2.Error as e:
+            print(f"Error executing tour ID query: {e}")
+            return None
+    return None
+
+def send_request(endpoint, payload, session_token="4kbjho7zdc2s54flsjlty4luortomp4m"):
     try:
         json_payload = json.dumps(payload).encode('utf-8')
         
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)  # Add a timeout to prevent hanging
+        sock.settimeout(30)
         sock.connect(('localhost', 5173))
         
         request_str = (
@@ -95,14 +112,10 @@ def send_request(endpoint, payload, session_token="ftigbfqqu27a5gy7let2lwczwjy3x
             f"Connection: close\r\n\r\n"
         )
         request = request_str.encode('utf-8')
-        
         sock.sendall(request + json_payload)
-        
         response = sock.recv(4096).decode('utf-8')
-        
         sock.close()
-        
-        if "HTTP/1.1 200" not in response:
+        if "HTTP/1.1 200" not in response and "HTTP/1.1 400" not in response:
             print(f"Error sending request to {endpoint}. Response: {response}")
             return None
         
@@ -118,21 +131,25 @@ def send_request(endpoint, payload, session_token="ftigbfqqu27a5gy7let2lwczwjy3x
         print(f"Unexpected error sending request to {endpoint}: {e}")
         return None
 
-
 def parse_endpoint_probabilities(args):
     probabilities = {
-        '/api/booking': 0.95,
-        '/api/cancelTour': 0.05
+        '/api/booking': 0.9,
+        '/api/cancelTour': 0,
+        'taxi/availability/api/tour': 0.1
     }
     
     for arg in args:
         if arg.startswith('--prob-booking='):
             prob = float(arg.split('=')[1])
-            probabilities['/api/booking'] = prob / 100 if prob > 1 else prob
+            probabilities['/api/booking'] = prob
         
         elif arg.startswith('--prob-cancel='):
             prob = float(arg.split('=')[1])
-            probabilities['/api/cancelTour'] = prob / 100 if prob > 1 else prob
+            probabilities['/api/cancelTour'] = prob
+        
+        elif arg.startswith('--prob-cancel='):
+            prob = float(arg.split('=')[1])
+            probabilities['taxi/availability/api/tour'] = prob
     
     return probabilities
 
@@ -252,10 +269,7 @@ def generate_booking_request(coordinates=None, min_lat=None, max_lat=None, min_l
 
 def main(filepath=None, min_lat=None, max_lat=None, min_lng=None, max_lng=None, 
          num_requests=1, include_second_connection=True, endpoint_probabilities=None):
-    probabilities = endpoint_probabilities or {
-        '/api/booking': 0.5,
-        '/api/cancelTour': 0.5
-    }
+    probabilities = endpoint_probabilities
     
     cancellation_counter = 0
     
@@ -276,23 +290,35 @@ def main(filepath=None, min_lat=None, max_lat=None, min_lng=None, max_lng=None,
                     min_lng=min_lng, max_lng=max_lng,
                     include_second_connection=include_second_connection
                 )
-                
                 send_request('/api/booking', booking_request)
             
             elif chosen_endpoint == '/api/cancelTour':
                 tour_id = get_uncancelled_tour_id(connection)
-                print("tourtt: ", tour_id)
                 if tour_id:
-                    cancel_request = {
-                        'tourId': tour_id,
+                    cancel_tour = {
+                        'tourId': tour_id[0],
                         'message': str(cancellation_counter)
                     }
-                    
-                    send_request('/api/cancelTour', cancel_request)
-                    
+                    send_request('/api/cancelTour', cancel_tour)
                     cancellation_counter += 1
                 else:
                     print("No uncancelled tours found. Skipping cancellation.")
+
+            elif chosen_endpoint == 'taxi/availability/api/tour':
+                tour_and_vehicle = get_uncancelled_tour_id(connection)
+                if tour_and_vehicle:
+                    vehicle = get_other_vehicle(connection, tour_and_vehicle[1])
+                    if vehicle:
+                        move_tour = {
+                            'tourId': tour_and_vehicle[0],
+                            'vehicleId': vehicle[0]
+                        }
+                        send_request('/taxi/availability/api/tour', move_tour)
+                        print(f"moved tour {tour_and_vehicle[0]} to vehicle {vehicle} from {tour_and_vehicle[1]}")
+                    else:
+                        print("No vehicle to move the chosen tour to.")
+                else:
+                    print("No uncancelled tours found. Skipping moving tour.")
 
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
