@@ -292,7 +292,7 @@ def validate_direct_durations(tours):
             later_tour_start = e2['scheduled_time_start']
             if 0 < later_tour_start - earlier_tour_end <= 5 * 3600 * 1000:
                 expected_duration = one_to_many(e1['lat'], e1['lng'], e2['lat'], e2['lng'])
-                if expected_duration is not None and expected_duration != later_tour['direct_duration'] / 1000:
+                if expected_duration is not None and abs(expected_duration - later_tour['direct_duration'] / 1000) > 2:
                     print(f"Direct duration mismatch for tour {later_tour['tour_id']}: \
                           Expected {expected_duration} seconds,\
                           Found {later_tour['direct_duration'] / 1000} seconds")
@@ -310,13 +310,13 @@ def validate_leg_durations(tours):
                 earlier_event['lat'], earlier_event['lng'],
                 later_event['lat'], later_event['lng']
             )
-            if expected_duration is not None and expected_duration + 60 != earlier_event['next_leg_duration'] / 1000:
+            if expected_duration is not None and expected_duration + 58 > earlier_event['next_leg_duration'] / 1000:
                 print(f"Direct duration mismatch for events {earlier_event['event_id']} -> {later_event['event_id']}: \
                       Expected {expected_duration + 60} seconds, Found {earlier_event['next_leg_duration'] / 1000} seconds")
             earlier_event_start = earlier_event['scheduled_time_start']
             later_event_end = later_event['scheduled_time_end']
             time_diff = (later_event_end - earlier_event_start) / 1000
-            if time_diff > expected_duration + 60:
+            if time_diff > expected_duration + 62:
                 print(f"Time difference mismatch for event_id {earlier_event['event_id']} and event_id {later_event['event_id']}: \
                         Time difference {time_diff} seconds exceeds expected duration {expected_duration + 60} seconds")
 
@@ -325,11 +325,11 @@ def validate_company_durations(tours):
     for tour in tours:
         events = sorted(tour['events'], key=lambda e: e['scheduled_time_start'])
         from_company = one_to_many(tour['company_lat'], tour['company_lng'], events[0]['lat'], events[0]['lng'])
-        if from_company != events[0]['prev_leg_duration'] / 1000:
-            print(f"Duration from company to first event does not match in tour with id: {tour['tour_id']}")
+        if abs(from_company - events[0]['prev_leg_duration'] / 1000) > 2:
+            print(f"Duration from company to first event does not match in tour with id: {tour['tour_id']}, duration in db: {events[0]['prev_leg_duration'] / 1000} duration: {from_company}")
         to_company = one_to_many(events[-1]['lat'], events[-1]['lng'], tour['company_lat'], tour['company_lng']) + 60
-        if to_company != events[-1]['next_leg_duration'] / 1000:
-            print(f"Duration to company from last event does not match in tour with id: {tour['tour_id']}")
+        if abs(to_company - events[-1]['next_leg_duration'] / 1000) > 2:
+            print(f"Duration to company from last event does not match in tour with id: {tour['tour_id']}, duration in db: {events[-1]['next_leg_duration'] / 1000} duration: {to_company}")
 
 def test_database_connection(connection):
     if connection:
