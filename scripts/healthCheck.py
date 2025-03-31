@@ -366,7 +366,7 @@ def one_to_many(from_lat, from_lng, to_lat, to_lng):
         "arriveBy": False,
         "many": [f"{to_lat};{to_lng}"],
         "max": 3600,
-        "maxMatchingDistance": 200,
+        "maxMatchingDistance": 250,
         "mode": "CAR",
         "one": f"{from_lat};{from_lng}"
     }
