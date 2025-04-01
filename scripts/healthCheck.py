@@ -292,10 +292,15 @@ def validate_direct_durations(tours):
             later_tour_start = e2['scheduled_time_start']
             if 0 < later_tour_start - earlier_tour_end <= 5 * 3600 * 1000:
                 expected_duration = one_to_many(e1['lat'], e1['lng'], e2['lat'], e2['lng'])
-                if expected_duration is not None and abs(expected_duration - later_tour['direct_duration'] / 1000) > 2:
-                    print(f"Direct duration mismatch for tour {later_tour['tour_id']}: \
-                          Expected {expected_duration} seconds,\
-                          Found {later_tour['direct_duration'] / 1000} seconds")
+                if expected_duration is None:
+                    print(f"Found unexpected None is direct Duration for earlier tour: {earlier_tour['tour_id']} and later tour: {later_tour['tour_id']}")
+                if later_tour['direct_duration'] is None:
+                    print(f"direct duration is none unexpectedly for earlier tour: {earlier_tour['tour_id']} and later tour: {later_tour['tour_id']}")
+                else:
+                    if expected_duration is not None and abs(expected_duration - later_tour['direct_duration'] / 1000) > 2:
+                        print(f"Direct duration mismatch for tour {later_tour['tour_id']}: \
+                              Expected {expected_duration} seconds,\
+                              Found {later_tour['direct_duration'] / 1000} seconds")
 
 def validate_leg_durations(tours):
     print("Validating leg durations...")
