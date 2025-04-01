@@ -75,5 +75,10 @@ export const POST = async (event: RequestEvent) => {
 	}
 
 	console.log('BLACKLIST RESPONSE: ', { startResponse, targetResponse, directResponse });
-	return json({ start: startResponse, target: targetResponse, direct: directResponse });
+	return json({
+		start: startResponse,
+		target: targetResponse,
+		direct: directResponse,
+		...(parameters.uuid !== undefined && { uuid: parameters.uuid })
+	});
 };

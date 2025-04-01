@@ -10,6 +10,7 @@ export type BlacklistRequest = {
 	latest: number;
 	startFixed: boolean;
 	capacities: Capacities;
+	uuid?: string;
 };
 
 export type BlacklistRequestWithISOStrings = {
@@ -21,6 +22,7 @@ export type BlacklistRequestWithISOStrings = {
 	latest: string;
 	startFixed: boolean;
 	capacities: Capacities;
+	uuid?: string;
 };
 
 export function toBlacklistRequestWithISOStrings(
@@ -80,7 +82,7 @@ export const blacklistSchema = {
 		latest: { type: 'integer' },
 		startFixed: { type: 'boolean' },
 		capacities: { $ref: '/schemaDefinitions#/definitions/capacities' },
-		uuid: { type: 'string', format: 'uuid'}
+		uuid: { type: 'string', format: 'uuid' }
 	},
 	required: [
 		'start',
