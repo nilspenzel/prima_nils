@@ -62,7 +62,7 @@ export const blacklistSchema = {
 					lat: { type: 'number', minimum: -90, maximum: 90 },
 					lng: { type: 'number', minimum: -180, maximum: 180 }
 				},
-				required: ['lat', 'lng', 'times']
+				required: ['lat', 'lng']
 			}
 		},
 		targetBusStops: {
@@ -73,13 +73,14 @@ export const blacklistSchema = {
 					lat: { type: 'number', minimum: -90, maximum: 90 },
 					lng: { type: 'number', minimum: -180, maximum: 180 }
 				},
-				required: ['lat', 'lng', 'times']
+				required: ['lat', 'lng']
 			}
 		},
 		earliest: { type: 'integer' },
 		latest: { type: 'integer' },
 		startFixed: { type: 'boolean' },
-		capacities: { $ref: '/schemaDefinitions#/definitions/capacities' }
+		capacities: { $ref: '/schemaDefinitions#/definitions/capacities' },
+		uuid: { type: 'string', format: 'uuid'}
 	},
 	required: [
 		'start',
