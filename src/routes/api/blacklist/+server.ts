@@ -40,14 +40,16 @@ export const POST = async (event: RequestEvent) => {
 			parameters.startBusStops,
 			parameters.capacities,
 			parameters.earliest,
-			parameters.latest
+			parameters.latest,
+			parameters.uuid
 		),
 		getViableBusStops(
 			parameters.target,
 			parameters.targetBusStops,
 			parameters.capacities,
 			parameters.earliest,
-			parameters.latest
+			parameters.latest,
+			parameters.uuid
 		)
 	]);
 
@@ -74,7 +76,12 @@ export const POST = async (event: RequestEvent) => {
 		startResponse = startResponse.slice(0, startResponse.length - 1);
 	}
 
-	console.log('BLACKLIST RESPONSE: ', { startResponse, targetResponse, directResponse });
+	console.log('BLACKLIST RESPONSE: ', {
+		startResponse,
+		targetResponse,
+		directResponse,
+		...(parameters.uuid !== undefined && { uuid: parameters.uuid })
+	});
 	return json({
 		start: startResponse,
 		target: targetResponse,

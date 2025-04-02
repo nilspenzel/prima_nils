@@ -15,6 +15,7 @@ export type WhitelistRequest = {
 	directTimes: UnixtimeMs[];
 	startFixed: boolean;
 	capacities: Capacities;
+	uuid?: string;
 };
 
 export type WhitelistRequestWithISOStrings = {
@@ -25,6 +26,7 @@ export type WhitelistRequestWithISOStrings = {
 	directTimes: string[];
 	startFixed: boolean;
 	capacities: Capacities;
+	uuid?: string;
 };
 
 export function toWhitelistRequestWithISOStrings(
@@ -48,7 +50,8 @@ export const whitelistSchema = {
 		targetBusStops: { $ref: '/schemaDefinitions#/definitions/busStops' },
 		directTimes: { $ref: '/schemaDefinitions#/definitions/times' },
 		startFixed: { type: 'boolean' },
-		capacities: { $ref: '/schemaDefinitions#/definitions/capacities' }
+		capacities: { $ref: '/schemaDefinitions#/definitions/capacities' },
+		uuid: { type: 'string', format: 'uuid' }
 	},
 	required: [
 		'start',

@@ -39,7 +39,8 @@ export const getViableBusStops = async (
 	busStops: Coordinates[],
 	capacities: Capacities,
 	earliest: UnixtimeMs,
-	latest: UnixtimeMs
+	latest: UnixtimeMs,
+	uuid?: string
 ): Promise<BlacklistingResult[]> => {
 	if (busStops.length == 0) {
 		return [];
@@ -99,7 +100,12 @@ export const getViableBusStops = async (
 		getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END),
 		[afterPreptime]
 	);
-	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
+	console.log(
+		'BLACKLIST QUERY RESULT: ',
+		uuid === undefined ? '' : uuid,
+		' ',
+		JSON.stringify(response, null, '\t')
+	);
 	return response.valid.map((r) => {
 		return {
 			...r,
