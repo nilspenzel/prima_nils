@@ -234,7 +234,7 @@ export const getBookingAvailability = async (
 	trx?: Transaction<Database>
 ) => {
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 3, MAX_TRAVEL * 3);
-	const twiceExpandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 6, MAX_TRAVEL * 6);
+	const twiceExpandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 12, MAX_TRAVEL * 12);
 
 	console.log(
 		'getBookingAvailability params: ',

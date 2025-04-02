@@ -95,7 +95,7 @@ def get_other_vehicle(connection, blocked_id):
             return None
     return None
 
-def send_request(endpoint, payload, session_token="udp7szkxrffbcahi57upgmk5u2ajtodu"):
+def send_request(endpoint, payload, session_token="dbxjvyuujwk3fr6sh7ofe25cbbxfephz"):
     try:
         json_payload = json.dumps(payload).encode('utf-8')
         
