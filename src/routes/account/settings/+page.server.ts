@@ -11,12 +11,18 @@ import EmailVerification from '$lib/server/email/EmailVerification.svelte';
 import { deleteSessionTokenCookie, invalidateSession } from '$lib/server/auth/session';
 import { verifyPhone } from '$lib/server/verifyPhone';
 import { getUserPasswordHash } from '$lib/server/auth/user';
+import { jsonArrayFrom } from 'kysely/helpers/postgres';
+import { LATEST_VALID_TIME } from '$lib/constants';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function load(event: PageServerLoadEvent) {
 	const user = await db
 		.selectFrom('user')
 		.where('user.id', '=', event.locals.session!.userId)
-		.select(['user.email', 'user.phone'])
+		.select((eb) => [
+			'user.email',
+			'user.phone'
+		])
 		.executeTakeFirst();
 	if (user === undefined) {
 		error(404, { message: 'User not found' });
@@ -108,6 +114,91 @@ export const actions: Actions = {
 	},
 
 	logout: async (event: RequestEvent) => {
+		await invalidateSession(event.locals.session!.id);
+		deleteSessionTokenCookie(event);
+		return redirect(302, '/');
+	},
+
+	deleteAccount: async (event: RequestEvent) => {
+		await db.transaction().execute(async (trx) => {
+			const user = await trx
+			.selectFrom('user')
+			.where('user.id', '=', event.locals.session!.userId)
+			.leftJoin('company', 'company.id', 'user.companyId')
+			.select((eb) => [
+				jsonArrayFrom(
+					eb.selectFrom('request')
+					.innerJoin('event', 'event.request', 'request.id')
+					.whereRef('request.customer', '=', 'user.id')
+					.where('request.cancelled', '=', false)
+					.where('request.ticketChecked', '=', false)
+					.where('event.communicatedTime', '>=', Date.now())
+					.select([
+						'event.address'
+					])
+				).as('events'),
+				'user.email',
+				'user.phone',
+				jsonArrayFrom(
+					eb.selectFrom('vehicle')
+					.select((eb) => [
+						'vehicle.id',
+						jsonArrayFrom(
+							eb.selectFrom('availability')
+							.whereRef('availability.vehicle', '=', 'vehicle.id')
+							.where('availability.endTime', '>', Date.now())
+							.select(['availability.id'])
+						).as('availabilities'),
+						jsonArrayFrom(
+							eb.selectFrom('tour')
+							.whereRef('tour.vehicle', '=', 'vehicle.id')
+							.where('tour.arrival', '>', Date.now())
+							.select(['tour.id'])
+						).as('tours')
+					])
+				).as('vehicles')
+			])
+			.executeTakeFirst();
+
+			user?.vehicles.filter((v) => v.availabilities.length != 0).forEach(async (v) => 
+				await fetch('/taxi/availability/api/availability', {
+					method: 'DELETE',
+					body: JSON.stringify({ vehicleId: v.id, from: Date.now(), to: LATEST_VALID_TIME })
+				})
+			);
+			if(user?.vehicles) {
+				if(user.vehicles.flatMap((v) => v.tours).length != 0) {
+					return;
+				}
+			}
+			let success = false;
+			const maxTries = 20;
+			let tries = 0;
+			while(!success && tries++ < maxTries) {
+				const uuid = uuidv4();
+				try {
+					await trx.updateTable('user')
+					.where('user.id', '=', event.locals.session!.userId)
+					.set({
+						name: uuid,
+						email: uuid,
+						passwordHash: uuid,
+						isTaxiOwner: false,
+						isAdmin: false,
+						isEmailVerified: false,
+						passwordResetCode: null,
+						emailVerificationCode: null,
+						emailVerificationExpiresAt: null,
+						passwordResetExpiresAt: null,
+						phone: null,
+						companyId: null
+					}).execute();
+				} catch(e) {
+					continue;
+				}
+				success = true;
+			}
+		})
 		await invalidateSession(event.locals.session!.id);
 		deleteSessionTokenCookie(event);
 		return redirect(302, '/');

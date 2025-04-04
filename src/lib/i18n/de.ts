@@ -125,6 +125,7 @@ const translations: Translations = {
 		changePhoneSubtitle: 'Ändern Sie Ihre Telefonnummer.',
 		logout: 'Abmelden',
 		logoutSubtitle: 'Aus dem Konto abmelden. Sie können sich jederzeit wieder anmelden.',
+		deleteAccount: 'Konto löschen',
 		code: 'Code',
 		passwordReset: 'Passwort zurücksetzen',
 		passwordResetSubtitle: 'Hier können Sie ein neues Passwort festlegen.',

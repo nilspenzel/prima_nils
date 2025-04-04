@@ -121,6 +121,7 @@ const translations: Translations = {
 		changePhoneSubtitle: 'Change your phone number.',
 		logout: 'Logout',
 		logoutSubtitle: 'Log out of your account. You can log in later any time.',
+		deleteAccount: 'Delete Account',
 		code: 'Code',
 		passwordReset: 'Reset Password',
 		passwordResetSubtitle: 'Choose a new password.',

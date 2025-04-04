@@ -120,6 +120,7 @@ export type Translations = {
 		changePhoneSubtitle: string;
 		logout: string;
 		logoutSubtitle: string;
+		deleteAccount: string;
 		code: string;
 		passwordReset: string;
 		passwordResetSubtitle: string;

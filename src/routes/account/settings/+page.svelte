@@ -6,9 +6,31 @@
 	import Meta from '$lib/ui/Meta.svelte';
 	import { PUBLIC_PROVIDER } from '$env/static/public';
 	import { t } from '$lib/i18n/translation';
+	import * as Dialog from '$lib/shadcn/dialog';
 
 	const { data, form } = $props();
 	let showTooltip = $state(false);
+
+
+	const user = await db
+		.selectFrom('user')
+		.where('user.id', '=', event.locals.session!.userId)
+		.select((eb) => [
+			jsonArrayFrom(
+				eb.selectFrom('request')
+				.innerJoin('event', 'event.request', 'request.id')
+				.whereRef('request.customer', '=', 'user.id')
+				.where('request.cancelled', '=', false)
+				.where('request.ticketChecked', '=', false)
+				.where('event.communicatedTime', '>=', Date.now())
+				.select([
+					'event.address'
+				])
+			).as('events'),
+			'user.email',
+			'user.phone'
+		])
+		.executeTakeFirst();
 </script>
 
 <Meta title="Account | {PUBLIC_PROVIDER}" />
@@ -69,5 +91,22 @@
 				<Button type="submit" variant="outline">{t.account.logout}</Button>
 			</div>
 		</form>
+	</Panel>
+
+	<Panel title={t.account.deleteAccount} subtitle={''}>
+		<div class="mt-4 flex justify-end">
+			<Dialog.Root>
+				<Dialog.Trigger>
+						<Button variant="destructive">{t.account.deleteAccount}</Button>
+				</Dialog.Trigger>
+				<Dialog.Content>
+					<p class="my-2 text-sm">{data.plannedEvents.length == 0 ? 'Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden.':
+						`Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden. Sie haben noch ${data.plannedEvents.length} geplante Fahrten. Wenn Sie Ihr Konto löschen werden diese storniert. Bei Stornierungen weniger als eine Stunde vor Fahrtbeginn fallen Kosten für die Anfahrt an.`}</p>
+					<form method="post" action="/account/settings?/deleteAccount" class="mt-8">
+						<Button type="submit" variant="destructive">{t.account.deleteAccount}</Button>
+					</form>
+				</Dialog.Content>
+			</Dialog.Root>
+		</div>
 	</Panel>
 </div>
