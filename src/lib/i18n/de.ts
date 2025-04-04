@@ -13,7 +13,7 @@ const translations: Translations = {
 		companies: 'Unternehmen'
 	},
 	msg: {
-		unkownError: 'Unbekannter Fehler.',
+		unknownError: 'Unbekannter Fehler.',
 
 		// Account
 		enterEmailAndPassword: 'Bitte geben Sie Ihre E-Mail und Ihr Passwort ein.',
@@ -44,6 +44,10 @@ const translations: Translations = {
 			'Bitte prüfen Sie Ihr E-Mail-Postfach um Ihre neue E-Mail-Adresse zu verifizieren.',
 		passwordResetSuccess:
 			'Passwort erfolgreich zurückgesetzt. Sie können sich jetzt mit dem neuen Passwort anmelden.',
+		remainingTours:
+			'Ihr Account kann nicht gelöscht werden so lange sie der einzige Unternehmensadministrator in ihrem Unternehmen sind und es noch geplante Fahrten für Ihr Unternehmen gibt.',
+		remainingAvailabilities:
+			'Ihr Account kann nicht gelöscht werden so lange sie der einzige Unternehmensadministrator in ihrem Unternehmen sind und es noch Verfügbarkeiten in der Zukunft für Ihr Unternehmen gibt.',
 
 		// Admin
 		userDoesNotExist: 'Nutzer existiert nicht.',

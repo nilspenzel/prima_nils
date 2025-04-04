@@ -14,7 +14,7 @@ const translations: Translations = {
 	},
 	msg: {
 		// Unknown error
-		unkownError: 'Unkown Error',
+		unknownError: 'Unkown Error',
 
 		// Account
 		enterEmailAndPassword: 'Please enter your email and password.',
@@ -42,6 +42,10 @@ const translations: Translations = {
 		checkInboxToVerify: 'Please check your inbox to verify your new email address.',
 		passwordResetSuccess:
 			'Your password has been reset successfully. Please login with your new password.',
+		remainingTours:
+			'We cannot delete your account while you are the only administrator of your company and there are planned tours for you company.',
+		remainingAvailabilities:
+			'We cannot delete your account while you are the only administrator of your company and there are availabilities in the future for you company.',
 
 		// Admin
 		userDoesNotExist: 'User does not exist.',

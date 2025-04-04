@@ -76,11 +76,15 @@
 		<div class="mt-4 flex justify-end">
 			<Dialog.Root>
 				<Dialog.Trigger>
-						<Button variant="destructive">{t.account.deleteAccount}</Button>
+					<Button variant="destructive">{t.account.deleteAccount}</Button>
 				</Dialog.Trigger>
 				<Dialog.Content>
-					<p class="my-2 text-sm">{0 == 0 ? 'Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden.':
-						`Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden. Sie haben noch ${2} geplante Fahrten. Wenn Sie Ihr Konto löschen werden diese storniert. Bei Stornierungen weniger als eine Stunde vor Fahrtbeginn fallen Kosten für die Anfahrt an.`}</p>
+					<Message msg={form?.msg} />
+					<p class="my-2 text-sm">
+						{form == null
+							? 'Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden.'
+							: `Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden. Sie haben noch ${2} geplante Fahrten. Wenn Sie Ihr Konto löschen werden diese storniert. Bei Stornierungen weniger als eine Stunde vor Fahrtbeginn fallen Kosten für die Anfahrt an.`}
+					</p>
 					<form method="post" action="/account/settings?/deleteAccount" class="mt-8">
 						<Button type="submit" variant="destructive">{t.account.deleteAccount}</Button>
 					</form>

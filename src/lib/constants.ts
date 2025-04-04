@@ -19,7 +19,6 @@ export const LATEST_SHIFT_END = 21 * HOUR;
 export const FIXED_PRICE = 300;
 export const CAP = 4000;
 export const OVER_CAP_FACTOR = 0.25;
-export const LATEST_VALID_TIME = 8640000000000000;
 export const MONTHS = [
 	'Januar',
 	'Februar',
