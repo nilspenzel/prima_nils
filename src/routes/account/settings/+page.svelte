@@ -10,27 +10,6 @@
 
 	const { data, form } = $props();
 	let showTooltip = $state(false);
-
-
-	const user = await db
-		.selectFrom('user')
-		.where('user.id', '=', event.locals.session!.userId)
-		.select((eb) => [
-			jsonArrayFrom(
-				eb.selectFrom('request')
-				.innerJoin('event', 'event.request', 'request.id')
-				.whereRef('request.customer', '=', 'user.id')
-				.where('request.cancelled', '=', false)
-				.where('request.ticketChecked', '=', false)
-				.where('event.communicatedTime', '>=', Date.now())
-				.select([
-					'event.address'
-				])
-			).as('events'),
-			'user.email',
-			'user.phone'
-		])
-		.executeTakeFirst();
 </script>
 
 <Meta title="Account | {PUBLIC_PROVIDER}" />
@@ -100,8 +79,8 @@
 						<Button variant="destructive">{t.account.deleteAccount}</Button>
 				</Dialog.Trigger>
 				<Dialog.Content>
-					<p class="my-2 text-sm">{data.plannedEvents.length == 0 ? 'Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden.':
-						`Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden. Sie haben noch ${data.plannedEvents.length} geplante Fahrten. Wenn Sie Ihr Konto löschen werden diese storniert. Bei Stornierungen weniger als eine Stunde vor Fahrtbeginn fallen Kosten für die Anfahrt an.`}</p>
+					<p class="my-2 text-sm">{0 == 0 ? 'Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden.':
+						`Vorsicht, das Löschen Ihres Accounts kann nicht Rückgängig gemacht werden. Sie haben noch ${2} geplante Fahrten. Wenn Sie Ihr Konto löschen werden diese storniert. Bei Stornierungen weniger als eine Stunde vor Fahrtbeginn fallen Kosten für die Anfahrt an.`}</p>
 					<form method="post" action="/account/settings?/deleteAccount" class="mt-8">
 						<Button type="submit" variant="destructive">{t.account.deleteAccount}</Button>
 					</form>

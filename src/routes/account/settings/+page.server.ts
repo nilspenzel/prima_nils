@@ -14,6 +14,7 @@ import { getUserPasswordHash } from '$lib/server/auth/user';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { LATEST_VALID_TIME } from '$lib/constants';
 import { v4 as uuidv4 } from 'uuid';
+import { cancelRequest } from '$lib/server/db/cancelRequest';
 
 export async function load(event: PageServerLoadEvent) {
 	const user = await db
@@ -141,6 +142,7 @@ export const actions: Actions = {
 				'user.phone',
 				jsonArrayFrom(
 					eb.selectFrom('vehicle')
+					.innerJoin('company', 'company.id', 'vehicle.company')
 					.select((eb) => [
 						'vehicle.id',
 						jsonArrayFrom(
@@ -156,23 +158,35 @@ export const actions: Actions = {
 							.select(['tour.id'])
 						).as('tours')
 					])
-				).as('vehicles')
+				).as('vehicles'),
+				jsonArrayFrom(
+					eb.selectFrom('request')
+					.innerJoin('tour', 'request.tour', 'tour.id')
+					.whereRef('request.customer', '=', 'user.id')
+					.where('request.cancelled', '=', false)
+					.where('tour.departure', '>', Date.now())
+					.select(['request.id'])
+				).as('requests')
 			])
 			.executeTakeFirst();
 
-			user?.vehicles.filter((v) => v.availabilities.length != 0).forEach(async (v) => 
-				await fetch('/taxi/availability/api/availability', {
+			if(!user) {
+				return;
+			}
+
+			for(const v of user.vehicles?.filter((v) => v.availabilities.length != 0)){
+				await event.fetch('/taxi/availability/api/availability', {
 					method: 'DELETE',
 					body: JSON.stringify({ vehicleId: v.id, from: Date.now(), to: LATEST_VALID_TIME })
 				})
-			);
-			if(user?.vehicles) {
+			};
+			if(user.vehicles) {
 				if(user.vehicles.flatMap((v) => v.tours).length != 0) {
 					return;
 				}
 			}
 			let success = false;
-			const maxTries = 20;
+			const maxTries = 100;
 			let tries = 0;
 			while(!success && tries++ < maxTries) {
 				const uuid = uuidv4();
@@ -180,7 +194,7 @@ export const actions: Actions = {
 					await trx.updateTable('user')
 					.where('user.id', '=', event.locals.session!.userId)
 					.set({
-						name: uuid,
+						name: 'gelöschter Nutzer',
 						email: uuid,
 						passwordHash: uuid,
 						isTaxiOwner: false,
@@ -193,6 +207,7 @@ export const actions: Actions = {
 						phone: null,
 						companyId: null
 					}).execute();
+					await Promise.all(user.requests.map((r) => cancelRequest(r.id, event.locals.session!.userId)));
 				} catch(e) {
 					continue;
 				}
