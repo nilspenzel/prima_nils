@@ -59,9 +59,10 @@ export const schemaDefinitions = {
 				passengers: { type: 'integer', minimum: 1 },
 				wheelchairs: { type: 'integer', minimum: 0 },
 				bikes: { type: 'integer', minimum: 0 },
-				luggage: { type: 'integer', minimum: 0 }
+				luggage: { type: 'integer', minimum: 0 },
+				lightLuggage: { type: 'integer', minimum: 0 }
 			},
-			required: ['passengers', 'wheelchairs', 'bikes', 'luggage']
+			required: ['passengers', 'wheelchairs', 'bikes', 'luggage', 'lightLuggage']
 		},
 		location: {
 			type: 'object',

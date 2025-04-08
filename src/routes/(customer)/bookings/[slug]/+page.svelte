@@ -102,6 +102,7 @@
 					passengers={data.passengers}
 					wheelchair={data.wheelchairs !== 0}
 					luggage={data.luggage}
+					lightLuggage={data.lightLuggage}
 					price={odmPrice(data.journey, data.passengers)}
 				/>
 			</Card.Content>

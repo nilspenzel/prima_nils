@@ -49,6 +49,7 @@ export const POST = async (event) => {
 							'request.bikes',
 							'request.wheelchairs',
 							'request.luggage',
+							'request.lightLuggage',
 							'request.passengers',
 							'request.id',
 							jsonArrayFrom(
@@ -89,7 +90,13 @@ export const POST = async (event) => {
 		const newVehicle = await trx
 			.selectFrom('vehicle')
 			.where('vehicle.id', '=', vehicleId)
-			.select(['vehicle.bikes', 'vehicle.luggage', 'vehicle.wheelchairs', 'vehicle.passengers'])
+			.select([
+				'vehicle.bikes',
+				'vehicle.luggage',
+				'vehicle.wheelchairs',
+				'vehicle.passengers',
+				'vehicle.lightLuggage'
+			])
 			.executeTakeFirst();
 		if (!newVehicle) {
 			console.log(
@@ -107,13 +114,14 @@ export const POST = async (event) => {
 					passengers: r.passengers,
 					bikes: r.bikes,
 					wheelchairs: r.wheelchairs,
-					luggage: r.luggage
+					luggage: r.luggage,
+					lightLuggage: r.lightLuggage
 				};
 			})
 		);
 		const possibleInsertions = getPossibleInsertions(
 			newVehicle,
-			{ passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 },
+			{ passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0, lightLuggage: 0 },
 			events
 		);
 		if (

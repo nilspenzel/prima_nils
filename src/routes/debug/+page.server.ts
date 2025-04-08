@@ -45,6 +45,7 @@ export const actions = {
 		const capacities: Capacities = {
 			bikes: 0,
 			luggage: 0,
+			lightLuggage: 0,
 			passengers: 1,
 			wheelchairs: 0
 		};

@@ -43,7 +43,8 @@ export const addTaxi = async (company: number, capacities: Capacities): Promise<
 				passengers: capacities.passengers,
 				wheelchairs: capacities.wheelchairs,
 				bikes: capacities.bikes,
-				luggage: capacities.luggage
+				luggage: capacities.luggage,
+				lightLuggage: capacities.lightLuggage
 			})
 			.returning('id')
 			.executeTakeFirstOrThrow()
@@ -84,6 +85,7 @@ export const setRequest = async (
 			passengers: passengers ?? 1,
 			bikes: 0,
 			luggage: 0,
+			lightLuggage: 0,
 			wheelchairs: 0,
 			tour,
 			customer,

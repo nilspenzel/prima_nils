@@ -110,7 +110,13 @@ describe('Whitelist and Booking API Tests', () => {
 
 	it('company in wrong zone', async () => {
 		const company = await addCompany(Zone.GÖRLITZ, inNiesky3);
-		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const taxi = await addTaxi(company, {
+			passengers: 3,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		await setAvailability(taxi, inXMinutes(0), inXMinutes(999999));
 		const body = JSON.stringify({
 			start: inNiesky1,
@@ -180,7 +186,13 @@ describe('Whitelist and Booking API Tests', () => {
 
 	it('no availability', async () => {
 		const company = await addCompany(Zone.NIESKY, inNiesky3);
-		await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		await addTaxi(company, {
+			passengers: 3,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		const body = JSON.stringify({
 			start: inNiesky1,
 			target: inNiesky2,
@@ -215,7 +227,13 @@ describe('Whitelist and Booking API Tests', () => {
 
 	it('blacklist fail because request would require taxi to operate outside of defined shift (6:00-21:00)', async () => {
 		const company = await addCompany(Zone.NIESKY, inNiesky3);
-		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const taxi = await addTaxi(company, {
+			passengers: 3,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		await setAvailability(taxi, inXMinutes(0), inXMinutes(600));
 		const body = JSON.stringify({
 			start: inNiesky1,
@@ -235,7 +253,13 @@ describe('Whitelist and Booking API Tests', () => {
 
 	it('whitelist fail because request would require taxi to operate outside of defined shift (6:00-21:00)', async () => {
 		const company = await addCompany(Zone.NIESKY, inNiesky3);
-		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const taxi = await addTaxi(company, {
+			passengers: 3,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		await setAvailability(taxi, inXMinutes(0), inXMinutes(600));
 		const body = JSON.stringify({
 			start: inNiesky1,
@@ -262,7 +286,13 @@ describe('Whitelist and Booking API Tests', () => {
 
 	it('simple success case', async () => {
 		const company = await addCompany(Zone.NIESKY, inNiesky3);
-		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const taxi = await addTaxi(company, {
+			passengers: 3,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		await setAvailability(taxi, inXMinutes(0), inXMinutes(600));
 		const busStops = [];
 		for (let i = 0; i != 1; i++) {
@@ -349,7 +379,13 @@ describe('Whitelist and Booking API Tests', () => {
 
 	it('keeps Promise is robust to rounding to full minutes', async () => {
 		const company = await addCompany(Zone.NIESKY, inNiesky3);
-		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const taxi = await addTaxi(company, {
+			passengers: 3,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		await setAvailability(taxi, inXMinutes(0), inXMinutes(600));
 		const busStops = [];
 		for (let i = 0; i != 1; i++) {

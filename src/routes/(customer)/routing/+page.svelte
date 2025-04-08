@@ -8,13 +8,11 @@
 	import ChevronLeft from 'lucide-svelte/icons/chevron-left';
 	import ChevronRight from 'lucide-svelte/icons/chevron-right';
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
-	import NoLuggageIcon from 'lucide-svelte/icons/circle-slash-2';
 	import LuggageIcon from 'lucide-svelte/icons/luggage';
 	import WheelchairIcon from 'lucide-svelte/icons/accessibility';
 	import PersonIcon from 'lucide-svelte/icons/user';
 
 	import Separator from '$lib/shadcn/separator/separator.svelte';
-	import * as RadioGroup from '$lib/shadcn/radio-group';
 	import { Input } from '$lib/shadcn/input';
 	import { Label } from '$lib/shadcn/label';
 
@@ -44,8 +42,7 @@
 	import { posToLocation } from '$lib/map/Location';
 	import { MAX_MATCHING_DISTANCE } from '$lib/constants';
 	import PopupMap from '$lib/ui/PopupMap.svelte';
-
-	type LuggageType = 'none' | 'light' | 'heavy';
+	import { luggageCostFn } from '$lib/util/booking/luggageCostFn';
 
 	const { form, data } = $props();
 
@@ -53,7 +50,8 @@
 
 	let passengers = $state(1);
 	let wheelchair = $state(false);
-	let luggage = $state<LuggageType>('none');
+	let luggage = $state(0);
+	let lightLuggage = $state(0);
 	let time = $state<Date>(new Date());
 	let timeType = $state<TimeType>('departure');
 	let fromParam: Match | undefined = undefined;
@@ -75,16 +73,6 @@
 	let fromItems = $state<Array<Location>>([]);
 	let toItems = $state<Array<Location>>([]);
 
-	const luggageToInt = (str: LuggageType) => {
-		switch (str) {
-			case 'heavy':
-				return 3;
-			case 'light':
-				return 1;
-			case 'none':
-				return 0;
-		}
-	};
 	const toPlaceString = (l: Location) => {
 		if (l.value.match?.level) {
 			return `${lngLatToStr(l.value.match!)},${l.value.match.level}`;
@@ -103,7 +91,7 @@
 						preTransitModes: ['WALK', 'ODM'],
 						postTransitModes: ['WALK', 'ODM'],
 						directModes: ['WALK', 'ODM'],
-						luggage: luggageToInt(luggage),
+						luggage,
 						fastestDirectFactor: 1.6,
 						maxMatchingDistance: MAX_MATCHING_DISTANCE,
 						maxTravelTime: 1440,
@@ -196,7 +184,8 @@
 							<BookingSummary
 								{passengers}
 								{wheelchair}
-								luggage={luggageToInt(luggage)}
+								{luggage}
+								{lightLuggage}
 								price={odmPrice(page.state.selectedItinerary, passengers)}
 							/>
 
@@ -270,7 +259,8 @@
 										value={new Date(lastOdm.endTime).getTime()}
 									/>
 									<input type="hidden" name="passengers" value={passengers} />
-									<input type="hidden" name="luggage" value={luggageToInt(luggage)} />
+									<input type="hidden" name="luggage" value={luggage} />
+									<input type="hidden" name="lightLuggage" value={lightLuggage} />
 									<input type="hidden" name="wheelchairs" value={wheelchair ? 1 : 0} />
 									<Button type="submit" variant="outline">{t.booking.header}</Button>
 								</form>
@@ -388,13 +378,10 @@
 						<span class="flex items-center">
 							{passengers === 1 ? '' : passengers}
 							<PersonIcon />
-							{#if luggage == 'light'}
-								+ <LuggageIcon />
-							{/if}
-							{#if luggage == 'heavy'}
-								+ <LuggageIcon />
-								<LuggageIcon />
-							{/if}
+							{luggage === 1 ? '' : luggage}
+							<LuggageIcon />
+							{lightLuggage === 1 ? '' : lightLuggage}
+							<LuggageIcon />
 							{#if wheelchair}
 								+ <WheelchairIcon />
 							{/if}
@@ -420,35 +407,22 @@
 							<Switch class="justify-self-end" bind:checked={wheelchair} />
 						</div>
 
-						<RadioGroup.Root bind:value={luggage} class="grid grid-cols-3 gap-4">
-							<Label
-								for="none"
-								class="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-4 text-center leading-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
-							>
-								<RadioGroup.Item value="none" id="none" class="sr-only" aria-label="none" />
-								<NoLuggageIcon />
-								{t.booking.noLuggage}
-							</Label>
-							<Label
-								for="light"
-								class="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-4 text-center leading-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
-							>
-								<RadioGroup.Item value="light" id="light" class="sr-only" aria-label="light" />
-								<LuggageIcon />
-								{t.booking.handLuggage}
-							</Label>
-							<Label
-								for="heavy"
-								class="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-4 text-center leading-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
-							>
-								<RadioGroup.Item value="heavy" id="heavy" class="sr-only" aria-label="heavy" />
-								<div class="flex">
-									<LuggageIcon />
-									<LuggageIcon />
-								</div>
-								{t.booking.heavyLuggage}
-							</Label>
-						</RadioGroup.Root>
+						<Label
+							for="light"
+							class="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-4 text-center leading-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
+						>
+							<Input type="number" bind:value={lightLuggage} min="0" max="6" />
+							<LuggageIcon />
+							{t.booking.handLuggage}
+						</Label>
+						<Label
+							for="heavy"
+							class="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-4 text-center leading-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
+						>
+							<Input type="number" bind:value={luggage} min="0" max="6" />
+							<LuggageIcon />
+							{t.booking.heavyLuggage}
+						</Label>
 					</Dialog.Content>
 				</Dialog.Root>
 			</div>

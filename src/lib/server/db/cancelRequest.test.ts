@@ -19,7 +19,13 @@ describe('tests for cancelling requests', () => {
 	it('cancel request', async () => {
 		const u = await addTestUser();
 		const c = await addCompany(1);
-		const v = await addTaxi(c, { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const v = await addTaxi(c, {
+			passengers: 0,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		const t = await setTour(v, 0, 0);
 		const r = (await setRequest(t!.id, u.id, '')).id;
 		const e1 = await setEvent(r, Date.now() + 7200, true, 1, 1);

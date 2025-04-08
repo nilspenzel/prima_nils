@@ -5,12 +5,14 @@
 		passengers,
 		wheelchair,
 		price,
-		luggage
+		luggage,
+		lightLuggage
 	}: {
 		passengers: number;
 		wheelchair: boolean;
 		price: number;
 		luggage: number;
+		lightLuggage: number;
 	} = $props();
 </script>
 
@@ -27,11 +29,6 @@
 		<li>{t.booking.withFoldableWheelchair}</li>
 	{/if}
 
-	{#if luggage == 0}
-		<li>{t.booking.noLuggage}</li>
-	{:else if luggage == 1}
-		<li>{t.booking.handLuggage}</li>
-	{:else if luggage == 3}
-		<li>{t.booking.heavyLuggage}</li>
-	{/if}
+	<li>mit {luggage} Koffern</li>
+	<li>und {lightLuggage} Handgepäcken</li>
 </ul>

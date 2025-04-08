@@ -3,4 +3,5 @@ export type Capacities = {
 	bikes: number;
 	passengers: number;
 	luggage: number;
+	lightLuggage: number;
 };

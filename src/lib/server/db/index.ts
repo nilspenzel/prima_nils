@@ -45,6 +45,7 @@ export interface Database {
 		wheelchairs: number;
 		bikes: number;
 		luggage: number;
+		lightLuggage: number;
 	};
 	tour: {
 		id: Generated<number>;
@@ -83,6 +84,7 @@ export interface Database {
 		wheelchairs: number;
 		bikes: number;
 		luggage: number;
+		lightLuggage: number;
 		tour: number;
 		customer: number;
 		ticketCode: string;

@@ -37,7 +37,13 @@ describe('tests for cancelling tours', () => {
 		const mockUserId = (await addTestUser(c)).id;
 		sessionToken = 'generateSessionToken()';
 		await createSession(sessionToken, mockUserId);
-		const v = await addTaxi(c, { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const v = await addTaxi(c, {
+			passengers: 0,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		const t = await setTour(v, 0, 0);
 		await setTour(v, 0, 0);
 		const r = (await setRequest(t!.id, mockUserId, '')).id;
@@ -62,7 +68,13 @@ describe('tests for cancelling tours', () => {
 		const mockUserId = (await addTestUser(c)).id;
 		sessionToken = 'generateSessionToken()';
 		await createSession(sessionToken, mockUserId);
-		const v = await addTaxi(c, { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const v = await addTaxi(c, {
+			passengers: 0,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		const t = await setTour(v, 0, 0, 1);
 		const r = (await setRequest(t!.id, mockUserId, '')).id;
 		await setEvent(r, 0, true, 1, 1);
@@ -85,7 +97,13 @@ describe('tests for cancelling tours', () => {
 		const mockUserId = (await addTestUser(c)).id;
 		sessionToken = 'generateSessionToken()';
 		await createSession(sessionToken, mockUserId);
-		const v = await addTaxi(c, { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const v = await addTaxi(c, {
+			passengers: 0,
+			bikes: 0,
+			wheelchairs: 0,
+			luggage: 0,
+			lightLuggage: 0
+		});
 		const t = await setTour(v, 0, 0);
 		const r = (await setRequest(t!.id, mockUserId, '', 1, true)).id;
 		await setEvent(r, 0, true, 1, 1);

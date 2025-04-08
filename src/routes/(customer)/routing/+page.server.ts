@@ -29,6 +29,7 @@ export const actions = {
 
 		const passengers = readInt(formData.get('passengers'));
 		const luggage = readInt(formData.get('luggage'));
+		const lightLuggage = readInt(formData.get('lightLuggage'));
 		const wheelchairs = readInt(formData.get('wheelchairs'));
 		const json = formData.get('json');
 		const startFixed1 = formData.get('startFixed1');
@@ -53,6 +54,7 @@ export const actions = {
 		console.log('BOOKING PARAMS =', {
 			passengers,
 			luggage,
+			lightLuggage,
 			wheelchairs,
 			startFixed1,
 			startFixed2,
@@ -101,6 +103,7 @@ export const actions = {
 		const capacities: Capacities = {
 			bikes: 0,
 			luggage,
+			lightLuggage,
 			passengers,
 			wheelchairs
 		};

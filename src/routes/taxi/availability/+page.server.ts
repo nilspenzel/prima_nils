@@ -85,6 +85,7 @@ export const actions: Actions = {
 		const bike = formData.get('bike');
 		const wheelchair = formData.get('wheelchair');
 		const luggage = readInt(formData.get('luggage'));
+		const lightLuggage = readInt(formData.get('lightLuggage'));
 		const passengers = readInt(formData.get('passengers'));
 
 		if (passengers !== 3 && passengers !== 5 && passengers !== 7) {
@@ -99,6 +100,10 @@ export const actions: Actions = {
 			return fail(400, { msg: msg('invalidStorage') });
 		}
 
+		if (isNaN(lightLuggage) || lightLuggage <= 0 || lightLuggage >= 11) {
+			return fail(400, { msg: msg('invalidStorage') });
+		}
+
 		try {
 			await db
 				.insertInto('vehicle')
@@ -107,6 +112,7 @@ export const actions: Actions = {
 					company,
 					passengers,
 					luggage,
+					lightLuggage,
 					wheelchairs: !wheelchair ? 0 : 1,
 					bikes: !bike ? 0 : 1
 				})
@@ -133,6 +139,7 @@ export const actions: Actions = {
 		const bike = formData.get('bike');
 		const wheelchair = formData.get('wheelchair');
 		const luggage = readInt(formData.get('luggage'));
+		const lightLuggage = readInt(formData.get('lightLuggage'));
 		const passengers = readInt(formData.get('passengers'));
 		const id = readInt(formData.get('id'));
 
@@ -170,7 +177,8 @@ export const actions: Actions = {
 								'request.passengers',
 								'request.bikes',
 								'request.wheelchairs',
-								'request.luggage'
+								'request.luggage',
+								'request.lightLuggage'
 							])
 					).as('events')
 				])
@@ -181,12 +189,14 @@ export const actions: Actions = {
 					const possibleInsertions = getPossibleInsertions(
 						{
 							luggage,
+							lightLuggage,
 							wheelchairs: !wheelchair ? 0 : 1,
 							bikes: !bike ? 0 : 1,
 							passengers
 						},
 						{
 							luggage: 0,
+							lightLuggage: 0,
 							bikes: 0,
 							wheelchairs: 0,
 							passengers: 0
