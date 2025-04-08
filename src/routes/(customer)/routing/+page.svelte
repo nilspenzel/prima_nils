@@ -9,6 +9,7 @@
 	import ChevronRight from 'lucide-svelte/icons/chevron-right';
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 	import LuggageIcon from 'lucide-svelte/icons/luggage';
+	import BriefcaseIcon from 'lucide-svelte/icons/briefcase-business';
 	import WheelchairIcon from 'lucide-svelte/icons/accessibility';
 	import PersonIcon from 'lucide-svelte/icons/user';
 
@@ -42,7 +43,7 @@
 	import { posToLocation } from '$lib/map/Location';
 	import { MAX_MATCHING_DISTANCE } from '$lib/constants';
 	import PopupMap from '$lib/ui/PopupMap.svelte';
-	import { luggageCostFn } from '$lib/util/booking/luggageCostFn';
+	import * as Tooltip from '$lib/shadcn/tooltip/index.js';
 
 	const { form, data } = $props();
 
@@ -378,10 +379,14 @@
 						<span class="flex items-center">
 							{passengers === 1 ? '' : passengers}
 							<PersonIcon />
-							{luggage === 1 ? '' : luggage}
-							<LuggageIcon />
-							{lightLuggage === 1 ? '' : lightLuggage}
-							<LuggageIcon />
+							{#if lightLuggage !== 0}
+								{lightLuggage === 1 ? '' : lightLuggage}
+								<BriefcaseIcon />
+							{/if}
+							{#if luggage !== 0}
+								{luggage === 1 ? '' : luggage}
+								<LuggageIcon />
+							{/if}
 							{#if wheelchair}
 								+ <WheelchairIcon />
 							{/if}
@@ -412,7 +417,16 @@
 							class="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-4 text-center leading-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
 						>
 							<Input type="number" bind:value={lightLuggage} min="0" max="6" />
-							<LuggageIcon />
+							<Tooltip.Provider>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<BriefcaseIcon />
+									</Tooltip.Trigger>
+									<Tooltip.Content>
+										<p>{t.booking.handLuggageDescription}</p>
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</Tooltip.Provider>
 							{t.booking.handLuggage}
 						</Label>
 						<Label
@@ -420,7 +434,16 @@
 							class="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-4 text-center leading-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
 						>
 							<Input type="number" bind:value={luggage} min="0" max="6" />
-							<LuggageIcon />
+							<Tooltip.Provider>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<LuggageIcon />
+									</Tooltip.Trigger>
+									<Tooltip.Content>
+										<p>{t.booking.heavyLuggageDescription}</p>
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</Tooltip.Provider>
 							{t.booking.heavyLuggage}
 						</Label>
 					</Dialog.Content>
