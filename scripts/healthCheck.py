@@ -301,7 +301,7 @@ def validate_direct_durations(tours):
                     print(f"direct duration is none unexpectedly for earlier tour: {earlier_tour['tour_id']} and later tour: {later_tour['tour_id']}")
                 else:
                     if expected_duration is not None and abs(expected_duration - later_tour['direct_duration'] / 1000) > 5:
-                        print(f"Direct duration mismatch for tour {later_tour['tour_id']}: \
+                        print(f"Direct duration mismatch for earlier tour {earlier_tour['tour_id']} and later tour {later_tour['tour_id']}: \
                               Expected {expected_duration} seconds,\
                               Found {later_tour['direct_duration'] / 1000} seconds")
 
