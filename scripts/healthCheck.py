@@ -333,9 +333,10 @@ def validate_company_durations(tours):
     uncancelled_tours = [t for t in tours if not t['cancelled']]
     for tour in uncancelled_tours:
         events = sorted(tour['events'], key=lambda e: e['scheduled_time_start'])
-        from_company = one_to_many(tour['company_lat'], tour['company_lng'], events[0]['lat'], events[0]['lng'])
-        if abs(from_company - events[0]['prev_leg_duration'] / 1000) > 5:
-            print(f"Duration from company to first event does not match in tour with id: {tour['tour_id']}, duration in db: {events[0]['prev_leg_duration'] / 1000} duration: {from_company}")
+        from_company_fwd = one_to_many(tour['company_lat'], tour['company_lng'], events[0]['lat'], events[0]['lng'])
+        from_company_bwd = one_to_many(events[0]['lat'], events[0]['lng'], tour['company_lat'], tour['company_lng'])
+        if abs(from_company_fwd - events[0]['prev_leg_duration'] / 1000) > 5 and abs(from_company_bwd - events[0]['prev_leg_duration'] / 1000) > 5:
+            print(f"Duration from company to first event does not match in tour with id: {tour['tour_id']}, duration in db: {events[0]['prev_leg_duration'] / 1000} duration: {from_company_fwd}")
         to_company = one_to_many(events[-1]['lat'], events[-1]['lng'], tour['company_lat'], tour['company_lng']) + 60
         if abs(to_company - events[-1]['next_leg_duration'] / 1000) > 5:
             print(f"Duration to company from last event does not match in tour with id: {tour['tour_id']}, duration in db: {events[-1]['next_leg_duration'] / 1000} duration: {to_company}")
