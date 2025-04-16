@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
 	// test for development version
@@ -46,12 +46,12 @@ export default defineConfig({
 		{
 			name: 'availability',
 			testMatch: 'availability.test.ts',
-			dependencies: ['login']
+			dependencies: ['entrepreneurAssignsRoles']
 		},
 		{
 			name: 'booking',
 			testMatch: 'booking.test.ts',
-			dependencies: ['login']
+			dependencies: ['move tour']
 		},
 		{
 			name: 'move tour',
@@ -61,7 +61,7 @@ export default defineConfig({
 		{
 			name: 'driver app',
 			testMatch: 'driver.test.ts',
-			dependencies: ['availability']
+			dependencies: ['booking']
 		}
 	]
 });
