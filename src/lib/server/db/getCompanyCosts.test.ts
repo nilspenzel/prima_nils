@@ -16,7 +16,7 @@ beforeEach(async () => {
 });
 
 const dummyCoordinates = { lat: 1, lng: 1 };
-const dummyCapacities = { passengers: 1, bikes: 1, wheelchairs: 1, luggage: 1 };
+const dummyCapacities = { passengers: 1, bikes: 1, wheelchairs: 1, luggage: 1, lightLuggage: 0 };
 const midnight = roundToUnit(Date.now(), DAY, Math.floor);
 const testDays = [midnight - 30 * DAY];
 

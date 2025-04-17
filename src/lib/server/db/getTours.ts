@@ -130,6 +130,7 @@ export const getToursWithRequests = async (
 									'request.bikes',
 									'request.customer',
 									'request.luggage',
+									'request.lightLuggage',
 									'request.passengers',
 									'request.ticketChecked',
 									'request.wheelchairs',

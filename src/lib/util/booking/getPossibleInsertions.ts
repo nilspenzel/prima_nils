@@ -1,3 +1,4 @@
+import { luggageCostFn } from '$lib/util/booking/luggageCostFn';
 import type { Capacities } from './Capacities';
 
 export type Range = {
@@ -9,7 +10,8 @@ export const isValid = (capacities: Capacities, required: Capacities): boolean =
 	return (
 		capacities.bikes >= required.bikes &&
 		capacities.wheelchairs >= required.wheelchairs &&
-		capacities.luggage + capacities.passengers >= required.luggage + required.passengers &&
+		luggageCostFn(capacities.luggage, capacities.lightLuggage) + capacities.passengers >=
+			luggageCostFn(required.luggage, required.lightLuggage) + required.passengers &&
 		capacities.passengers >= required.passengers
 	);
 };
@@ -28,6 +30,7 @@ export function getPossibleInsertions(
 	const updateCapacity = (capacities: Capacities, event: Event): void => {
 		capacities.bikes += event.isPickup ? event.bikes : -event.bikes;
 		capacities.luggage += event.isPickup ? event.luggage : -event.luggage;
+		capacities.lightLuggage += event.isPickup ? event.lightLuggage : -event.lightLuggage;
 		capacities.wheelchairs += event.isPickup ? event.wheelchairs : -event.wheelchairs;
 		capacities.passengers += event.isPickup ? event.passengers : -event.passengers;
 	};

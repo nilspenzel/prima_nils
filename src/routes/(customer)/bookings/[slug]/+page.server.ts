@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			'json',
 			'request.passengers',
 			'request.luggage',
+			'request.lightLuggage',
 			'request.wheelchairs',
 			'request.cancelled',
 			'request.ticketCode',

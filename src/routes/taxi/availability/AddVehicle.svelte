@@ -16,6 +16,7 @@
 		text: string;
 		vehicle?: {
 			luggage: number;
+			lightLuggage: number;
 			licensePlate: string;
 			passengers: number;
 			wheelchairs: number;
@@ -103,7 +104,16 @@
 			</div>
 			<div class="field">
 				<Label for="luggage">Gepäckstücke:</Label>
-				<Input name="luggage" type="number" placeholder="4" value={v?.luggage?.toString() ?? '4'} />
+				<Input name="luggage" type="number" placeholder="4" value={v?.luggage?.toString() ?? '0'} />
+			</div>
+			<div class="field">
+				<Label for="luggage">Handgepäck:</Label>
+				<Input
+					name="lightLuggage"
+					type="number"
+					placeholder="4"
+					value={v?.lightLuggage?.toString() ?? '4'}
+				/>
 			</div>
 			<input type="hidden" name="id" value={v?.id} />
 			<Button type="submit" variant="outline" data-testid="create-vehicle">

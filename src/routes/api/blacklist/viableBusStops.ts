@@ -14,6 +14,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import type { BusStop } from '$lib/server/booking/BusStop';
 import { Interval } from '$lib/util/interval';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
+import { luggageCostFn } from '$lib/util/booking/luggageCostFn';
 
 interface CoordinatesTable {
 	busStopIndex: number;
@@ -106,7 +107,7 @@ const doesVehicleExist = (
 					eb('vehicle.passengers', '>=', capacities.passengers),
 					eb('vehicle.bikes', '>=', capacities.bikes),
 					eb('vehicle.wheelchairs', '>=', capacities.wheelchairs),
-					sql<boolean>`"vehicle"."luggage" >= cast(${capacities.luggage} as integer) + cast(${capacities.passengers} as integer) - cast(${eb.ref('vehicle.passengers')} as integer)`,
+					sql<boolean>`"vehicle"."luggage" >= cast(${luggageCostFn(capacities.luggage, capacities.lightLuggage)} as integer) + cast(${capacities.passengers} as integer) - cast(${eb.ref('vehicle.passengers')} as integer)`,
 					eb.or([doesAvailabilityExist(eb), doesTourExist(eb)])
 				])
 			)

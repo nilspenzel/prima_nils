@@ -325,7 +325,7 @@
 			const events = tour.requests.flatMap((r) => r.events);
 			const possibleInsertions = getPossibleInsertions(
 				v,
-				{ bikes: 0, wheelchairs: 0, passengers: 0, luggage: 0 },
+				{ bikes: 0, wheelchairs: 0, passengers: 0, luggage: 0, lightLuggage: 0 },
 				events
 			);
 			return (

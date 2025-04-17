@@ -6,6 +6,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import { db, type Database } from '$lib/server/db';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { covers } from '$lib/server/db/covers';
+import { luggageCostFn } from '$lib/util/booking/luggageCostFn';
 
 const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 	return jsonArrayFrom(
@@ -27,6 +28,7 @@ const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 				'request.passengers',
 				'request.bikes',
 				'request.luggage',
+				'request.lightLuggage',
 				'request.wheelchairs',
 				'event.isPickup',
 				'event.prevLegDuration',
@@ -73,6 +75,7 @@ const selectVehicles = (
 	twiceEpandedSearchInterval: Interval,
 	requestCapacities: Capacities
 ) => {
+	const luggageCost = luggageCostFn(requestCapacities.luggage, requestCapacities.lightLuggage);
 	return jsonArrayFrom(
 		eb
 			.selectFrom('vehicle')
@@ -85,7 +88,7 @@ const selectVehicles = (
 					eb(
 						'vehicle.luggage',
 						'>=',
-						sql<number>`cast(${requestCapacities.passengers} as integer) + cast(${requestCapacities.luggage} as integer) - ${eb.ref('vehicle.passengers')}`
+						sql<number>`cast(${requestCapacities.passengers} as integer) + cast(${luggageCost} as integer) - ${eb.ref('vehicle.passengers')}`
 					)
 				])
 			)
@@ -93,6 +96,7 @@ const selectVehicles = (
 				'vehicle.id',
 				'vehicle.bikes',
 				'vehicle.luggage',
+				'vehicle.lightLuggage',
 				'vehicle.wheelchairs',
 				'vehicle.passengers',
 				selectTours(eb, twiceEpandedSearchInterval),

@@ -185,7 +185,9 @@ export type Translations = {
 		disclaimer: string;
 		noLuggage: string;
 		handLuggage: string;
+		handLuggageDescription: string;
 		heavyLuggage: string;
+		heavyLuggageDescription: string;
 		totalPrice: string;
 		foldableWheelchair: string;
 		withFoldableWheelchair: string;
