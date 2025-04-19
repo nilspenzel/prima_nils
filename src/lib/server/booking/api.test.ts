@@ -12,6 +12,7 @@ import { COORDINATE_ROUNDING_ERROR_THRESHOLD } from '$lib/constants';
 import { createSession } from '../auth/session';
 import { MINUTE, roundToUnit } from '$lib/util/time';
 import type { ExpectedConnection } from './bookRide';
+import { INTERNAL_API_TOKEN } from '$env/static/private';
 
 const black = async (body: string) => {
 	return await fetch('http://localhost:5173/api/blacklist', {
@@ -39,7 +40,8 @@ const booking = async (body: string) => {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			Cookie: `session = ${sessionToken}`
+			Cookie: `session = ${sessionToken}`,
+			'internal-token': INTERNAL_API_TOKEN
 		},
 		body
 	});

@@ -8,6 +8,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import { insertRequest } from './query';
 import { error, json } from '@sveltejs/kit';
 import { signEntry } from '$lib/server/signEntry';
+import { INTERNAL_API_TOKEN } from '$env/static/private';
 
 export type BookingParameters = {
 	connection1: ExpectedConnection | null;
@@ -25,6 +26,7 @@ const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
 };
 
 export const POST = async (event: RequestEvent) => {
+	const token = event.request.headers.get('internal-token');
 	const customer = event.locals.session!.userId!;
 
 	const p: BookingParameters = await event.request.json();
@@ -41,7 +43,8 @@ export const POST = async (event: RequestEvent) => {
 		);
 	}
 	if (
-		(p.connection1 !== null &&
+		(token !== INTERNAL_API_TOKEN &&
+			p.connection1 !== null &&
 			signEntry(
 				p.connection1.start.lat,
 				p.connection1.start.lng,

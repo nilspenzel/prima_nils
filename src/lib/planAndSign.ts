@@ -16,7 +16,7 @@ export async function planAndSign(q: PlanData): Promise<{ data: SignedPlanRespon
 			query: q.query
 		})
 	}).then(async (r) => {
-		const { data } = await r.json(); 
+		const { data } = await r.json();
 		return { data };
 	});
 }
