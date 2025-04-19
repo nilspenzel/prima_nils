@@ -6,7 +6,8 @@ import type { RequestEvent } from './$types';
 import { bookRide, type ExpectedConnection } from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { insertRequest } from './query';
-import { json } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
+import { signEntry } from '$lib/server/signEntry';
 
 export type BookingParameters = {
 	connection1: ExpectedConnection | null;
@@ -38,6 +39,30 @@ export const POST = async (event: RequestEvent) => {
 			{ message: 'Es wurde weder eine Anfrage für die erste noch für die letzte Meile gestellt.' },
 			{ status: 200 }
 		);
+	}
+	if (
+		(p.connection1 !== null &&
+			signEntry(
+				p.connection1.start.lat,
+				p.connection1.start.lng,
+				p.connection1.target.lat,
+				p.connection1.target.lng,
+				p.connection1.startTime,
+				p.connection1.targetTime,
+				false
+			)) ||
+		(p.connection2 !== null &&
+			signEntry(
+				p.connection2.start.lat,
+				p.connection2.start.lng,
+				p.connection2.target.lat,
+				p.connection2.target.lng,
+				p.connection2.startTime,
+				p.connection2.targetTime,
+				true
+			))
+	) {
+		error(403);
 	}
 	let firstMileRequestId: number | undefined = undefined;
 	let lastMileRequestId: number | undefined = undefined;

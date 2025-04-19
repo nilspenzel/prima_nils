@@ -5,9 +5,10 @@ import { readFloat, readInt } from '$lib/server/util/readForm';
 import { sql } from 'kysely';
 import { insertRequest } from '../../api/booking/query';
 import { msg, type Msg } from '$lib/msg';
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { sendMail } from '$lib/server/sendMail';
 import NewRide from '$lib/server/email/NewRide.svelte';
+import { signEntry } from '$lib/server/signEntry';
 
 const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
 	for (const e of l1) {
@@ -49,6 +50,8 @@ export const actions = {
 		const endTime1 = readInt(formData.get('endTime1'));
 		const startTime2 = readInt(formData.get('startTime2'));
 		const endTime2 = readInt(formData.get('endTime2'));
+		const signature1 = formData.get('signature1');
+		const signature2 = formData.get('signature2');
 
 		console.log('BOOKING PARAMS =', {
 			passengers,
@@ -93,7 +96,9 @@ export const actions = {
 			isNaN(toLat2) ||
 			isNaN(toLng2) ||
 			isNaN(startTime2) ||
-			isNaN(endTime2)
+			isNaN(endTime2) ||
+			typeof signature1 !== 'string' ||
+			typeof signature2 !== 'string'
 		) {
 			throw 'invalid booking params';
 		}
@@ -113,7 +118,8 @@ export const actions = {
 			start: start1,
 			target: target1,
 			startTime: startTime1,
-			targetTime: endTime1
+			targetTime: endTime1,
+			signature: signature1
 		};
 
 		const onlyOne = start1.lat === start2.lat && start1.lng === start2.lng;
@@ -123,7 +129,8 @@ export const actions = {
 					start: start2,
 					target: target2,
 					startTime: startTime2,
-					targetTime: endTime2
+					targetTime: endTime2,
+					signature: signature2
 				};
 
 		console.log(
@@ -147,6 +154,19 @@ export const actions = {
 			let firstBooking = undefined;
 			let secondBooking = undefined;
 			if (connection1 != null) {
+				if (
+					signEntry(
+						connection1.start.lat,
+						connection1.start.lng,
+						connection1.target.lat,
+						connection1.target.lng,
+						connection1.startTime,
+						connection1.targetTime,
+						false
+					) !== connection1.signature
+				) {
+					error(403);
+				}
 				firstBooking = await bookRide(connection1, capacities, startFixed1 === '1', trx);
 				if (firstBooking == undefined) {
 					console.log('FIRST BOOKING FAILED');
@@ -155,6 +175,19 @@ export const actions = {
 				}
 			}
 			if (connection2 != null) {
+				if (
+					signEntry(
+						connection2.start.lat,
+						connection2.start.lng,
+						connection2.target.lat,
+						connection2.target.lng,
+						connection2.startTime,
+						connection2.targetTime,
+						true
+					) !== connection2.signature
+				) {
+					error(403);
+				}
 				secondBooking = await bookRide(connection2, capacities, startFixed2 === '1', trx);
 				if (secondBooking == undefined) {
 					console.log('SECOND BOOKING FAILED');

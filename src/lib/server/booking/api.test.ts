@@ -302,7 +302,8 @@ describe('Whitelist and Booking API Tests', () => {
 			start: { ...inNiesky1, address: 'start address' },
 			target: { ...inNiesky2, address: 'target address' },
 			startTime: whiteResponse.direct[0].pickupTime,
-			targetTime: whiteResponse.direct[0].dropoffTime
+			targetTime: whiteResponse.direct[0].dropoffTime,
+			signature: ''
 		};
 		const bookingBody = JSON.stringify({
 			connection1,
@@ -375,7 +376,8 @@ describe('Whitelist and Booking API Tests', () => {
 			start: { ...inNiesky1, address: 'start address' },
 			target: { ...inNiesky2, address: 'target address' },
 			startTime: whiteResponse.direct[0].pickupTime,
-			targetTime: roundToUnit(whiteResponse.direct[0].dropoffTime, MINUTE, Math.floor)
+			targetTime: roundToUnit(whiteResponse.direct[0].dropoffTime, MINUTE, Math.floor),
+			signature: ''
 		};
 		const bookingBody = JSON.stringify({
 			connection1,

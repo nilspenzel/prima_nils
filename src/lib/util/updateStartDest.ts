@@ -1,8 +1,9 @@
-import type { Itinerary, PlanResponse } from '$lib/openapi';
+import type { Itinerary } from '$lib/openapi';
 import type { Location } from '$lib/map/Location';
+import type { SignedPlanResponse } from '$lib/planAndSign';
 
 export const updateStartDest = (from: Location, to: Location) => {
-	return (r: { data: PlanResponse | undefined }) => {
+	return (r: { data: SignedPlanResponse | undefined }) => {
 		if (!r.data) {
 			return r.data;
 		}
