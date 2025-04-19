@@ -50,7 +50,7 @@ export const POST = async (event: RequestEvent) => {
 				p.connection1.startTime,
 				p.connection1.targetTime,
 				false
-			)) ||
+			) !== p.connection1.signature) ||
 		(p.connection2 !== null &&
 			signEntry(
 				p.connection2.start.lat,
@@ -60,7 +60,7 @@ export const POST = async (event: RequestEvent) => {
 				p.connection2.startTime,
 				p.connection2.targetTime,
 				true
-			))
+			) !== p.connection2.signature)
 	) {
 		error(403);
 	}
