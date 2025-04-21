@@ -87,6 +87,7 @@ export async function updateDirectDurations(
 		oldVehicle.nexttour[0]?.events &&
 		oldVehicle.nexttour[0].events.length != 0
 	) {
+		console.log("runningq1")
 		await trx
 			.updateTable('tour')
 			.set({
@@ -95,13 +96,13 @@ export async function updateDirectDurations(
 					oldVehicle.prevtour.length != 0 &&
 					oldVehicle.prevtour[0]?.events &&
 					oldVehicle.prevtour[0].events.length != 0
-						? (
+						? ((
 								await oneToManyCarRouting(
 									oldVehicle.prevtour[0].events[0],
 									[oldVehicle.nexttour[0].events[0]],
 									false
 								)
-							)[0]
+							)[0])??null
 						: null
 			})
 			.where('id', '=', oldVehicle.nexttour[0].events[0].tour)
@@ -112,24 +113,26 @@ export async function updateDirectDurations(
 		const newVehicle = vehicles[0].id === newVehicleId ? vehicles[0] : vehicles[1];
 		const events = newVehicle.moved[0].events;
 		events.sort((e) => e.scheduledTimeStart);
+		console.log("runningq2")
 		await trx
 			.updateTable('tour')
 			.set({
 				directDuration:
 					newVehicle.prevtour != null && newVehicle.prevtour.length != 0
-						? (await oneToManyCarRouting(newVehicle.prevtour[0].events[0], [events[0]], false))[0]
+						? ((await oneToManyCarRouting(newVehicle.prevtour[0].events[0], [events[0]], false))[0]??null)
 						: null
 			})
 			.where('id', '=', tourId)
 			.executeTakeFirst();
 
 		if (newVehicle.nexttour && newVehicle.nexttour.length != 0) {
+			console.log("runningq3")
 			await trx
 				.updateTable('tour')
 				.set({
 					directDuration:
 						newVehicle.prevtour && newVehicle.prevtour.length != 0
-							? (await oneToManyCarRouting(events[0], [newVehicle.nexttour[0].events[0]], false))[0]
+							? ((await oneToManyCarRouting(events[0], [newVehicle.nexttour[0].events[0]], false))[0])??null
 							: null
 				})
 				.where('id', '=', newVehicle.nexttour[0].events[0].tour)

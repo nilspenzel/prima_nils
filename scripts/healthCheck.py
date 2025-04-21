@@ -295,15 +295,14 @@ def validate_direct_durations(tours):
             later_tour_start = e2['scheduled_time_start']
             if 0 < later_tour_start - earlier_tour_end <= 3 * 3600 * 1000:
                 expected_duration = one_to_many(e1['lat'], e1['lng'], e2['lat'], e2['lng'])
+                expected_duration_bwd = one_to_many(e2['lat'], e2['lng'], e1['lat'], e1['lng'])
                 if expected_duration is None:
                     print(f"Found unexpected None is direct Duration for earlier tour: {earlier_tour['tour_id']} and later tour: {later_tour['tour_id']}")
                 if later_tour['direct_duration'] is None:
                     print(f"direct duration is none unexpectedly for earlier tour: {earlier_tour['tour_id']} and later tour: {later_tour['tour_id']}")
                 else:
-                    if expected_duration is not None and abs(expected_duration - later_tour['direct_duration'] / 1000) > 5:
-                        print(f"Direct duration mismatch for earlier tour {earlier_tour['tour_id']} and later tour {later_tour['tour_id']}: \
-                              Expected {expected_duration} seconds,\
-                              Found {later_tour['direct_duration'] / 1000} seconds")
+                    if expected_duration is not None and abs(expected_duration - later_tour['direct_duration'] / 1000) > 5 and abs(expected_duration_bwd - later_tour['direct_duration'] / 1000) > 5:
+                        print(f"Direct duration mismatch for earlier tour {earlier_tour['tour_id']} and later tour {later_tour['tour_id']}. Expected {expected_duration} seconds, Found {later_tour['direct_duration'] / 1000} seconds. lat1: {e1['lat']}, lng1:  {e1['lng']}, lat2: {e2['lat']}, lng2: {e2['lng']}")
 
 def validate_leg_durations(tours):
     print("Validating leg durations...")
@@ -336,7 +335,7 @@ def validate_company_durations(tours):
         from_company_fwd = one_to_many(tour['company_lat'], tour['company_lng'], events[0]['lat'], events[0]['lng'])
         from_company_bwd = one_to_many(events[0]['lat'], events[0]['lng'], tour['company_lat'], tour['company_lng'])
         if abs(from_company_fwd - events[0]['prev_leg_duration'] / 1000) > 5 and abs(from_company_bwd - events[0]['prev_leg_duration'] / 1000) > 5:
-            print(f"Duration from company to first event does not match in tour with id: {tour['tour_id']}, duration in db: {events[0]['prev_leg_duration'] / 1000} duration: {from_company_fwd}")
+            print(f"Duration from company to first event does not match in tour with id: {tour['tour_id']}, duration in db: {events[0]['prev_leg_duration'] / 1000} duration_fwd: {from_company_fwd}, duration_bwd: {from_company_bwd}, eventlat: {events[0]['lat']}, eventlng: {events[0]['lng']}, companylat: {tour['company_lat']}, companylng{tour['company_lng']}")
         to_company = one_to_many(events[-1]['lat'], events[-1]['lng'], tour['company_lat'], tour['company_lng']) + 60
         if abs(to_company - events[-1]['next_leg_duration'] / 1000) > 5:
             print(f"Duration to company from last event does not match in tour with id: {tour['tour_id']}, duration in db: {events[-1]['next_leg_duration'] / 1000} duration: {to_company}")
@@ -386,8 +385,8 @@ def one_to_many(from_lat, from_lng, to_lat, to_lng):
         response = requests.get(url, params=data, headers=headers)
         response.raise_for_status()
         return response.json()[0]['duration']
-    except requests.exceptions.RequestException as e:
-        return {"error": str(e)}
+    except (requests.exceptions.RequestException, ValueError, KeyError, IndexError) as e:
+        return -1
 
 def main():
     env_vars = parse_env_file()
