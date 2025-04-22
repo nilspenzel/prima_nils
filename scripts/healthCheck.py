@@ -227,7 +227,7 @@ def validate_tours_with_no_events(tours):
             print(f"Tour {tour['tour_id']} has no associated events.")
 
 def validate_tour_and_request_cancelled(tours):
-    print("Validating tour and request cancellation consistency...")
+    print(f"Validating tour and request cancellation consistency. Checking {len(tours)} tours")
     for tour in tours:
         all_requests_cancelled = True
         for event in tour['events']:
@@ -281,8 +281,8 @@ def validate_event_time_no_overlap(tours):
                     print(f"Overlap detected between event_id {event1['event_id']} and event_id {event2['event_id']}")
 
 def validate_direct_durations(tours):
-    print("Validating direct durations...")
     uncancelled_tours = [t for t in tours if not t['cancelled']]
+    print(f"Validating direct durations. Checking {len(uncancelled_tours)} tours")
     for tour_idx in range(1, len(uncancelled_tours)):
         earlier_tour = uncancelled_tours[tour_idx - 1]
         later_tour = uncancelled_tours[tour_idx] 
@@ -328,8 +328,8 @@ def validate_leg_durations(tours):
                 print(f"Time difference expected duration {expected_duration + 58} seconds exceeds difference in event times {time_diff} seconds for event_id {earlier_event['event_id']} and event_id {later_event['event_id']}")
 
 def validate_company_durations(tours):
-    print("Validating leg durations from/to company...")
     uncancelled_tours = [t for t in tours if not t['cancelled']]
+    print(f"Validating leg durations from/to company. Checking {len(uncancelled_tours)} tours")
     for tour in uncancelled_tours:
         events = sorted(tour['events'], key=lambda e: e['scheduled_time_start'])
         from_company_fwd = one_to_many(tour['company_lat'], tour['company_lng'], events[0]['lat'], events[0]['lng'])

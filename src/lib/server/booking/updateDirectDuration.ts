@@ -132,7 +132,7 @@ export async function updateDirectDurations(
 				.set({
 					directDuration:
 						newVehicle.prevtour && newVehicle.prevtour.length != 0
-							? ((await oneToManyCarRouting(events[0], [newVehicle.nexttour[0].events[0]], false))[0])??null
+							? ((await oneToManyCarRouting(events[events.length - 1], [newVehicle.nexttour[0].events[0]], false))[0])??null
 							: null
 				})
 				.where('id', '=', newVehicle.nexttour[0].events[0].tour)

@@ -95,7 +95,7 @@ def get_other_vehicle(connection, blocked_id):
             return None
     return None
 
-def send_request(endpoint, payload, session_token="gdapfqhjg6vahpizhsuqj2y6c24ncdil"):
+def send_request(endpoint, payload, session_token="opnrjn3u3axvgupvdgftsc2y5bg43xty"):
     try:
         json_payload = json.dumps(payload).encode('utf-8')
         
@@ -133,9 +133,9 @@ def send_request(endpoint, payload, session_token="gdapfqhjg6vahpizhsuqj2y6c24nc
 
 def parse_endpoint_probabilities(args):
     probabilities = {
-        '/api/booking': 0.95,
+        '/api/booking': 0.9,
         '/api/cancelTour': 0,
-        'taxi/availability/api/tour': 0.05
+        'taxi/availability/api/tour': 0.1
     }
     
     for arg in args:

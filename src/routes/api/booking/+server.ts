@@ -46,7 +46,7 @@ export const POST = async (event: RequestEvent) => {
 	let message: string | undefined = undefined;
 	let success = false;
 	await db.transaction().execute(async (trx) => {
-		await sql`LOCK TABLE tour, request, event, availability IN ACCESS EXCLUSIVE MODE;`.execute(trx);
+		await sql`LOCK TABLE tour, request, event, availability, vehicle IN ACCESS EXCLUSIVE MODE;`.execute(trx);
 		let firstConnection = undefined;
 		let secondConnection = undefined;
 		if (p.connection1 != null) {

@@ -14,7 +14,7 @@ export const POST = async (event) => {
 	const request = event.request;
 	const { tourId, vehicleId } = await request.json();
 	await db.transaction().execute(async (trx) => {
-		await sql`LOCK TABLE tour IN ACCESS EXCLUSIVE MODE;`.execute(trx);
+		await sql`LOCK TABLE tour, request, event, vehicle IN ACCESS EXCLUSIVE MODE;`.execute(trx);
 		const movedTour = await trx
 			.selectFrom('tour')
 			.where(({ eb }) =>
