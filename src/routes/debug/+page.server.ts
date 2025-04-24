@@ -68,7 +68,8 @@ export const actions = {
 			start,
 			target,
 			startTime: result.pickupTime,
-			targetTime: result.dropoffTime
+			targetTime: result.dropoffTime,
+			signature: ''
 		};
 		const booking = await bookRide(connection, capacities, true);
 

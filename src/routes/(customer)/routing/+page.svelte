@@ -18,7 +18,7 @@
 	import { Input } from '$lib/shadcn/input';
 	import { Label } from '$lib/shadcn/label';
 
-	import { plan, trip, type Leg, type Match, type PlanData, type PlanResponse } from '$lib/openapi';
+	import { trip, type Leg, type Match, type PlanData } from '$lib/openapi';
 
 	import { t } from '$lib/i18n/translation';
 	import { lngLatToStr } from '$lib/util/lngLatToStr';
@@ -44,6 +44,7 @@
 	import { posToLocation } from '$lib/map/Location';
 	import { MAX_MATCHING_DISTANCE } from '$lib/constants';
 	import PopupMap from '$lib/ui/PopupMap.svelte';
+	import { planAndSign, type SignedPlanResponse } from '$lib/planAndSign';
 
 	type LuggageType = 'none' | 'light' | 'heavy';
 
@@ -114,14 +115,14 @@
 	);
 
 	type Timeout = ReturnType<typeof setTimeout>;
-	let baseResponse = $state<Promise<PlanResponse | undefined>>();
-	let routingResponses = $state<Array<Promise<PlanResponse | undefined>>>([]);
+	let baseResponse = $state<Promise<SignedPlanResponse | undefined>>();
+	let routingResponses = $state<Array<Promise<SignedPlanResponse | undefined>>>([]);
 	let searchDebounceTimer: Timeout;
 	$effect(() => {
 		if (baseQuery) {
 			clearTimeout(searchDebounceTimer);
 			searchDebounceTimer = setTimeout(() => {
-				const base = plan<true>(baseQuery).then(updateStartDest(from, to));
+				const base = planAndSign(baseQuery).then(updateStartDest(from, to));
 				baseResponse = base;
 				routingResponses = [base];
 			}, 400);
@@ -266,6 +267,16 @@
 									<input type="hidden" name="fromLng2" value={lastOdm.from.lon} />
 									<input type="hidden" name="toLat2" value={lastOdm.to.lat} />
 									<input type="hidden" name="toLng2" value={lastOdm.to.lon} />
+									<input
+										type="hidden"
+										name="signature1"
+										value={page.state.selectedItinerary.signature1}
+									/>
+									<input
+										type="hidden"
+										name="signature2"
+										value={page.state.selectedItinerary.signature2}
+									/>
 									<input
 										type="hidden"
 										name="startTime1"
