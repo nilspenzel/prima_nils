@@ -73,6 +73,7 @@ export async function updateDirectDurations(
 								.where('request.cancelled', '=', false)
 								.whereRef('request.tour', '=', 'tour.id')
 								.orderBy('event.scheduledTimeEnd', 'asc')
+								.limit(1)
 								.select(['event.lat', 'event.lng', 'event.scheduledTimeStart'])
 						).as('events')
 					])
@@ -110,14 +111,14 @@ export async function updateDirectDurations(
 
 	if (newVehicleId) {
 		const newVehicle = vehicles[0].id === newVehicleId ? vehicles[0] : vehicles[1];
-		const events = newVehicle.moved[0].events;
-		events.sort((e) => e.scheduledTimeStart);
+		const lastEventMovedTour = newVehicle.moved[0].events[0];
+		const firstEventNextTour = newVehicle.nexttour[0].events[0];
 		await trx
 			.updateTable('tour')
 			.set({
 				directDuration:
 					newVehicle.prevtour != null && newVehicle.prevtour.length != 0
-						? (await oneToManyCarRouting(newVehicle.prevtour[0].events[0], [events[0]], false))[0]
+						? (await oneToManyCarRouting(newVehicle.prevtour[0].events[0], [lastEventMovedTour], false))[0]
 						: null
 			})
 			.where('id', '=', tourId)
@@ -129,10 +130,10 @@ export async function updateDirectDurations(
 				.set({
 					directDuration:
 						newVehicle.prevtour && newVehicle.prevtour.length != 0
-							? (await oneToManyCarRouting(events[0], [newVehicle.nexttour[0].events[0]], false))[0]
+							? (await oneToManyCarRouting(lastEventMovedTour, [firstEventNextTour], false))[0]
 							: null
 				})
-				.where('id', '=', newVehicle.nexttour[0].events[0].tour)
+				.where('id', '=', firstEventNextTour.tour)
 				.executeTakeFirst();
 		}
 	}
