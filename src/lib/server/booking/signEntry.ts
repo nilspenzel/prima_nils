@@ -19,5 +19,5 @@ export function signEntry(
 		endTime: endTime,
 		startFixed
 	});
-	return crypto.createHmac('sha256', env.SECRET_KEY).update(serialized).digest('hex');
+	return crypto.createHmac('sha256', env.SECRET_KEY!).update(serialized).digest('hex');
 }

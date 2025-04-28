@@ -1,13 +1,9 @@
-import { Validator } from 'jsonschema';
-import { bookingSchema, schemaDefinitions } from '../whitelist/WhitelistRequest';
 import { db } from '$lib/server/db';
-import type { RequestEvent } from './$types';
 import { bookRide, type ExpectedConnection } from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
-import { insertRequest } from './query';
 import { lockTablesStatement } from '$lib/server/db/lockTables';
-import { error, json } from '@sveltejs/kit';
 import { signEntry } from '$lib/server/booking/signEntry';
+import { insertRequest } from './insertRequest';
 
 export type BookingParameters = {
 	connection1: ExpectedConnection | null;
@@ -24,24 +20,32 @@ const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
 	return undefined;
 };
 
-export const POST = async (event: RequestEvent) => {
-	const customer = event.locals.session!.userId!;
-
-	const p: BookingParameters = await event.request.json();
-	const validator = new Validator();
-	validator.addSchema(schemaDefinitions, '/schemaDefinitions');
-	const result = validator.validate(p, bookingSchema);
-	if (!result.valid) {
-		return json({ message: result.errors }, { status: 400 });
-	}
+export async function bookingApi(
+	p: BookingParameters,
+	customer: number,
+	isLocalhost: boolean
+): Promise<{
+	message?: string;
+	status: number;
+	request1Id?: number;
+	request2Id?: number;
+}> {
 	if (p.connection1 == null && p.connection2 == null) {
-		return json(
-			{ message: 'Es wurde weder eine Anfrage für die erste noch für die letzte Meile gestellt.' },
-			{ status: 200 }
-		);
+		return {
+			message: 'Es wurde weder eine Anfrage für die erste noch für die letzte Meile gestellt.',
+			status: 204
+		};
+	}
+	if (p.connection1 === null) {
+		console.log('connection2 only');
+	} else if (p.connection2 === null) {
+		console.log('connection1 only');
+	} else {
+		console.log('both connections');
 	}
 	if (
-		(p.connection1 !== null &&
+		(!isLocalhost &&
+			p.connection1 !== null &&
 			signEntry(
 				p.connection1.start.lat,
 				p.connection1.start.lng,
@@ -51,7 +55,8 @@ export const POST = async (event: RequestEvent) => {
 				p.connection1.targetTime,
 				false
 			) !== p.connection1.signature) ||
-		(p.connection2 !== null &&
+		(!isLocalhost &&
+			p.connection2 !== null &&
 			signEntry(
 				p.connection2.start.lat,
 				p.connection2.start.lng,
@@ -62,10 +67,25 @@ export const POST = async (event: RequestEvent) => {
 				true
 			) !== p.connection2.signature)
 	) {
-		error(403);
+		console.log(
+			'hier gings schief',
+			{ sig: p.connection1!.signature },
+			{
+				cmpSig: signEntry(
+					p.connection1!.start.lat,
+					p.connection1!.start.lng,
+					p.connection1!.target.lat,
+					p.connection1!.target.lng,
+					p.connection1!.startTime,
+					p.connection1!.targetTime,
+					false
+				)
+			}
+		);
+		return { status: 403 };
 	}
-	let firstMileRequestId: number | undefined = undefined;
-	let lastMileRequestId: number | undefined = undefined;
+	let request1Id: number | undefined = undefined;
+	let request2Id: number | undefined = undefined;
 	let message: string | undefined = undefined;
 	let success = false;
 	await db.transaction().execute(async (trx) => {
@@ -106,7 +126,7 @@ export const POST = async (event: RequestEvent) => {
 			}
 		}
 		if (p.connection1 != null) {
-			firstMileRequestId =
+			request1Id =
 				(await insertRequest(
 					firstConnection!.best,
 					p.capacities,
@@ -122,7 +142,7 @@ export const POST = async (event: RequestEvent) => {
 				)) ?? null;
 		}
 		if (p.connection2 != null) {
-			lastMileRequestId =
+			request2Id =
 				(await insertRequest(
 					secondConnection!.best,
 					p.capacities,
@@ -142,7 +162,7 @@ export const POST = async (event: RequestEvent) => {
 		return;
 	});
 	if (message == undefined) {
-		return json({ status: 500 });
+		return { status: 500 };
 	}
-	return json({ message, firstMileRequestId, lastMileRequestId }, { status: success ? 200 : 400 });
-};
+	return { message, request1Id, request2Id, status: success ? 200 : 400 };
+}

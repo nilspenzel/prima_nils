@@ -221,81 +221,11 @@
 							<p class="my-2 text-sm">{t.booking.disclaimer}</p>
 
 							<Dialog.Footer>
-								{@const firstOdmIndex = page.state.selectedItinerary.legs.findIndex(
-									(l: Leg) => l.mode === 'ODM'
-								)}
-								{@const firstOdm =
-									firstOdmIndex === -1
-										? undefined
-										: page.state.selectedItinerary.legs[firstOdmIndex]}
-								{@const lastOdmIndex = page.state.selectedItinerary.legs.findLastIndex(
-									(l: Leg) => l.mode === 'ODM'
-								)}
-								{@const lastOdm =
-									lastOdmIndex === -1 ? undefined : page.state.selectedItinerary.legs[lastOdmIndex]}
-								{@const isDirectODM =
-									page.state.selectedItinerary.legs.length === 1 &&
-									page.state.selectedItinerary.legs[0].mode === 'ODM'}
-
 								<form method="post" action="?/bookItineraryWithOdm" use:enhance>
 									<input
 										type="hidden"
 										name="json"
 										value={JSON.stringify(page.state.selectedItinerary)}
-									/>
-									<input
-										type="hidden"
-										name="startFixed1"
-										value={isDirectODM
-											? timeType === 'departure'
-												? '1'
-												: '0'
-											: firstOdmIndex === 0
-												? '0'
-												: '1'}
-									/>
-									<input type="hidden" name="startFixed2" value="1" />
-									<input type="hidden" name="fromAddress1" value={firstOdm.from.name} />
-									<input type="hidden" name="toAddress1" value={firstOdm.to.name} />
-									<input type="hidden" name="fromAddress2" value={lastOdm.from.name} />
-									<input type="hidden" name="toAddress2" value={lastOdm.to.name} />
-									<input type="hidden" name="fromLat1" value={firstOdm.from.lat} />
-									<input type="hidden" name="fromLng1" value={firstOdm.from.lon} />
-									<input type="hidden" name="toLat1" value={firstOdm.to.lat} />
-									<input type="hidden" name="toLng1" value={firstOdm.to.lon} />
-									<input type="hidden" name="fromLat2" value={lastOdm.from.lat} />
-									<input type="hidden" name="fromLng2" value={lastOdm.from.lon} />
-									<input type="hidden" name="toLat2" value={lastOdm.to.lat} />
-									<input type="hidden" name="toLng2" value={lastOdm.to.lon} />
-									<input
-										type="hidden"
-										name="signature1"
-										value={page.state.selectedItinerary.signature1}
-									/>
-									<input
-										type="hidden"
-										name="signature2"
-										value={page.state.selectedItinerary.signature2}
-									/>
-									<input
-										type="hidden"
-										name="startTime1"
-										value={new Date(firstOdm.startTime).getTime()}
-									/>
-									<input
-										type="hidden"
-										name="endTime1"
-										value={new Date(firstOdm.endTime).getTime()}
-									/>
-									<input
-										type="hidden"
-										name="startTime2"
-										value={new Date(lastOdm.startTime).getTime()}
-									/>
-									<input
-										type="hidden"
-										name="endTime2"
-										value={new Date(lastOdm.endTime).getTime()}
 									/>
 									<input type="hidden" name="passengers" value={passengers} />
 									<input type="hidden" name="luggage" value={luggageToInt(luggage)} />

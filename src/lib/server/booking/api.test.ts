@@ -13,6 +13,7 @@ import { createSession } from '../auth/session';
 import { MINUTE, roundToUnit } from '$lib/util/time';
 import type { ExpectedConnection } from './bookRide';
 import { signEntry } from './signEntry';
+import { bookingApi } from './bookingApi';
 
 const black = async (body: string) => {
 	return await fetch('http://localhost:5173/api/blacklist', {
@@ -35,16 +36,6 @@ const white = async (body: string) => {
 };
 
 let sessionToken: string;
-const booking = async (body: string) => {
-	return await fetch('http://localhost:5173/api/booking', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Cookie: `session = ${sessionToken}`
-		},
-		body
-	});
-};
 
 const capacities = {
 	passengers: 1,
@@ -314,13 +305,13 @@ describe('Whitelist and Booking API Tests', () => {
 				false
 			)
 		};
-		const bookingBody = JSON.stringify({
+		const bookingBody = {
 			connection1,
 			connection2: null,
 			capacities
-		});
+		};
 
-		const bookingResponse = await booking(bookingBody);
+		const bookingResponse = await bookingApi(bookingBody, mockUserId, false);
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 		expect(tours[0].requests.length).toBe(1);
@@ -352,9 +343,7 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(
 			Math.abs(inNiesky2.lat - dropoff.lat) + Math.abs(inNiesky2.lng - dropoff.lng)
 		).toBeLessThan(COORDINATE_ROUNDING_ERROR_THRESHOLD);
-
-		const response = await bookingResponse.json();
-		requests.some((r) => r.id == response.firstMileRequestId);
+		requests.some((r) => r.id == bookingResponse.request1Id);
 	}, 30000);
 
 	it('keeps Promise is robust to rounding to full minutes', async () => {
@@ -396,13 +385,13 @@ describe('Whitelist and Booking API Tests', () => {
 				false
 			)
 		};
-		const bookingBody = JSON.stringify({
+		const bookingBody = {
 			connection1,
 			connection2: null,
 			capacities
-		});
+		};
 
-		await booking(bookingBody);
+		await bookingApi(bookingBody, mockUserId, false);
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 	}, 30000);
@@ -444,14 +433,14 @@ describe('Whitelist and Booking API Tests', () => {
 				false
 			)
 		};
-		const bookingBody = JSON.stringify({
+		const bookingBody = {
 			connection1,
 			connection2: null,
 			capacities
-		});
-
-		await booking(bookingBody);
+		};
+		const response = await bookingApi(bookingBody, mockUserId, false);
 		const tours = await getTours();
+		expect(response.status === 403);
 		expect(tours.length).toBe(0);
 	}, 30000);
 });
