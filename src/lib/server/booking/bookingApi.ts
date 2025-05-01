@@ -20,6 +20,21 @@ const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
 	return undefined;
 };
 
+function isSignatureInvalid(c: ExpectedConnection | null) {
+	return (
+		c !== null &&
+		signEntry(
+			c.start.lat,
+			c.start.lng,
+			c.target.lat,
+			c.target.lng,
+			c.startTime,
+			c.targetTime,
+			false
+		) !== c.signature
+	);
+}
+
 export async function bookingApi(
 	p: BookingParameters,
 	customer: number,
@@ -39,30 +54,7 @@ export async function bookingApi(
 			status: 204
 		};
 	}
-	if (
-		(!isLocalhost &&
-			p.connection1 !== null &&
-			signEntry(
-				p.connection1.start.lat,
-				p.connection1.start.lng,
-				p.connection1.target.lat,
-				p.connection1.target.lng,
-				p.connection1.startTime,
-				p.connection1.targetTime,
-				false
-			) !== p.connection1.signature) ||
-		(!isLocalhost &&
-			p.connection2 !== null &&
-			signEntry(
-				p.connection2.start.lat,
-				p.connection2.start.lng,
-				p.connection2.target.lat,
-				p.connection2.target.lng,
-				p.connection2.startTime,
-				p.connection2.targetTime,
-				true
-			) !== p.connection2.signature)
-	) {
+	if (!isLocalhost && (isSignatureInvalid(p.connection1) || isSignatureInvalid(p.connection2))) {
 		return { status: 403 };
 	}
 	let request1Id: number | undefined = undefined;
