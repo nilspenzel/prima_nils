@@ -77,7 +77,10 @@ export const actions = {
 		const bookingResponse = await bookingApi(
 			{ connection1, connection2: null, capacities },
 			customer,
-			true
+			true,
+			0,
+			0,
+			0
 		);
 
 		if (bookingResponse.request1Id === undefined) {

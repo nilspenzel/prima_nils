@@ -23,7 +23,10 @@ const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
 export async function bookingApi(
 	p: BookingParameters,
 	customer: number,
-	isLocalhost: boolean
+	isLocalhost: boolean,
+	kidsZeroToTwo: number,
+	kidsThreeToFour: number,
+	kidsFiveToSix: number
 ): Promise<{
 	message?: string;
 	status: number;
@@ -138,9 +141,9 @@ export async function bookingApi(
 					firstConnection!.dropoffEventGroup,
 					firstConnection!.neighbourIds,
 					firstConnection!.directDurations,
-					0,
-					0,
-					0,
+					kidsZeroToTwo,
+					kidsThreeToFour,
+					kidsFiveToSix,
 					trx
 				)) ?? null;
 		}
@@ -157,9 +160,9 @@ export async function bookingApi(
 					secondConnection!.dropoffEventGroup,
 					secondConnection!.neighbourIds,
 					secondConnection!.directDurations,
-					0,
-					0,
-					0,
+					kidsZeroToTwo,
+					kidsThreeToFour,
+					kidsFiveToSix,
 					trx
 				)) ?? null;
 		}

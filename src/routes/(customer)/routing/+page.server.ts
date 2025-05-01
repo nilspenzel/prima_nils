@@ -40,21 +40,37 @@ export const actions = {
 		const passengersString = formData.get('passengers');
 		const luggageString = formData.get('luggage');
 		const wheelchairsString = formData.get('wheelchairs');
+		const kidsZeroToTwoString = formData.get('kidsZeroToTwo');
+		const kidsThreeToFourString = formData.get('kidsThreeToFour');
+		const kidsFiveToSixString = formData.get('kidsFiveToSix');
 		const json = formData.get('json');
 
 		if (
 			typeof json !== 'string' ||
 			typeof luggageString !== 'string' ||
 			typeof wheelchairsString !== 'string' ||
-			typeof passengersString !== 'string'
+			typeof passengersString !== 'string' ||
+			typeof kidsZeroToTwoString !== 'string' ||
+			typeof kidsThreeToFourString !== 'string' ||
+			typeof kidsFiveToSixString !== 'string'
 		) {
 			throw 'invalid booking params';
 		}
 		const luggage = readInt(luggageString);
 		const wheelchairs = readInt(wheelchairsString);
 		const passengers = readInt(passengersString);
+		const kidsZeroToTwo = readInt(kidsZeroToTwoString);
+		const kidsThreeToFour = readInt(kidsThreeToFourString);
+		const kidsFiveToSix = readInt(kidsFiveToSixString);
 
-		if (isNaN(luggage) || isNaN(wheelchairs) || isNaN(passengers)) {
+		if (
+			isNaN(luggage) ||
+			isNaN(wheelchairs) ||
+			isNaN(passengers) ||
+			isNaN(kidsZeroToTwo) ||
+			isNaN(kidsThreeToFour) ||
+			isNaN(kidsFiveToSix)
+		) {
 			throw 'invalid booking params';
 		}
 
@@ -115,7 +131,14 @@ export const actions = {
 			JSON.stringify(toExpectedConnectionWithISOStrings(connection2), null, '\t')
 		);
 
-		const bookingResult = await bookingApi({ connection1, connection2, capacities }, user, false);
+		const bookingResult = await bookingApi(
+			{ connection1, connection2, capacities },
+			user,
+			false,
+			kidsZeroToTwo,
+			kidsThreeToFour,
+			kidsFiveToSix
+		);
 		if (bookingResult.status !== 200) {
 			console.log(
 				'Booking failed: ',
