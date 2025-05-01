@@ -84,7 +84,6 @@ export const actions = {
 		);
 
 		if (bookingResponse.request1Id === undefined) {
-			console.log('hier steht was: ', { bookingResponse });
 			return { msg: 'bookingError' };
 		}
 

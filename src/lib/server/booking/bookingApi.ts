@@ -39,13 +39,6 @@ export async function bookingApi(
 			status: 204
 		};
 	}
-	if (p.connection1 === null) {
-		console.log('connection2 only');
-	} else if (p.connection2 === null) {
-		console.log('connection1 only');
-	} else {
-		console.log('both connections');
-	}
 	if (
 		(!isLocalhost &&
 			p.connection1 !== null &&
@@ -70,21 +63,6 @@ export async function bookingApi(
 				true
 			) !== p.connection2.signature)
 	) {
-		console.log(
-			'hier gings schief',
-			{ sig: p.connection1!.signature },
-			{
-				cmpSig: signEntry(
-					p.connection1!.start.lat,
-					p.connection1!.start.lng,
-					p.connection1!.target.lat,
-					p.connection1!.target.lng,
-					p.connection1!.startTime,
-					p.connection1!.targetTime,
-					false
-				)
-			}
-		);
 		return { status: 403 };
 	}
 	let request1Id: number | undefined = undefined;
