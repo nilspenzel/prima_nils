@@ -89,7 +89,10 @@ export const actions = {
 				'Unable to parse json as Itinerary in bookItineraryWithOdm action. ',
 				{ json },
 				{ user },
-				{ time: new Date(Date.now()).toISOString() }
+				{ capacities },
+				{ kidsZeroToTwo },
+				{ kidsThreeToFour },
+				{ kidsFiveToSix }
 			);
 			return { msg: msg('unknownError') };
 		}
@@ -100,7 +103,10 @@ export const actions = {
 				'Journey with no ODM in bookItineraryWithOdm action. ',
 				{ json },
 				{ user },
-				{ time: new Date(Date.now()).toISOString() }
+				{ capacities },
+				{ kidsZeroToTwo },
+				{ kidsThreeToFour },
+				{ kidsFiveToSix }
 			);
 			return { msg: msg('unknownError') };
 		}
@@ -112,7 +118,10 @@ export const actions = {
 				'Missing signature for connection1 in bookItineraryWithOdm action. ',
 				{ json },
 				{ user },
-				{ time: new Date(Date.now()).toISOString() }
+				{ capacities },
+				{ kidsZeroToTwo },
+				{ kidsThreeToFour },
+				{ kidsFiveToSix }
 			);
 			return { msg: msg('unknownError') };
 		}
@@ -151,7 +160,7 @@ export const actions = {
 		}
 		const request1: number | null = bookingResult.request1Id ?? null;
 		const request2: number | null = bookingResult.request2Id ?? null;
-		console.log('INSERTION DONE - REQUIESTS:', { request1, request2 });
+		console.log('INSERTION DONE - REQUESTS:', { request1, request2 });
 
 		console.log('SAVING JOURNEY');
 		const id = (
