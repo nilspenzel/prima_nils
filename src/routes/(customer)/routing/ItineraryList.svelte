@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/shadcn/button';
-	import { plan, type Itinerary, type PlanData, type PlanResponse } from '$lib/openapi';
+	import { type PlanData } from '$lib/openapi';
 	import LoaderCircle from 'lucide-svelte/icons/loader-circle';
 	import Info from 'lucide-svelte/icons/info';
 	import { t, language } from '$lib/i18n/translation';
@@ -16,11 +16,11 @@
 		passengers,
 		kids
 	}: {
-		routingResponses: Array<Promise<PlanResponse | undefined>>;
-		baseResponse: Promise<PlanResponse | undefined> | undefined;
+		routingResponses: Array<Promise<SignedPlanResponse | undefined>>;
+		baseResponse: Promise<SignedPlanResponse | undefined> | undefined;
 		baseQuery: PlanData | undefined;
-		selectItinerary: (it: Itinerary) => void;
-		updateStartDest: (r: { data: PlanResponse | undefined }) => PlanResponse | undefined;
+		selectItinerary: (it: SignedItinerary) => void;
+		updateStartDest: (r: SignedPlanResponse | undefined) => SignedPlanResponse | undefined;
 		passengers: number;
 		kids: number;
 	} = $props();
@@ -62,7 +62,7 @@
 											routingResponses.splice(
 												0,
 												0,
-												plan({
+												planAndSign({
 													query: { ...baseQuery.query, pageCursor: r.previousPageCursor }
 												}).then(updateStartDest)
 											);
@@ -96,9 +96,9 @@
 										variant="outline"
 										onclick={() => {
 											routingResponses.push(
-												plan({ query: { ...baseQuery.query, pageCursor: r.nextPageCursor } }).then(
-													updateStartDest
-												)
+												planAndSign({
+													query: { ...baseQuery.query, pageCursor: r.nextPageCursor }
+												}).then(updateStartDest)
 											);
 										}}
 									>
