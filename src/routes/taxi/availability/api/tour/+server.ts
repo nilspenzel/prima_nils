@@ -7,6 +7,7 @@ import { lockTablesStatement } from '$lib/server/db/lockTables';
 import { sendNotifications } from '$lib/server/firebase/notifications.js';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
+import { updateDirectDurations } from '$lib/server/booking/updateDirectDurations';
 
 export const POST = async (event) => {
 	const companyId = event.locals.session?.companyId;
@@ -44,6 +45,7 @@ export const POST = async (event) => {
 				'tour.departure',
 				'tour.arrival',
 				'tour.id',
+				'tour.vehicle',
 				jsonArrayFrom(
 					eb
 						.selectFrom('request')
@@ -163,6 +165,15 @@ export const POST = async (event) => {
 				.set({ vehicle: vehicleId })
 				.where('id', '=', tourId)
 				.executeTakeFirst();
+
+
+			await updateDirectDurations(
+				movedTour.vehicle,
+				movedTour.id,
+				movedTour.departure,
+				trx,
+				vehicleId
+			);
 
 			const firstEvent = movedTour.requests
 				.sort((r) => r.events[0].scheduledTimeStart)[0]
