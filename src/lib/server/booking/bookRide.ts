@@ -44,6 +44,7 @@ export async function bookRide(
 	required: Capacities,
 	startFixed: boolean,
 	trx?: Transaction<Database>,
+	skipPromiseCheck?: boolean,
 	blockedVehicleId?: number
 ) {
 	console.log('BS');
@@ -80,7 +81,7 @@ export async function bookRide(
 			[{ ...busStop, times: [busTime] }],
 			required,
 			startFixed,
-			{
+			skipPromiseCheck ? undefined : {
 				pickup: c.startTime,
 				dropoff: c.targetTime
 			}

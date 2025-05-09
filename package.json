@@ -15,7 +15,8 @@
 		"lint": "prettier --check . && eslint . --ignore-pattern src/lib/openapi",
 		"test:unit": "./setup-db.sh && vitest --fileParallelism false",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"randomApi": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/randomApi/script.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
@@ -80,6 +81,7 @@
 		"pg": "^8.13.1",
 		"polyline": "^0.2.0",
 		"svelte-qrcode": "^1.0.1",
-		"uuid": "^11.0.5"
+		"uuid": "^11.0.5",
+		"vite-node": "^3.1.3"
 	}
 }
