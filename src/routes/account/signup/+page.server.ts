@@ -17,6 +17,7 @@ import type { Actions, PageServerLoadEvent, RequestEvent } from './$types';
 import { getIp } from '$lib/server/getIp';
 import { PUBLIC_PROVIDER } from '$env/static/public';
 import { verifyPhone } from '$lib/server/verifyPhone';
+import { nowOrSimulationTime } from '$lib/server/util/time';
 
 const ipBucket = new RefillingTokenBucket<string>(3, 10);
 
@@ -30,7 +31,7 @@ async function createUser(name: string, email: string, password: string, phone: 
 			passwordHash,
 			isEmailVerified: false,
 			emailVerificationCode: generateRandomOTP(),
-			emailVerificationExpiresAt: Date.now() + 10 * MINUTE,
+			emailVerificationExpiresAt: nowOrSimulationTime().getTime() + 10 * MINUTE,
 			passwordResetCode: null,
 			phone,
 			companyId: null,

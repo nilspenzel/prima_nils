@@ -10,6 +10,7 @@ import {
 } from '$lib/testHelpers';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cancelRequest } from './cancelRequest';
+import { nowOrSimulationTime } from '../util/time';
 
 beforeEach(async () => {
 	await clearDatabase();
@@ -22,11 +23,11 @@ describe('tests for cancelling requests', () => {
 		const v = await addTaxi(c, { passengers: 0, bikes: 0, wheelchairs: 0, luggage: 0 });
 		const t = await setTour(v, 0, 0);
 		const r = (await setRequest(t!.id, u.id, '')).id;
-		const e1 = await setEvent(r, Date.now() + 7200, true, 1, 1);
-		const e2 = await setEvent(r, Date.now() + 7200, false, 1, 1);
+		const e1 = await setEvent(r, nowOrSimulationTime().getTime() + 7200, true, 1, 1);
+		const e2 = await setEvent(r, nowOrSimulationTime().getTime() + 7200, false, 1, 1);
 		const r2 = (await setRequest(t!.id, u.id, '')).id;
-		await setEvent(r2, Date.now() + 7200, true, 1, 1);
-		await setEvent(r2, Date.now() + 7200, false, 1, 1);
+		await setEvent(r2, nowOrSimulationTime().getTime() + 7200, true, 1, 1);
+		await setEvent(r2, nowOrSimulationTime().getTime() + 7200, false, 1, 1);
 
 		await cancelRequest(r, u.id);
 		const events = await selectEvents();

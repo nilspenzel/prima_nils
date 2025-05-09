@@ -7,6 +7,7 @@ import { lockTablesStatement } from './lockTables';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { sendNotifications } from '../firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
+import { nowOrSimulationTime } from '../util/time';
 
 export const cancelRequest = async (requestId: number, userId: number) => {
 	console.log(
@@ -60,7 +61,7 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 			});
 			return;
 		}
-		await sql`CALL cancel_request(${requestId}, ${userId}, ${Date.now()})`.execute(trx);
+		await sql`CALL cancel_request(${requestId}, ${userId}, ${nowOrSimulationTime().getTime()})`.execute(trx);
 		const tourInfo = await trx
 			.selectFrom('request as cancelled_request')
 			.where('cancelled_request.id', '=', requestId)

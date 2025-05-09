@@ -7,6 +7,7 @@ import { groupBy } from '$lib/util/groupBy';
 import { DAY, HOUR, roundToUnit } from '$lib/util/time';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { getOffset } from '$lib/util/getOffset';
+import { nowOrSimulationTime } from '../util/time';
 
 export async function getCompanyCosts(companyId?: number) {
 	const tours: (TourWithRequests & { interval: Interval })[] = (
@@ -21,8 +22,8 @@ export async function getCompanyCosts(companyId?: number) {
 	if (tours.length === 0) {
 		return {
 			tours: [],
-			earliestTime: Date.now(),
-			latestTime: Date.now(),
+			earliestTime: nowOrSimulationTime().getTime(),
+			latestTime: nowOrSimulationTime().getTime(),
 			costPerDayAndVehicle: []
 		};
 	}
@@ -158,7 +159,7 @@ export async function getCompanyCosts(companyId?: number) {
 						(!tour.cancelled &&
 						tour.fare !== null &&
 						!tour.requests.flatMap((request) => request.events).some((e) => e.ticketChecked) &&
-						tour.endTime > Date.now()
+						tour.endTime > nowOrSimulationTime().getTime()
 							? 0
 							: (tourVerifiedCustomerCount === 0 ? 0 : tourTaxameter) - tourVerifiedTicketsPrice),
 					availabilityDuration: availabilitiesPerDayAndVehicle[dayIdx].get(tour.vehicleId) ?? 0,

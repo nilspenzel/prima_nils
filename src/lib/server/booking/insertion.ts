@@ -29,6 +29,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import { isValid } from '$lib/util/booking/getPossibleInsertions';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { roundToUnit, MINUTE } from '$lib/util/time';
+import { nowOrSimulationTime } from '../util/time';
 
 export type InsertionEvaluation = {
 	pickupTime: number;

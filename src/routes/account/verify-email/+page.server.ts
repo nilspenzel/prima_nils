@@ -8,6 +8,7 @@ import { msg } from '$lib/msg';
 import { sendMail } from '$lib/server/sendMail';
 import Welcome from '$lib/server/email/Welcome.svelte';
 import { PUBLIC_PROVIDER } from '$env/static/public';
+import { nowOrSimulationTime } from '$lib/server/util/time';
 
 const bucket = new ExpiringTokenBucket<number>(5, 60 * 30);
 const sendVerificationEmailBucket = new ExpiringTokenBucket<number>(3, 60 * 10);
@@ -18,7 +19,7 @@ async function updateEmailVerificationCode(userId: number) {
 			.updateTable('user')
 			.set({
 				emailVerificationCode: generateRandomOTP(),
-				emailVerificationExpiresAt: Date.now() + 10 * MINUTE
+				emailVerificationExpiresAt: nowOrSimulationTime().getTime() + 10 * MINUTE
 			})
 			.where('id', '=', userId)
 			.returning('emailVerificationCode')
@@ -47,7 +48,7 @@ export const actions: Actions = {
 			return fail(400, { msg: msg('enterYourCode') });
 		}
 
-		if (Date.now() >= (event.locals.session!.emailVerificationExpiresAt || 0)) {
+		if (nowOrSimulationTime().getTime() >= (event.locals.session!.emailVerificationExpiresAt || 0)) {
 			const code = await updateEmailVerificationCode(event.locals.session!.userId);
 			try {
 				await sendMail(Welcome, `Willkommen zu ${PUBLIC_PROVIDER}`, event.locals.session!.email, {

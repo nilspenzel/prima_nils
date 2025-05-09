@@ -7,6 +7,7 @@ import { lockTablesStatement } from '$lib/server/db/lockTables';
 import { sendNotifications } from '$lib/server/firebase/notifications.js';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
+import { nowOrSimulationTime } from '$lib/server/util/time';
 
 export const POST = async (event) => {
 	const companyId = event.locals.session?.companyId;
@@ -134,7 +135,7 @@ export const POST = async (event) => {
 		}
 
 		const firstEventTime = Math.min(...events.map((e) => getLatestEventTime(e)));
-		if (firstEventTime < Date.now()) {
+		if (firstEventTime < nowOrSimulationTime().getTime()) {
 			console.log(
 				'MOVE TOUR early exit - tour may not be moved since the first event is already in the past. tourId: ',
 				tourId

@@ -2,13 +2,14 @@ import { test, expect, type Page } from '@playwright/test';
 import { Kysely, PostgresDialect, RawBuilder, sql } from 'kysely';
 import { dbConfig } from './config';
 import pg from 'pg';
+import { nowOrSimulationTime } from '../src/lib/server/util/time';
 import { DAY, HOUR, MINUTE } from '../src/lib/util/time';
 import { LOCALE } from '../src/lib/constants';
 import { getOffset } from '../src/lib/util/getOffset';
 
 test.use({ locale: LOCALE });
 
-export const in6Days = new Date(Math.ceil(Date.now() / DAY) * DAY + 5 * DAY);
+export const in6Days = new Date(Math.ceil(nowOrSimulationTime().getTime() / DAY) * DAY + 5 * DAY);
 export const dayString = in6Days.toISOString().split('T')[0];
 export const offset = getOffset(in6Days.getTime() + HOUR * 12) / MINUTE;
 export type UserCredentials = {
@@ -85,6 +86,12 @@ export async function signup(page: Page, credentials: UserCredentials) {
 	await page.waitForTimeout(1000);
 	await page.screenshot({ path: 'screenshots/beforeLogout.png', fullPage: true });
 	await page.getByRole('button', { name: 'Abmelden' }).click();
+}
+
+export async function logout(page: Page) {
+	await page.getByRole('link', { name: 'Konto' }).click();
+	await page.getByRole('button', { name: 'Abmelden' }).click();
+	await expect(page.locator('#searchmask-container')).toBeVisible();
 }
 
 export async function setCompanyData(page: Page, user: UserCredentials, company: Company) {

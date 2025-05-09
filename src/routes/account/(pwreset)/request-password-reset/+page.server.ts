@@ -9,6 +9,7 @@ import { db } from '$lib/server/db';
 import type { Actions, RequestEvent } from './$types';
 import { sendMail } from '$lib/server/sendMail';
 import PasswordReset from '$lib/server/email/PasswordReset.svelte';
+import { nowOrSimulationTime } from '$lib/server/util/time';
 
 const ipBucket = new RefillingTokenBucket<string>(3, 60);
 const emailBucket = new RefillingTokenBucket<string>(3, 60);
@@ -33,7 +34,7 @@ export const actions: Actions = {
 			.updateTable('user')
 			.set({
 				passwordResetCode: generateRandomOTP(),
-				passwordResetExpiresAt: Date.now() + 10 * MINUTE
+				passwordResetExpiresAt: nowOrSimulationTime().getTime() + 10 * MINUTE
 			})
 			.where('email', '=', email)
 			.returningAll()

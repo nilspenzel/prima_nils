@@ -6,6 +6,7 @@ import { msg } from '$lib/msg';
 import { getIp } from '$lib/server/getIp';
 import { db } from '$lib/server/db';
 import { hashPassword, isStrongPassword } from '$lib/server/auth/password';
+import { nowOrSimulationTime } from '$lib/server/util/time';
 
 export function load(event: PageServerLoadEvent) {
 	return {
@@ -58,7 +59,7 @@ export const actions: Actions = {
 			})
 			.where('email', '=', email)
 			.where('passwordResetCode', '=', code)
-			.where('passwordResetExpiresAt', '>=', Date.now())
+			.where('passwordResetExpiresAt', '>=', nowOrSimulationTime().getTime())
 			.executeTakeFirst();
 
 		if (success.numUpdatedRows === BigInt(0)) {

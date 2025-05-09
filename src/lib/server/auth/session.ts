@@ -4,6 +4,7 @@ import { sha256 } from '@oslojs/crypto/sha2';
 import type { RequestEvent } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { DAY } from '$lib/util/time';
+import { nowOrSimulationTime } from '../util/time';
 
 export type Session = Awaited<ReturnType<typeof validateSessionToken>>;
 
@@ -38,14 +39,14 @@ export async function validateSessionToken(token: string | undefined) {
 	}
 
 	// Session expired? Delete session.
-	if (Date.now() >= session.expiresAt) {
+	if (nowOrSimulationTime().getTime() >= session.expiresAt) {
 		await db.deleteFrom('session').where('id', '=', session.id).execute();
 		return null;
 	}
 
 	// Session valid. Extend session by 30 days if less than 15 days left.
-	if (Date.now() >= session.expiresAt - 15 * DAY) {
-		session.expiresAt = Date.now() + 30 * DAY;
+	if (nowOrSimulationTime().getTime() >= session.expiresAt - 15 * DAY) {
+		session.expiresAt = nowOrSimulationTime().getTime() + 30 * DAY;
 		await db
 			.updateTable('session')
 			.set({ expiresAt: session.expiresAt })
@@ -89,7 +90,7 @@ export function generateSessionToken(): string {
 export async function createSession(token: string, userId: number) {
 	const session = {
 		id: encodeHexLowerCase(sha256(new TextEncoder().encode(token))),
-		expiresAt: Date.now() + 30 * DAY,
+		expiresAt: nowOrSimulationTime().getTime() + 30 * DAY,
 		userId
 	};
 	await db.insertInto('session').values(session).executeTakeFirst();

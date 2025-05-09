@@ -11,6 +11,7 @@ import EmailVerification from '$lib/server/email/EmailVerification.svelte';
 import { deleteSessionTokenCookie, invalidateSession } from '$lib/server/auth/session';
 import { verifyPhone } from '$lib/server/verifyPhone';
 import { getUserPasswordHash } from '$lib/server/auth/user';
+import { nowOrSimulationTime } from '$lib/server/util/time';
 
 export async function load(event: PageServerLoadEvent) {
 	const user = await db
@@ -74,7 +75,7 @@ export const actions: Actions = {
 			.set({
 				email,
 				emailVerificationCode: generateRandomOTP(),
-				emailVerificationExpiresAt: Date.now() + 10 * MINUTE,
+				emailVerificationExpiresAt: nowOrSimulationTime().getTime() + 10 * MINUTE,
 				isEmailVerified: false
 			})
 			.where('id', '=', event.locals.session!.userId)

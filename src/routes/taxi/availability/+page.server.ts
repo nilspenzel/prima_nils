@@ -7,6 +7,7 @@ import { msg } from '$lib/msg';
 import { readInt } from '$lib/server/util/readForm';
 import { getPossibleInsertions } from '$lib/util/booking/getPossibleInsertions';
 import { lockTablesStatement } from '$lib/server/db/lockTables';
+import { nowOrSimulationTime } from '$lib/server/util/time';
 
 const LICENSE_PLATE_REGEX = /^([A-ZÄÖÜ]{1,3})-([A-ZÄÖÜ]{1,2})-([0-9]{1,4})$/;
 export async function load(event: RequestEvent) {
@@ -155,7 +156,7 @@ export const actions: Actions = {
 			const tours = await trx
 				.selectFrom('tour')
 				.where('tour.vehicle', '=', id)
-				.where('tour.arrival', '>', Date.now())
+				.where('tour.arrival', '>', nowOrSimulationTime().getTime())
 				.where('tour.cancelled', '=', false)
 				.select((eb) => [
 					'tour.id',

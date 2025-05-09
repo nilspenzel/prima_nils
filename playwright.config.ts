@@ -11,7 +11,10 @@ export default defineConfig({
 	use: {
 		baseURL: 'http://localhost:5173',
 		locale: 'de-DE',
-		timezoneId: 'Europe/Berlin'
+		timezoneId: 'Europe/Berlin',
+		launchOptions: {
+			slowMo: 1,
+		  },
 	},
 
 	// webServer: {
@@ -46,7 +49,7 @@ export default defineConfig({
 		{
 			name: 'availability',
 			testMatch: 'availability.test.ts',
-			dependencies: ['login']
+			dependencies: ['entrepreneurAssignsRoles']
 		},
 		{
 			name: 'move tour',
@@ -54,9 +57,14 @@ export default defineConfig({
 			dependencies: ['availability']
 		},
 		{
+			name: 'booking',
+			testMatch: 'booking.test.ts',
+			dependencies: ['move tour']
+		},
+		{
 			name: 'driver app',
 			testMatch: 'driver.test.ts',
-			dependencies: ['move tour']
+			dependencies: ['booking']
 		}
 	]
 });
