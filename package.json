@@ -16,7 +16,8 @@
 		"test:unit": "./setup-db.sh && vitest --fileParallelism false",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
-		"randomApi": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/randomApi/script.ts"
+		"sim": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/simulation/script.ts",
+		"health": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/healthCheck.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",

@@ -1,8 +1,5 @@
-import { EARLIEST_SHIFT_START, LATEST_SHIFT_END } from '$lib/constants';
 import { db, type Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
-import { getAllowedTimes } from '$lib/util/getAllowedTimes';
-import { HOUR } from '$lib/util/time';
 import { json } from '@sveltejs/kit';
 import { type Insertable, type Selectable } from 'kysely';
 import { getAlterableTimeframe } from '$lib/util/getAlterableTimeframe';

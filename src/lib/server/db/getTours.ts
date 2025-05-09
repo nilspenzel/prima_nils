@@ -95,6 +95,7 @@ export const getToursWithRequests = async (
 			'company.lng as companyLng',
 			'vehicle.id as vehicleId',
 			'vehicle.licensePlate',
+			'tour.directDuration',
 			jsonArrayFrom(
 				eb
 					.selectFrom('request')
@@ -103,10 +104,13 @@ export const getToursWithRequests = async (
 					.select([
 						'request.luggage',
 						'request.passengers',
+						'request.wheelchairs',
+						'request.bikes',
 						'request.kidsZeroToTwo',
 						'request.kidsThreeToFour',
 						'request.kidsFiveToSix',
 						'request.ticketChecked',
+						'request.id as requestId',
 						jsonArrayFrom(
 							eb
 								.selectFrom('event')
@@ -130,6 +134,8 @@ export const getToursWithRequests = async (
 									'event.scheduledTimeStart',
 									'event.scheduledTimeEnd',
 									'event.cancelled',
+									'request.cancelled as requestCancelled',
+									'tour.cancelled as tourCancelled',
 									'request.bikes',
 									'request.customer',
 									'request.luggage',
