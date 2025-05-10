@@ -1,12 +1,10 @@
-import { EARLIEST_SHIFT_START, LATEST_SHIFT_END } from '$lib/constants';
 import { db, type Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
-import { getAllowedTimes } from '$lib/util/getAllowedTimes';
-import { HOUR } from '$lib/util/time';
 import { json } from '@sveltejs/kit';
 import { type Insertable, type Selectable } from 'kysely';
 import { getAlterableTimeframe } from '$lib/util/getAlterableTimeframe';
 import { lockTablesStatement } from '$lib/server/db/lockTables';
+import { addAvailability } from '$lib/server/addAvailability';
 
 type Availability = Selectable<Database['availability']>;
 type NewAvailability = Insertable<Database['availability']>;
@@ -112,7 +110,6 @@ export const POST = async ({ locals, request }) => {
 	if (!companyId) {
 		throw 'no company';
 	}
-
 	const { vehicleId, from, to } = await request.json();
 	if (typeof vehicleId !== 'number' || typeof from !== 'number' || typeof to !== 'number') {
 		console.log('add availability invalid params: ', { vehicleId, from, to });
@@ -123,32 +120,6 @@ export const POST = async ({ locals, request }) => {
 	if (interval === undefined) {
 		return json({});
 	}
-	await Promise.all(
-		getAllowedTimes(
-			interval.startTime,
-			interval.endTime,
-			EARLIEST_SHIFT_START - HOUR,
-			LATEST_SHIFT_END + HOUR
-		)
-			.map((allowed) => allowed.intersect(interval))
-			.filter((a) => a != undefined)
-			.map((availability) =>
-				db
-					.insertInto('availability')
-					.columns(['startTime', 'endTime', 'vehicle'])
-					.expression((eb) =>
-						eb
-							.selectFrom('vehicle')
-							.select((eb) => [
-								eb.val(availability.startTime).as('startTime'),
-								eb.val(availability.endTime).as('endTime'),
-								'vehicle.id as vehicle'
-							])
-							.where('vehicle.company', '=', companyId)
-							.where('vehicle.id', '=', vehicleId)
-					)
-					.execute()
-			)
-	);
+	await addAvailability(interval, companyId, vehicleId);
 	return json({});
 };
