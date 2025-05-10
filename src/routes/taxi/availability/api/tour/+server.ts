@@ -7,6 +7,7 @@ import { lockTablesStatement } from '$lib/server/db/lockTables';
 import { sendNotifications } from '$lib/server/firebase/notifications.js';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
+import { updateDirectDurations } from '$lib/server/booking/updateDirectDuration';
 
 export const POST = async (event) => {
 	const companyId = event.locals.session?.companyId;
@@ -44,6 +45,7 @@ export const POST = async (event) => {
 				'tour.departure',
 				'tour.arrival',
 				'tour.id',
+				'tour.vehicle',
 				jsonArrayFrom(
 					eb
 						.selectFrom('request')
@@ -87,6 +89,11 @@ export const POST = async (event) => {
 			console.log('MOVE TOUR early exit - no vehicle id was provided. tourId: ', tourId);
 			error(400, {
 				message: 'Keine Fahrzeug-id angegeben'
+			});
+		}
+		if (vehicleId === movedTour.vehicle) {
+			error(400, {
+				message: 'Neue Fahrzeug-id stimmt mit alter überein.'
 			});
 		}
 		const newVehicle = await trx
@@ -175,6 +182,14 @@ export const POST = async (event) => {
 				wheelchairs,
 				change: TourChange.MOVED
 			});
+
+			await updateDirectDurations(
+				movedTour.vehicle,
+				movedTour.id,
+				movedTour.departure,
+				trx,
+				vehicleId
+			);
 		}
 	});
 	return json({});

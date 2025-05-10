@@ -9,6 +9,7 @@ import { lockTablesStatement } from '$lib/server/db/lockTables';
 import { sendNotifications } from '$lib/server/firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
+import { updateDirectDurations } from '$lib/server/booking/updateDirectDuration';
 
 export const POST = async (event: RequestEvent) => {
 	const company = event.locals.session!.companyId;
@@ -31,6 +32,8 @@ export const POST = async (event: RequestEvent) => {
 			.select((eb) => [
 				'tour.fare',
 				'tour.vehicle',
+				'tour.id',
+				'tour.departure',
 				jsonArrayFrom(
 					eb
 						.selectFrom('request')
@@ -76,6 +79,7 @@ export const POST = async (event: RequestEvent) => {
 			});
 		}
 		await sql`CALL cancel_tour(${p.tourId}, ${company}, ${p.message})`.execute(trx);
+		await updateDirectDurations(tour.vehicle, tour.id, tour.departure, trx);
 		console.assert(tour.requests.length != 0, 'Found a tour with no requests');
 		for (const request of tour.requests) {
 			console.assert(request.events.length != 0, 'Found a request with no events');
