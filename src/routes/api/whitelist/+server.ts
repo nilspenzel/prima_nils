@@ -3,11 +3,11 @@ import { Validator } from 'jsonschema';
 import { json } from '@sveltejs/kit';
 import { whitelist } from './whitelist';
 import {
-	schemaDefinitions,
 	toWhitelistRequestWithISOStrings,
 	whitelistSchema,
 	type WhitelistRequest
 } from './WhitelistRequest';
+import { schemaDefinitions } from '$lib/server/booking/jsonSchemaDefinitions';
 import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
 import { assertArraySizes } from '$lib/testHelpers';
 
@@ -15,6 +15,7 @@ export type WhitelistResponse = {
 	start: (Insertion | undefined)[][];
 	target: (Insertion | undefined)[][];
 	direct: (Insertion | undefined)[];
+	uuid?: string;
 };
 
 export async function POST(event: RequestEvent) {
@@ -45,8 +46,8 @@ export async function POST(event: RequestEvent) {
 		}
 	}
 	let [start, target] = await Promise.all([
-		whitelist(p.start, p.startBusStops, p.capacities, false),
-		whitelist(p.target, p.targetBusStops, p.capacities, true)
+		whitelist(p.start, p.startBusStops, p.capacities, false, p.uuid),
+		whitelist(p.target, p.targetBusStops, p.capacities, true, p.uuid)
 	]);
 
 	assertArraySizes(start, p.startBusStops, 'Whitelist', false);
@@ -69,7 +70,8 @@ export async function POST(event: RequestEvent) {
 	const response: WhitelistResponse = {
 		start,
 		target,
-		direct
+		direct,
+		...(p.uuid !== undefined && { uuid: p.uuid })
 	};
 	console.log(
 		'WHITELIST RESPONSE: ',

@@ -12,7 +12,8 @@ export async function whitelist(
 	userChosen: Coordinates,
 	busStops: BusStop[],
 	required: Capacities,
-	startFixed: boolean
+	startFixed: boolean,
+	uuid?: string
 ): Promise<Array<(Insertion | undefined)[]>> {
 	console.log(
 		'Whitelist Request: ',
@@ -46,9 +47,10 @@ export async function whitelist(
 		}
 	}
 
-	console.log('BUS STOPS', JSON.stringify(busStops));
+	console.log('BUS STOPS ', uuid === undefined ? '' : { uuid } + ' ', JSON.stringify(busStops));
 	console.log(
-		'INTERVAL',
+		'INTERVAL ',
+		uuid === undefined ? '' : { uuid } + ' ',
 		JSON.stringify({
 			firstTime: new Date(firstTime).toISOString(),
 			lastTime: new Date(lastTime).toISOString()
@@ -66,6 +68,7 @@ export async function whitelist(
 	);
 	console.log(
 		'Whitelist Request: getBookingAvailability results\n',
+		uuid === undefined ? '' : { uuid } + ' \n',
 		JSON.stringify(
 			{
 				searchInterval: searchInterval.toString(),
