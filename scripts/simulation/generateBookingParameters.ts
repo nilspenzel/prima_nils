@@ -28,7 +28,8 @@ function generateExpectedConnection(coordinates: Coordinates[]): ExpectedConnect
 		target: { ...coordinates[r2], address: 'generated' },
 		startTime: rt1,
 		targetTime: rt2,
-		signature: ''
+		signature: '',
+		startFixed: Math.random() < 0.5
 	};
 }
 
