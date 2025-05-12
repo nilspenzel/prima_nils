@@ -1,4 +1,4 @@
-import type { Capacities } from '$lib/server/booking/Capacities';
+import type { Capacities } from '$lib/util/booking/Capacities';
 import type { Coordinates } from '$lib/util/Coordinates';
 
 export type BlacklistRequest = {

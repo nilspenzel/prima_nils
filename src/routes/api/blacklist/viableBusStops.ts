@@ -3,7 +3,7 @@ import { db } from '$lib/server/db';
 import { covers } from '$lib/server/db/covers';
 import { sql } from 'kysely';
 import type { Coordinates } from '$lib/util/Coordinates';
-import type { Capacities } from '$lib/server/booking/Capacities';
+import type { Capacities } from '$lib/util/booking/Capacities';
 import { Interval } from '$lib/util/interval';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
