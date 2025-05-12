@@ -63,7 +63,11 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 			});
 			return;
 		}
-		await sql`CALL cancel_request(${requestId}, ${userId}, ${Date.now()})`.execute(trx);
+		const queryResult = await sql<{
+			wastourcancelled: boolean;
+		}>`SELECT cancel_request(${requestId}, ${userId}, ${Date.now()}) AS wasTourCancelled`.execute(
+			trx
+		);
 		const tourInfo = await trx
 			.selectFrom('request as cancelled_request')
 			.where('cancelled_request.id', '=', requestId)
@@ -102,7 +106,13 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 						.innerJoin('user', 'user.companyId', 'company.id')
 						.where('request.id', '=', requestId)
 						.where('user.isTaxiOwner', '=', true)
-						.select(['user.name', 'user.email', 'company.lat', 'company.lng', 'company.id as companyId'])
+						.select([
+							'user.name',
+							'user.email',
+							'company.lat',
+							'company.lng',
+							'company.id as companyId'
+						])
 				).as('companyOwners')
 			])
 			.executeTakeFirst();
@@ -113,15 +123,6 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 			);
 			return;
 		}
-		if (tourInfo.ticketChecked === true) {
-			return;
-		}
-		const queryResult = await sql<{
-			wastourcancelled: boolean;
-		}>`SELECT cancel_request(${requestId}, ${userId}, ${Date.now()}) AS wasTourCancelled`.execute(
-			trx
-		);
-		console.log({ queryResult }, { q: queryResult.rows[0].wastourcancelled });
 		console.assert(queryResult.rows.length === 1);
 		if (queryResult.rows[0].wastourcancelled) {
 			await updateDirectDurations(tourInfo.vehicle, tourInfo.id, tourInfo.departure, trx);
