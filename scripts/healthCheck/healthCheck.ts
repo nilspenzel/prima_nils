@@ -206,7 +206,7 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 		(t) => t.vehicleId,
 		(t) => t
 	);
-	for (const companyTours of uncancelledTours) {
+	for (const [_, companyTours] of uncancelledTours) {
 		for (let tourIdx = 1; tourIdx != companyTours.length; tourIdx++) {
 			const earlierTour = companyTours[tourIdx - 1];
 			const laterTour = companyTours[tourIdx];

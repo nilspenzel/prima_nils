@@ -137,7 +137,8 @@ export const getToursWithRequests = async (
 									'request.passengers',
 									'request.ticketChecked',
 									'request.wheelchairs',
-									'request.id as requestId'
+									'request.id as requestId',
+									'request.cancelled as requestCancelled'
 								])
 								.select(sql<string>`md5(request.ticket_code)`.as('ticketHash'))
 								.orderBy('event.scheduledTimeStart')
