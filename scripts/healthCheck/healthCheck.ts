@@ -5,17 +5,9 @@ import { groupBy } from '../../src/lib/util/groupBy';
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
 	for (const tour of tours) {
-		const eventGroups: { [key: number]: TourWithRequestsEvent[] } = {};
-
-		for (const event of tour.requests.flatMap((r) => r.events)) {
-			if (!eventGroups[event.requestId]) {
-				eventGroups[event.requestId] = [];
-			}
-
-			eventGroups[event.requestId].push(event);
-		}
-
-		for (const [requestId, events] of Object.entries(eventGroups)) {
+		for (const request of tour.requests) {
+			const events = request.events;
+			const requestId = request.requestId;
 			if (events.length !== 2) {
 				console.log(
 					`Invalid tour: ${tour.tourId} - Request ID: ${requestId} does not have 2 events.`
