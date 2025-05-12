@@ -42,12 +42,10 @@ fun Vehicles(
     val vehicles by viewModel.vehicles.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val networkError by viewModel.networkError.collectAsState()
-    val navItems = emptyList<NavItem>()
 
     Scaffold(
         topBar = {
             TopBar(
-                null,
                 stringResource(id = R.string.vehicles_header),
                 true,
                 listOf(

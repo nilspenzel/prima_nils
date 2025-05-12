@@ -36,11 +36,13 @@ class ToursViewModel @Inject constructor(
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
-    private val _tourSelected = MutableSharedFlow<Unit>()
-    val tourSelected = _tourSelected.asSharedFlow()
-
-    val _showAll = MutableStateFlow(false)
+    private val _showAll = MutableStateFlow(false)
     val showAll: StateFlow<Boolean> = _showAll.asStateFlow()
+
+    private val _intentSeen = MutableStateFlow(false)
+    val intentSeen: StateFlow<Boolean> = _intentSeen.asStateFlow()
+
+    val markedTour: StateFlow<Int> = repository.markedTour
 
     init {
         startReporting()
@@ -131,5 +133,23 @@ class ToursViewModel @Inject constructor(
             res = "$rounded Euro"
         }
         return res
+    }
+
+    fun isCancelled(tourId: Int): Boolean {
+        return repository.isTourCancelled(tourId)
+    }
+
+    fun setShowAll(value: Boolean) {
+        _showAll.value = value
+    }
+
+    fun addMarker(tourId: Int) {
+        repository.addMarker(tourId)
+        _intentSeen.value = false
+    }
+
+    fun removeMarker() {
+        repository.removeMarker()
+        _intentSeen.value = true
     }
 }

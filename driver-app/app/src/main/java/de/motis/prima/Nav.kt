@@ -1,18 +1,15 @@
 package de.motis.prima
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -23,11 +20,21 @@ import de.motis.prima.viewmodel.SettingsViewModel
 @Composable
 fun Nav(intent: Intent?) {
     val navController = rememberNavController()
-    val settingsViewModel: SettingsViewModel = hiltViewModel()
     val loginViewModel: LoginViewModel = hiltViewModel()
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
+
     val selectedVehicle = settingsViewModel.selectedVehicle.collectAsState().value
-    val deviceInfo by loginViewModel.deviceInfo.collectAsState(DeviceInfo("", "", false))
     val loggedIn = loginViewModel.isLoggedIn()
+
+    var notifiedTourId = -1
+    intent?.let { safeIntent ->
+        runCatching {
+            val tourIdStr = safeIntent.getStringExtra("tourId")
+            tourIdStr?.let { safeTourIdStr ->
+                notifiedTourId = safeTourIdStr.toInt()
+            }
+        }
+    }
 
     if (selectedVehicle == null) {
         LoadingScreen()
@@ -35,17 +42,17 @@ fun Nav(intent: Intent?) {
         val startDestination = if (!loggedIn) {
             "login"
         } else {
-            if (selectedVehicle.id == 0) {
+            if (notifiedTourId != -1) {
+                "preview/${notifiedTourId}"
+            }
+            else if (selectedVehicle.id == 0) {
                 "vehicles"
             } else {
                 "tours"
             }
         }
 
-        if (intent != null) {
-            Log.d("intent", "Nav:  ${intent.getStringExtra("tourId")}")
-        }
-
+        val deviceInfo by loginViewModel.deviceInfo.collectAsState(DeviceInfo("", "", false))
         if (loggedIn && deviceInfo.tokenPending) {
             loginViewModel.sendDeviceInfo(deviceInfo.deviceId, deviceInfo.fcmToken)
         }
@@ -60,12 +67,7 @@ fun Nav(intent: Intent?) {
             }
 
             composable(route = "tours") {
-                Tours(navController)
-            }
-
-            composable(route = "test/{tourId}") {
-                val tourId = it.arguments?.getString("tourId")?.toInt()
-                Test(tourId!!)
+                Tours(navController, intent)
             }
 
             composable(route = "preview/{tourId}") {
@@ -96,12 +98,5 @@ fun Nav(intent: Intent?) {
 fun LoadingScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
-    }
-}
-
-@Composable
-fun Test(tourId: Int) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = tourId.toString())
     }
 }

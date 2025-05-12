@@ -1,5 +1,6 @@
 package de.motis.prima
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -62,16 +63,28 @@ import java.util.TimeZone
 @Composable
 fun Tours(
     navController: NavController,
+    intent: Intent?,
     viewModel: ToursViewModel = hiltViewModel()
 ) {
     val vehicle = viewModel.selectedVehicle.collectAsState()
     val toursToday by viewModel.toursCache.collectAsState()
     val toursDate by viewModel.toursForDate.collectAsState()
+    val intentSeen by viewModel.intentSeen.collectAsState()
+
+    intent?.let { safeIntent ->
+        runCatching {
+            val tourIdStr = safeIntent.getStringExtra("tourId")
+            if (!intentSeen) {
+                tourIdStr?.let { safeTourIdStr ->
+                    viewModel.addMarker(safeTourIdStr.toInt())
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
             TopBar(
-                "vehicles",
                 stringResource(id = R.string.tours_header),
                 true,
                 listOf(
@@ -131,14 +144,21 @@ fun Tours(
             val showAll by viewModel.showAll.collectAsState()
 
             var displayTours = toursToday
+
             if (networkError || displayDay != today) {
-                Log.d("test", "displayTours = toursDate")
                 displayTours = toursDate
             }
-            if (today == displayDay && !showAll) {
-                displayTours = toursToday.filter { t -> Date(t.endTime) > Date() }
-                displayTours = displayTours.sortedBy { t -> t.events[0].scheduledTimeStart }
+
+            if (displayDay == today && !showAll) {
+                displayTours = toursToday.filter { t ->
+                    !viewModel.isCancelled(t.tourId) && Date(t.endTime) > Date() }
             }
+
+            if (displayDay != today) {
+                displayTours = toursToday.filter { t -> !viewModel.isCancelled(t.tourId) }
+            }
+
+            displayTours = displayTours.sortedBy { t -> t.events[0].scheduledTimeStart }
 
             ShowTours(navController, displayTours)
         }
@@ -245,7 +265,7 @@ fun DateSelect(
         } else {
             Switch(
                 checked = !showAll,
-                onCheckedChange = { viewModel._showAll.value = !it }
+                onCheckedChange = { viewModel.setShowAll(!it) }
             )
             Text(
                 text = "Nur ausstehende",
@@ -282,6 +302,7 @@ fun ShowTours(
             }
         } else {
             val loading by viewModel.loading.collectAsState()
+            val markedTour by viewModel.markedTour.collectAsState()
 
             LazyColumn(
                 modifier = Modifier
@@ -293,6 +314,7 @@ fun ShowTours(
                         viewModel.updateEventGroups(tour.tourId)
                         if (!loading) {
                             navController.navigate("preview/${tour.tourId}")
+                            viewModel.removeMarker()
                         }
                     }) {
                         val city: String
@@ -321,13 +343,18 @@ fun ShowTours(
                             ""
                         }
 
+                        var cardColor = Color(234, 232, 235)
+                        if (markedTour == tour.tourId) {
+                            cardColor = Color(200, 255, 200)
+                        }
+
                         Card(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(10.dp)
                                 .wrapContentSize(),
-                            colors = CardColors(Color(234, 232, 235), Color.Black, Color.White, Color.White)
+                            colors = CardColors(cardColor, Color.Black, Color.White, Color.White)
                         ) {
                             Column(
                                 modifier = Modifier.padding(10.dp),
@@ -355,6 +382,23 @@ fun ShowTours(
                                         fontSize = 24.sp,
                                         textAlign = TextAlign.Center
                                     )
+                                }
+
+                                if (viewModel.isCancelled(tour.tourId)) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 12.dp),
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = "Storniert",
+                                            fontSize = 24.sp,
+                                            textAlign = TextAlign.Center,
+                                            color = Color.Red
+                                        )
+                                    }
                                 }
 
                                 val now = Date()
