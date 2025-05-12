@@ -183,5 +183,8 @@ export async function moveTour(
 			});
 		}
 	});
+	if (result !== undefined) {
+		return result;
+	}
 	return { status: 200 };
 }
