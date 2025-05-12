@@ -17,7 +17,7 @@
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
 		"sim": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/simulation/script.ts",
-		"health": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/healthCheck.ts"
+		"health": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/healthCheck/script.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
