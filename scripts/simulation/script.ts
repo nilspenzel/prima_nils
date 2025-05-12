@@ -121,7 +121,8 @@ async function booking(coordinates: Coordinates[]) {
 		true,
 		kidsThreeToFour,
 		kidsThreeToFour,
-		kidsFiveToSix
+		kidsFiveToSix,
+		true
 	);
 	console.log(response.status === 200 ? 'succesful booking' : 'failed to book');
 }
