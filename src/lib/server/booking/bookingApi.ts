@@ -67,7 +67,7 @@ export async function bookingApi(
 		let firstConnection = undefined;
 		let secondConnection = undefined;
 		if (p.connection1 != null) {
-			firstConnection = await bookRide(p.connection1, p.capacities, false, trx, skipPromiseCheck);
+			firstConnection = await bookRide(p.connection1, p.capacities, trx, skipPromiseCheck);
 			if (firstConnection == undefined) {
 				message = 'Die Anfrage für die erste Meile kann nicht erfüllt werden.';
 				return;
@@ -81,7 +81,6 @@ export async function bookingApi(
 			secondConnection = await bookRide(
 				p.connection2,
 				p.capacities,
-				true,
 				trx,
 				skipPromiseCheck,
 				blockedVehicleId
