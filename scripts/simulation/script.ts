@@ -17,6 +17,7 @@ import * as fs from 'fs';
 import * as readline from 'readline';
 import { DAY } from '../../src/lib/util/time';
 import { healthCheck } from '../healthCheck/healthCheck';
+import { logHelp } from './logHelp';
 
 enum Action {
 	BOOKING,
@@ -109,8 +110,8 @@ const getAction = (r: number) => {
 	return undefined;
 };
 
-async function booking(coordinates: Coordinates[]) {
-	const parameters = generateBookingParameters(coordinates);
+async function booking(coordinates: Coordinates[], restricted: Coordinates[] | undefined) {
+	const parameters = await generateBookingParameters(coordinates, restricted);
 	const potentialKids = parameters.capacities.passengers - 1;
 	const kidsZeroToTwo = randomInt(0, potentialKids);
 	const kidsThreeToFour = randomInt(0, potentialKids - kidsZeroToTwo);
@@ -176,7 +177,7 @@ async function main() {
 		console.log('Chose:', action.text);
 		switch (action.action) {
 			case Action.BOOKING:
-				await booking(coordinates);
+				await booking(coordinates, restrictedCoordinates);
 				break;
 			case Action.CANCEL_REQUEST:
 				await cancelRequestLocal();
@@ -215,11 +216,14 @@ async function main() {
 	let finishTime: number | undefined = undefined;
 	let ongoing = false;
 	let help = false;
+	let restrict = false;
 
 	for (const arg of process.argv) {
 		if (arg === '--health') {
 			healthChecks = true;
-		} else if (arg.startsWith('--runs=')) {
+		} if (arg === '--restrict') {
+			restrict = true;	
+		} if (arg.startsWith('--runs=')) {
 			const value = parseInt(arg.split('=')[1], 10);
 			if (isNaN(value) || value <= 0) {
 				console.error('Invalid value for --runs. Must be a positive integer.');
@@ -240,50 +244,15 @@ async function main() {
 		}
 	}
 	if (help) {
-		console.log('This script simulates possible user actions in the motis-prima-project.');
-		console.log(
-			'The script will NOT create any companies or vehicles. It will however set all relevant availabilities at the start of the script.'
-		);
-		console.log(
-			'You can adjust the probability of choosing each available action in /scripts/simulation/script.ts. Look for actionProbabilities to do so'
-		);
-		console.log('The following is a list of currently available simulated user actions:');
-		console.log(
-			'bookRide:   attempts to book a taxi, you can adjust the random parameters in /scripts/simulation/generateBookingParameters.ts'
-		);
-		console.log(
-			'cancelTour: if there is at least one uncancelled tour, choose a random uncancelled tour and cancel it'
-		);
-		console.log();
-		console.log('The script accepts the following flags:');
-		console.log(
-			'--health: performs some necessary checks for the database state to be healthy after each simulation action. Will stop if any errors are found. Be aware: the checks take a lot longer than the simulation actions.'
-		);
-		console.log('--runs=x: Sets the amount of simulation actions to perform');
-		console.log('--second=x: Sets the amount of seconds after which the script is terminated');
-		console.log(
-			'--ongoing: Will run the script indefinitely (or if the health flag is set until there is an error)'
-		);
-		console.log();
-		console.log(
-			'If you set more than one of the three flags runs/seconds/ongoing only one of these will be considered with the importance order being ongoing>seconds>runs'
-		);
-		console.log(
-			'If none of these three flags is chosen, the scripts will only perform one simulation action'
-		);
-		console.log();
-		console.log(
-			'The lat/lng-pairs used for the bookRide simulation action are derived as follows:'
-		);
-		console.log(
-			'Take the set of all lat/lng-pairs of an osm.pbf file, restrict to those points inside of the Weisswasser multipolygon,'
-		);
-		console.log(
-			'divide the multipolygon into squares with fixed side length, randomly choose at most one lat/lng-pair from each such square'
-		);
+		logHelp();
 		process.exit(0);
 	}
 	const coordinates = await readCoordinates();
+	const maxLat = 51.54675239279669;
+	const minLat = 51.52743007431573;
+	const maxLng = 14.540862766349306;
+	const minLng = 14.511228293715078;
+	const restrictedCoordinates = restrict ? coordinates.filter((c) => c.lat <= maxLat && c.lat >= minLat && c.lng <= maxLng && c.lng >= minLng) : undefined;
 	await addInitialAvailabilities(1, 1);
 	await addInitialAvailabilities(1, 2);
 	const chosen = Array.from({ length: actionProbabilities.length }, (_) => 0);
