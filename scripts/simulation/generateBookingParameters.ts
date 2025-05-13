@@ -5,9 +5,11 @@ import { type Coordinates } from '../../src/lib/util/Coordinates';
 import { HOUR, MINUTE, DAY } from '../../src/lib/util/time';
 import { randomInt } from './randomInt';
 import { reverseGeo } from '../../src/lib/server/util/reverseGeocode';
-import { QuerySerializerOptions } from '@hey-api/client-fetch';
 
-export async function generateBookingParameters(coordinates: Coordinates[], restricted: Coordinates[] | undefined): Promise<BookingParameters> {
+export async function generateBookingParameters(
+	coordinates: Coordinates[],
+	restricted: Coordinates[] | undefined
+): Promise<BookingParameters> {
 	return {
 		connection1: await generateExpectedConnection(coordinates, restricted),
 		connection2: null,
@@ -15,7 +17,10 @@ export async function generateBookingParameters(coordinates: Coordinates[], rest
 	};
 }
 
-async function generateExpectedConnection(coordinates: Coordinates[], restricted: Coordinates[] | undefined): Promise<ExpectedConnection> {
+async function generateExpectedConnection(
+	coordinates: Coordinates[],
+	restricted: Coordinates[] | undefined
+): Promise<ExpectedConnection> {
 	const chosenCoordinates = restricted ? restricted : coordinates;
 	const r1 = randomInt(0, chosenCoordinates.length);
 	const c1 = chosenCoordinates[r1];
@@ -31,8 +36,8 @@ async function generateExpectedConnection(coordinates: Coordinates[], restricted
 	const rt2 = randomInt(rt1 + 15 * MINUTE, rt1 + HOUR);
 
 	const r1IsStart = Math.random() < 0.5;
-	const loc1 = {...c1, address: a1};
-	const loc2 = {...c2, address: a2};
+	const loc1 = { ...c1, address: a1 };
+	const loc2 = { ...c2, address: a2 };
 
 	return {
 		start: r1IsStart ? loc1 : loc2,

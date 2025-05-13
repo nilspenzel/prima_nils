@@ -129,7 +129,11 @@ async function booking(coordinates: Coordinates[], restricted: Coordinates[] | u
 }
 
 async function cancelRequestLocal() {
-	const requests = (await getToursWithRequests(false)).flatMap((t) => t.requests.map((r)=> {return{...t, ...r}}));
+	const requests = (await getToursWithRequests(false)).flatMap((t) =>
+		t.requests.map((r) => {
+			return { ...t, ...r };
+		})
+	);
 	if (requests.length === 0) {
 		return;
 	}
@@ -221,9 +225,11 @@ async function main() {
 	for (const arg of process.argv) {
 		if (arg === '--health') {
 			healthChecks = true;
-		} if (arg === '--restrict') {
-			restrict = true;	
-		} if (arg.startsWith('--runs=')) {
+		}
+		if (arg === '--restrict') {
+			restrict = true;
+		}
+		if (arg.startsWith('--runs=')) {
 			const value = parseInt(arg.split('=')[1], 10);
 			if (isNaN(value) || value <= 0) {
 				console.error('Invalid value for --runs. Must be a positive integer.');
@@ -252,7 +258,11 @@ async function main() {
 	const minLat = 51.52743007431573;
 	const maxLng = 14.540862766349306;
 	const minLng = 14.511228293715078;
-	const restrictedCoordinates = restrict ? coordinates.filter((c) => c.lat <= maxLat && c.lat >= minLat && c.lng <= maxLng && c.lng >= minLng) : undefined;
+	const restrictedCoordinates = restrict
+		? coordinates.filter(
+				(c) => c.lat <= maxLat && c.lat >= minLat && c.lng <= maxLng && c.lng >= minLng
+			)
+		: undefined;
 	await addInitialAvailabilities(1, 1);
 	await addInitialAvailabilities(1, 2);
 	const chosen = Array.from({ length: actionProbabilities.length }, (_) => 0);
