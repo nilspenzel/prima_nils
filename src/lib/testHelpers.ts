@@ -192,6 +192,8 @@ export const selectEvents = async () => {
 			'request.id as requestid',
 			'tour.id as tourid',
 			'event.cancelled as ec',
+			'event.nextLegDuration',
+			'event.prevLegDuration',
 			'request.cancelled as rc',
 			'tour.cancelled as tc',
 			'tour.message'
