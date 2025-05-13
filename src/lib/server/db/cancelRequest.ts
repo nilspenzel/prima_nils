@@ -127,7 +127,7 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 		if (queryResult.rows[0].wastourcancelled) {
 			await updateDirectDurations(tourInfo.vehicle, tourInfo.id, tourInfo.departure, trx);
 		} else {
-			updateLegDurations(
+			await updateLegDurations(
 				tourInfo.events,
 				{ lat: tourInfo.companyOwners[0].lat!, lng: tourInfo.companyOwners[0].lng! },
 				requestId,
@@ -203,7 +203,7 @@ async function updateLegDurations(
 			console.log({ routingResult });
 			if (
 				routingResult === undefined ||
-				routingResult.length != 0 ||
+				routingResult.length === 0 ||
 				routingResult[0] === undefined
 			) {
 				console.log(
@@ -223,7 +223,7 @@ async function updateLegDurations(
 			console.log({ routingResult });
 			if (
 				routingResult === undefined ||
-				routingResult.length != 0 ||
+				routingResult.length === 0 ||
 				routingResult[0] === undefined
 			) {
 				console.log(
@@ -247,7 +247,7 @@ async function updateLegDurations(
 		console.log({ routingResult });
 		if (
 			routingResult === undefined ||
-			routingResult.length != 0 ||
+			routingResult.length === 0 ||
 			routingResult[0] === undefined
 		) {
 			console.log(
@@ -268,13 +268,17 @@ async function updateLegDurations(
 	};
 
 	events.filter((e) => e.requestid === requestId || e.cancelled === false);
-	events.sort((e) => e.scheduledTimeStart);
+	events.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 	const cancelled1Idx = events.findIndex((e) => e.requestid === requestId);
 	const cancelled2Idx = events.findLastIndex((e) => e.requestid === requestId);
-	console.assert(cancelled1Idx != -1 && cancelled2Idx != -1 && cancelled1Idx < cancelled2Idx);
+	console.assert(
+		cancelled1Idx != -1 && cancelled2Idx != -1 && cancelled1Idx < cancelled2Idx,
+		'Invalid cancelledIdx in cancelRequest.ts',
+		{ cancelled1Idx },
+		{ cancelled2Idx }
+	);
 	if (cancelled1Idx === cancelled2Idx - 1) {
 		await update(cancelled1Idx - 1, cancelled2Idx + 1, events, company, trx);
-
 		return;
 	}
 	await update(cancelled1Idx - 1, cancelled1Idx + 1, events, company, trx);
