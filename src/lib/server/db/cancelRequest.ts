@@ -199,7 +199,7 @@ async function updateLegDurations(
 		trx: Transaction<Database>
 	) => {
 		if (prevIdx === -1) {
-			const routingResult = await oneToManyCarRouting(events[nextIdx], [company], false, HOUR * 10);
+			const routingResult = await oneToManyCarRouting(company, [events[nextIdx]], false, HOUR * 10);
 			console.log({ routingResult });
 			if (
 				routingResult === undefined ||
@@ -233,12 +233,17 @@ async function updateLegDurations(
 			}
 			await trx
 				.updateTable('event')
-				.set({ nextLegDuration: (await oneToManyCarRouting(company, [events[prevIdx]], false))[0] })
+				.set({ nextLegDuration: routingResult[0] })
 				.where('event.id', '=', events[prevIdx].eventid)
 				.executeTakeFirst();
 			return;
 		}
-		const routingResult = await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false, HOUR * 10);
+		const routingResult = await oneToManyCarRouting(
+			events[prevIdx],
+			[events[nextIdx]],
+			false,
+			HOUR * 10
+		);
 		console.log({ routingResult });
 		if (
 			routingResult === undefined ||

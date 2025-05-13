@@ -198,7 +198,7 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 		(t) => t.vehicleId,
 		(t) => t
 	);
-	for (let [_, companyTours] of uncancelledTours) {
+	for (const [_, companyTours] of uncancelledTours) {
 		for (let tourIdx = 1; tourIdx != companyTours.length; tourIdx++) {
 			const earlierTour = companyTours[tourIdx - 1];
 			const laterTour = companyTours[tourIdx];
@@ -280,7 +280,9 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			);
 			if (
 				expectedDuration !== null &&
-				expectedDuration + 58 > earlierEvent.nextLegDuration / 1000 && expectedDuration2 !== null && expectedDuration2 + 58 > earlierEvent.nextLegDuration / 1000
+				expectedDuration + 58 > earlierEvent.nextLegDuration / 1000 &&
+				expectedDuration2 !== null &&
+				expectedDuration2 + 58 > earlierEvent.nextLegDuration / 1000
 			) {
 				console.log(`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \
               Expected ${expectedDuration + 60} seconds, Found ${earlierEvent.nextLegDuration / 1000} seconds`);
@@ -289,7 +291,12 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			const earlierEventStart = earlierEvent.scheduledTimeStart;
 			const laterEventEnd = laterEvent.scheduledTimeEnd;
 			const timeDiff = (laterEventEnd - earlierEventStart) / 1000;
-			if (expectedDuration !== null && timeDiff < expectedDuration + 58 && expectedDuration2 !== null && timeDiff < expectedDuration2 + 58) {
+			if (
+				expectedDuration !== null &&
+				timeDiff < expectedDuration + 58 &&
+				expectedDuration2 !== null &&
+				timeDiff < expectedDuration2 + 58
+			) {
 				console.log(
 					`Time difference expected duration ${expectedDuration + 58} seconds exceeds difference in event times ${timeDiff} seconds for event_id ${earlierEvent.id} and event_id ${laterEvent.id}`
 				);
