@@ -192,5 +192,5 @@ export async function moveTour(
 			);
 		}
 	});
-	return { status: 200 };
+	return result ?? { status: 200 };
 }

@@ -31,9 +31,7 @@ export function logHelp() {
 		'If none of these three flags is chosen, the scripts will only perform one simulation action'
 	);
 	console.log();
-	console.log(
-		'The lat/lng-pairs used for the bookRide simulation action are derived as follows:'
-	);
+	console.log('The lat/lng-pairs used for the bookRide simulation action are derived as follows:');
 	console.log(
 		'Take the set of all lat/lng-pairs of an osm.pbf file, restrict to those points inside of the Weisswasser multipolygon,'
 	);
