@@ -438,7 +438,7 @@ describe('Whitelist and Booking API Tests', () => {
 			target: inNiesky1,
 			startBusStops: [],
 			targetBusStops: [],
-			directTimes: [inXMinutes(75)],
+			directTimes: [inXMinutes(80)],
 			startFixed: false,
 			capacities
 		});
@@ -490,8 +490,19 @@ describe('Whitelist and Booking API Tests', () => {
 		const tours3 = await getTours();
 		expect(tours3.length).toBe(1);
 		expect(tours3[0].requests.length).toBe(3);
-
-		//doWhitelistTimesMatchBooking(whiteResponse3.direct[0]!, tours3);
+		const events = tours3
+			.flatMap((t) => t.requests.flatMap((r) => r.events))
+			.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+		const newEvents = tours3
+			.flatMap((t) => t.requests.flatMap((r) => r.events))
+			.sort((e1, e2) => e2.id - e1.id)
+			.slice(0, 2);
+		const idx1 = events.findIndex((e) => e.id === newEvents[0].id);
+		const idx2 = events.findIndex((e) => e.id === newEvents[1].id);
+		const diff = Math.abs(idx1 - idx2);
+		expect(idx1).not.toBe(-1);
+		expect(idx2).not.toBe(-1);
+		expect(diff).toBeGreaterThan(1);
 	});
 
 	it('invalid signature', async () => {
