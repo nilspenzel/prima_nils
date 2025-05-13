@@ -200,6 +200,7 @@ async function updateLegDurations(
 	) => {
 		if (prevIdx === -1) {
 			const routingResult = await oneToManyCarRouting(events[nextIdx], [company], false, HOUR * 10);
+			console.log({ routingResult });
 			if (
 				routingResult === undefined ||
 				routingResult.length != 0 ||
@@ -210,7 +211,6 @@ async function updateLegDurations(
 				);
 				return;
 			}
-			console.log({ routingResult });
 			await trx
 				.updateTable('event')
 				.set({ prevLegDuration: routingResult[0] })
@@ -219,7 +219,8 @@ async function updateLegDurations(
 			return;
 		}
 		if (nextIdx === events.length) {
-			const routingResult = await oneToManyCarRouting(events[nextIdx], [company], false, HOUR * 10);
+			const routingResult = await oneToManyCarRouting(events[prevIdx], [company], false, HOUR * 10);
+			console.log({ routingResult });
 			if (
 				routingResult === undefined ||
 				routingResult.length != 0 ||
@@ -237,10 +238,8 @@ async function updateLegDurations(
 				.executeTakeFirst();
 			return;
 		}
-		const duration = (
-			await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false, HOUR * 10)
-		)[0];
-		const routingResult = await oneToManyCarRouting(events[nextIdx], [company], false, HOUR * 10);
+		const routingResult = await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false, HOUR * 10);
+		console.log({ routingResult });
 		if (
 			routingResult === undefined ||
 			routingResult.length != 0 ||
@@ -253,12 +252,12 @@ async function updateLegDurations(
 		}
 		await trx
 			.updateTable('event')
-			.set({ nextLegDuration: duration })
+			.set({ nextLegDuration: routingResult[0] })
 			.where('event.id', '=', events[prevIdx].eventid)
 			.executeTakeFirst();
 		await trx
 			.updateTable('event')
-			.set({ prevLegDuration: duration })
+			.set({ prevLegDuration: routingResult[0] })
 			.where('event.id', '=', events[nextIdx].eventid)
 			.executeTakeFirst();
 	};
@@ -270,6 +269,7 @@ async function updateLegDurations(
 	console.assert(cancelled1Idx != -1 && cancelled2Idx != -1 && cancelled1Idx < cancelled2Idx);
 	if (cancelled1Idx === cancelled2Idx - 1) {
 		await update(cancelled1Idx - 1, cancelled2Idx + 1, events, company, trx);
+
 		return;
 	}
 	await update(cancelled1Idx - 1, cancelled1Idx + 1, events, company, trx);
