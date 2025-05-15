@@ -222,13 +222,14 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 					laterTourStart - earlierTourEnd <= 3 * 3600 * 1000
 				) {
 					const expectedDuration = await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng);
-					if (expectedDuration === null) {
+					const expectedDuration2 = await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true);
+					if (expectedDuration === null || expectedDuration2 === null) {
 						console.log(
 							`Found unexpected null in direct Duration for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}`
 						);
 						fail = true;
 					}
-					if (laterTour.directDuration === null || laterTour.directDuration === undefined) {
+					if (!laterTour.directDuration) {
 						console.log(
 							`direct duration is null unexpectedly for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}`
 						);
@@ -236,10 +237,11 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 					} else {
 						if (
 							expectedDuration !== null &&
-							Math.abs(expectedDuration - laterTour.directDuration / 1000) > 5
+							Math.abs(expectedDuration - laterTour.directDuration / 1000) > 2 &&
+							Math.abs(expectedDuration2! - laterTour.directDuration / 1000) > 2
 						) {
 							console.log(`Direct duration mismatch for earlier tour ${earlierTour.tourId} and later tour ${laterTour.tourId}: \
-                  Expected ${expectedDuration} seconds, Found ${laterTour.directDuration / 1000} seconds`);
+                  Expected ${expectedDuration} or ${expectedDuration2} seconds, Found ${laterTour.directDuration / 1000} seconds`);
 							fail = true;
 						}
 					}
@@ -285,7 +287,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				expectedDuration2 + 58 > earlierEvent.nextLegDuration / 1000
 			) {
 				console.log(`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \
-              Expected ${expectedDuration + 60} seconds, Found ${earlierEvent.nextLegDuration / 1000} seconds`);
+              Expected ${expectedDuration + 60} or ${expectedDuration2 + 60} seconds, Found ${earlierEvent.nextLegDuration / 1000} seconds`);
 				fail = true;
 			}
 			const earlierEventStart = earlierEvent.scheduledTimeStart;
@@ -366,14 +368,14 @@ export async function healthCheck() {
 	let fail = false;
 	if (tours) {
 		console.log('Validating tours...');
-		fail = fail ? fail : validateRequestHas2Events(tours);
-		fail = fail ? fail : validateRequestsWithNoEvents(tours);
-		fail = fail ? fail : validateTourAndRequestCancelled(tours);
-		fail = fail ? fail : validateEventParameters(tours);
-		fail = fail ? fail : validateEventTimeNoOverlap(tours);
-		fail = fail ? fail : await validateDirectDurations(tours);
-		fail = fail ? fail : await validateLegDurations(tours);
-		fail = fail ? fail : await validateCompanyDurations(tours);
+		fail = validateRequestHas2Events(tours) ? true : fail;
+		fail = validateRequestsWithNoEvents(tours) ? true : fail;
+		fail = validateTourAndRequestCancelled(tours) ? true : fail;
+		fail = validateEventParameters(tours) ? true : fail;
+		fail = validateEventTimeNoOverlap(tours) ? true : fail;
+		fail = (await validateDirectDurations(tours)) ? true : fail;
+		fail = (await validateLegDurations(tours)) ? true : fail;
+		fail = (await validateCompanyDurations(tours)) ? true : fail;
 	} else {
 		console.log('No tours found or there was an error fetching the data.');
 	}
