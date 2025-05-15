@@ -1,6 +1,6 @@
 import type { Transaction } from 'kysely';
 import { type Database } from '$lib/server/db';
-import { jsonArrayFrom } from 'kysely/helpers/postgres';
+import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/postgres';
 import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 
 export async function updateDirectDurations(
@@ -19,47 +19,31 @@ export async function updateDirectDurations(
 		.where('vehicle.id', 'in', vehicleIds)
 		.select((eb) => [
 			'vehicle.id',
-			jsonArrayFrom(
+			jsonObjectFrom(
 				eb
 					.selectFrom('tour')
+					.innerJoin('request', 'request.tour', 'tour.id')
+					.innerJoin('event', 'event.request', 'request.id')
 					.whereRef('tour.vehicle', '=', 'vehicle.id')
 					.where('tour.cancelled', '=', false)
 					.where('tour.departure', '<=', departure)
-					.orderBy('tour.departure', 'asc')
+					.orderBy('tour.departure', 'desc')
+					.orderBy('event.scheduledTimeEnd', 'desc')
 					.limit(1)
-					.select((eb) => [
-						jsonArrayFrom(
-							eb
-								.selectFrom('request')
-								.innerJoin('event', 'event.request', 'request.id')
-								.where('request.cancelled', '=', false)
-								.whereRef('request.tour', '=', 'tour.id')
-								.orderBy('event.scheduledTimeEnd', 'desc')
-								.limit(1)
-								.select(['event.lat', 'event.lng', 'request.tour', 'event.scheduledTimeStart'])
-						).as('events')
-					])
+					.select(['event.lat', 'event.lng', 'request.tour', 'event.scheduledTimeStart'])
 			).as('prevtour'),
-			jsonArrayFrom(
+			jsonObjectFrom(
 				eb
 					.selectFrom('tour')
+					.innerJoin('request', 'request.tour', 'tour.id')
+					.innerJoin('event', 'event.request', 'request.id')
 					.whereRef('tour.vehicle', '=', 'vehicle.id')
 					.where('tour.cancelled', '=', false)
 					.where('tour.departure', '>', departure)
 					.orderBy('tour.departure', 'asc')
+					.orderBy('event.scheduledTimeEnd', 'asc')
 					.limit(1)
-					.select((eb) => [
-						jsonArrayFrom(
-							eb
-								.selectFrom('request')
-								.innerJoin('event', 'event.request', 'request.id')
-								.where('request.cancelled', '=', false)
-								.whereRef('request.tour', '=', 'tour.id')
-								.orderBy('event.scheduledTimeEnd', 'asc')
-								.limit(1)
-								.select(['event.lat', 'event.lng', 'request.tour', 'event.scheduledTimeStart'])
-						).as('events')
-					])
+					.select(['event.lat', 'event.lng', 'request.tour', 'event.scheduledTimeStart'])
 			).as('nexttour'),
 			jsonArrayFrom(
 				eb
@@ -81,30 +65,15 @@ export async function updateDirectDurations(
 		.execute();
 
 	const oldVehicle = vehicles[0].id === oldVehicleId ? vehicles[0] : vehicles[1];
-	if (
-		oldVehicle?.nexttour &&
-		oldVehicle.nexttour.length != 0 &&
-		oldVehicle.nexttour[0]?.events &&
-		oldVehicle.nexttour[0].events.length != 0
-	) {
+	if (oldVehicle.nexttour) {
 		await trx
 			.updateTable('tour')
 			.set({
-				directDuration:
-					oldVehicle?.prevtour &&
-					oldVehicle.prevtour.length != 0 &&
-					oldVehicle.prevtour[0]?.events &&
-					oldVehicle.prevtour[0].events.length != 0
-						? (
-								await oneToManyCarRouting(
-									oldVehicle.prevtour[0].events[0],
-									[oldVehicle.nexttour[0].events[0]],
-									false
-								)
-							)[0]
-						: null
+				directDuration: oldVehicle?.prevtour
+					? (await oneToManyCarRouting(oldVehicle.prevtour, [oldVehicle.nexttour], false))[0]
+					: null
 			})
-			.where('id', '=', oldVehicle.nexttour[0].events[0].tour)
+			.where('id', '=', oldVehicle.nexttour.tour)
 			.executeTakeFirst();
 	}
 
@@ -116,23 +85,22 @@ export async function updateDirectDurations(
 			.updateTable('tour')
 			.set({
 				directDuration:
-					newVehicle.prevtour != null && newVehicle.prevtour.length != 0
-						? (await oneToManyCarRouting(newVehicle.prevtour[0].events[0], [events[0]], false))[0]
+					newVehicle.prevtour != null
+						? (await oneToManyCarRouting(newVehicle.prevtour, [events[0]], false))[0]
 						: null
 			})
 			.where('id', '=', tourId)
 			.executeTakeFirst();
 
-		if (newVehicle.nexttour && newVehicle.nexttour.length != 0) {
+		if (newVehicle.nexttour) {
 			await trx
 				.updateTable('tour')
 				.set({
-					directDuration:
-						newVehicle.prevtour && newVehicle.prevtour.length != 0
-							? (await oneToManyCarRouting(events[0], [newVehicle.nexttour[0].events[0]], false))[0]
-							: null
+					directDuration: newVehicle.prevtour
+						? (await oneToManyCarRouting(events[0], [newVehicle.nexttour], false))[0]
+						: null
 				})
-				.where('id', '=', newVehicle.nexttour[0].events[0].tour)
+				.where('id', '=', newVehicle.nexttour.tour)
 				.executeTakeFirst();
 		}
 	}
