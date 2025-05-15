@@ -9,31 +9,12 @@ import {
 } from '$lib/testHelpers';
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { COORDINATE_ROUNDING_ERROR_THRESHOLD } from '$lib/constants';
-import { createSession } from '../auth/session';
+import { createSession } from '$lib/server/auth/session';
 import { MINUTE, roundToUnit } from '$lib/util/time';
-import type { ExpectedConnection } from './bookRide';
-import { signEntry } from './signEntry';
-import { bookingApi } from './bookingApi';
-
-const black = async (body: string) => {
-	return await fetch('http://localhost:5173/api/blacklist', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		body
-	});
-};
-
-const white = async (body: string) => {
-	return await fetch('http://localhost:5173/api/whitelist', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		body
-	});
-};
+import type { ExpectedConnection } from '$lib/server/booking/bookRide';
+import { signEntry } from '$lib/server/booking/signEntry';
+import { bookingApi } from '$lib/server/booking/bookingApi';
+import { black, dateInXMinutes, inXMinutes, white } from '../util';
 
 let sessionToken: string;
 
@@ -48,9 +29,6 @@ const inNiesky1 = { lat: 51.29468377345111, lng: 14.833542206420248 };
 const inNiesky2 = { lat: 51.29544187321241, lng: 14.820560314788537 };
 const inNiesky3 = { lat: 51.294046423258095, lng: 14.820774891510126 };
 
-const BASE_DATE = new Date('2050-09-23T17:00Z').getTime();
-const dateInXMinutes = (x: number) => new Date(BASE_DATE + x * MINUTE);
-const inXMinutes = (x: number) => BASE_DATE + x * MINUTE;
 let mockUserId = -1;
 
 beforeAll(async () => {
@@ -397,113 +375,6 @@ describe('Whitelist and Booking API Tests', () => {
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
 	}, 30000);
-
-	it('create tour concetanation, where pickup and dropoff are not inserted between the same 2 events', async () => {
-		const company = await addCompany(Zone.NIESKY, inNiesky3);
-		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
-		await setAvailability(taxi, inXMinutes(0), inXMinutes(600));
-		const body = JSON.stringify({
-			start: inNiesky1,
-			target: inNiesky2,
-			startBusStops: [],
-			targetBusStops: [],
-			directTimes: [inXMinutes(70)],
-			startFixed: false,
-			capacities
-		});
-		const whiteResponse = await white(body).then((r) => r.json());
-		const connection1: ExpectedConnection = {
-			start: { ...inNiesky1, address: 'start address' },
-			target: { ...inNiesky2, address: 'target address' },
-			startTime: whiteResponse.direct[0].pickupTime,
-			targetTime: whiteResponse.direct[0].dropoffTime,
-			signature: '',
-			startFixed: false
-		};
-		const bookingBody = {
-			connection1,
-			connection2: null,
-			capacities
-		};
-
-		await bookingApi(bookingBody, mockUserId, true, 0, 0, 0, true);
-		const tours = await getTours();
-		expect(tours.length).toBe(1);
-		expect(tours[0].requests.length).toBe(1);
-
-		// Add an other request, which should be appended to the existing tour.
-		// The new requests start will be the last requests destination and as such some of the events will share the same eventgroup
-		const body2 = JSON.stringify({
-			start: inNiesky2,
-			target: inNiesky1,
-			startBusStops: [],
-			targetBusStops: [],
-			directTimes: [inXMinutes(80)],
-			startFixed: false,
-			capacities
-		});
-		const whiteResponse2 = await white(body2).then((r) => r.json());
-		const appendConnection: ExpectedConnection = {
-			start: { ...inNiesky2, address: 'start address' },
-			target: { ...inNiesky1, address: 'target address' },
-			startTime: whiteResponse2.direct[0].pickupTime,
-			targetTime: whiteResponse2.direct[0].dropoffTime,
-			signature: '',
-			startFixed: false
-		};
-		const bookingBodyAppend = {
-			connection1: appendConnection,
-			connection2: null,
-			capacities
-		};
-		await bookingApi(bookingBodyAppend, mockUserId, true, 0, 0, 0, true);
-		const tours2 = await getTours();
-		expect(tours2.length).toBe(1);
-		expect(tours2[0].requests.length).toBe(2);
-
-		// Add an other request, which should be appended to the existing tour.
-		// The new requests start will be the last requests destination and as such some of the events will share the same eventgroup
-		const body3 = JSON.stringify({
-			start: inNiesky1,
-			target: inNiesky2,
-			startBusStops: [],
-			targetBusStops: [],
-			directTimes: [inXMinutes(75)],
-			startFixed: false,
-			capacities
-		});
-		const whiteResponse3 = await white(body3).then((r) => r.json());
-		const appendConnection2: ExpectedConnection = {
-			start: { ...inNiesky1, address: 'start address' },
-			target: { ...inNiesky2, address: 'target address' },
-			startTime: whiteResponse3.direct[0]!.pickupTime,
-			targetTime: whiteResponse3.direct[0]!.dropoffTime,
-			signature: '',
-			startFixed: false
-		};
-		const bookingBodyAppend2 = {
-			connection1: appendConnection2,
-			connection2: null,
-			capacities
-		};
-		await bookingApi(bookingBodyAppend2, mockUserId, true, 0, 0, 0, true);
-		const tours3 = await getTours();
-		expect(tours3.length).toBe(1);
-		expect(tours3[0].requests.length).toBe(3);
-		const events = tours3
-			.flatMap((t) => t.requests.flatMap((r) => r.events))
-			.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
-		const newEvents = tours3
-			.flatMap((t) => t.requests.flatMap((r) => r.events))
-			.sort((e1, e2) => e2.id - e1.id)
-			.slice(0, 2);
-		const idx1 = events.findIndex((e) => e.id === newEvents[0].id);
-		const idx2 = events.findIndex((e) => e.id === newEvents[1].id);
-		const diff = Math.abs(idx1 - idx2);
-		expect(idx1).not.toBe(-1);
-		expect(idx2).not.toBe(-1);
-		expect(diff).toBeGreaterThan(1);
-	});
 
 	it('invalid signature', async () => {
 		const company = await addCompany(Zone.NIESKY, inNiesky3);

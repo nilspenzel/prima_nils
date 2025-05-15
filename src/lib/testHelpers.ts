@@ -5,6 +5,7 @@ import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { db } from '$lib/server/db';
 import type { BusStop } from './server/booking/BusStop';
+import { lockTablesStatement } from './server/db/lockTables';
 
 export enum Zone {
 	NIESKY = 1,
@@ -183,22 +184,25 @@ export const getTours = async () => {
 };
 
 export const selectEvents = async () => {
-	return await db
-		.selectFrom('tour')
-		.innerJoin('request', 'tour.id', 'request.tour')
-		.innerJoin('event', 'event.request', 'request.id')
-		.select([
-			'event.id as eventid',
-			'request.id as requestid',
-			'tour.id as tourid',
-			'event.cancelled as ec',
-			'event.nextLegDuration',
-			'event.prevLegDuration',
-			'request.cancelled as rc',
-			'tour.cancelled as tc',
-			'tour.message'
-		])
-		.execute();
+	return await db.transaction().execute(async (trx) => {
+		await lockTablesStatement(['tour', 'request', 'event']).execute(trx);
+		return await trx
+			.selectFrom('tour')
+			.innerJoin('request', 'tour.id', 'request.tour')
+			.innerJoin('event', 'event.request', 'request.id')
+			.select([
+				'event.id as eventid',
+				'request.id as requestid',
+				'tour.id as tourid',
+				'event.cancelled as ec',
+				'event.nextLegDuration',
+				'event.prevLegDuration',
+				'request.cancelled as rc',
+				'tour.cancelled as tc',
+				'tour.message'
+			])
+			.execute();
+	});
 };
 
 export function assertArraySizes<T>(
