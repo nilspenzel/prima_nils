@@ -15,7 +15,7 @@ export async function cancelTour(
 	company: number
 ): Promise<{ status?: number; message?: string }> {
 	await db.transaction().execute(async (trx) => {
-		await lockTablesStatement(['tour', 'request', 'event', 'user', 'vehicle']).execute(trx);
+		//await lockTablesStatement(['tour', 'request', 'event', 'user', 'vehicle']).execute(trx);
 		const tour = await trx
 			.selectFrom('tour')
 			.where('tour.id', '=', tourId)

@@ -14,8 +14,8 @@ export async function moveTour(
 	companyId: number
 ): Promise<{ status: number; message?: string }> {
 	let result: { status: number; message?: string } | undefined = undefined;
-	await db.transaction().execute(async (trx) => {
-		await lockTablesStatement(['tour', 'request', 'event', 'vehicle']).execute(trx);
+	await db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
+		//await lockTablesStatement(['tour', 'request', 'event', 'vehicle']).execute(trx);
 		const movedTour = await trx
 			.selectFrom('tour')
 			.where(({ eb }) =>
