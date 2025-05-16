@@ -62,8 +62,8 @@ export async function bookingApi(
 	let request2Id: number | undefined = undefined;
 	let message: string | undefined = undefined;
 	let success = false;
-	await db.transaction().execute(async (trx) => {
-		await lockTablesStatement(['tour', 'request', 'event', 'availability', 'vehicle']).execute(trx);
+	await db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
+		//await lockTablesStatement(['tour', 'request', 'event', 'availability', 'vehicle']).execute(trx);
 		let firstConnection = undefined;
 		let secondConnection = undefined;
 		if (p.connection1 != null) {

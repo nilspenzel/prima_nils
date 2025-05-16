@@ -150,8 +150,8 @@ export const actions: Actions = {
 		let success = false;
 		let duplicateLicensePlate = false;
 		let unknownError = false;
-		await db.transaction().execute(async (trx) => {
-			await lockTablesStatement(['tour', 'request', 'event', 'vehicle']).execute(trx);
+		await db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
+			//await lockTablesStatement(['tour', 'request', 'event', 'vehicle']).execute(trx);
 			const tours = await trx
 				.selectFrom('tour')
 				.where('tour.vehicle', '=', id)
