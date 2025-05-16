@@ -1,9 +1,9 @@
 import { db } from '$lib/server/db';
 import { bookRide, type ExpectedConnection } from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
-import { lockTablesStatement } from '$lib/server/db/lockTables';
 import { signEntry } from '$lib/server/booking/signEntry';
 import { insertRequest } from './insertRequest';
+import { retry } from '../db/retryQuery';
 
 export type BookingParameters = {
 	connection1: ExpectedConnection | null;
@@ -62,8 +62,8 @@ export async function bookingApi(
 	let request2Id: number | undefined = undefined;
 	let message: string | undefined = undefined;
 	let success = false;
-	await db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
-		//await lockTablesStatement(['tour', 'request', 'event', 'availability', 'vehicle']).execute(trx);
+		await retry(() => 
+	db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
 		let firstConnection = undefined;
 		let secondConnection = undefined;
 		if (p.connection1 != null) {
@@ -146,7 +146,7 @@ export async function bookingApi(
 		message = 'Die Anfrage wurde erfolgreich bearbeitet.';
 		success = true;
 		return;
-	});
+	}));
 	if (message == undefined) {
 		return { status: 500 };
 	}

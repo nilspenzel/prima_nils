@@ -2,20 +2,20 @@ import { sql } from 'kysely';
 import { sendMail } from '$lib/server/sendMail';
 import CancelNotificationCustomer from '$lib/server/email/CancelNotificationCustomer.svelte';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
-import { lockTablesStatement } from '$lib/server/db/lockTables';
 import { sendNotifications } from '$lib/server/firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { updateDirectDurations } from '$lib/server/booking/updateDirectDuration';
 import { db } from '$lib/server/db';
+import { retry } from './db/retryQuery';
 
 export async function cancelTour(
 	tourId: number,
 	message: string,
 	company: number
 ): Promise<{ status?: number; message?: string }> {
-	await db.transaction().execute(async (trx) => {
-		//await lockTablesStatement(['tour', 'request', 'event', 'user', 'vehicle']).execute(trx);
+	await retry(() => 
+	db.transaction().execute(async (trx) => {
 		const tour = await trx
 			.selectFrom('tour')
 			.where('tour.id', '=', tourId)
@@ -102,7 +102,7 @@ export async function cancelTour(
 			wheelchairs,
 			change: TourChange.CANCELLED
 		});
-	});
+	}));
 	console.log('Cancel Tour succes. tourId: ', tourId);
 	return {};
 }
