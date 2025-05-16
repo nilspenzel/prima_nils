@@ -6,7 +6,7 @@ import { fail } from '@sveltejs/kit';
 import { msg } from '$lib/msg';
 import { readInt } from '$lib/server/util/readForm';
 import { getPossibleInsertions } from '$lib/util/booking/getPossibleInsertions';
-import { lockTablesStatement } from '$lib/server/db/lockTables';
+import { retry } from '$lib/server/db/retryQuery';
 
 const LICENSE_PLATE_REGEX = /^([A-ZÄÖÜ]{1,3})-([A-ZÄÖÜ]{1,2})-([0-9]{1,4})$/;
 export async function load(event: RequestEvent) {
@@ -150,8 +150,8 @@ export const actions: Actions = {
 		let success = false;
 		let duplicateLicensePlate = false;
 		let unknownError = false;
-		await db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
-			//await lockTablesStatement(['tour', 'request', 'event', 'vehicle']).execute(trx);
+			await retry(() => 
+		db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
 			const tours = await trx
 				.selectFrom('tour')
 				.where('tour.vehicle', '=', id)
@@ -225,7 +225,7 @@ export const actions: Actions = {
 				return;
 			}
 			success = true;
-		});
+		}));
 		if (duplicateLicensePlate) {
 			return fail(400, { msg: msg('duplicateLicensePlate') });
 		}
