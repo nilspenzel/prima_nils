@@ -1,6 +1,7 @@
 import { getToursWithRequests } from '../../src/lib/server/db/getTours';
 import type { ToursWithRequests, TourWithRequestsEvent } from '../../src/lib/util/getToursTypes';
 import { groupBy } from '../../src/lib/util/groupBy';
+import { Interval } from '../../src/lib/util/interval';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -141,7 +142,7 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 		return start1 < end2 && start2 < end1;
 	}
 
-	for (const tour of tours) {
+	for (const [tId, tour] of tours.entries()) {
 		const events = tour.requests.flatMap((r) => r.events.filter((e) => !e.requestCancelled));
 		for (let i = 0; i < events.length; i++) {
 			for (let j = i + 1; j < events.length; j++) {
@@ -152,6 +153,14 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 					console.log(`Overlap detected between eventId ${event1.id} and eventId ${event2.id}`);
 					fail = true;
 				}
+			}
+		}
+		for(let tId2 = tId+1;tId2!=tours.length;++tId2) {
+			const i1 = new Interval(tour.startTime, tour.endTime);
+			const i2 = new Interval(tours[tId2].startTime, tours[tId2].endTime);
+			if((i1.contains(i2) || i2.contains(i1)) && tour.vehicleId === tours[tId2].vehicleId) {
+				console.log(`tour overlap detected between tourId ${tour.tourId} and tourId ${tours[tId2].tourId}`)
+				fail = true;
 			}
 		}
 	}
