@@ -5,7 +5,6 @@ import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { db } from '$lib/server/db';
 import type { BusStop } from './server/booking/BusStop';
-import { lockTablesStatement } from './server/db/lockTables';
 
 export enum Zone {
 	NIESKY = 1,
@@ -185,7 +184,6 @@ export const getTours = async () => {
 
 export const selectEvents = async () => {
 	return await db.transaction().execute(async (trx) => {
-		await lockTablesStatement(['tour', 'request', 'event']).execute(trx);
 		return await trx
 			.selectFrom('tour')
 			.innerJoin('request', 'tour.id', 'request.tour')

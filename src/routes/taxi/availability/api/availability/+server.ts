@@ -3,8 +3,8 @@ import { Interval } from '$lib/util/interval';
 import { json } from '@sveltejs/kit';
 import { type Insertable, type Selectable } from 'kysely';
 import { getAlterableTimeframe } from '$lib/util/getAlterableTimeframe';
-import { lockTablesStatement } from '$lib/server/db/lockTables';
 import { addAvailability } from '$lib/server/addAvailability';
+import { retry } from '$lib/server/db/retryQuery';
 
 type Availability = Selectable<Database['availability']>;
 type NewAvailability = Insertable<Database['availability']>;
@@ -43,8 +43,8 @@ export const DELETE = async ({ locals, request }) => {
 		return json({});
 	}
 	console.log('remove availability vehicle=', vehicleId, 'toRemove=', toRemove);
-	await db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
-		//await lockTablesStatement(['availability', 'vehicle']).execute(trx);
+		await retry(() => 
+	db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
 		const overlapping = await trx
 			.selectFrom('availability')
 			.where(({ eb }) =>
@@ -101,7 +101,7 @@ export const DELETE = async ({ locals, request }) => {
 			);
 		}
 		await Promise.all(promises);
-	});
+	}));
 	return json({});
 };
 

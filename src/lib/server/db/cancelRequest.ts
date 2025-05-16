@@ -2,7 +2,6 @@ import { sql, Transaction } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { sendMail } from '$lib/server/sendMail';
 import CancelNotificationCompany from '$lib/server/email/CancelNotificationCompany.svelte';
-import { lockTablesStatement } from './lockTables';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { sendNotifications } from '../firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
@@ -10,6 +9,7 @@ import { updateDirectDurations } from '$lib/server/booking/updateDirectDuration'
 import { db, type Database } from '$lib/server/db';
 import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
 import { HOUR } from '$lib/util/time';
+import { retry } from './retryQuery';
 
 export const cancelRequest = async (requestId: number, userId: number) => {
 	console.log(
@@ -17,8 +17,8 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 		JSON.stringify({ requestId, userId }, null, '\t'),
 		' Cancel Request PARAMS END'
 	);
-	await db.transaction().execute(async (trx) => {
-		//await lockTablesStatement(['tour', 'request', 'event', 'user']).execute(trx);
+		await retry(() => 
+	db.transaction().execute(async (trx) => {
 		const tour = await trx
 			.selectFrom('request')
 			.where('request.id', '=', requestId)
@@ -164,7 +164,7 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 		}
 
 		console.log('Cancel Request - success', { requestId, userId });
-	});
+	}));
 };
 
 async function updateLegDurations(

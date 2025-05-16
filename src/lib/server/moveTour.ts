@@ -2,11 +2,11 @@ import { db } from '$lib/server/db';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { getPossibleInsertions } from '$lib/util/booking/getPossibleInsertions';
 import { getLatestEventTime } from '$lib/util/getLatestEventTime';
-import { lockTablesStatement } from '$lib/server/db/lockTables';
 import { sendNotifications } from '$lib/server/firebase/notifications.js';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { updateDirectDurations } from '$lib/server/booking/updateDirectDuration';
+import { retry } from './db/retryQuery';
 
 export async function moveTour(
 	tourId: number,
@@ -14,8 +14,8 @@ export async function moveTour(
 	companyId: number
 ): Promise<{ status: number; message?: string }> {
 	let result: { status: number; message?: string } | undefined = undefined;
-	await db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
-		//await lockTablesStatement(['tour', 'request', 'event', 'vehicle']).execute(trx);
+		await retry(() => 
+	db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
 		const movedTour = await trx
 			.selectFrom('tour')
 			.where(({ eb }) =>
@@ -191,6 +191,6 @@ export async function moveTour(
 				vehicleId
 			);
 		}
-	});
+	}));
 	return result ?? { status: 200 };
 }
