@@ -137,7 +137,7 @@ const rawDb = new Kysely<Database>({
 });
 
 export const db = withRetry(rawDb);
-
+/*
 export function withRetry<T extends Kysely<any>>(db: T, maxRetries = 15, baseDelayMs = 1000): T {
 	const isQueryBuilder = (obj: any) => obj && typeof obj.execute === 'function';
 
@@ -230,4 +230,29 @@ export function withRetry<T extends Kysely<any>>(db: T, maxRetries = 15, baseDel
 	};
 
 	return new Proxy(db, dbHandler);
+}*/export async function withRetryTransaction<T>(
+  db: Kysely<any>,
+  callback: (trx: Kysely.Transaction<any>) => Promise<T>,
+  maxRetries = 15,
+  baseDelayMs = 1000
+): Promise<T> {
+  let attempt = 0;
+
+  while (true) {
+    try {
+      return await db.transaction(callback);
+    } catch (err: any) {
+      const code = err?.code;
+      const isRetryable = code === '40P01' || code === '40001';
+
+      attempt++;
+      if (!isRetryable || attempt > maxRetries) {
+        throw err;
+      }
+
+      const delay = baseDelayMs * Math.pow(1.5, attempt);
+      console.warn(`[RETRY] Transaction failed with ${code}, retrying in ${delay.toFixed(0)}ms (attempt ${attempt})`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
 }

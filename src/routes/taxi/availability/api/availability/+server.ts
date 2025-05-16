@@ -43,8 +43,8 @@ export const DELETE = async ({ locals, request }) => {
 		return json({});
 	}
 	console.log('remove availability vehicle=', vehicleId, 'toRemove=', toRemove);
-	await db.transaction().execute(async (trx) => {
-		await lockTablesStatement(['availability', 'vehicle']).execute(trx);
+	await db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
+		//await lockTablesStatement(['availability', 'vehicle']).execute(trx);
 		const overlapping = await trx
 			.selectFrom('availability')
 			.where(({ eb }) =>

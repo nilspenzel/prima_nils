@@ -18,7 +18,7 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 		' Cancel Request PARAMS END'
 	);
 	await db.transaction().execute(async (trx) => {
-		await lockTablesStatement(['tour', 'request', 'event', 'user']).execute(trx);
+		//await lockTablesStatement(['tour', 'request', 'event', 'user']).execute(trx);
 		const tour = await trx
 			.selectFrom('request')
 			.where('request.id', '=', requestId)
