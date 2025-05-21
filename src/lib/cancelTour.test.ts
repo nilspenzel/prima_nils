@@ -14,6 +14,10 @@ import { createSession } from './server/auth/session';
 import { oneToManyCarRouting } from './server/util/oneToManyCarRouting';
 
 let sessionToken: string;
+async function waitAndSelectEvents() {
+	await new Promise((resolve) => setTimeout(resolve, 2000));
+	return await selectEvents();
+}
 
 beforeEach(async () => {
 	await clearDatabase();
@@ -52,11 +56,11 @@ describe('tests for cancelling tours', () => {
 		await setEvent(r2, 0, false, 1, 1);
 
 		await cancelTour(t!.id, 'tour cancelled');
-		const events = await selectEvents();
+		const events = await waitAndSelectEvents();
 		events.forEach((e) => {
-			expect(e.ec).toBe(true);
-			expect(e.rc).toBe(true);
-			expect(e.tc).toBe(true);
+			expect(e.eventCancelled).toBe(true);
+			expect(e.requestCancelled).toBe(true);
+			expect(e.tourCancelled).toBe(true);
 			expect(e.message).toBe('tour cancelled');
 		});
 	});
@@ -76,11 +80,11 @@ describe('tests for cancelling tours', () => {
 		await setEvent(r2, 0, false, 1, 1);
 
 		await cancelTour(t!.id, 'tour cancelled');
-		const events = await selectEvents();
+		const events = await waitAndSelectEvents();
 		events.forEach((e) => {
-			expect(e.ec).toBe(false);
-			expect(e.rc).toBe(false);
-			expect(e.tc).toBe(false);
+			expect(e.eventCancelled).toBe(false);
+			expect(e.requestCancelled).toBe(false);
+			expect(e.tourCancelled).toBe(false);
 		});
 	});
 
@@ -99,11 +103,11 @@ describe('tests for cancelling tours', () => {
 		await setEvent(r2, 0, false, 1, 1);
 
 		await cancelTour(t!.id, 'tour cancelled');
-		const events = await selectEvents();
+		const events = await waitAndSelectEvents();
 		events.forEach((e) => {
-			expect(e.ec).toBe(false);
-			expect(e.rc).toBe(false);
-			expect(e.tc).toBe(false);
+			expect(e.eventCancelled).toBe(false);
+			expect(e.requestCancelled).toBe(false);
+			expect(e.tourCancelled).toBe(false);
 		});
 	});
 
@@ -118,8 +122,8 @@ describe('tests for cancelling tours', () => {
 		await setEvent(r, 0, true, 1, 1);
 		await setEvent(r, 1, false, inNiesky1.lat, inNiesky1.lng);
 
-		const t2 = await setTour(v, 2, 3);
-		const r2 = (await setRequest(t2!.id, mockUserId, '', 1)).id;
+		const t2 = (await setTour(v, 2, 3))!.id;
+		const r2 = (await setRequest(t2, mockUserId, '', 1)).id;
 		await setEvent(r2, 2, true, 1, 1);
 		await setEvent(r2, 3, false, 1, 1);
 
@@ -128,22 +132,23 @@ describe('tests for cancelling tours', () => {
 		await setEvent(r3, 4, true, inNiesky2.lat, inNiesky2.lng);
 		await setEvent(r3, 5, false, 1, 1);
 
-		await cancelTour(t2!.id, 'tour cancelled');
+		await cancelTour(t2, 'tour cancelled');
 
-		const events = await selectEvents();
+		const events = await waitAndSelectEvents();
+
 		events
 			.filter((e) => e.requestid === r || e.requestid === r3)
 			.forEach((e) => {
-				expect(e.ec).toBe(false);
-				expect(e.rc).toBe(false);
-				expect(e.tc).toBe(false);
+				expect(e.eventCancelled).toBe(false);
+				expect(e.requestCancelled).toBe(false);
+				expect(e.tourCancelled).toBe(false);
 			});
 		events
 			.filter((e) => e.requestid === r2)
 			.forEach((e) => {
-				expect(e.ec).toBe(true);
-				expect(e.rc).toBe(true);
-				expect(e.tc).toBe(true);
+				expect(e.eventCancelled).toBe(true);
+				expect(e.requestCancelled).toBe(true);
+				expect(e.tourCancelled).toBe(true);
 			});
 
 		const directDuration = await oneToManyCarRouting(inNiesky1, [inNiesky2], false);

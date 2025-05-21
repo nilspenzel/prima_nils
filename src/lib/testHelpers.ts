@@ -184,24 +184,23 @@ export const getTours = async () => {
 };
 
 export const selectEvents = async () => {
-	return await db.transaction().execute(async (trx) => {
-		return await trx
-			.selectFrom('tour')
-			.innerJoin('request', 'tour.id', 'request.tour')
-			.innerJoin('event', 'event.request', 'request.id')
-			.select([
-				'event.id as eventid',
-				'request.id as requestid',
-				'tour.id as tourid',
-				'event.cancelled as ec',
-				'event.nextLegDuration',
-				'event.prevLegDuration',
-				'request.cancelled as rc',
-				'tour.cancelled as tc',
-				'tour.message'
-			])
-			.execute();
-	});
+	console.log('did selectEvents');
+	return await db
+		.selectFrom('tour')
+		.innerJoin('request', 'tour.id', 'request.tour')
+		.innerJoin('event', 'event.request', 'request.id')
+		.select([
+			'event.id as eventid',
+			'request.id as requestid',
+			'tour.id as tourid',
+			'event.cancelled as eventCancelled',
+			'event.nextLegDuration',
+			'event.prevLegDuration',
+			'request.cancelled as requestCancelled',
+			'tour.cancelled as tourCancelled',
+			'tour.message'
+		])
+		.execute();
 };
 
 export function assertArraySizes<T>(
