@@ -48,14 +48,14 @@ describe('tests for cancelling requests', () => {
 			}
 			if (e.eventid == e1 || e.eventid == e2) {
 				expect(e.requestid).toBe(r);
-				expect(e.ec).toBe(true);
-				expect(e.rc).toBe(true);
-				expect(e.tc).toBe(false);
+				expect(e.eventCancelled).toBe(true);
+				expect(e.requestCancelled).toBe(true);
+				expect(e.tourCancelled).toBe(false);
 			} else {
 				expect(e.requestid).toBe(r2);
-				expect(e.ec).toBe(false);
-				expect(e.rc).toBe(false);
-				expect(e.tc).toBe(false);
+				expect(e.eventCancelled).toBe(false);
+				expect(e.requestCancelled).toBe(false);
+				expect(e.tourCancelled).toBe(false);
 			}
 		});
 
@@ -63,9 +63,9 @@ describe('tests for cancelling requests', () => {
 		const events2 = await selectEvents();
 		expect(events2.length).toBe(4);
 		events2.forEach((e) => {
-			expect(e.ec).toBe(true);
-			expect(e.rc).toBe(true);
-			expect(e.tc).toBe(true);
+			expect(e.eventCancelled).toBe(true);
+			expect(e.requestCancelled).toBe(true);
+			expect(e.tourCancelled).toBe(true);
 		});
 	});
 
@@ -93,14 +93,14 @@ describe('tests for cancelling requests', () => {
 			}
 			if (e.eventid == e3 || e.eventid == e4) {
 				expect(e.requestid).toBe(r2);
-				expect(e.ec).toBe(true);
-				expect(e.rc).toBe(true);
-				expect(e.tc).toBe(false);
+				expect(e.eventCancelled).toBe(true);
+				expect(e.requestCancelled).toBe(true);
+				expect(e.tourCancelled).toBe(false);
 			} else {
 				expect(e.requestid).toBe(r);
-				expect(e.ec).toBe(false);
-				expect(e.rc).toBe(false);
-				expect(e.tc).toBe(false);
+				expect(e.eventCancelled).toBe(false);
+				expect(e.requestCancelled).toBe(false);
+				expect(e.tourCancelled).toBe(false);
 			}
 		});
 
@@ -108,9 +108,9 @@ describe('tests for cancelling requests', () => {
 		const events2 = await selectEvents();
 		expect(events2.length).toBe(4);
 		events2.forEach((e) => {
-			expect(e.ec).toBe(true);
-			expect(e.rc).toBe(true);
-			expect(e.tc).toBe(true);
+			expect(e.eventCancelled).toBe(true);
+			expect(e.requestCancelled).toBe(true);
+			expect(e.tourCancelled).toBe(true);
 		});
 	});
 
@@ -148,13 +148,13 @@ describe('tests for cancelling requests', () => {
 			}
 			if (e.eventid == e5 || e.eventid == e6) {
 				expect(e.requestid).toBe(r3);
-				expect(e.ec).toBe(true);
-				expect(e.rc).toBe(true);
-				expect(e.tc).toBe(false);
+				expect(e.eventCancelled).toBe(true);
+				expect(e.requestCancelled).toBe(true);
+				expect(e.tourCancelled).toBe(false);
 			} else {
-				expect(e.ec).toBe(false);
-				expect(e.rc).toBe(false);
-				expect(e.tc).toBe(false);
+				expect(e.eventCancelled).toBe(false);
+				expect(e.requestCancelled).toBe(false);
+				expect(e.tourCancelled).toBe(false);
 			}
 		});
 	});

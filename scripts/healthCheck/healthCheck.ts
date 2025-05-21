@@ -142,7 +142,7 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 		return start1 < end2 && start2 < end1;
 	}
 
-	for (const [tId, tour] of tours.entries()) {
+	for (const [tourId1, tour] of tours.entries()) {
 		const events = tour.requests.flatMap((r) => r.events.filter((e) => !e.requestCancelled));
 		for (let i = 0; i < events.length; i++) {
 			for (let j = i + 1; j < events.length; j++) {
@@ -155,11 +155,13 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 				}
 			}
 		}
-		for(let tId2 = tId+1;tId2!=tours.length;++tId2) {
+		for (let tourId2 = tourId1 + 1; tourId2 != tours.length; ++tourId2) {
 			const i1 = new Interval(tour.startTime, tour.endTime);
-			const i2 = new Interval(tours[tId2].startTime, tours[tId2].endTime);
-			if((i1.contains(i2) || i2.contains(i1)) && tour.vehicleId === tours[tId2].vehicleId) {
-				console.log(`tour overlap detected between tourId ${tour.tourId} and tourId ${tours[tId2].tourId}`)
+			const i2 = new Interval(tours[tourId2].startTime, tours[tourId2].endTime);
+			if ((i1.contains(i2) || i2.contains(i1)) && tour.vehicleId === tours[tourId2].vehicleId) {
+				console.log(
+					`tour overlap detected between tourId ${tour.tourId} and tourId ${tours[tourId2].tourId}`
+				);
 				fail = true;
 			}
 		}

@@ -62,91 +62,95 @@ export async function bookingApi(
 	let request2Id: number | undefined = undefined;
 	let message: string | undefined = undefined;
 	let success = false;
-		await retry(() => 
-	db.transaction().setIsolationLevel('serializable').execute(async (trx) => {
-		let firstConnection = undefined;
-		let secondConnection = undefined;
-		if (p.connection1 != null) {
-			firstConnection = await bookRide(p.connection1, p.capacities, trx, skipPromiseCheck);
-			if (firstConnection == undefined) {
-				message = 'Die Anfrage für die erste Meile kann nicht erfüllt werden.';
+	await retry(() =>
+		db
+			.transaction()
+			.setIsolationLevel('serializable')
+			.execute(async (trx) => {
+				let firstConnection = undefined;
+				let secondConnection = undefined;
+				if (p.connection1 != null) {
+					firstConnection = await bookRide(p.connection1, p.capacities, trx, skipPromiseCheck);
+					if (firstConnection == undefined) {
+						message = 'Die Anfrage für die erste Meile kann nicht erfüllt werden.';
+						return;
+					}
+				}
+				if (p.connection2 != null) {
+					let blockedVehicleId: number | undefined = undefined;
+					if (firstConnection != undefined) {
+						blockedVehicleId = firstConnection.best.vehicle;
+					}
+					secondConnection = await bookRide(
+						p.connection2,
+						p.capacities,
+						trx,
+						skipPromiseCheck,
+						blockedVehicleId
+					);
+					if (secondConnection == undefined) {
+						message = 'Die Anfrage für die zweite Meile kann nicht erfüllt werden.';
+						return;
+					}
+				}
+				if (
+					p.connection1 != null &&
+					p.connection2 != null &&
+					firstConnection!.tour != undefined &&
+					secondConnection!.tour != undefined
+				) {
+					const newTour = getCommonTour(
+						firstConnection!.mergeTourList,
+						secondConnection!.mergeTourList
+					);
+					if (newTour != undefined) {
+						firstConnection!.tour = newTour;
+						secondConnection!.tour = newTour;
+					}
+				}
+				if (p.connection1 != null) {
+					request1Id =
+						(await insertRequest(
+							firstConnection!.best,
+							p.capacities,
+							p.connection1,
+							customer,
+							firstConnection!.eventGroupUpdateList,
+							[...firstConnection!.mergeTourList],
+							firstConnection!.pickupEventGroup,
+							firstConnection!.dropoffEventGroup,
+							firstConnection!.neighbourIds,
+							firstConnection!.directDurations,
+							kidsZeroToTwo,
+							kidsThreeToFour,
+							kidsFiveToSix,
+							trx
+						)) ?? null;
+				}
+				if (p.connection2 != null) {
+					request2Id =
+						(await insertRequest(
+							secondConnection!.best,
+							p.capacities,
+							p.connection2,
+							customer,
+							secondConnection!.eventGroupUpdateList,
+							[...secondConnection!.mergeTourList],
+							secondConnection!.pickupEventGroup,
+							secondConnection!.dropoffEventGroup,
+							secondConnection!.neighbourIds,
+							secondConnection!.directDurations,
+							kidsZeroToTwo,
+							kidsThreeToFour,
+							kidsFiveToSix,
+							trx
+						)) ?? null;
+				}
+				message = 'Die Anfrage wurde erfolgreich bearbeitet.';
+				success = true;
 				return;
-			}
-		}
-		if (p.connection2 != null) {
-			let blockedVehicleId: number | undefined = undefined;
-			if (firstConnection != undefined) {
-				blockedVehicleId = firstConnection.best.vehicle;
-			}
-			secondConnection = await bookRide(
-				p.connection2,
-				p.capacities,
-				trx,
-				skipPromiseCheck,
-				blockedVehicleId
-			);
-			if (secondConnection == undefined) {
-				message = 'Die Anfrage für die zweite Meile kann nicht erfüllt werden.';
-				return;
-			}
-		}
-		if (
-			p.connection1 != null &&
-			p.connection2 != null &&
-			firstConnection!.tour != undefined &&
-			secondConnection!.tour != undefined
-		) {
-			const newTour = getCommonTour(
-				firstConnection!.mergeTourList,
-				secondConnection!.mergeTourList
-			);
-			if (newTour != undefined) {
-				firstConnection!.tour = newTour;
-				secondConnection!.tour = newTour;
-			}
-		}
-		if (p.connection1 != null) {
-			request1Id =
-				(await insertRequest(
-					firstConnection!.best,
-					p.capacities,
-					p.connection1,
-					customer,
-					firstConnection!.eventGroupUpdateList,
-					[...firstConnection!.mergeTourList],
-					firstConnection!.pickupEventGroup,
-					firstConnection!.dropoffEventGroup,
-					firstConnection!.neighbourIds,
-					firstConnection!.directDurations,
-					kidsZeroToTwo,
-					kidsThreeToFour,
-					kidsFiveToSix,
-					trx
-				)) ?? null;
-		}
-		if (p.connection2 != null) {
-			request2Id =
-				(await insertRequest(
-					secondConnection!.best,
-					p.capacities,
-					p.connection2,
-					customer,
-					secondConnection!.eventGroupUpdateList,
-					[...secondConnection!.mergeTourList],
-					secondConnection!.pickupEventGroup,
-					secondConnection!.dropoffEventGroup,
-					secondConnection!.neighbourIds,
-					secondConnection!.directDurations,
-					kidsZeroToTwo,
-					kidsThreeToFour,
-					kidsFiveToSix,
-					trx
-				)) ?? null;
-		}
-		message = 'Die Anfrage wurde erfolgreich bearbeitet.';
-		success = true;
-		return;
-	}));
+			})
+	);
 	if (message == undefined) {
 		return { status: 500 };
 	}
