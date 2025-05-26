@@ -1,4 +1,5 @@
 import { PUBLIC_MOTIS_URL } from '$env/static/public';
+import { SCHEDULED_TIME_BUFFER } from '$lib/constants';
 import type { PlanData } from '$lib/openapi';
 import { plan } from '$lib/openapi/services.gen';
 import { signEntry } from '$lib/server/booking/signEntry';
@@ -20,10 +21,42 @@ export const POST = async (event: RequestEvent) => {
 	return json({
 		...response!,
 		itineraries: response!.itineraries.map((i) => {
+			const odmIndex1 = i.legs.findIndex((l) => l.mode === 'ODM');
+			const odmIndex2 = i.legs.findLastIndex((l) => l.mode === 'ODM');
 			const odmLeg1 = i.legs.find((l) => l.mode === 'ODM');
 			const odmLeg2 = i.legs.findLast((l) => l.mode === 'ODM');
+			if (odmLeg1) {
+				i.legs[odmIndex1] = {
+					...odmLeg1!,
+					scheduledStartTime: new Date(
+						new Date(odmLeg1!.scheduledStartTime).getTime() - SCHEDULED_TIME_BUFFER
+					).toISOString(),
+					scheduledEndTime: new Date(
+						new Date(odmLeg1!.scheduledEndTime).getTime() + SCHEDULED_TIME_BUFFER
+					).toISOString()
+				};
+			}
+			if (odmLeg2) {
+				i.legs[odmIndex2] = {
+					...odmLeg2!,
+					scheduledStartTime: new Date(
+						new Date(odmLeg2!.scheduledStartTime).getTime() - SCHEDULED_TIME_BUFFER
+					).toISOString(),
+					scheduledEndTime: new Date(
+						new Date(odmLeg2!.scheduledEndTime).getTime() + SCHEDULED_TIME_BUFFER
+					).toISOString()
+				};
+			}
 			return {
 				...i,
+				startTime:
+					odmIndex1 === 0
+						? new Date(new Date(i.startTime).getTime() - SCHEDULED_TIME_BUFFER)
+						: i.startTime,
+				endTime:
+					odmIndex1 === 0
+						? new Date(new Date(i.endTime).getTime() + SCHEDULED_TIME_BUFFER)
+						: i.endTime,
 				signature1:
 					odmLeg1 !== undefined
 						? signEntry(

@@ -48,6 +48,10 @@ export async function bookingApi(
 	status: number;
 	request1Id?: number;
 	request2Id?: number;
+	communicatedPickup1?: number;
+	communicatedDropoff1?: number;
+	communicatedPickup2?: number;
+	communicatedDropoff2?: number;
 }> {
 	if (p.connection1 == null && p.connection2 == null) {
 		return {
@@ -60,6 +64,10 @@ export async function bookingApi(
 	}
 	let request1Id: number | undefined = undefined;
 	let request2Id: number | undefined = undefined;
+	let communicatedPickup1: number | undefined = undefined;
+	let communicatedDropoff1: number | undefined = undefined;
+	let communicatedPickup2: number | undefined = undefined;
+	let communicatedDropoff2: number | undefined = undefined;
 	let message: string | undefined = undefined;
 	let success = false;
 	await retry(() =>
@@ -154,5 +162,14 @@ export async function bookingApi(
 	if (message == undefined) {
 		return { status: 500 };
 	}
-	return { message, request1Id, request2Id, status: success ? 200 : 400 };
+	return {
+		message,
+		request1Id,
+		request2Id,
+		communicatedPickup1,
+		communicatedDropoff1,
+		communicatedPickup2,
+		communicatedDropoff2,
+		status: success ? 200 : 400
+	};
 }

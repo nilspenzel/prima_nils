@@ -7,10 +7,14 @@ import { type Database } from '$lib/server/db';
 import { sql, Transaction } from 'kysely';
 import { sendNotifications } from '$lib/server/firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
+<<<<<<< HEAD
 import { env } from '$env/dynamic/public';
+=======
+import type { Times } from './evaluateRequest';
+>>>>>>> 8603a42 (wip)
 
 export async function insertRequest(
-	connection: Insertion,
+	connection: Insertion & Times,
 	capacities: Capacities,
 	c: ExpectedConnection,
 	customer: number,
@@ -60,9 +64,15 @@ export async function insertRequest(
 	const requestId = (
 		await sql<{ request: number }>`
         SELECT create_and_merge_tours(
+<<<<<<< HEAD
             ROW(${capacities.passengers}, ${kidsZeroToTwo}, ${kidsThreeToFour}, ${kidsFiveToSix}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}, ${customer}, ${ticketPrice}),
             ROW(${true}, ${c.start.lat}, ${c.start.lng}, ${connection.pickupTime}, ${connection.pickupTime}, ${connection.pickupTime}, ${connection.pickupPrevLegDuration}, ${connection.pickupNextLegDuration}, ${c.start.address}, ${startEventGroup}),
             ROW(${false}, ${c.target.lat}, ${c.target.lng}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${connection.dropoffPrevLegDuration}, ${connection.dropoffNextLegDuration}, ${c.target.address}, ${targetEventGroup}),
+=======
+            ROW(${capacities.passengers}, ${kidsZeroToTwo}, ${kidsThreeToFour}, ${kidsFiveToSix}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}, ${customer}),
+            ROW(${true}, ${c.start.lat}, ${c.start.lng}, ${connection.scheduledPickupTimeStart}, ${connection.scheduledPickupTimeEnd}, ${connection.communicatedPickupTime}, ${connection.pickupPrevLegDuration}, ${connection.pickupNextLegDuration}, ${c.start.address}, ${startEventGroup}),
+            ROW(${false}, ${c.target.lat}, ${c.target.lng}, ${connection.scheduledDropoffTimeStart}, ${connection.scheduledDropoffTimeEnd}, ${connection.communicatedDropoffTime}, ${connection.dropoffPrevLegDuration}, ${connection.dropoffNextLegDuration}, ${c.target.address}, ${targetEventGroup}),
+>>>>>>> 8603a42 (wip)
             ${mergeTourList},
             ROW(${connection.departure}, ${connection.arrival}, ${connection.vehicle}, ${direct.thisTour?.directDrivingDuration ?? null}, ${connection.tour ?? null}),
             ${JSON.stringify(updateEventGroupList)}::jsonb,
