@@ -14,15 +14,26 @@ import {
 	LATEST_SHIFT_END,
 	MAX_PASSENGER_WAITING_TIME_DROPOFF,
 	MAX_PASSENGER_WAITING_TIME_PICKUP,
-	PASSENGER_CHANGE_DURATION
+	PASSENGER_CHANGE_DURATION,
+	SCHEDULED_TIME_BUFFER
 } from '$lib/constants';
 import {
 	evaluateNewTours,
 	evaluatePairInsertions,
 	evaluateSingleInsertions,
-	takeBest
+	takeBest,
+	type Insertion
 } from './insertion';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
+
+export type Times = {
+	communicatedPickupTime: number;
+	scheduledPickupTimeStart: number;
+	scheduledPickupTimeEnd: number;
+	communicatedDropoffTime: number;
+	scheduledDropoffTimeStart: number;
+	scheduledDropoffTimeEnd: number;
+};
 
 export async function evaluateRequest(
 	companies: Company[],
@@ -32,7 +43,7 @@ export async function evaluateRequest(
 	required: Capacities,
 	startFixed: boolean,
 	promisedTimes?: PromisedTimes
-) {
+): Promise<((Insertion & Times) | undefined)[][]> {
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
@@ -124,5 +135,19 @@ export async function evaluateRequest(
 		userChosenEvaluations
 	);
 	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
-	return best;
+	return best.map((b) =>
+		b.map((b2) => {
+			return b2
+				? {
+						...b2,
+						communicatedPickupTime: b2.pickupTime - SCHEDULED_TIME_BUFFER,
+						scheduledPickupTimeStart: b2.pickupTime - SCHEDULED_TIME_BUFFER,
+						scheduledPickupTimeEnd: b2.pickupTime,
+						communicatedDropoffTime: b2.dropoffTime + SCHEDULED_TIME_BUFFER,
+						scheduledDropoffTimeStart: b2.dropoffTime,
+						scheduledDropoffTimeEnd: b2.dropoffTime + SCHEDULED_TIME_BUFFER
+					}
+				: undefined;
+		})
+	);
 }

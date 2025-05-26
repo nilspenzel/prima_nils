@@ -305,18 +305,18 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(pickup.eventGroup).not.toBe(dropoff.eventGroup);
 
 		expect(new Date(pickup.communicatedTime).toISOString()).toBe(
-			new Date(whiteResponse.direct[0].pickupTime).toISOString()
+			new Date(whiteResponse.direct[0].communicatedPickupTime).toISOString()
 		);
 		expect(pickup.address).toBe('start address');
 		expect(
 			Math.abs(inNiesky1.lat - pickup.lat) + Math.abs(inNiesky1.lng - pickup.lng)
 		).toBeLessThan(COORDINATE_ROUNDING_ERROR_THRESHOLD);
 		expect(new Date(pickup.scheduledTimeStart).toISOString()).toBe(
-			dateInXMinutes(70).toISOString()
+			dateInXMinutes(70 - 10).toISOString()
 		);
 
 		expect(new Date(dropoff.communicatedTime).toISOString()).toBe(
-			new Date(whiteResponse.direct[0].dropoffTime).toISOString()
+			new Date(whiteResponse.direct[0].communicatedDropoffTime).toISOString()
 		);
 		expect(dropoff.address).toBe('target address');
 		expect(
