@@ -312,3 +312,23 @@ export const companyColsAdmin: Column<CompanyRow>[] = [
 ];
 
 export const companyColsCompany = companyColsAdmin.slice(1);
+
+export const feedbackCols: Column<TourWithRequests>[] = [
+	{
+		text: ['Unternehmen'],
+		sort: summationLast((a: TourWithRequests, b: TourWithRequests) => a.companyId - b.companyId),
+		toTableEntry: (r: TourWithRequests) => r.companyName ?? ''
+	},
+	{
+		text: ['Kunden'],
+		sort: summationLast((a: TourWithRequests, b: TourWithRequests) => a.customerCount - b.customerCount),
+		toTableEntry: (r: TourWithRequests) => r.customerCount
+	},
+	{
+		text: ['erschienene', 'Kunden'],
+		sort: summationLast(
+			(a: TourWithRequests, b: TourWithRequests) => a.verifiedCustomerCount - b.verifiedCustomerCount
+		),
+		toTableEntry: (r: TourWithRequests) => r.verifiedCustomerCount
+	},
+];

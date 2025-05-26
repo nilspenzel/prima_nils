@@ -15,6 +15,7 @@
 	import {
 		companyColsAdmin,
 		companyColsCompany,
+		feedbackCols,
 		subtractionColsAdmin,
 		subtractionColsCompany,
 		tourColsAdmin,
@@ -106,6 +107,7 @@
 	let currentRowsToursTable: TourWithRequests[] = $state(tours);
 	let currentRowsSubtractionsTable: Subtractions[] = $state(costPerDayAndVehicle);
 	let currentCompanyRows: CompanyRow[] = $state(updateCompanySums(costPerDayAndVehicle));
+	let currentFeedbackRows: TourWithRequests[] = $derived(currentRowsToursTable.filter((t) => t.requests.some((r) => r.comment !== null || r.comment !== null)));
 
 	const getNewSum = (rows: Subtractions[]) => {
 		let newSum = 0;
@@ -269,7 +271,8 @@
 	let tables = [
 		{ label: 'pro Tour', value: 1, component: tourTable },
 		{ label: 'pro Tag und Fahrzeug', value: 2, component: subtractionTable },
-		{ label: isAdmin ? 'pro Unternehmen' : 'Summe', value: 3, component: companyTable }
+		{ label: isAdmin ? 'pro Unternehmen' : 'Summe', value: 3, component: companyTable },
+		{ label: 'Feedback', value: 4, component: feedbackTable }
 	];
 
 	let selectedCompletedToursIdx = $state(-1);
@@ -316,7 +319,6 @@
 	<SortableTable
 		bind:rows={currentRowsToursTable}
 		cols={isAdmin ? tourColsAdmin : tourColsCompany}
-		{isAdmin}
 		getRowStyle={(_) => 'cursor-pointer '}
 		bind:selectedRow={selectedToursTableRow}
 		bindSelectedRow={true}
@@ -329,7 +331,6 @@
 	<SortableTable
 		bind:rows={currentRowsSubtractionsTable}
 		cols={isAdmin ? subtractionColsAdmin : subtractionColsCompany}
-		{isAdmin}
 	/>
 {/snippet}
 
@@ -337,8 +338,14 @@
 	<SortableTable
 		bind:rows={currentCompanyRows}
 		cols={isAdmin ? companyColsAdmin : companyColsCompany}
-		{isAdmin}
 		fixLastRow={isAdmin}
+	/>
+{/snippet}
+
+{#snippet feedbackTable()}
+	<SortableTable
+		rows={currentFeedbackRows}
+		cols={feedbackCols}
 	/>
 {/snippet}
 
