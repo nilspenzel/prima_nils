@@ -86,12 +86,12 @@
 		});
 	}
 
-	let currentTestEntity = $state(undefined);
+	let currentTestEntity = $state(null);
 	let expectedRequestCount = $state('0');
 	let expectedTourCount = $state('0');
-	let expectedPosition = $state(undefined);
+	let expectedPosition = $state(null);
 	let afterRequest = $state('0');
-	let selectedRequest = $state(undefined);
+	let selectedRequest = $state(null);
 
 	let conditions: Condition[] = $state([]);
 	let uuid = '1';
@@ -102,9 +102,10 @@
 			entity: currentTestEntity!,
 			tourCount: parseInt(expectedTourCount),
 			requestCount: parseInt(expectedRequestCount),
-			expectedPosition: expectedPosition ? parseInt(expectedPosition) : undefined,
-			start: selectedRequest ? starts[selectedRequest] : undefined,
-			destination: selectedRequest ? destinations[selectedRequest] : undefined
+			expectedPosition: expectedPosition ? parseInt(expectedPosition) : null,
+			start: selectedRequest ? starts[selectedRequest] : null,
+			destination: selectedRequest ? destinations[selectedRequest] : null,
+			company: null
 		});
 	}
 
@@ -115,7 +116,10 @@
 			entity: 'requestCompanyMatch',
 			start,
 			destination: destinations[startIdx],
-			company
+			company,
+			expectedPosition: null,
+			tourCount: null,
+			requestCount: null
 		});
 	}
 
@@ -166,7 +170,7 @@
 		if (userInputJson === undefined) {
 			return;
 		}
-		const test = JSON.parse(userInputJson) as TestParams;
+		const test: TestParams = eval('(' + userInputJson + ')');
 		companies.length = 0;
 		test.process.companies.forEach((i) => companies.push(i));
 		starts.length = 0;
