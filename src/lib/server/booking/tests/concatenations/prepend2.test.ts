@@ -57,7 +57,7 @@ describe('Concatenation tests', () => {
 			target: inGeheege,
 			startBusStops: [],
 			targetBusStops: [],
-			directTimes: [inXMinutes(55)],
+			directTimes: [inXMinutes(50)],
 			startFixed: false,
 			capacities
 		});
