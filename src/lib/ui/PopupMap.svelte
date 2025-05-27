@@ -14,6 +14,7 @@
 	import GeoJSON from '$lib/map/GeoJSON.svelte';
 	import Layer from '$lib/map/Layer.svelte';
 	import { t } from '$lib/i18n/translation';
+	import type { SignedItinerary } from '$lib/planAndSign';
 
 	let {
 		from = $bindable(),
@@ -23,7 +24,7 @@
 	}: {
 		from?: Location | undefined;
 		to?: Location | undefined;
-		itinerary?: Itinerary | undefined;
+		itinerary?: SignedItinerary | undefined;
 		areas?: unknown;
 	} = $props();
 
