@@ -25,6 +25,7 @@ import {
 	type Insertion
 } from './insertion';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
+import { DAY } from '$lib/util/time';
 
 export type Times = {
 	communicatedPickupTime: number;
@@ -99,6 +100,8 @@ export async function evaluateRequest(
 	if (earliest >= latest) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
+	earliest = Math.max(earliest, Date.now() - 2* DAY);
+	latest = Math.min(latest, Date.now() + 15 * DAY);
 	const allowedTimes = getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END);
 	console.log(
 		'WHITELIST REQUEST: ALLOWED TIMES (RESTRICTION FROM 4 TO 23):\n',
