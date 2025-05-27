@@ -12,6 +12,25 @@ import NewRide from '$lib/server/email/NewRide.svelte';
 import { bookingApi } from '$lib/server/booking/bookingApi';
 import type { Leg } from '$lib/openapi';
 import type { SignedItinerary } from '$lib/planAndSign';
+import { sql } from 'kysely';
+import type { PageServerLoad } from './$types';
+import Prom from 'prom-client';
+
+let booking_errors: Prom.Counter | undefined;
+let booking_attempts: Prom.Counter | undefined;
+
+try {
+	booking_errors = new Prom.Counter({
+		name: 'prima_booking_errors_total',
+		help: 'Booking errors occurred'
+	});
+	booking_attempts = new Prom.Counter({
+		name: 'prima_booking_attempts_total',
+		help: 'Booking attempts occurred'
+	});
+} catch {
+	/* ignored */
+}
 
 function expectedConnectionFromLeg(
 	leg: Leg,
@@ -59,6 +78,7 @@ export const actions = {
 			typeof kidsFiveToSixString !== 'string' ||
 			typeof startFixedString !== 'string'
 		) {
+			booking_errors?.inc();
 			throw 'invalid booking params';
 		}
 		const luggage = readInt(luggageString);
@@ -101,6 +121,7 @@ export const actions = {
 				{ kidsThreeToFour },
 				{ kidsFiveToSix }
 			);
+			booking_errors?.inc();
 			return { msg: msg('unknownError') };
 		}
 
@@ -116,6 +137,7 @@ export const actions = {
 				{ kidsThreeToFour },
 				{ kidsFiveToSix }
 			);
+			booking_errors?.inc();
 			return { msg: msg('unknownError') };
 		}
 		const firstOdm = legs[firstOdmIndex];
@@ -245,7 +267,6 @@ export const actions = {
 		} catch {
 			/* nothing we can do about this */
 		}
-
 		return redirect(302, `/bookings/${id}`);
 	},
 	storeItineraryWithNoOdm: async ({ request, locals }): Promise<{ msg: Msg }> => {

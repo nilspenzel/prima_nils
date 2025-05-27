@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { v4 as uuidv4 } from 'uuid';
 	import maplibregl from 'maplibre-gl';
 	import { getStyle } from '$lib/map/style.js';
 	import Map from '$lib/map/Map.svelte';
@@ -93,8 +94,9 @@
 	let selectedRequest = $state(undefined);
 
 	let conditions: Condition[] = $state([]);
-
+	let uuid = '1';
 	function addCondition() {
+		uuid = uuidv4();
 		conditions.push({
 			evalAfterStep: parseInt(afterRequest),
 			entity: currentTestEntity!,
@@ -150,7 +152,7 @@
 		JSON.stringify(
 			{
 				conditions,
-				process: { starts, destinations, times, isDepartures, companies }
+				process: { starts, destinations, times, isDepartures, companies, uuid }
 			},
 			null,
 			'\t'

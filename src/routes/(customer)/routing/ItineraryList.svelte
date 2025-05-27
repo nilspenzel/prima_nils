@@ -6,6 +6,7 @@
 	import { t, language } from '$lib/i18n/translation';
 	import ItinerarySummary from './ItinerarySummary.svelte';
 	import { odmPrice, getEuroString } from '$lib/util/odmPrice';
+	import { planAndSign, type SignedItinerary, type SignedPlanResponse } from '$lib/planAndSign';
 
 	let {
 		routingResponses,
@@ -31,7 +32,7 @@
 	};
 </script>
 
-{#snippet odmInfo(it: Itinerary)}
+{#snippet odmInfo(it: SignedItinerary)}
 	<Info class="size-4" /> {t.booking.bookHere} {getEuroString(odmPrice(it, passengers, kids))}
 {/snippet}
 

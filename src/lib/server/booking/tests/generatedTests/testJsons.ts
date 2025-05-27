@@ -23,10 +23,12 @@ export type TestProcess = {
 export type TestParams = {
 	process: TestProcess;
 	conditions: Condition[];
+	uuid: string;
 };
 
 export const tests: TestParams[] = [
 	{
+		uuid: '1',
 		conditions: [
 			{
 				evalAfterStep: 0,
