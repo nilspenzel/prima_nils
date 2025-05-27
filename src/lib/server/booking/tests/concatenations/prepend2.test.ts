@@ -57,7 +57,7 @@ describe('Concatenation tests', () => {
 			target: inGeheege,
 			startBusStops: [],
 			targetBusStops: [],
-			directTimes: [inXMinutes(60)],
+			directTimes: [inXMinutes(55)],
 			startFixed: false,
 			capacities
 		});
@@ -82,9 +82,9 @@ describe('Concatenation tests', () => {
 		const events = tours2
 			.flatMap((t) => t.requests.flatMap((r) => r.events))
 			.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
-		expect(isSamePlace(events[0], inRothenburg2)).toBe(true);
-		expect(isSamePlace(events[1], inGeheege)).toBe(true);
-		expect(isSamePlace(events[2], inHorka1)).toBe(true);
-		expect(isSamePlace(events[3], inHorka2)).toBe(true);
+		expect(isSamePlace(events[0], inRothenburg2)).toBeTruthy();
+		expect(isSamePlace(events[1], inGeheege)).toBeTruthy();
+		expect(isSamePlace(events[2], inHorka1)).toBeTruthy();
+		expect(isSamePlace(events[3], inHorka2)).toBeTruthy();
 	});
 });

@@ -456,7 +456,7 @@ export function evaluateSingleInsertions(
 		}
 		bothEvaluations[i] = new Array<Insertion | undefined>(busStopTimes[i].length);
 	}
-	const prepTime = new Date(Date.now() + MINUTE * MIN_PREP).getTime();
+	const prepTime = Date.now() + MIN_PREP;
 	const direction = startFixed ? InsertDirection.BUS_STOP_PICKUP : InsertDirection.BUS_STOP_DROPOFF;
 
 	iterateAllInsertions(
