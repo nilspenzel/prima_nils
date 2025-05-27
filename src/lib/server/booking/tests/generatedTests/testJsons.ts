@@ -27,7 +27,7 @@ export type TestParams = {
 };
 
 export const tests: TestParams[] = [
-	{
+	{// printhere
 		conditions: [
 			{
 				evalAfterStep: 0,

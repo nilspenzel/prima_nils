@@ -225,6 +225,11 @@
 
 			<Switch class="justify-self-end" bind:checked={departure} />
 			<Label class="flex items-center gap-2">Time fixed at start</Label>
+
+			<form method="POST">
+				<input type="hidden" name="value" value={json} />
+				<button type="submit" name="intent">Write to File</button>
+			</form>
 		</div>
 
 		<div class="mt-4 flex gap-4">
