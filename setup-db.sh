@@ -6,6 +6,9 @@ export DATABASE_URL="postgresql://postgres:pw@localhost:6500/prima"
 docker compose up -d pg
 
 sleep 2
+echo "SELECT pg_terminate_backend(pid)
+    FROM pg_stat_activity
+    WHERE datname = 'prima' AND pid <> pg_backend_pid();" | psql $DB
 
 echo "DROP DATABASE prima;" | psql $DB
 echo "CREATE DATABASE prima;" | psql $DB

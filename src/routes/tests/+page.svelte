@@ -110,6 +110,7 @@
 	}
 
 	function assignRequestToCompany(startIdx: number, start: Coordinates, company: Coordinates) {
+		uuid = uuidv4();
 		conditions.push({
 			evalAfterStep: startIdx,
 			entity: 'requestCompanyMatch',
@@ -152,11 +153,12 @@
 		JSON.stringify(
 			{
 				conditions,
-				process: { starts, destinations, times, isDepartures, companies, uuid }
+				process: { starts, destinations, times, isDepartures, companies },
+				uuid
 			},
 			null,
 			'\t'
-		)
+		).replace(/"([^"]+)"(?=\s*:)/g, '$1')
 	);
 </script>
 
