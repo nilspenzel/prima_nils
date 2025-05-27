@@ -102,5 +102,8 @@ describe('Concatenation tests', () => {
 				}
 			}
 		}
+		console.log(
+			`Successfully ran ${tests.length} tests with a total of ${tests.flatMap((t) => t.conditions).length} conditions.`
+		);
 	});
 });
