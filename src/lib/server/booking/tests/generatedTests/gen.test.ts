@@ -4,6 +4,7 @@ import { addCompany, addTaxi, getTours, setAvailability, Zone } from '$lib/testH
 import type { ExpectedConnection } from '$lib/server/booking/bookRide';
 import { bookingApi } from '$lib/server/booking/bookingApi';
 import { tests } from './testJsons';
+import { db } from '$lib/server/db';
 
 describe('Concatenation tests', () => {
 	it('generated tests', async () => {
@@ -45,37 +46,58 @@ describe('Concatenation tests', () => {
 					capacities: { passengers: 1, luggage: 0, wheelchairs: 0, bikes: 0 }
 				};
 				await bookingApi(bookingBody, mockUserId, true, 0, 0, 0, true);
-				console.log('booking done!!!!');
 				const tours = await getTours();
-
-				for (const condition of test.conditions.filter((c) => c.evalAfterStep === requestIdx + 1)) {
-					switch (condition.entity) {
-						case 'requestCount':
-							expect(tours.flatMap((t) => t.requests).length).toBe(condition.requestCount);
-							break;
-						case 'tourCount':
-							expect(tours.length).toBe(condition.tourCount);
-							break;
-						case 'startPosition':
-							break;
-						case 'destinationPosition':
-							break;
-						case 'requestCompanyMatch': {
-							const r = tours.filter((t) =>
-								t.requests.some(
-									(r) =>
-										!r.events.some(
-											(e) =>
-												(e.lat !== condition.start?.lat || e.lng !== condition.start.lng) &&
-												(e.lat !== condition.start?.lat || e.lng !== condition.start.lng)
-										)
-								)
-							);
-							expect(r.length).not.toBe(0);
-							break;
+				for (const condition of test.conditions.filter((c) => c.evalAfterStep === requestIdx)) {
+					try {
+						switch (condition.entity) {
+							case 'requestCount':
+								expect(tours.flatMap((t) => t.requests).length).toBe(condition.requestCount);
+								break;
+							case 'tourCount':
+								expect(tours.length).toBe(condition.tourCount);
+								break;
+							case 'startPosition':
+								break;
+							case 'destinationPosition':
+								break;
+							case 'requestCompanyMatch': {
+								const toursWithCorrectRequest = tours.filter((t) =>
+									t.requests.some(
+										(r) =>
+											!r.events.some(
+												(e) =>
+													(e.lat !== condition.start?.lat || e.lng !== condition.start.lng) &&
+													(e.lat !== condition.destination?.lat ||
+														e.lng !== condition.destination.lng)
+											)
+									)
+								);
+								const companiesWithCorrectRequest = await db
+									.selectFrom('tour')
+									.innerJoin('vehicle', 'vehicle.id', 'tour.vehicle')
+									.innerJoin('company', 'company.id', 'vehicle.company')
+									.where(
+										'tour.id',
+										'in',
+										toursWithCorrectRequest.map((r) => r.id)
+									)
+									.select(['company.lat', 'company.lng'])
+									.execute();
+								expect(
+									companiesWithCorrectRequest.filter(
+										(c) =>
+											(c.lat !== condition.company?.lat || c.lng !== condition.company.lng) &&
+											(c.lat !== condition.company?.lat || c.lng !== condition.company.lng)
+									).length
+								).not.toBe(0);
+								break;
+							}
+							default:
+								expect(false).toBeTruthy();
 						}
-						default:
-							expect(false).toBeTruthy();
+					} catch (err) {
+						console.error(`❌ Condition failed:`, { condition }, { uuid: test.uuid });
+						throw err;
 					}
 				}
 			}

@@ -100,7 +100,7 @@ export async function evaluateRequest(
 	if (earliest >= latest) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
-	earliest = Math.max(earliest, Date.now() - 2* DAY);
+	earliest = Math.max(earliest, Date.now() - 2 * DAY);
 	latest = Math.min(latest, Date.now() + 15 * DAY);
 	const allowedTimes = getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END);
 	console.log(

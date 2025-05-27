@@ -75,7 +75,7 @@ export const tests: TestParams[] = [
 		uuid: '22a5d98e-317c-429a-9a85-b90765e7325b'
 	},
 	{
-		uuid: '1',
+		uuid: '22a5d98e-317c-429a-9a85-b90765e7325a',
 		conditions: [
 			{
 				evalAfterStep: 0,
