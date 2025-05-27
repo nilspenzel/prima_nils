@@ -26,8 +26,8 @@ export type TestParams = {
 	uuid: string;
 };
 
-export const tests: TestParams[] = [
-	{// printhere
+export const tests: TestParams[] = [// printhere
+	{
 		conditions: [
 			{
 				evalAfterStep: 0,
