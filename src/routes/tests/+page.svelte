@@ -88,8 +88,7 @@
 	let currentTestEntity = $state(undefined);
 	let expectedRequestCount = $state('0');
 	let expectedTourCount = $state('0');
-	let expectedStartPosition = $state('0');
-	let expectedDestinationPosition = $state('0');
+	let expectedPosition = $state(undefined);
 	let afterRequest = $state('0');
 	let selectedRequest = $state(undefined);
 
@@ -102,8 +101,7 @@
 			entity: currentTestEntity!,
 			tourCount: parseInt(expectedTourCount),
 			requestCount: parseInt(expectedRequestCount),
-			startIdxInTimeSortedTour: parseInt(expectedStartPosition),
-			destinationIdxInTimeSortedTour: parseInt(expectedDestinationPosition),
+			expectedPosition: expectedPosition ? parseInt(expectedPosition) : undefined,
 			start: selectedRequest ? starts[selectedRequest] : undefined,
 			destination: selectedRequest ? destinations[selectedRequest] : undefined
 		});
@@ -163,7 +161,7 @@
 </script>
 
 <div class="flex h-full w-screen">
-	<div class="h-full w-2/3">
+	<div class="h-full w-1/2">
 		<Map
 			bind:map
 			transformRequest={(url, _resourceType) => {
@@ -218,7 +216,7 @@
 			</GeoJSON>
 		</Map>
 	</div>
-	<div class="h-full w-1/3 flex-col overflow-auto border-l border-gray-300 p-4">
+	<div class="h-full w-1/2 flex-col overflow-auto border-l border-gray-300 p-4">
 		<div class="mt-4 flex gap-4">
 			<Switch class="justify-self-end" bind:checked={addCompany} />
 			<Label class="flex items-center gap-2">Add Company</Label>
@@ -287,39 +285,24 @@
 
 			{#if currentTestEntity === 'startPosition' || currentTestEntity === 'destinationPosition'}
 				<select
+					bind:value={expectedPosition}
+					class="rounded border border-gray-300 bg-white px-3 py-2"
+				>
+					<option disabled selected hidden>Select position</option>
+					{#each destinations.entries() as [i, _]}
+						<option value={i.toString()}>{i}</option>
+					{/each}
+				</select>
+				<select
 					bind:value={selectedRequest}
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
+					<option disabled selected hidden>Select request</option>
 					{#each destinations.entries() as [i, _]}
 						<option value={(i + 1).toString()}>{i + 1}</option>
 					{/each}
 				</select>
 			{/if}
-
-			{#if currentTestEntity === 'startPosition'}
-				<select
-					bind:value={expectedStartPosition}
-					class="rounded border border-gray-300 bg-white px-3 py-2"
-				>
-					<option value="0" selected>0</option>
-					{#each destinations.entries() as [i, _]}
-						<option value={(i + 1).toString()}>{i + 1}</option>
-					{/each}
-				</select>
-			{/if}
-
-			{#if currentTestEntity === 'destinationPosition'}
-				<select
-					bind:value={expectedDestinationPosition}
-					class="rounded border border-gray-300 bg-white px-3 py-2"
-				>
-					<option value="0" selected>0</option>
-					{#each destinations.entries() as [i, _]}
-						<option value={(i + 1).toString()}>{i + 1}</option>
-					{/each}
-				</select>
-			{/if}
-
 			{#if currentTestEntity !== '' && parseInt(afterRequest) !== -1}
 				<Button onclick={addCondition}>Add Condition</Button>
 			{/if}

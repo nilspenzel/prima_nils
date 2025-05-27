@@ -11,7 +11,13 @@ export async function prepareTest() {
 	return mockUserId;
 }
 
-const BASE_DATE = new Date('2050-09-23T17:00Z').getTime();
+const now = new Date();
+const baseDate = new Date(
+	Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 2, 13, 0, 0, 0)
+);
+
+const BASE_DATE = baseDate.getTime();
+
 export const dateInXMinutes = (x: number) => new Date(BASE_DATE + x * MINUTE);
 export const inXMinutes = (x: number) => BASE_DATE + x * MINUTE;
 

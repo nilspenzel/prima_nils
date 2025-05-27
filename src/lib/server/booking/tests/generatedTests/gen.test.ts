@@ -3,8 +3,27 @@ import { prepareTest, white } from '../util';
 import { addCompany, addTaxi, getTours, setAvailability, Zone } from '$lib/testHelpers';
 import type { ExpectedConnection } from '$lib/server/booking/bookRide';
 import { bookingApi } from '$lib/server/booking/bookingApi';
-import { tests } from './testJsons';
+import { tests, type Condition } from './testJsons';
 import { db } from '$lib/server/db';
+
+function filterByContainedEvent(
+	tours: {
+		id: number;
+		requests: { events: { lat: number; lng: number; scheduledTimeStart: number }[] }[];
+	}[],
+	condition: Condition
+) {
+	return tours.filter((t) =>
+		t.requests.some(
+			(r) =>
+				!r.events.some(
+					(e) =>
+						(e.lat !== condition.start?.lat || e.lng !== condition.start.lng) &&
+						(e.lat !== condition.destination?.lat || e.lng !== condition.destination.lng)
+				)
+		)
+	);
+}
 
 describe('Concatenation tests', () => {
 	it('generated tests', async () => {
@@ -56,22 +75,24 @@ describe('Concatenation tests', () => {
 							case 'tourCount':
 								expect(tours.length).toBe(condition.tourCount);
 								break;
-							case 'startPosition':
+							case 'startPosition': {
+								const events = filterByContainedEvent(tours, condition)[0]
+									.requests.flatMap((r) => r.events)
+									.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+								expect(events[condition.expectedPosition!].lat).toBe(condition.start?.lat);
+								expect(events[condition.expectedPosition!].lng).toBe(condition.start?.lng);
 								break;
-							case 'destinationPosition':
+							}
+							case 'destinationPosition': {
+								const events = filterByContainedEvent(tours, condition)[0]
+									.requests.flatMap((r) => r.events)
+									.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+								expect(events[condition.expectedPosition!].lat).toBe(condition.destination?.lat);
+								expect(events[condition.expectedPosition!].lng).toBe(condition.destination?.lng);
 								break;
+							}
 							case 'requestCompanyMatch': {
-								const toursWithCorrectRequest = tours.filter((t) =>
-									t.requests.some(
-										(r) =>
-											!r.events.some(
-												(e) =>
-													(e.lat !== condition.start?.lat || e.lng !== condition.start.lng) &&
-													(e.lat !== condition.destination?.lat ||
-														e.lng !== condition.destination.lng)
-											)
-									)
-								);
+								const toursWithCorrectRequest = filterByContainedEvent(tours, condition);
 								const companiesWithCorrectRequest = await db
 									.selectFrom('tour')
 									.innerJoin('vehicle', 'vehicle.id', 'tour.vehicle')
@@ -79,7 +100,7 @@ describe('Concatenation tests', () => {
 									.where(
 										'tour.id',
 										'in',
-										toursWithCorrectRequest.map((r) => r.id)
+										toursWithCorrectRequest.map((t) => t.id)
 									)
 									.select(['company.lat', 'company.lng'])
 									.execute();
