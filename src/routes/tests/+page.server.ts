@@ -1,11 +1,10 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { readFloat } from '$lib/server/util/readForm';
 import { sql } from 'kysely';
-import { whitelist } from '../api/whitelist/whitelist';
-import type { Capacities } from '$lib/util/booking/Capacities';
 import type { Translations } from '$lib/i18n/translation';
-import { bookingApi } from '$lib/server/booking/bookingApi';
+import fs from 'fs';
+import path from 'path';
+import type { Actions } from './$types';
 
 export type BookingError = { msg: keyof Translations['msg'] };
 
@@ -16,75 +15,41 @@ export const load: PageServerLoad = async () => {
 	};
 };
 
-export const actions = {
-	default: async (event): Promise<BookingError | { request: number }> => {
-		const formData = await event.request.formData();
+export const actions: Actions = {
+	default: async ({ request }) => {
+		const formData = await request.formData();
+		const value = formData.get('value');
 
-		const fromLat = readFloat(formData.get('fromLat'));
-		const fromLng = readFloat(formData.get('fromLng'));
-		const toLat = readFloat(formData.get('toLat'));
-		const toLng = readFloat(formData.get('toLng'));
-		const timeStr = formData.get('time');
-
-		if (
-			isNaN(fromLat) ||
-			isNaN(fromLng) ||
-			isNaN(toLat) ||
-			isNaN(toLng) ||
-			typeof timeStr !== 'string'
-		) {
-			console.log('invalid booking params', { fromLat, fromLng, toLat, toLng, timeStr });
-			throw 'invalid booking params';
+		if (typeof value !== 'string') {
+			return { success: false, error: 'Invalid value' };
 		}
 
-		const time = new Date(timeStr);
-		if (isNaN(time.getTime())) {
-			console.log('invalid time', timeStr);
-			throw 'invalid time';
+		const testFilePath = path.resolve('src/lib/testfile.ts'); // Adjust the path if needed
+		const marker = '// printhere';
+
+		let fileContent: string;
+		try {
+			fileContent = fs.readFileSync(testFilePath, 'utf-8');
+		} catch (err) {
+			return { success: false, error: 'Could not read file' };
 		}
 
-		const capacities: Capacities = {
-			bikes: 0,
-			luggage: 0,
-			passengers: 1,
-			wheelchairs: 0
-		};
-		const start = { lat: fromLat, lng: fromLng, address: '' };
-		const target = { lat: toLat, lng: toLng, address: '' };
-		const whitelistResult = await whitelist(
-			{ ...target },
-			[{ ...start, times: [time.getTime()] }],
-			capacities,
-			false
-		);
-
-		const result = whitelistResult[0][0];
-		if (result == undefined) {
-			return { msg: 'noVehicle' };
-		}
-		const connection1 = {
-			start,
-			target,
-			startTime: result.pickupTime,
-			targetTime: result.dropoffTime,
-			signature: '',
-			startFixed: false
-		};
-
-		const bookingResponse = await bookingApi(
-			{ connection1, connection2: null, capacities },
-			1,
-			true,
-			0,
-			0,
-			0
-		);
-
-		if (bookingResponse.request1Id === undefined) {
-			return { msg: 'bookingError' };
+		const index = fileContent.indexOf(marker);
+		if (index === -1) {
+			return { success: false, error: 'Marker not found' };
 		}
 
-		return { request: bookingResponse.request1Id };
+		const before = fileContent.slice(0, index + marker.length);
+		const after = fileContent.slice(index + marker.length);
+		const newContent = `${before}\n\t\t${JSON.stringify(value)},${after}`;
+
+		try {
+			fs.writeFileSync(testFilePath, newContent, 'utf-8');
+		} catch (err) {
+			return { success: false, error: 'Failed to write to file' };
+		}
+
+		return { success: true };
 	}
 };
 
