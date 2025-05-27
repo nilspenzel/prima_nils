@@ -28,6 +28,53 @@ export type TestParams = {
 
 export const tests: TestParams[] = [
 	{
+		conditions: [
+			{
+				evalAfterStep: 0,
+				entity: 'requestCompanyMatch',
+				start: {
+					lat: 51.537015283793494,
+					lng: 14.608825073401135
+				},
+				destination: {
+					lat: 51.53918656449426,
+					lng: 14.594695490056267
+				},
+				company: {
+					lat: 51.537190960856094,
+					lng: 14.632143533304486
+				}
+			}
+		],
+		process: {
+			starts: [
+				{
+					lat: 51.537015283793494,
+					lng: 14.608825073401135
+				}
+			],
+			destinations: [
+				{
+					lat: 51.53918656449426,
+					lng: 14.594695490056267
+				}
+			],
+			times: [1748590615492],
+			isDepartures: [true],
+			companies: [
+				{
+					lat: 51.537190960856094,
+					lng: 14.632143533304486
+				},
+				{
+					lat: 51.5360501900239,
+					lng: 14.669216422668057
+				}
+			]
+		},
+		uuid: '22a5d98e-317c-429a-9a85-b90765e7325b'
+	},
+	{
 		uuid: '1',
 		conditions: [
 			{
