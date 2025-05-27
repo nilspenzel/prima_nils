@@ -3,8 +3,9 @@ import { prepareTest, white } from '../util';
 import { addCompany, addTaxi, getTours, setAvailability, Zone } from '$lib/testHelpers';
 import type { ExpectedConnection } from '$lib/server/booking/bookRide';
 import { bookingApi } from '$lib/server/booking/bookingApi';
-import { tests, type Condition } from './testJsons';
 import { db } from '$lib/server/db';
+import type { Condition } from '$lib/util/booking/testParams';
+import { tests } from './testJsons';
 
 function filterByContainedEvent(
 	tours: {
