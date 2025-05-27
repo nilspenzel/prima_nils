@@ -3,8 +3,8 @@ export async function retry<T>(fn: () => Promise<T>, maxRetries = 15): Promise<T
 	while (true) {
 		try {
 			return await fn();
-		} catch (err: any) {
-			const code = err?.code;
+		} catch (err) {
+			const code = (err as any)?.code;
 			const isRetryable = code === '40001' || code === '40P01';
 			if (!isRetryable || attempt >= maxRetries) throw err;
 			attempt++;
