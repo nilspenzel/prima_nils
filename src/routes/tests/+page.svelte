@@ -158,7 +158,7 @@
 			},
 			null,
 			'\t'
-		).replace(/"([^"]+)"(?=\s*:)/g, '$1')
+		)
 	);
 </script>
 
@@ -228,7 +228,7 @@
 
 			<form method="POST">
 				<input type="hidden" name="value" value={json} />
-				<button type="submit" name="intent">Write to File</button>
+				<Button type="submit" name="intent">Add Test</Button>
 			</form>
 		</div>
 

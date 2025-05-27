@@ -14,6 +14,7 @@
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint . --ignore-pattern src/lib/openapi",
 		"test:unit": "./setup-db.sh && vitest --fileParallelism false",
+		"test:gen": "./setup-db.sh && vitest src/lib/server/booking/tests/generatedTests/gen.test.ts --fileParallelism false",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
 		"sim": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/simulation/script.ts",

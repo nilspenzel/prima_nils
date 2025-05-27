@@ -18,34 +18,54 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
-		const value = formData.get('value');
+		const raw = formData.get('value');
 
-		if (typeof value !== 'string') {
+		if (typeof raw !== 'string') {
+			console.log('Invalid value');
 			return { success: false, error: 'Invalid value' };
 		}
 
-		const testFilePath = path.resolve('src/lib/testfile.ts'); // Adjust the path if needed
+		let parsed;
+		try {
+			parsed = JSON.parse(raw);
+		} catch (_) {
+			console.log('Invalid JSON input', { raw });
+			return { success: false, error: 'Invalid JSON input' };
+		}
+
+		const formatted = JSON.stringify(parsed, null, 2);
+
+		const testFilePath = path.resolve('src/lib/server/booking/tests/generatedTests/testJsons.ts');
 		const marker = '// printhere';
 
 		let fileContent: string;
 		try {
 			fileContent = fs.readFileSync(testFilePath, 'utf-8');
-		} catch (err) {
+		} catch (_) {
+			console.log('Could not read file');
 			return { success: false, error: 'Could not read file' };
 		}
 
 		const index = fileContent.indexOf(marker);
 		if (index === -1) {
+			console.log('Marker not found');
 			return { success: false, error: 'Marker not found' };
 		}
 
 		const before = fileContent.slice(0, index + marker.length);
 		const after = fileContent.slice(index + marker.length);
-		const newContent = `${before}\n\t\t${JSON.stringify(value)},${after}`;
+
+		const indentedFormatted = formatted
+			.split('\n')
+			.map((line) => '\t' + line)
+			.join('\n');
+		console.log({ indentedFormatted });
+		const newContent = `${before}\n\t${indentedFormatted},${after}`;
 
 		try {
 			fs.writeFileSync(testFilePath, newContent, 'utf-8');
-		} catch (err) {
+		} catch (_) {
+			console.log('Failed to write to file');
 			return { success: false, error: 'Failed to write to file' };
 		}
 
