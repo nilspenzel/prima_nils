@@ -1,29 +1,4 @@
-import type { Coordinates } from '$lib/util/Coordinates';
-
-export type Condition = {
-	evalAfterStep: number;
-	entity: string;
-	company?: Coordinates;
-	start?: Coordinates;
-	destination?: Coordinates;
-	expectedPosition?: number;
-	tourCount?: number;
-	requestCount?: number;
-};
-
-export type TestProcess = {
-	companies: Coordinates[];
-	starts: Coordinates[];
-	destinations: Coordinates[];
-	times: number[];
-	isDepartures: boolean[];
-};
-
-export type TestParams = {
-	process: TestProcess;
-	conditions: Condition[];
-	uuid: string;
-};
+import type { TestParams } from '$lib/util/booking/testParams';
 
 export const tests: TestParams[] = [
 	// printhere
@@ -72,6 +47,6 @@ export const tests: TestParams[] = [
 				}
 			]
 		},
-		uuid: 'fb0c53ed-7a1e-4439-a28a-be4425e35426'
+		uuid: '1'
 	}
 ];

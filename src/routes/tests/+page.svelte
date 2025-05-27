@@ -11,7 +11,8 @@
 	import Switch from '$lib/shadcn/switch/switch.svelte';
 	import { Label } from '$lib/shadcn/label/index.js';
 	import type { Coordinates } from '$lib/util/Coordinates.js';
-	import type { Condition } from '$lib/server/booking/tests/generatedTests/testJsons.js';
+	import type { Condition, TestParams } from '$lib/util/booking/testParams.js';
+	import { Input } from '$lib/shadcn/input/index.js';
 
 	const { data } = $props();
 
@@ -158,6 +159,27 @@
 			'\t'
 		)
 	);
+
+	let userInputJson: string | undefined = $state(undefined);
+
+	function readTest(userInputJson: string | undefined) {
+		if (userInputJson === undefined) {
+			return;
+		}
+		const test = JSON.parse(userInputJson) as TestParams;
+		companies.length = 0;
+		test.process.companies.forEach((i) => companies.push(i));
+		starts.length = 0;
+		test.process.starts.forEach((i) => starts.push(i));
+		destinations.length = 0;
+		test.process.destinations.forEach((i) => destinations.push(i));
+		times.length = 0;
+		test.process.times.forEach((i) => times.push(i));
+		isDepartures.length = 0;
+		test.process.isDepartures.forEach((i) => isDepartures.push(i));
+		conditions.length = 0;
+		test.conditions.forEach((i) => conditions.push(i));
+	}
 </script>
 
 <div class="flex h-full w-screen">
@@ -227,6 +249,11 @@
 			<form method="POST">
 				<input type="hidden" name="value" value={json} />
 				<Button type="submit" name="intent">Add Test</Button>
+			</form>
+
+			<Input type="text" class="justify-self-end" bind:value={userInputJson} />
+			<form method="POST">
+				<Button onclick={() => readTest(userInputJson)}>Load Test</Button>
 			</form>
 		</div>
 
