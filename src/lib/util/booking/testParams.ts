@@ -3,12 +3,12 @@ import type { Coordinates } from '../Coordinates';
 export type Condition = {
 	evalAfterStep: number;
 	entity: string;
-	company?: Coordinates;
-	start?: Coordinates;
-	destination?: Coordinates;
-	expectedPosition?: number;
-	tourCount?: number;
-	requestCount?: number;
+	company: Coordinates | null;
+	start: Coordinates | null;
+	destination: Coordinates | null;
+	expectedPosition: number | null;
+	tourCount: number | null;
+	requestCount: number | null;
 };
 
 export type TestProcess = {
