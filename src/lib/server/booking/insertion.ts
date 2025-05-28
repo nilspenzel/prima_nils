@@ -272,7 +272,7 @@ export function evaluateNewTours(
 		nextMonday.setHours(10);
 		nextMonday.setMinutes(0);
 		nextMonday.setSeconds(0);
-		prepTime = nextMonday.getTime();
+		prepTime = nowOrSimulationTime().getTime() + MIN_PREP;
 	}
 
 	companies.forEach((company, companyIdx) => {
