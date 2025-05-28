@@ -496,6 +496,20 @@ export function evaluateSingleInsertions(
 					prepTime,
 					insertionInfo.vehicle
 				);
+				if (insertHow === InsertHow.INSERT && prev && next) {
+					const twoBefore = insertionInfo.vehicle.events[insertionInfo.idxInEvents - 2];
+					if (twoBefore && twoBefore?.tourId != prev.tourId) {
+						const tourDifference = prev.departure - twoBefore.arrival;
+						const scheduledTimeLength = prev.scheduledTimeEnd - prev.scheduledTimeStart;
+						windows[0].startTime += Math.max(0, scheduledTimeLength - tourDifference);
+					}
+					const twoAfter = insertionInfo.vehicle.events[insertionInfo.idxInEvents + 1];
+					if (twoAfter && twoAfter?.tourId != next.tourId) {
+						const tourDifference = twoAfter.departure - next.arrival;
+						const scheduledTimeLength = next.scheduledTimeEnd - next.scheduledTimeStart;
+						windows[0].startTime -= Math.max(0, scheduledTimeLength - tourDifference);
+					}
+				}
 				for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
 					for (let busTimeIdx = 0; busTimeIdx != busStopTimes[busStopIdx].length; ++busTimeIdx) {
 						insertionCase.what = InsertWhat.BOTH;
