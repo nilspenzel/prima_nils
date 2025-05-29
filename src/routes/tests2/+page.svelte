@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { v4 as uuidv4 } from 'uuid';
 	import maplibregl from 'maplibre-gl';
 	import { getStyle } from '$lib/map/style.js';
 	import Map from '$lib/map/Map.svelte';
@@ -18,15 +17,29 @@
 
 	let map = $state<maplibregl.Map>();
 
-	let events = $state(data.tours.flatMap((t) => t.requests.flatMap((r) => r.events.map((e) => {return{...e,tourId:t.tourId,requestId: r.requestId}}))));
-	let companies = $state(data.companies.filter((c) => c.lat && c.lng).map((c) => {return{...c,lat:c.lat!,lng:c.lng!,companyId:c.id}}));
+	let events = $state(
+		data.tours.flatMap((t) =>
+			t.requests.flatMap((r) =>
+				r.events.map((e) => {
+					return { ...e, tourId: t.tourId, requestId: r.requestId };
+				})
+			)
+		)
+	);
+	let companies = $state(
+		data.companies
+			.filter((c) => c.lat && c.lng)
+			.map((c) => {
+				return { ...c, lat: c.lat!, lng: c.lng!, companyId: c.id };
+			})
+	);
 
 	let init = false;
 	let startMarkers: maplibregl.Marker[] = [];
 	let destinationMarkers: maplibregl.Marker[] = [];
 	let companyMarkers: maplibregl.Marker[] = [];
-	let start: {lat: number, lng: number} | undefined = $state(undefined);
-	let destination: {lat: number, lng: number} | undefined = $state(undefined);
+	let start: { lat: number; lng: number } | undefined = $state(undefined);
+	let destination: { lat: number; lng: number } | undefined = $state(undefined);
 
 	function addTime(t: number) {
 		time = new Date(time.getTime() + t);
@@ -34,10 +47,13 @@
 
 	function addMarkers(
 		markers: maplibregl.Marker[],
-		coordinates: { lat: number; lng: number,
-		requestId?: number,
-		tourId?: number,
-		companyId?: number }[],
+		coordinates: {
+			lat: number;
+			lng: number;
+			requestId?: number;
+			tourId?: number;
+			companyId?: number;
+		}[],
 		color: string,
 		onDropNearCompany?: (start: number, company: number) => void
 	) {
@@ -45,7 +61,7 @@
 		return coordinates.map((coordinate, i) => {
 			const el = document.createElement('div');
 			el.className = 'marker-start';
-			el.innerText = `${coordinate.requestId ? 'r' + coordinate.requestId + ' ' : ''}${coordinate.tourId ? 't' + coordinate.tourId + ' ' : ''}${coordinate.companyId ? 'c' + coordinate.companyId: ''}`;
+			el.innerText = `${coordinate.requestId ? 'r' + coordinate.requestId + ' ' : ''}${coordinate.tourId ? 't' + coordinate.tourId + ' ' : ''}${coordinate.companyId ? 'c' + coordinate.companyId : ''}`;
 			Object.assign(el.style, {
 				backgroundColor: color,
 				color: 'black',
@@ -92,9 +108,17 @@
 
 	$effect(() => {
 		if (!map) return;
-		companyMarkers = addMarkers(companyMarkers, companies, 'yellow',);
-		startMarkers = addMarkers(startMarkers, events.filter((e) => e.isPickup), 'green');
-		destinationMarkers = addMarkers(destinationMarkers, events.filter((e) => !e.isPickup), 'red');
+		companyMarkers = addMarkers(companyMarkers, companies, 'yellow');
+		startMarkers = addMarkers(
+			startMarkers,
+			events.filter((e) => e.isPickup),
+			'green'
+		);
+		destinationMarkers = addMarkers(
+			destinationMarkers,
+			events.filter((e) => !e.isPickup),
+			'red'
+		);
 	});
 
 	$effect(() => {
@@ -102,9 +126,9 @@
 			map.on('contextmenu', (e) => {
 				const { lat, lng } = e.lngLat;
 				if (start) {
-					destination = {lat,lng};
+					destination = { lat, lng };
 				} else {
-					start = {lat,lng};
+					start = { lat, lng };
 				}
 			});
 			init = true;
@@ -241,6 +265,5 @@
 				</select>
 			{/if}
 		</div>
-
 	</div>
 </div>
