@@ -62,8 +62,10 @@ export async function bookRide(
 		trx
 	);
 	if (companies.length == 0 || filteredBusStops[0] == undefined) {
-		if(debugInfo) {
-			console.log("BOOK RIDE DEBUG INFO: there were no vehicles with corrcet zone, capacity and availability or tour for concatenation.");
+		if (debugInfo) {
+			console.log(
+				'BOOK RIDE DEBUG INFO: there were no vehicles with corrcet zone, capacity and availability or tour for concatenation.'
+			);
 		}
 		return undefined;
 	}
