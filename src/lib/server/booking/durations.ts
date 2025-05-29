@@ -253,7 +253,7 @@ export function getArrivalWindow(
 				{ arrivalWindows: arrivalWindows.map((w) => w.toString()) },
 				'  ',
 				printInsertionType(insertionCase),
-				{busStopWindow:busStopWindow.toString()}
+				{ busStopWindow: busStopWindow.toString() }
 			);
 		}
 	}

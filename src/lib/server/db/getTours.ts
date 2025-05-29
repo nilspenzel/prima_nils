@@ -101,7 +101,7 @@ export const getToursWithRequests = async (
 					.selectFrom('request')
 					.whereRef('tour.id', '=', 'request.tour')
 					.$if(!selectCancelled, (qb) => qb.where('tour.cancelled', '=', false))
-					.select((eb) =>[
+					.select((eb) => [
 						'request.luggage',
 						'request.passengers',
 						'request.wheelchairs',
