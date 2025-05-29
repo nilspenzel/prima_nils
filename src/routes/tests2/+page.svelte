@@ -10,28 +10,23 @@
 	import { DAY, HOUR, MINUTE } from '$lib/util/time.js';
 	import Switch from '$lib/shadcn/switch/switch.svelte';
 	import { Label } from '$lib/shadcn/label/index.js';
-	import type { Coordinates } from '$lib/util/Coordinates.js';
-	import type { Condition, TestParams } from '$lib/util/booking/testParams.js';
-	import { Input } from '$lib/shadcn/input/index.js';
 
 	const { data } = $props();
 
 	let time = $state(new Date(Date.now() + DAY * 3));
-	let addCompany = $state(true);
 	let departure = $state(true);
 
 	let map = $state<maplibregl.Map>();
 
-	let starts: { lat: number; lng: number }[] = $state([]);
-	let destinations: { lat: number; lng: number }[] = $state([]);
-	let companies: { lat: number; lng: number }[] = $state([]);
+	let events = $state(data.tours.flatMap((t) => t.requests.flatMap((r) => r.events.map((e) => {return{...e,tourId:t.tourId,requestId: r.requestId}}))));
+	let companies = $state(data.companies.filter((c) => c.lat && c.lng).map((c) => {return{...c,lat:c.lat!,lng:c.lng!,companyId:c.id}}));
 
 	let init = false;
 	let startMarkers: maplibregl.Marker[] = [];
 	let destinationMarkers: maplibregl.Marker[] = [];
 	let companyMarkers: maplibregl.Marker[] = [];
-	let times: number[] = [];
-	let isDepartures: boolean[] = [];
+	let start: {lat: number, lng: number} | undefined = $state(undefined);
+	let destination: {lat: number, lng: number} | undefined = $state(undefined);
 
 	function addTime(t: number) {
 		time = new Date(time.getTime() + t);
@@ -39,7 +34,10 @@
 
 	function addMarkers(
 		markers: maplibregl.Marker[],
-		coordinates: { lat: number; lng: number }[],
+		coordinates: { lat: number; lng: number,
+		requestId?: number,
+		tourId?: number,
+		companyId?: number }[],
 		color: string,
 		onDropNearCompany?: (start: number, company: number) => void
 	) {
@@ -47,7 +45,7 @@
 		return coordinates.map((coordinate, i) => {
 			const el = document.createElement('div');
 			el.className = 'marker-start';
-			el.innerText = `${i + 1}`;
+			el.innerText = `${coordinate.requestId ? 'r' + coordinate.requestId + ' ' : ''}${coordinate.tourId ? 't' + coordinate.tourId + ' ' : ''}${coordinate.companyId ? 'c' + coordinate.companyId: ''}`;
 			Object.assign(el.style, {
 				backgroundColor: color,
 				color: 'black',
@@ -71,12 +69,12 @@
 
 					const threshold = 0.002;
 					const foundIndex = companies.findIndex((company) => {
-						const dx = dropped.lng - company.lng;
-						const dy = dropped.lat - company.lat;
+						const dx = dropped.lng - company.lng!;
+						const dy = dropped.lat - company.lat!;
 						return Math.sqrt(dx * dx + dy * dy) < threshold;
 					});
 
-					if (foundIndex !== -1 && destinations.length !== i) {
+					if (foundIndex !== -1) {
 						onDropNearCompany(i, foundIndex);
 					}
 					marker.setLngLat(coordinate);
@@ -90,100 +88,28 @@
 	let expectedRequestCount = $state('0');
 	let expectedTourCount = $state('0');
 	let expectedPosition = $state(null);
-	let afterRequest = $state('0');
 	let selectedRequest = $state(null);
-
-	let conditions: Condition[] = $state([]);
-	let uuid = '1';
-	function addCondition() {
-		uuid = uuidv4();
-		conditions.push({
-			evalAfterStep: parseInt(afterRequest),
-			entity: currentTestEntity!,
-			tourCount: parseInt(expectedTourCount),
-			requestCount: parseInt(expectedRequestCount),
-			expectedPosition: expectedPosition ? parseInt(expectedPosition) : null,
-			start: selectedRequest ? starts[selectedRequest] : null,
-			destination: selectedRequest ? destinations[selectedRequest] : null,
-			company: null
-		});
-	}
-
-	function assignRequestToCompany(startIdx: number, start: Coordinates, company: Coordinates) {
-		uuid = uuidv4();
-		conditions.push({
-			evalAfterStep: startIdx,
-			entity: 'requestCompanyMatch',
-			start,
-			destination: destinations[startIdx],
-			company,
-			expectedPosition: null,
-			tourCount: null,
-			requestCount: null
-		});
-	}
 
 	$effect(() => {
 		if (!map) return;
-		companyMarkers = addMarkers(companyMarkers, companies, 'yellow');
-		startMarkers = addMarkers(startMarkers, starts, 'green', (s, c) =>
-			assignRequestToCompany(s, starts[s], companies[c])
-		);
-		destinationMarkers = addMarkers(destinationMarkers, destinations, 'red');
+		companyMarkers = addMarkers(companyMarkers, companies, 'yellow',);
+		startMarkers = addMarkers(startMarkers, events.filter((e) => e.isPickup), 'green');
+		destinationMarkers = addMarkers(destinationMarkers, events.filter((e) => !e.isPickup), 'red');
 	});
 
 	$effect(() => {
 		if (map && !init) {
 			map.on('contextmenu', (e) => {
 				const { lat, lng } = e.lngLat;
-				if (addCompany) {
-					companies.push({ lat, lng });
+				if (start) {
+					destination = {lat,lng};
 				} else {
-					if (starts.length === destinations.length) {
-						starts.push({ lat, lng });
-					} else {
-						destinations.push({ lat, lng });
-						times.push(time.getTime());
-						isDepartures.push(departure);
-					}
+					start = {lat,lng};
 				}
 			});
 			init = true;
 		}
 	});
-
-	let json: string = $derived(
-		JSON.stringify(
-			{
-				conditions,
-				process: { starts, destinations, times, isDepartures, companies },
-				uuid
-			},
-			null,
-			'\t'
-		)
-	);
-
-	let userInputJson: string | undefined = $state(undefined);
-
-	function readTest(userInputJson: string | undefined) {
-		if (userInputJson === undefined) {
-			return;
-		}
-		const test: TestParams = eval('(' + userInputJson + ')');
-		companies.length = 0;
-		test.process.companies.forEach((i) => companies.push(i));
-		starts.length = 0;
-		test.process.starts.forEach((i) => starts.push(i));
-		destinations.length = 0;
-		test.process.destinations.forEach((i) => destinations.push(i));
-		times.length = 0;
-		test.process.times.forEach((i) => times.push(i));
-		isDepartures.length = 0;
-		test.process.isDepartures.forEach((i) => isDepartures.push(i));
-		conditions.length = 0;
-		test.conditions.forEach((i) => conditions.push(i));
-	}
 </script>
 
 <div class="flex h-full w-screen">
@@ -244,21 +170,8 @@
 	</div>
 	<div class="h-full w-1/2 flex-col overflow-auto border-l border-gray-300 p-4">
 		<div class="mt-4 flex gap-4">
-			<Switch class="justify-self-end" bind:checked={addCompany} />
-			<Label class="flex items-center gap-2">Add Company</Label>
-
 			<Switch class="justify-self-end" bind:checked={departure} />
 			<Label class="flex items-center gap-2">Time fixed at start</Label>
-
-			<form method="POST">
-				<input type="hidden" name="value" value={json} />
-				<Button type="submit" name="intent">Add Test</Button>
-			</form>
-
-			<Input type="text" class="justify-self-end" bind:value={userInputJson} />
-			<form method="POST">
-				<Button onclick={() => readTest(userInputJson)}>Load Test</Button>
-			</form>
 		</div>
 
 		<div class="mt-4 flex gap-4">
@@ -272,13 +185,6 @@
 		</div>
 
 		<div class="mt-4 flex gap-4">
-			<select bind:value={afterRequest} class="rounded border border-gray-300 bg-white px-3 py-2">
-				<option value="-1">After Request #</option>
-				{#each destinations.entries() as [i, _]}
-					<option value={i}>{i + 1}</option>
-				{/each}
-			</select>
-
 			<select
 				bind:value={currentTestEntity}
 				class="rounded border border-gray-300 bg-white px-3 py-2"
@@ -296,7 +202,7 @@
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
 					<option value="0" selected>0</option>
-					{#each destinations.entries() as [i, _]}
+					{#each data.tours.entries() as [i, _]}
 						<option value={(i + 1).toString()}>{i + 1}</option>
 					{/each}
 				</select>
@@ -308,7 +214,7 @@
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
 					<option value="0" selected>0</option>
-					{#each destinations.entries() as [i, _]}
+					{#each data.tours.entries() as [i, _]}
 						<option value={(i + 1).toString()}>{i + 1}</option>
 					{/each}
 				</select>
@@ -320,7 +226,7 @@
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
 					<option disabled selected hidden>Select position</option>
-					{#each destinations.entries() as [i, _]}
+					{#each data.tours.entries() as [i, _]}
 						<option value={i.toString()}>{i}</option>
 					{/each}
 				</select>
@@ -329,18 +235,12 @@
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
 					<option disabled selected hidden>Select request</option>
-					{#each destinations.entries() as [i, _]}
+					{#each data.tours.entries() as [i, _]}
 						<option value={(i + 1).toString()}>{i + 1}</option>
 					{/each}
 				</select>
 			{/if}
-			{#if currentTestEntity !== '' && parseInt(afterRequest) !== -1}
-				<Button onclick={addCondition}>Add Condition</Button>
-			{/if}
 		</div>
 
-		<pre>
-			{json}
-		</pre>
 	</div>
 </div>
