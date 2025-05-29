@@ -7,6 +7,7 @@ import { getToursWithRequests } from '$lib/server/db/getTours';
 export type BookingError = { msg: keyof Translations['msg'] };
 
 export const load: PageServerLoad = async () => {
+    console.log("i am now logging gettours: ", (await getToursWithRequests(false)).flatMap((t) => t.requests.flatMap((r) => r.events.map((e)=> "request: " + e.requestId + " tour: " + e.tour + " event: "+e.id))));
     return {
         companies: await db.selectFrom('company').select(['id', 'lat', 'lng']).execute(),
         areas: (await areasGeoJSON()).rows[0],

@@ -135,6 +135,8 @@ export async function bookingApi(
 							trx
 						)) ?? null;
 				}
+				communicatedPickup1 = firstConnection?.best.pickupTime;
+				communicatedDropoff1 = firstConnection?.best.dropoffTime;
 				if (p.connection2 != null) {
 					request2Id =
 						(await insertRequest(
@@ -153,6 +155,8 @@ export async function bookingApi(
 							kidsFiveToSix,
 							trx
 						)) ?? null;
+					communicatedPickup2 = secondConnection?.best.pickupTime;
+					communicatedDropoff2 = secondConnection?.best.dropoffTime;
 				}
 				message = 'Die Anfrage wurde erfolgreich bearbeitet.';
 				success = true;
