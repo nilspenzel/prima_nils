@@ -11,6 +11,7 @@ import { InsertHow } from '$lib/server/booking/insertionTypes';
 import { getEventGroupInfo } from '$lib/server/booking/getEventGroupInfo';
 import { getDirectDurations } from './getDirectDrivingDurations';
 import { getMergeTourList } from './getMergeToorList';
+import type { DebugInfo } from '../util/debugInfo';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -45,7 +46,8 @@ export async function bookRide(
 	required: Capacities,
 	trx?: Transaction<Database>,
 	skipPromiseCheck?: boolean,
-	blockedVehicleId?: number
+	blockedVehicleId?: number,
+	debugInfo?: DebugInfo
 ) {
 	console.log('BS');
 	const searchInterval = new Interval(c.startTime, c.targetTime);
@@ -60,6 +62,9 @@ export async function bookRide(
 		trx
 	);
 	if (companies.length == 0 || filteredBusStops[0] == undefined) {
+		if(debugInfo) {
+			console.log("BOOK RIDE DEBUG INFO: there were no vehicles with corrcet zone, capacity and availability or tour for concatenation.");
+		}
 		return undefined;
 	}
 	if (blockedVehicleId != undefined && blockedVehicleId != null) {
@@ -86,7 +91,8 @@ export async function bookRide(
 				: {
 						pickup: c.startTime,
 						dropoff: c.targetTime
-					}
+					},
+			debugInfo
 		)
 	)[0][0];
 	if (best == undefined) {
