@@ -166,7 +166,8 @@ export function evaluateSingleInsertion(
 	prev: Event | undefined,
 	next: Event | undefined,
 	allowedTimes: Interval[],
-	promisedTimes?: PromisedTimes
+	promisedTimes?: PromisedTimes,
+	debugInfo?: DebugInfo
 ): SingleInsertionEvaluation | undefined {
 	console.assert(insertionCase.what != InsertWhat.BOTH);
 	const approachDuration = getPrevLegDuration(
@@ -191,7 +192,11 @@ export function evaluateSingleInsertion(
 		busStopWindow,
 		approachDuration,
 		returnDuration,
-		allowedTimes
+		allowedTimes,
+		debugInfo &&
+			(debugInfo.vehicleId === undefined || insertionInfo.vehicle.id === debugInfo.vehicleId)
+			? debugInfo
+			: undefined
 	);
 	if (arrivalWindow == undefined) {
 		return undefined;
@@ -279,7 +284,10 @@ export function evaluateBothInsertion(
 		prevLegDuration,
 		nextLegDuration,
 		allowedTimes,
-		debugInfo && (debugInfo.vehicleId === undefined || insertionInfo.vehicle.id === debugInfo.vehicleId) ? debugInfo : undefined
+		debugInfo &&
+			(debugInfo.vehicleId === undefined || insertionInfo.vehicle.id === debugInfo.vehicleId)
+			? debugInfo
+			: undefined
 	);
 	if (arrivalWindow == undefined) {
 		console.log(
@@ -446,7 +454,8 @@ export function evaluateSingleInsertions(
 	routingResults: RoutingResults,
 	travelDurations: (number | undefined)[],
 	allowedTimes: Interval[],
-	promisedTimes?: PromisedTimes
+	promisedTimes?: PromisedTimes,
+	debugInfo?: DebugInfo
 ): Evaluations {
 	const bothEvaluations: (Insertion | undefined)[][] = [];
 	const userChosenEvaluations: (SingleInsertionEvaluation | undefined)[] = [];
@@ -500,7 +509,8 @@ export function evaluateSingleInsertions(
 					next,
 					expandedSearchInterval,
 					prepTime,
-					insertionInfo.vehicle
+					insertionInfo.vehicle,
+					debugInfo
 				);
 				if (insertHow === InsertHow.INSERT && prev && next) {
 					const twoBefore = insertionInfo.vehicle.events[insertionInfo.idxInEvents - 2];
@@ -530,7 +540,8 @@ export function evaluateSingleInsertions(
 							prev,
 							next,
 							allowedTimes,
-							promisedTimes
+							promisedTimes,
+							debugInfo
 						);
 						if (
 							resultBoth != undefined &&
@@ -561,7 +572,8 @@ export function evaluateSingleInsertions(
 							prev,
 							next,
 							allowedTimes,
-							promisedTimes
+							promisedTimes,
+							debugInfo
 						);
 						if (
 							resultBus != undefined &&
