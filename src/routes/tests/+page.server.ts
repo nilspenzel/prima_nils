@@ -12,8 +12,7 @@ export type BookingError = { msg: keyof Translations['msg'] };
 export const load: PageServerLoad = async () => {
 	return {
 		companies: await db.selectFrom('company').select(['id', 'lat', 'lng']).execute(),
-		areas: (await areasGeoJSON()).rows[0],
-		tours: await getToursWithRequests(false)
+		areas: (await areasGeoJSON()).rows[0]
 	};
 };
 
