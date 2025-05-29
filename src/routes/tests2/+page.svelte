@@ -35,9 +35,6 @@
 	);
 
 	let init = false;
-	let startMarkers: maplibregl.Marker[] = [];
-	let destinationMarkers: maplibregl.Marker[] = [];
-	let companyMarkers: maplibregl.Marker[] = [];
 	let start: { lat: number; lng: number } | undefined = $state(undefined);
 	let destination: { lat: number; lng: number } | undefined = $state(undefined);
 
@@ -46,7 +43,6 @@
 	}
 
 	function addMarkers(
-		markers: maplibregl.Marker[],
 		coordinates: {
 			lat: number;
 			lng: number;
@@ -57,7 +53,6 @@
 		color: string,
 		onDropNearCompany?: (start: number, company: number) => void
 	) {
-		markers.forEach((marker) => marker.remove());
 		return coordinates.map((coordinate, i) => {
 			const el = document.createElement('div');
 			el.className = 'marker-start';
@@ -108,17 +103,27 @@
 
 	$effect(() => {
 		if (!map) return;
-		companyMarkers = addMarkers(companyMarkers, companies, 'yellow');
-		startMarkers = addMarkers(
-			startMarkers,
+		addMarkers(companies, 'yellow');
+		addMarkers(
 			events.filter((e) => e.isPickup),
 			'green'
 		);
-		destinationMarkers = addMarkers(
-			destinationMarkers,
+		addMarkers(
 			events.filter((e) => !e.isPickup),
 			'red'
 		);
+	});
+
+	$effect(() => {
+		if (start) {
+			addMarkers([start], 'white');
+		}
+	});
+
+	$effect(() => {
+		if (destination) {
+			addMarkers([destination], 'black');
+		}
 	});
 
 	$effect(() => {
@@ -126,7 +131,9 @@
 			map.on('contextmenu', (e) => {
 				const { lat, lng } = e.lngLat;
 				if (start) {
-					destination = { lat, lng };
+					if (!destination) {
+						destination = { lat, lng };
+					}
 				} else {
 					start = { lat, lng };
 				}
@@ -266,4 +273,14 @@
 			{/if}
 		</div>
 	</div>
+	<form method="POST">
+		<input type="hidden" value={start?.lat} name="startLat" />
+		<input type="hidden" value={start?.lat} name="startLng" />
+		<input type="hidden" value={destination?.lat} name="destinationLat" />
+		<input type="hidden" value={destination?.lat} name="destinationLng" />
+		<input type="hidden" value={1748543100000} name="time" />
+		<input type="hidden" value={true} name="startFixed" />
+		<input type="hidden" value={2} name="vehicle" />
+		<Button type="submit" name="intent">do things</Button>
+	</form>
 </div>

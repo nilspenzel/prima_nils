@@ -101,6 +101,9 @@ export async function bookRide(
 		console.log('surprisingly no possible connection found: ', userChosen, busStop, busTime, best);
 		return undefined;
 	}
+	if (debugInfo) {
+		return undefined;
+	}
 	const events = companies[best.company].vehicles.find((v) => v.id == best.vehicle)!.events;
 	let prevPickupEventIdx = best.pickupIdx == undefined ? undefined : best.pickupIdx - 1;
 	if (best.pickupCase.how == InsertHow.NEW_TOUR) {
