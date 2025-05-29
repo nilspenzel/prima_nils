@@ -2,6 +2,7 @@ import { BUFFER_TIME, MAX_TRAVEL, PASSENGER_CHANGE_DURATION } from '$lib/constan
 import { implication } from '$lib/server/util/implication';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
+import { debugInfoMatches, type DebugInfo } from '../util/debugInfo';
 import type { DbEvent, VehicleWithInterval } from './getBookingAvailability';
 import {
 	InsertDirection,
@@ -96,7 +97,8 @@ export function getAllowedOperationTimes(
 	next: DbEvent | undefined,
 	expandedSearchInterval: Interval,
 	prepTime: UnixtimeMs,
-	vehicle: VehicleWithInterval
+	vehicle: VehicleWithInterval,
+	debugInfo?: DebugInfo
 ): Interval[] {
 	console.assert(
 		implication(!returnsToCompany(insertionCase), next !== undefined),
@@ -135,6 +137,9 @@ export function getAllowedOperationTimes(
 				: prev.scheduledTimeStart;
 	windowStartTime = Math.max(windowStartTime, prepTime);
 	const window = new Interval(windowStartTime, windowEndTime);
+	if(debugInfo && debugInfoMatches(prev?.id ?? -1, next?.id??-1, insertionCase.how,insertionCase.what,vehicle.id,debugInfo)){
+		console.log("BOOK RIDE DEBUG INFO: initial allowed operations window: ", window.toString(), {vehicle:vehicle.id},"  ",printInsertionType(insertionCase));
+	}
 	if (insertionCase.how == InsertHow.INSERT) {
 		return [window];
 	}
@@ -157,9 +162,13 @@ export function getAllowedOperationTimes(
 		!(insertionCase.how != InsertHow.NEW_TOUR && relevantAvailabilities.length > 1),
 		`Found ${relevantAvailabilities.length} intervals, which are supposed to be disjoint, containing the same timestamp.`
 	);
-	return relevantAvailabilities
+	const finalWindow = relevantAvailabilities
 		.map((availability) => new Interval(availability).intersect(window))
 		.filter((availability) => availability != undefined);
+	if(debugInfo && debugInfoMatches(prev?.id ?? -1, next?.id??-1, insertionCase.how,insertionCase.what,vehicle.id,debugInfo)){
+		console.log("BOOK RIDE DEBUG INFO: final allowed operations window: ", finalWindow.toString(), {vehicle:vehicle.id},"  ",printInsertionType(insertionCase));
+	}
+	return finalWindow;
 }
 
 export function getArrivalWindow(

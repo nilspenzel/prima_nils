@@ -36,6 +36,7 @@ import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { roundToUnit, MINUTE } from '$lib/util/time';
 import { iterateAllInsertions } from './iterateAllInsertions';
 import { type Range } from '$lib/util/booking/getPossibleInsertions';
+import type { DebugInfo } from '../util/debugInfo';
 
 export type InsertionEvaluation = {
 	pickupTime: number;
@@ -243,7 +244,8 @@ export function evaluateBothInsertion(
 	prev: Event | undefined,
 	next: Event | undefined,
 	allowedTimes: Interval[],
-	promisedTimes?: PromisedTimes
+	promisedTimes?: PromisedTimes,
+	debugInfo?: DebugInfo
 ): InsertionEvaluation | undefined {
 	console.assert(
 		insertionCase.what == InsertWhat.BOTH,
@@ -350,7 +352,8 @@ export function evaluateNewTours(
 	routingResults: RoutingResults,
 	travelDurations: (number | undefined)[],
 	allowedTimes: Interval[],
-	promisedTimes?: PromisedTimes
+	promisedTimes?: PromisedTimes,
+	debugInfo?: DebugInfo
 ): (Insertion | undefined)[][] {
 	const bestEvaluations = new Array<(Insertion | undefined)[]>(busStopTimes.length);
 	for (let i = 0; i != busStopTimes.length; ++i) {
@@ -393,7 +396,8 @@ export function evaluateNewTours(
 				undefined,
 				expandedSearchInterval,
 				prepTime,
-				vehicle
+				vehicle,
+				debugInfo
 			);
 			for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
 				for (let busTimeIdx = 0; busTimeIdx != busStopTimes[busStopIdx].length; ++busTimeIdx) {
@@ -408,7 +412,8 @@ export function evaluateNewTours(
 						undefined,
 						undefined,
 						allowedTimes,
-						promisedTimes
+						promisedTimes,
+						debugInfo
 					);
 					if (
 						resultNewTour != undefined &&

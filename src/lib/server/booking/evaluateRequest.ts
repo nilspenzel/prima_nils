@@ -26,6 +26,7 @@ import {
 } from './insertion';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 import { DAY } from '$lib/util/time';
+import type { DebugInfo } from '../util/debugInfo';
 
 export type Times = {
 	communicatedPickupTime: number;
@@ -43,7 +44,8 @@ export async function evaluateRequest(
 	busStops: BusStop[],
 	required: Capacities,
 	startFixed: boolean,
-	promisedTimes?: PromisedTimes
+	promisedTimes?: PromisedTimes,
+	debugInfo?: DebugInfo
 ): Promise<((Insertion & Times) | undefined)[][]> {
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
@@ -116,7 +118,8 @@ export async function evaluateRequest(
 		routingResults,
 		directDurations,
 		allowedTimes,
-		promisedTimes
+		promisedTimes,
+		debugInfo
 	);
 	const { busStopEvaluations, bothEvaluations, userChosenEvaluations } = evaluateSingleInsertions(
 		companies,
@@ -127,7 +130,8 @@ export async function evaluateRequest(
 		routingResults,
 		directDurations,
 		allowedTimes,
-		promisedTimes
+		promisedTimes,
+		debugInfo
 	);
 	const pairEvaluations = evaluatePairInsertions(
 		companies,
