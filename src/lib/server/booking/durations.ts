@@ -137,7 +137,7 @@ export function getAllowedOperationTimes(
 				: prev.scheduledTimeStart;
 	windowStartTime = Math.max(windowStartTime, prepTime);
 	const window = new Interval(windowStartTime, windowEndTime);
-	if(debugInfo && debugInfoMatches(prev?.id ?? -1, next?.id??-1, insertionCase.how,insertionCase.what,vehicle.id,debugInfo)){
+	if(debugInfo && debugInfoMatches(debugInfo,insertionCase.how,insertionCase.what,prev?.id ?? -1, next?.id??-1, vehicle.id)){
 		console.log("BOOK RIDE DEBUG INFO: initial allowed operations window: ", window.toString(), {vehicle:vehicle.id},"  ",printInsertionType(insertionCase));
 	}
 	if (insertionCase.how == InsertHow.INSERT) {
@@ -165,7 +165,7 @@ export function getAllowedOperationTimes(
 	const finalWindow = relevantAvailabilities
 		.map((availability) => new Interval(availability).intersect(window))
 		.filter((availability) => availability != undefined);
-	if(debugInfo && debugInfoMatches(prev?.id ?? -1, next?.id??-1, insertionCase.how,insertionCase.what,vehicle.id,debugInfo)){
+	if(debugInfo && debugInfoMatches(debugInfo,insertionCase.how,insertionCase.what,prev?.id ?? -1, next?.id??-1, vehicle.id)){
 		console.log("BOOK RIDE DEBUG INFO: final allowed operations window: ", finalWindow.toString(), {vehicle:vehicle.id},"  ",printInsertionType(insertionCase));
 	}
 	return finalWindow;
@@ -178,7 +178,8 @@ export function getArrivalWindow(
 	busStopWindow: Interval | undefined,
 	prevLegDuration: number,
 	nextLegDuration: number,
-	allowedTimes: Interval[]
+	allowedTimes: Interval[],
+	debugInfo?: DebugInfo
 ): Interval | undefined {
 	const directWindows = Interval.intersect(
 		allowedTimes,
@@ -186,6 +187,9 @@ export function getArrivalWindow(
 			.map((window) => window.shrink(prevLegDuration, nextLegDuration))
 			.filter((window) => window != undefined)
 	);
+	if(debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
+		console.log("BOOK RIDE DEBUG INFO: arrival windows: ", {directWindows: directWindows.map((w) => w.toString())},"  ",printInsertionType(insertionCase));
+	}
 	let arrivalWindows = directWindows
 		.map((window) =>
 			window.shrink(
@@ -194,16 +198,25 @@ export function getArrivalWindow(
 			)
 		)
 		.filter((window) => window != undefined);
+	if(debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
+	console.log("BOOK RIDE DEBUG INFO: arrival windows: ", {arrivalWindows: arrivalWindows.map((w) => w.toString())},"  ",printInsertionType(insertionCase));
+	}
 	if (busStopWindow != undefined) {
 		arrivalWindows = arrivalWindows
 			.map((window) => busStopWindow.intersect(window))
 			.filter((window) => window != undefined);
+	if(debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
+		
+	}
 	}
 	if (arrivalWindows.length == 0) {
 		return undefined;
 	}
-	// TODO why?
-	return insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
+	const best = insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
 		? arrivalWindows.reduce((current, best) => (current.endTime < best.endTime ? current : best))
 		: arrivalWindows.reduce((current, best) => (current.endTime > best.endTime ? current : best));
+	if(debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
+		console.log("BOOK RIDE DEBUG INFO: arrival windows: ", {best: best.toString()},"  ",printInsertionType(insertionCase));
+	}
+	return best;
 }

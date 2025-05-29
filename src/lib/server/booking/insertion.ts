@@ -278,7 +278,8 @@ export function evaluateBothInsertion(
 		busStopWindow,
 		prevLegDuration,
 		nextLegDuration,
-		allowedTimes
+		allowedTimes,
+		debugInfo && (debugInfo.vehicleId === undefined || insertionInfo.vehicle.id === debugInfo.vehicleId) ? debugInfo : undefined
 	);
 	if (arrivalWindow == undefined) {
 		console.log(
