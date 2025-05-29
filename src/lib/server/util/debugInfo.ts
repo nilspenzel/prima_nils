@@ -9,11 +9,12 @@ export type DebugInfo = {
 }
 
 export function debugInfoMatches(
-    prevEventId: number,
-    nextEventId: number,
+    debugInfo: DebugInfo,
     how: InsertHow,
     what: InsertWhat,
-    vehicleId: number, debugInfo: DebugInfo) {
+    prevEventId?: number,
+    nextEventId?: number,
+    vehicleId?: number) {
         if(debugInfo.prevEventId !== undefined && prevEventId !== debugInfo.prevEventId) {
             return false;
         }
