@@ -7,7 +7,6 @@ import { bookRide } from '$lib/server/booking/bookRide';
 import { MINUTE } from '$lib/util/time';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
-import type { DebugInfo } from '$lib/server/util/debugInfo';
 
 export type BookingError = { msg: keyof Translations['msg'] };
 
@@ -107,7 +106,6 @@ export const actions: Actions = {
 		const prevEventId = !p ? undefined : parseInt(p);
 		const nextEventId = !n ? undefined : parseInt(n);
 		const debugInfo = { vehicleId, how, what, prevEventId, nextEventId };
-		console.log({ debugInfo }, { h }, { w });
 		await bookRide(
 			{
 				start,

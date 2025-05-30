@@ -5,7 +5,6 @@ import type { Translations } from '$lib/i18n/translation';
 import fs from 'fs';
 import path from 'path';
 import type { Actions } from './$types';
-import { getToursWithRequests } from '$lib/server/db/getTours';
 
 export type BookingError = { msg: keyof Translations['msg'] };
 
