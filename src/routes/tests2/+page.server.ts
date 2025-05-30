@@ -74,11 +74,40 @@ export const actions: Actions = {
 		const startFixed = fixed.toString().toLocaleLowerCase() === 'true';
 		const time = new Date(t.toString()).getTime();
 		const vehicleId = !v ? undefined : parseInt(v);
-		const how = !h ? undefined : parseInt(h);
-		const what = !w ? undefined : parseInt(w);
+		let how: undefined | InsertHow = undefined;
+		let what: undefined | InsertWhat = undefined;
+		switch (h) {
+			case 'CONNECT':
+				how = InsertHow.CONNECT;
+				break;
+			case 'APPEND':
+				how = InsertHow.APPEND;
+				break;
+			case 'PREPEND':
+				how = InsertHow.PREPEND;
+				break;
+			case 'INSERT':
+				how = InsertHow.INSERT;
+				break;
+			case 'NEW_TOUR':
+				how = InsertHow.NEW_TOUR;
+				break;
+		}
+		switch (w) {
+			case 'USER_CHOSEN':
+				what = InsertWhat.USER_CHOSEN;
+				break;
+			case 'BUS_STOP':
+				what = InsertWhat.BUS_STOP;
+				break;
+			case 'BOTH':
+				what = InsertWhat.BOTH;
+				break;
+		}
 		const prevEventId = !p ? undefined : parseInt(p);
 		const nextEventId = !n ? undefined : parseInt(n);
 		const debugInfo = { vehicleId, how, what, prevEventId, nextEventId };
+		console.log({ debugInfo }, { h }, { w });
 		await bookRide(
 			{
 				start,

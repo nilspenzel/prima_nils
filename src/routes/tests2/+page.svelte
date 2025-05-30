@@ -9,23 +9,26 @@
 	import { DAY, HOUR, MINUTE } from '$lib/util/time.js';
 	import Switch from '$lib/shadcn/switch/switch.svelte';
 	import { Label } from '$lib/shadcn/label/index.js';
-	import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes.js';
 
 	const { data } = $props();
 
 	let time = $state(new Date(Date.now() + DAY * 3));
+	let date = $derived(new Date(time));
+	let day = $derived(new Date(date.getFullYear(), date.getMonth(), date.getDate()));
 	let departure = $state(true);
 
 	let map = $state<maplibregl.Map>();
 
-	let events = $state(
-		data.tours.flatMap((t) =>
-			t.requests.flatMap((r) =>
-				r.events.map((e) => {
-					return { ...e, tourId: t.tourId, requestId: r.requestId };
-				})
+	let events = $derived(
+		data.tours
+			.filter((t) => t.startTime >= day.getTime() && t.startTime <= day.getTime() + DAY)
+			.flatMap((t) =>
+				t.requests.flatMap((r) =>
+					r.events.map((e) => {
+						return { ...e, tourId: t.tourId, requestId: r.requestId };
+					})
+				)
 			)
-		)
 	);
 	let companies = $state(
 		data.companies
@@ -97,8 +100,8 @@
 	}
 
 	let vehicle: undefined | number = $state(undefined);
-	let what: undefined | number = $state(undefined);
-	let how: undefined | number = $state(undefined);
+	let what: undefined | string = $state(undefined);
+	let how: undefined | string = $state(undefined);
 	let prevEventId: undefined | number = $state(undefined);
 	let nextEventId: undefined | number = $state(undefined);
 
@@ -211,9 +214,11 @@
 			<Button onclick={() => addTime(MINUTE)}>+1m</Button>
 			<Button onclick={() => addTime(5 * MINUTE)}>+5m</Button>
 			<Button onclick={() => addTime(HOUR)}>+1h</Button>
+			<Button onclick={() => addTime(DAY)}>+1d</Button>
 			<Button onclick={() => addTime(-MINUTE)}>-1m</Button>
 			<Button onclick={() => addTime(-5 * MINUTE)}>-5m</Button>
 			<Button onclick={() => addTime(-HOUR)}>-1h</Button>
+			<Button onclick={() => addTime(-DAY)}>-1d</Button>
 		</div>
 
 		<div class="mt-4 flex gap-4">
@@ -229,19 +234,19 @@
 				{#if how === undefined}
 					<option value={undefined} disabled selected>InsertHow</option>
 				{/if}
-				<option value={InsertHow.NEW_TOUR}>NewTour</option>
-				<option value={InsertHow.INSERT}>Insert</option>
-				<option value={InsertHow.PREPEND}>Prepend</option>
-				<option value={InsertHow.APPEND}>Append</option>
-				<option value={InsertHow.CONNECT}>Connect</option>
+				<option value={'NEW_TOUR'}>NewTour</option>
+				<option value={'INSERT'}>Insert</option>
+				<option value={'PREPEND'}>Prepend</option>
+				<option value={'APPEND'}>Append</option>
+				<option value={'CONNECT'}>Connect</option>
 			</select>
 			<select bind:value={what} class="rounded border border-gray-300 bg-white px-3 py-2">
 				{#if what === undefined}
 					<option value={undefined} disabled selected>InsertWhat</option>
 				{/if}
-				<option value={InsertWhat.BOTH}>Both</option>
-				<option value={InsertWhat.BUS_STOP}>BusStop</option>
-				<option value={InsertWhat.USER_CHOSEN}>UserChosen</option>
+				<option value={'BOTH'}>Both</option>
+				<option value={'BUS_STOP'}>BusStop</option>
+				<option value={'USER_CHOSEN'}>UserChosen</option>
 			</select>
 			<select bind:value={prevEventId} class="rounded border border-gray-300 bg-white px-3 py-2">
 				<option disabled selected hidden>Select position</option>
