@@ -220,7 +220,7 @@ export function getArrivalWindow(
 	);
 	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
 		console.log(
-			'BOOK RIDE DEBUG INFO: arrival windows: ',
+			'BOOK RIDE DEBUG INFO: arrival windows (prevleg and nextleg deducted): ',
 			{ directWindows: directWindows.map((w) => w.toString()) }, {prevLegDuration: new Date(prevLegDuration).toISOString()}, {nextLegDuration: new Date(nextLegDuration).toISOString()}, {directDuration: new Date(directDuration).toISOString()},
 			'  ',
 			printInsertionType(insertionCase)
@@ -236,10 +236,8 @@ export function getArrivalWindow(
 		.filter((window) => window != undefined);
 	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
 		console.log(
-			'BOOK RIDE DEBUG INFO: arrival windows: ',
-			{ arrivalWindows: arrivalWindows.map((w) => w.toString()) },
-			'  ',
-			printInsertionType(insertionCase)
+			'BOOK RIDE DEBUG INFO: arrival windows (directduration deducted): ',
+			{ arrivalWindows: arrivalWindows.map((w) => w.toString()) }
 		);
 	}
 	if (busStopWindow != undefined) {
@@ -250,8 +248,6 @@ export function getArrivalWindow(
 			console.log(
 				'BOOK RIDE DEBUG INFO: arrival windows after busstop: ',
 				{ arrivalWindows: arrivalWindows.map((w) => w.toString()) },
-				'  ',
-				printInsertionType(insertionCase),
 				{ busStopWindow: busStopWindow.toString() }
 			);
 		}
