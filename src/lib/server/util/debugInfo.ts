@@ -11,7 +11,7 @@ export type DebugInfo = {
 export function debugInfoMatches(
 	debugInfo: DebugInfo,
 	how: InsertHow,
-	what: InsertWhat,
+	what?: InsertWhat,
 	prevEventId?: number,
 	nextEventId?: number,
 	vehicleId?: number
@@ -25,7 +25,7 @@ export function debugInfoMatches(
 	if (debugInfo.how !== undefined && how !== debugInfo.how) {
 		return false;
 	}
-	if (debugInfo.what !== undefined && what !== debugInfo.what) {
+	if (debugInfo.what !== undefined  && what !== undefined && what !== debugInfo.what) {
 		return false;
 	}
 	if (debugInfo.vehicleId !== undefined && vehicleId !== debugInfo.vehicleId) {
