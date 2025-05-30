@@ -221,7 +221,7 @@ export function getArrivalWindow(
 	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
 		console.log(
 			'BOOK RIDE DEBUG INFO: arrival windows: ',
-			{ directWindows: directWindows.map((w) => w.toString()) }, {prevLegDuration}, {nextLegDuration}, {directDuration},
+			{ directWindows: directWindows.map((w) => w.toString()) }, {prevLegDuration: new Date(prevLegDuration).toISOString()}, {nextLegDuration: new Date(nextLegDuration).toISOString()}, {directDuration: new Date(directDuration).toISOString()},
 			'  ',
 			printInsertionType(insertionCase)
 		);
