@@ -31,16 +31,15 @@ export function iterateAllInsertions(
 						insertionIdx
 					);
 
-					const prepend = idxInEvents == 0;
+					const prepend = idxInEvents === 0;
 					if (!(prepend && vehicle.lastEventBefore == undefined)) {
 						prevEventIdxInRoutingResults++;
 					}
 
-					const append = idxInEvents != vehicle.events.length;
+					const append = idxInEvents === vehicle.events.length;
 					if (!(append && vehicle.firstEventAfter == undefined)) {
 						nextEventIdxInRoutingResults++;
 					}
-
 					insertionIdx++;
 				}
 			});

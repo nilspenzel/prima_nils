@@ -255,7 +255,6 @@ export function evaluateBothInsertion(
 		insertionCase.what == InsertWhat.BOTH,
 		'Not inserting both in evaluateBothInsertion.'
 	);
-	console.log({routingResults})
 	const prevLegDuration = getPrevLegDuration(
 		insertionCase,
 		routingResults,
@@ -755,7 +754,6 @@ function getTaxiWaitingDelta(
 	const nextTaskTime =
 		insertionCase.how == InsertHow.APPEND ? arrival! : getScheduledEventTime(next!);
 	const newWaitingTime = nextTaskTime - prevTaskTime - drivingDuration;
-	console.assert(newWaitingTime >= 0, 'Waiting time is negative.');
 	return newWaitingTime - oldWaitingTime;
 }
 
