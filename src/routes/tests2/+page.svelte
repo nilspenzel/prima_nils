@@ -9,6 +9,7 @@
 	import { DAY, HOUR, MINUTE } from '$lib/util/time.js';
 	import Switch from '$lib/shadcn/switch/switch.svelte';
 	import { Label } from '$lib/shadcn/label/index.js';
+	import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes.js';
 
 	const { data } = $props();
 
@@ -95,11 +96,11 @@
 		});
 	}
 
-	let currentTestEntity = $state(null);
-	let expectedRequestCount = $state('0');
-	let expectedTourCount = $state('0');
-	let expectedPosition = $state(null);
-	let selectedRequest = $state(null);
+	let vehicle: undefined | number = $state(undefined);
+	let what: undefined | number = $state(undefined);
+	let how: undefined | number = $state(undefined);
+	let prevEventId: undefined | number = $state(undefined);
+	let nextEventId: undefined | number = $state(undefined);
 
 	$effect(() => {
 		if (!map) return;
@@ -216,71 +217,66 @@
 		</div>
 
 		<div class="mt-4 flex gap-4">
-			<select
-				bind:value={currentTestEntity}
-				class="rounded border border-gray-300 bg-white px-3 py-2"
-			>
-				<option value="" disabled selected hidden>Select test type</option>
-				<option value="requestCount">requestCount</option>
-				<option value="tourCount">tourCount</option>
-				<option value="startPosition">startPosition</option>
-				<option value="destinationPosition">destinationPosition</option>
+			<select bind:value={vehicle} class="rounded border border-gray-300 bg-white px-3 py-2">
+				{#if vehicle === undefined}
+					<option value={undefined} disabled selected>vehicleId</option>
+				{/if}
+				{#each data.companies.flatMap((c) => c.vehicles.map((v) => v.id)) as v}
+					<option value={v}>{v}</option>
+				{/each}
 			</select>
-
-			{#if currentTestEntity === 'requestCount'}
-				<select
-					bind:value={expectedRequestCount}
-					class="rounded border border-gray-300 bg-white px-3 py-2"
-				>
-					<option value="0" selected>0</option>
-					{#each data.tours.entries() as [i, _]}
-						<option value={(i + 1).toString()}>{i + 1}</option>
-					{/each}
-				</select>
-			{/if}
-
-			{#if currentTestEntity === 'tourCount'}
-				<select
-					bind:value={expectedTourCount}
-					class="rounded border border-gray-300 bg-white px-3 py-2"
-				>
-					<option value="0" selected>0</option>
-					{#each data.tours.entries() as [i, _]}
-						<option value={(i + 1).toString()}>{i + 1}</option>
-					{/each}
-				</select>
-			{/if}
-
-			{#if currentTestEntity === 'startPosition' || currentTestEntity === 'destinationPosition'}
-				<select
-					bind:value={expectedPosition}
-					class="rounded border border-gray-300 bg-white px-3 py-2"
-				>
-					<option disabled selected hidden>Select position</option>
-					{#each data.tours.entries() as [i, _]}
-						<option value={i.toString()}>{i}</option>
-					{/each}
-				</select>
-				<select
-					bind:value={selectedRequest}
-					class="rounded border border-gray-300 bg-white px-3 py-2"
-				>
-					<option disabled selected hidden>Select request</option>
-					{#each data.tours.entries() as [i, _]}
-						<option value={(i + 1).toString()}>{i + 1}</option>
-					{/each}
-				</select>
+			<select bind:value={how} class="rounded border border-gray-300 bg-white px-3 py-2">
+				{#if how === undefined}
+					<option value={undefined} disabled selected>InsertHow</option>
+				{/if}
+				<option value={InsertHow.NEW_TOUR}>NewTour</option>
+				<option value={InsertHow.INSERT}>Insert</option>
+				<option value={InsertHow.PREPEND}>Prepend</option>
+				<option value={InsertHow.APPEND}>Append</option>
+				<option value={InsertHow.CONNECT}>Connect</option>
+			</select>
+			<select bind:value={what} class="rounded border border-gray-300 bg-white px-3 py-2">
+				{#if what === undefined}
+					<option value={undefined} disabled selected>InsertWhat</option>
+				{/if}
+				<option value={InsertWhat.BOTH}>Both</option>
+				<option value={InsertWhat.BUS_STOP}>BusStop</option>
+				<option value={InsertWhat.USER_CHOSEN}>UserChosen</option>
+			</select>
+			<select bind:value={prevEventId} class="rounded border border-gray-300 bg-white px-3 py-2">
+				<option disabled selected hidden>Select position</option>
+				{#if prevEventId === undefined}
+					<option value={undefined} disabled selected>PrevEventId</option>
+				{/if}
+				{#each data.tours.flatMap( (t) => t.requests.flatMap( (r) => r.events.map((e) => e.id) ) ) as event}
+					<option value={event}>{event}</option>
+				{/each}
+			</select>
+			<select bind:value={nextEventId} class="rounded border border-gray-300 bg-white px-3 py-2">
+				<option disabled selected hidden>Select position</option>
+				{#if nextEventId === undefined}
+					<option value={undefined} disabled selected>NextEventId</option>
+				{/if}
+				{#each data.tours.flatMap( (t) => t.requests.flatMap( (r) => r.events.map((e) => e.id) ) ) as event}
+					<option value={event}>{event}</option>
+				{/each}
+			</select>
+			{#if start && destination}
+				<form method="POST">
+					<input type="hidden" value={start?.lat} name="startLat" />
+					<input type="hidden" value={start?.lng} name="startLng" />
+					<input type="hidden" value={destination?.lat} name="destinationLat" />
+					<input type="hidden" value={destination?.lng} name="destinationLng" />
+					<input type="hidden" value={time} name="time" />
+					<input type="hidden" value={departure} name="startFixed" />
+					<input type="hidden" value={vehicle} name="vehicle" />
+					<input type="hidden" value={how} name="how" />
+					<input type="hidden" value={what} name="what" />
+					<input type="hidden" value={prevEventId} name="prev" />
+					<input type="hidden" value={nextEventId} name="next" />
+					<Button type="submit" name="intent">test booking</Button>
+				</form>
 			{/if}
 		</div>
 	</div>
-	<form method="POST">
-		<input type="hidden" value={start?.lat} name="startLat" />
-		<input type="hidden" value={start?.lat} name="startLng" />
-		<input type="hidden" value={destination?.lat} name="destinationLat" />
-		<input type="hidden" value={destination?.lat} name="destinationLng" />
-		<input type="hidden" value={1748543100000} name="time" />
-		<input type="hidden" value={true} name="startFixed" />
-		<input type="hidden" value={2} name="vehicle" />
-		<Button type="submit" name="intent">do things</Button>
-	</form>
 </div>

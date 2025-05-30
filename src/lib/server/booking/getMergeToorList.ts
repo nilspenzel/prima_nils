@@ -1,5 +1,5 @@
 import type { Event } from '$lib/server/booking/getBookingAvailability';
-import { InsertHow } from './insertionTypes';
+import { InsertHow } from '$lib/util/booking/insertionTypes';
 
 export const getMergeTourList = (
 	events: Event[],

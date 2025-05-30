@@ -8,8 +8,6 @@ import {
 import {
 	INSERT_HOW_OPTIONS,
 	InsertDirection,
-	InsertHow,
-	InsertWhat,
 	InsertWhere,
 	type InsertionInfo,
 	type InsertionType,
@@ -37,6 +35,7 @@ import { roundToUnit, MINUTE } from '$lib/util/time';
 import { iterateAllInsertions } from './iterateAllInsertions';
 import { type Range } from '$lib/util/booking/getPossibleInsertions';
 import type { DebugInfo } from '../util/debugInfo';
+import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 
 export type InsertionEvaluation = {
 	pickupTime: number;

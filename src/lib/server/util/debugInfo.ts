@@ -1,4 +1,4 @@
-import type { InsertHow, InsertWhat } from '../booking/insertionTypes';
+import type { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 
 export type DebugInfo = {
 	prevEventId?: number;

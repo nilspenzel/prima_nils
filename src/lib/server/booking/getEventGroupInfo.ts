@@ -1,8 +1,8 @@
 import type { Coordinates } from '$lib/util/Coordinates';
-import { InsertHow } from './insertionTypes';
 import { v4 as uuidv4 } from 'uuid';
 import { isSamePlace } from './isSamePlace';
 import { type Event } from '$lib/server/booking/getBookingAvailability';
+import { InsertHow } from '$lib/util/booking/insertionTypes';
 
 export type EventGroupUpdate = {
 	id: number;
