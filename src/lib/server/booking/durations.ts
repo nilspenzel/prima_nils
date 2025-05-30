@@ -142,8 +142,8 @@ export function getAllowedOperationTimes(
 			debugInfo,
 			insertionCase.how,
 			insertionCase.what,
-			prev?.id ?? -1,
-			next?.id ?? -1,
+			prev?.id,
+			next?.id,
 			vehicle.id
 		)
 	) {
@@ -221,7 +221,7 @@ export function getArrivalWindow(
 	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
 		console.log(
 			'BOOK RIDE DEBUG INFO: arrival windows: ',
-			{ directWindows: directWindows.map((w) => w.toString()) },
+			{ directWindows: directWindows.map((w) => w.toString()) }, {prevLegDuration}, {nextLegDuration}, {directDuration},
 			'  ',
 			printInsertionType(insertionCase)
 		);
