@@ -1,13 +1,12 @@
 import { BUFFER_TIME, MAX_TRAVEL, PASSENGER_CHANGE_DURATION } from '$lib/constants';
 import { implication } from '$lib/server/util/implication';
+import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { debugInfoMatches, type DebugInfo } from '../util/debugInfo';
 import type { DbEvent, VehicleWithInterval } from './getBookingAvailability';
 import {
 	InsertDirection,
-	InsertHow,
-	InsertWhat,
 	printInsertionType,
 	type InsertionInfo,
 	type InsertionType

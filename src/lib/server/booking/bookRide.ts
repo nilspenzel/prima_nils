@@ -7,11 +7,11 @@ import { MAX_TRAVEL } from '$lib/constants';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
-import { InsertHow } from '$lib/server/booking/insertionTypes';
 import { getEventGroupInfo } from '$lib/server/booking/getEventGroupInfo';
 import { getDirectDurations } from './getDirectDrivingDurations';
 import { getMergeTourList } from './getMergeToorList';
 import type { DebugInfo } from '../util/debugInfo';
+import { InsertHow } from '$lib/util/booking/insertionTypes';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -64,7 +64,8 @@ export async function bookRide(
 	if (companies.length == 0 || filteredBusStops[0] == undefined) {
 		if (debugInfo) {
 			console.log(
-				'BOOK RIDE DEBUG INFO: there were no vehicles with corrcet zone, capacity and availability or tour for concatenation.'
+				'BOOK RIDE DEBUG INFO: there were no vehicles with corrcet zone, capacity and availability or tour for concatenation.',
+				{ filteredBusStops }
 			);
 		}
 		return undefined;

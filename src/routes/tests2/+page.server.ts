@@ -5,13 +5,25 @@ import type { Translations } from '$lib/i18n/translation';
 import { getToursWithRequests } from '$lib/server/db/getTours';
 import { bookRide } from '$lib/server/booking/bookRide';
 import { MINUTE } from '$lib/util/time';
-import { InsertHow, InsertWhat } from '$lib/server/booking/insertionTypes';
+import { jsonArrayFrom } from 'kysely/helpers/postgres';
+import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
+import type { DebugInfo } from '$lib/server/util/debugInfo';
 
 export type BookingError = { msg: keyof Translations['msg'] };
 
 export const load: PageServerLoad = async () => {
 	return {
-		companies: await db.selectFrom('company').select(['id', 'lat', 'lng']).execute(),
+		companies: await db
+			.selectFrom('company')
+			.select((eb) => [
+				jsonArrayFrom(
+					eb.selectFrom('vehicle').whereRef('vehicle.company', '=', 'company.id').select(['id'])
+				).as('vehicles'),
+				'id',
+				'lat',
+				'lng'
+			])
+			.execute(),
 		areas: (await areasGeoJSON()).rows[0],
 		tours: await getToursWithRequests(false)
 	};
@@ -30,7 +42,6 @@ const areasGeoJSON = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		console.log("blabla")
 		const formData = await request.formData();
 		const startLat = formData.get('startLat');
 		const startLng = formData.get('startLng');
@@ -39,15 +50,22 @@ export const actions: Actions = {
 		const t = formData.get('time');
 		const fixed = formData.get('startFixed');
 		const v = formData.get('vehicle');
-console.log({t})
+		const h = formData.get('how');
+		const w = formData.get('what');
+		const p = formData.get('prev');
+		const n = formData.get('next');
 		if (
 			typeof startLat !== 'string' ||
 			typeof startLng !== 'string' ||
 			typeof destinationLat !== 'string' ||
 			typeof destinationLng !== 'string' ||
-			typeof t !== 'string' ||
 			typeof fixed !== 'string' ||
-			typeof v !== 'string'
+			typeof t !== 'string' ||
+			typeof v !== 'string' ||
+			typeof h !== 'string' ||
+			typeof w !== 'string' ||
+			typeof p !== 'string' ||
+			typeof n !== 'string'
 		) {
 			return { success: false, error: 'Invalid value' };
 		}
@@ -55,8 +73,12 @@ console.log({t})
 		const destination = { lat: parseFloat(destinationLat), lng: parseFloat(destinationLng) };
 		const startFixed = fixed.toString().toLocaleLowerCase() === 'true';
 		const time = new Date(t.toString()).getTime();
-		const vehicleId = parseInt(v);
-console.log("doing book ride")
+		const vehicleId = !v ? undefined : parseInt(v);
+		const how = !h ? undefined : parseInt(h);
+		const what = !w ? undefined : parseInt(w);
+		const prevEventId = !p ? undefined : parseInt(p);
+		const nextEventId = !n ? undefined : parseInt(n);
+		const debugInfo = { vehicleId, how, what, prevEventId, nextEventId };
 		await bookRide(
 			{
 				start,
@@ -70,8 +92,7 @@ console.log("doing book ride")
 			undefined,
 			true,
 			undefined,
-			{vehicleId, how: InsertHow.APPEND, what:InsertWhat.BOTH}
+			debugInfo
 		);
-console.log("didd book ride")
 	}
 };

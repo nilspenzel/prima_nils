@@ -1,8 +1,8 @@
 import type { ExpectedConnection } from './bookRide';
 import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 import type { Insertion } from './insertion';
-import { InsertHow } from './insertionTypes';
 import { type Event } from './getBookingAvailability';
+import { InsertHow } from '$lib/util/booking/insertionTypes';
 
 export type DirectDrivingDurations = {
 	thisTour?: {
