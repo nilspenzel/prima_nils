@@ -255,6 +255,7 @@ export function evaluateBothInsertion(
 		insertionCase.what == InsertWhat.BOTH,
 		'Not inserting both in evaluateBothInsertion.'
 	);
+	console.log({routingResults})
 	const prevLegDuration = getPrevLegDuration(
 		insertionCase,
 		routingResults,
