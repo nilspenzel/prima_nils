@@ -141,7 +141,7 @@ export function getAllowedOperationTimes(
 		debugInfoMatches(
 			debugInfo,
 			insertionCase.how,
-			insertionCase.what,
+			undefined,
 			prev?.id,
 			next?.id,
 			vehicle.id
@@ -185,9 +185,9 @@ export function getAllowedOperationTimes(
 		debugInfoMatches(
 			debugInfo,
 			insertionCase.how,
-			insertionCase.what,
-			prev?.id ?? -1,
-			next?.id ?? -1,
+			undefined,
+			prev?.id,
+			next?.id,
 			vehicle.id
 		)
 	) {
