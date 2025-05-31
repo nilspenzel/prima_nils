@@ -28,20 +28,20 @@ export const getPrevLegDuration = (
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
-			relevantRoutingResults = routingResults.userChosen;
+			relevantRoutingResults = routingResults.userChosen.from;
 			break;
 
 		case InsertWhat.BOTH:
 			console.assert(busStopIdx != undefined);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-					? routingResults.busStops[busStopIdx!]
-					: routingResults.userChosen;
+					? routingResults.busStops.from[busStopIdx!]
+					: routingResults.userChosen.from;
 			break;
 
 		case InsertWhat.BUS_STOP:
 			console.assert(busStopIdx != undefined);
-			relevantRoutingResults = routingResults.busStops[busStopIdx!];
+			relevantRoutingResults = routingResults.busStops.from[busStopIdx!];
 			break;
 	}
 
@@ -63,20 +63,20 @@ export const getNextLegDuration = (
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
-			relevantRoutingResults = routingResults.userChosen;
+			relevantRoutingResults = routingResults.userChosen.to;
 			break;
 
 		case InsertWhat.BOTH:
 			console.assert(busStopIdx != undefined);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-					? routingResults.userChosen
-					: routingResults.busStops[busStopIdx!];
+					? routingResults.userChosen.to
+					: routingResults.busStops.to[busStopIdx!];
 			break;
 
 		case InsertWhat.BUS_STOP:
 			console.assert(busStopIdx != undefined);
-			relevantRoutingResults = routingResults.busStops[busStopIdx!];
+			relevantRoutingResults = routingResults.busStops.to[busStopIdx!];
 			break;
 	}
 
@@ -138,14 +138,7 @@ export function getAllowedOperationTimes(
 	const window = new Interval(windowStartTime, windowEndTime);
 	if (
 		debugInfo &&
-		debugInfoMatches(
-			debugInfo,
-			insertionCase.how,
-			undefined,
-			prev?.id,
-			next?.id,
-			vehicle.id
-		)
+		debugInfoMatches(debugInfo, insertionCase.how, undefined, prev?.id, next?.id, vehicle.id)
 	) {
 		console.log(
 			'BOOK RIDE DEBUG INFO: initial allowed operations window: ',
@@ -182,14 +175,7 @@ export function getAllowedOperationTimes(
 		.filter((availability) => availability != undefined);
 	if (
 		debugInfo &&
-		debugInfoMatches(
-			debugInfo,
-			insertionCase.how,
-			undefined,
-			prev?.id,
-			next?.id,
-			vehicle.id
-		)
+		debugInfoMatches(debugInfo, insertionCase.how, undefined, prev?.id, next?.id, vehicle.id)
 	) {
 		console.log(
 			'BOOK RIDE DEBUG INFO: final allowed operations window: ',
@@ -221,7 +207,10 @@ export function getArrivalWindow(
 	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
 		console.log(
 			'BOOK RIDE DEBUG INFO: arrival windows (prevleg and nextleg deducted): ',
-			{ directWindows: directWindows.map((w) => w.toString()) }, {prevLegDuration: new Date(prevLegDuration).toISOString()}, {nextLegDuration: new Date(nextLegDuration).toISOString()}, {directDuration: new Date(directDuration).toISOString()},
+			{ directWindows: directWindows.map((w) => w.toString()) },
+			{ prevLegDuration: new Date(prevLegDuration).toISOString() },
+			{ nextLegDuration: new Date(nextLegDuration).toISOString() },
+			{ directDuration: new Date(directDuration).toISOString() },
 			'  ',
 			printInsertionType(insertionCase)
 		);
@@ -235,10 +224,9 @@ export function getArrivalWindow(
 		)
 		.filter((window) => window != undefined);
 	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
-		console.log(
-			'BOOK RIDE DEBUG INFO: arrival windows (directduration deducted): ',
-			{ arrivalWindows: arrivalWindows.map((w) => w.toString()) }
-		);
+		console.log('BOOK RIDE DEBUG INFO: arrival windows (directduration deducted): ', {
+			arrivalWindows: arrivalWindows.map((w) => w.toString())
+		});
 	}
 	if (busStopWindow != undefined) {
 		arrivalWindows = arrivalWindows
