@@ -25,7 +25,7 @@ export function debugInfoMatches(
 	if (debugInfo.how !== undefined && how !== debugInfo.how) {
 		return false;
 	}
-	if (debugInfo.what !== undefined  && what !== undefined && what !== debugInfo.what) {
+	if (debugInfo.what !== undefined && what !== undefined && what !== debugInfo.what) {
 		return false;
 	}
 	if (debugInfo.vehicleId !== undefined && vehicleId !== debugInfo.vehicleId) {

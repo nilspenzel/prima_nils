@@ -7,7 +7,6 @@ import { getPossibleInsertions } from '$lib/util/booking/getPossibleInsertions';
 import type { Company } from './getBookingAvailability';
 import type { PromisedTimes } from './PromisedTimes';
 import type { Range } from '$lib/util/booking/getPossibleInsertions';
-import { gatherRoutingCoordinates, routing } from './routing';
 import {
 	BUFFER_TIME,
 	EARLIEST_SHIFT_START,
@@ -27,6 +26,7 @@ import {
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 import { DAY } from '$lib/util/time';
 import type { DebugInfo } from '../util/debugInfo';
+import { routing } from './routing';
 
 export type Times = {
 	communicatedPickupTime: number;
@@ -62,10 +62,8 @@ export async function evaluateRequest(
 	);
 	const routingResults = await routing(
 		companies,
-		gatherRoutingCoordinates(companies, insertionRanges),
 		userChosen,
-		busStops,
-		startFixed
+		busStops
 	);
 	const busStopTimes = busStops.map((bs) =>
 		bs.times.map(

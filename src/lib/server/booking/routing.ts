@@ -1,10 +1,6 @@
 import type { Coordinates } from '$lib/util/Coordinates';
 import type { BusStop } from './BusStop';
 import type { Company } from './getBookingAvailability';
-import type { InsertionInfo } from './insertionTypes';
-import { iterateAllInsertions } from './iterateAllInsertions';
-import type { VehicleId } from './VehicleId';
-import type { Range } from '$lib/util/booking/getPossibleInsertions';
 import { isSamePlace } from './isSamePlace';
 import { batchOneToManyCarRouting } from '$lib/server/util/batchOneToManyCarRouting';
 
@@ -14,73 +10,65 @@ export type InsertionRoutingResult = {
 };
 
 export type RoutingResults = {
-	busStops: InsertionRoutingResult[];
-	userChosen: InsertionRoutingResult;
+	busStops: {from:InsertionRoutingResult[],to:InsertionRoutingResult[]};
+	userChosen: {from:InsertionRoutingResult,to:InsertionRoutingResult};
 };
-
-export function gatherRoutingCoordinates(
-	companies: Company[],
-	insertionsByVehicle: Map<VehicleId, Range[]>
-) {
-	const backward: Coordinates[] = [...companies];
-	const forward: Coordinates[] = [...companies];
-	iterateAllInsertions(companies, insertionsByVehicle, (insertionInfo: InsertionInfo) => {
-		const vehicle = insertionInfo.vehicle;
-		const idxInEvents = insertionInfo.idxInEvents;
-		if (idxInEvents != 0) {
-			backward.push(vehicle.events[idxInEvents - 1]);
-		} else if (vehicle.lastEventBefore != undefined) {
-			backward.push(vehicle.lastEventBefore);
-		}
-		if (idxInEvents != vehicle.events.length) {
-			forward.push(vehicle.events[idxInEvents]);
-		} else if (vehicle.firstEventAfter != undefined) {
-			forward.push(vehicle.firstEventAfter);
-		}
-	});
-	return { forward, backward };
-}
 
 export async function routing(
 	companies: Company[],
-	many: { forward: Coordinates[]; backward: Coordinates[] },
 	userChosen: Coordinates,
-	busStops: BusStop[],
-	startFixed: boolean
+	busStops: BusStop[]
 ): Promise<RoutingResults> {
+	const coords: Coordinates[] = companies.map((c) => {return{lat:c.lat,lng:c.lng}}).concat(companies.flatMap((c) => c.vehicles.flatMap((v) => v.events)));
 	const setZeroDistanceForMatchingPlaces = (
 		coordinates: Coordinates,
-		many: Coordinates[],
 		routingResult: (number | undefined)[]
 	) => {
-		console.assert(many.length == routingResult.length);
-		for (let i = 0; i != many.length; ++i) {
-			if (isSamePlace(coordinates, many[i])) {
+		console.assert(coords.length == routingResult.length);
+		for (let i = 0; i != coords.length; ++i) {
+			if (isSamePlace(coordinates, coords[i])) {
 				routingResult[i] = 0;
 			}
 		}
 	};
+	const fromUserChosen = await batchOneToManyCarRouting(userChosen, coords, false);
+	const toUserChosen = await batchOneToManyCarRouting(userChosen, coords, true);
+	setZeroDistanceForMatchingPlaces(userChosen, fromUserChosen);
+	setZeroDistanceForMatchingPlaces(userChosen, toUserChosen);
 
-	const userChosenMany = startFixed ? many.backward : many.forward;
-	const userChosenResult = await batchOneToManyCarRouting(userChosen, userChosenMany, !startFixed);
-	setZeroDistanceForMatchingPlaces(userChosen, userChosenMany, userChosenResult);
-
-	const busStopMany = !startFixed ? many.backward : many.forward;
-	const busStopResults = await Promise.all(
-		busStops.map((b) => batchOneToManyCarRouting(b, busStopMany, startFixed))
+	const fromBusStop = await Promise.all(
+		busStops.map((b) => batchOneToManyCarRouting(b, coords, false))
+	);
+	const toBusStop = await Promise.all(
+		busStops.map((b) => batchOneToManyCarRouting(b, coords, true))
 	);
 
 	return {
 		userChosen: {
-			company: userChosenResult.slice(0, companies.length),
-			event: userChosenResult.slice(companies.length)
+			from: {
+				company: fromUserChosen.slice(0, companies.length),
+				event: toUserChosen.slice(companies.length)
+			},
+			to: {
+				company: toUserChosen.slice(0, companies.length),
+				event: fromUserChosen.slice(companies.length)
+			}
 		},
-		busStops: busStopResults.map((b, busStopIdx) => {
-			setZeroDistanceForMatchingPlaces(busStops[busStopIdx], busStopMany, b);
-			return {
-				company: b.slice(0, companies.length),
-				event: b.slice(companies.length)
-			};
-		})
+		busStops: {
+			from: fromBusStop.map((b, busStopIdx) => {
+				setZeroDistanceForMatchingPlaces(busStops[busStopIdx], b);
+				return {
+					company: b.slice(0, companies.length),
+					event: b.slice(companies.length)
+				};
+			}),
+			to: toBusStop.map((b, busStopIdx) => {
+				setZeroDistanceForMatchingPlaces(busStops[busStopIdx], b);
+				return {
+					company: b.slice(0, companies.length),
+					event: b.slice(companies.length)
+				};
+			})
+		}
 	};
 }
