@@ -3,6 +3,9 @@ import type { BusStop } from './BusStop';
 import type { Company } from './getBookingAvailability';
 import { isSamePlace } from './isSamePlace';
 import { batchOneToManyCarRouting } from '$lib/server/util/batchOneToManyCarRouting';
+import type { VehicleId } from './VehicleId';
+import type { Range } from '$lib/util/booking/getPossibleInsertions';
+import { iterateAllInsertions } from './iterateAllInsertions';
 
 export type InsertionRoutingResult = {
 	company: (number | undefined)[];
@@ -17,9 +20,13 @@ export type RoutingResults = {
 export async function routing(
 	companies: Company[],
 	userChosen: Coordinates,
-	busStops: BusStop[]
+	busStops: BusStop[],
+	insertionRanges: Map<VehicleId, Range[]>
 ): Promise<RoutingResults> {
-	const coords: Coordinates[] = companies.map((c) => {return{lat:c.lat,lng:c.lng}}).concat(companies.flatMap((c) => c.vehicles.flatMap((v) => v.events)));
+	const coords: Coordinates[] = companies.map((c) => {return{lat:c.lat,lng:c.lng}});
+	iterateAllInsertions(companies, insertionRanges, (info, _) => {
+		coords.push(info.vehicle.events[info.idxInEvents]);
+	})
 	const setZeroDistanceForMatchingPlaces = (
 		coordinates: Coordinates,
 		routingResult: (number | undefined)[]
