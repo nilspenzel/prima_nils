@@ -63,7 +63,8 @@ export async function evaluateRequest(
 	const routingResults = await routing(
 		companies,
 		userChosen,
-		busStops
+		busStops,
+		insertionRanges
 	);
 	const busStopTimes = busStops.map((bs) =>
 		bs.times.map(

@@ -391,8 +391,6 @@ export function evaluateNewTours(
 		company.vehicles.forEach((vehicle) => {
 			const insertionInfo: InsertionInfo = {
 				companyIdx,
-				prevEventIdxInRoutingResults: 1,
-				nextEventIdxInRoutingResults: 1,
 				vehicle,
 				idxInEvents: 1,
 				currentRange: { earliestPickup: 0, latestDropoff: 0 }
