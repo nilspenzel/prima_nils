@@ -12,6 +12,7 @@ import { getDirectDurations } from './getDirectDrivingDurations';
 import { getMergeTourList } from './getMergeToorList';
 import type { DebugInfo } from '../util/debugInfo';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
+import { printInsertionType } from './insertionTypes';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -103,6 +104,7 @@ export async function bookRide(
 		return undefined;
 	}
 	if (debugInfo) {
+		console.log("BOOK RIDE DEBUG INFO: ", "pickup: ", printInsertionType(best.pickupCase), " dropoff: ", printInsertionType(best.dropoffCase));
 		return undefined;
 	}
 	const events = companies[best.company].vehicles.find((v) => v.id == best.vehicle)!.events;

@@ -25,7 +25,9 @@ export async function routing(
 ): Promise<RoutingResults> {
 	const coords: Coordinates[] = companies.map((c) => {return{lat:c.lat,lng:c.lng}});
 	iterateAllInsertions(companies, insertionRanges, (info, _) => {
-		coords.push(info.vehicle.events[info.idxInEvents]);
+		if(info.idxInEvents !== info.vehicle.events.length){
+			coords.push(info.vehicle.events[info.idxInEvents]);
+		}
 	})
 	const setZeroDistanceForMatchingPlaces = (
 		coordinates: Coordinates,
