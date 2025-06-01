@@ -47,11 +47,10 @@ export const getPrevLegDuration = (
 
 	const drivingTime = comesFromCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
-		: relevantRoutingResults.event[insertionInfo.idxInEvents];
+		: relevantRoutingResults.event[insertionInfo.idxInEvents-1];
 	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
 		return undefined;
 	}
-	console.log({drivingTime})
 	return drivingTime + BUFFER_TIME;
 };
 
@@ -85,7 +84,6 @@ export const getNextLegDuration = (
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
 		: relevantRoutingResults.event[insertionInfo.idxInEvents];
 	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
-		console.log('driving time undefined', drivingTime);
 		return undefined;
 	}
 	return drivingTime + PASSENGER_CHANGE_DURATION + BUFFER_TIME;

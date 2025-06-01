@@ -272,7 +272,7 @@ export function evaluateBothInsertion(
 		nextLegDuration == undefined ||
 		passengerDuration == undefined
 	) {
-		console.log('duration undefined', prevLegDuration, nextLegDuration, passengerDuration);
+		console.log('duration undefined: ', prevLegDuration, nextLegDuration, passengerDuration);
 		return undefined;
 	}
 	const arrivalWindow = getArrivalWindow(
