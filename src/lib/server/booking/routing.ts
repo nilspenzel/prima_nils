@@ -13,8 +13,8 @@ export type InsertionRoutingResult = {
 };
 
 export type RoutingResults = {
-	busStops: {from:InsertionRoutingResult[],to:InsertionRoutingResult[]};
-	userChosen: {from:InsertionRoutingResult,to:InsertionRoutingResult};
+	busStops: { from: InsertionRoutingResult[]; to: InsertionRoutingResult[] };
+	userChosen: { from: InsertionRoutingResult; to: InsertionRoutingResult };
 };
 
 export async function routing(
@@ -23,12 +23,14 @@ export async function routing(
 	busStops: BusStop[],
 	insertionRanges: Map<VehicleId, Range[]>
 ): Promise<RoutingResults> {
-	const coords: Coordinates[] = companies.map((c) => {return{lat:c.lat,lng:c.lng}});
+	const coords: Coordinates[] = companies.map((c) => {
+		return { lat: c.lat, lng: c.lng };
+	});
 	iterateAllInsertions(companies, insertionRanges, (info, _) => {
-		if(info.idxInEvents !== info.vehicle.events.length){
+		if (info.idxInEvents !== info.vehicle.events.length) {
 			coords.push(info.vehicle.events[info.idxInEvents]);
 		}
-	})
+	});
 	const setZeroDistanceForMatchingPlaces = (
 		coordinates: Coordinates,
 		routingResult: (number | undefined)[]

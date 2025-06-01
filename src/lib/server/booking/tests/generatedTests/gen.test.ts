@@ -94,6 +94,7 @@ describe('Concatenation tests', () => {
 							}
 							case 'requestCompanyMatch': {
 								const toursWithCorrectRequest = filterByContainedEvent(tours, condition);
+								console.log({ toursWithCorrectRequest });
 								const companiesWithCorrectRequest = await db
 									.selectFrom('tour')
 									.innerJoin('vehicle', 'vehicle.id', 'tour.vehicle')
@@ -108,8 +109,8 @@ describe('Concatenation tests', () => {
 								expect(
 									companiesWithCorrectRequest.filter(
 										(c) =>
-											(c.lat !== condition.company?.lat || c.lng !== condition.company.lng) &&
-											(c.lat !== condition.company?.lat || c.lng !== condition.company.lng)
+											(c.lat === condition.company?.lat || c.lng === condition.company?.lng) &&
+											(c.lat === condition.company?.lat || c.lng === condition.company?.lng)
 									).length
 								).not.toBe(0);
 								break;
@@ -118,7 +119,11 @@ describe('Concatenation tests', () => {
 								expect(false).toBeTruthy();
 						}
 					} catch (err) {
-						console.error(`❌ Condition failed:`, { condition }, { uuid: test.uuid });
+						console.error(
+							`❌ Condition failed:`,
+							{ condition },
+							{ link: `http://localhost:5173/tests?test=${test.uuid}` }
+						);
 						throw err;
 					}
 				}

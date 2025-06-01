@@ -164,13 +164,11 @@
 		)
 	);
 
-	let userInputJson: string | undefined = $state(undefined);
-
-	function readTest(userInputJson: string | undefined) {
-		if (userInputJson === undefined) {
+	function readTest(inputJson: string | null) {
+		if (inputJson === null) {
 			return;
 		}
-		const test: TestParams = eval('(' + userInputJson + ')');
+		const test: TestParams = eval('(' + inputJson.trim().replace(/},\s*$/, '}') + ')');
 		companies.length = 0;
 		test.process.companies.forEach((i) => companies.push(i));
 		starts.length = 0;
@@ -184,6 +182,7 @@
 		conditions.length = 0;
 		test.conditions.forEach((i) => conditions.push(i));
 	}
+	readTest(data.test);
 </script>
 
 <div class="flex h-full w-screen">
@@ -253,11 +252,6 @@
 			<form method="POST">
 				<input type="hidden" name="value" value={json} />
 				<Button type="submit" name="intent">Add Test</Button>
-			</form>
-
-			<Input type="text" class="justify-self-end" bind:value={userInputJson} />
-			<form method="POST">
-				<Button onclick={() => readTest(userInputJson)}>Load Test</Button>
 			</form>
 		</div>
 
