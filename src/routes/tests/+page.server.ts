@@ -4,12 +4,52 @@ import { sql } from 'kysely';
 import type { Translations } from '$lib/i18n/translation';
 import fs from 'fs';
 import path from 'path';
-import type { Actions } from './$types';
+import type { Actions, RequestEvent } from './$types';
 
 export type BookingError = { msg: keyof Translations['msg'] };
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async (event: RequestEvent) => {
+	const url = event.url;
+	let test = url.searchParams.get('test');
+	if (test) {
+		const testFilePath = path.resolve('src/lib/server/booking/tests/generatedTests/testJsons.ts');
+
+		let fileContent: string;
+		try {
+			fileContent = fs.readFileSync(testFilePath, 'utf-8');
+		} catch (err) {
+			console.error('Could not read test file', err);
+			return {
+				test: null,
+				error: 'Could not read test file',
+				companies: [],
+				areas: {}
+			};
+		}
+
+		const searchIndex = fileContent.indexOf(test);
+		if (searchIndex !== -1) {
+			const before = fileContent.slice(0, searchIndex);
+			const after = fileContent.slice(searchIndex);
+
+			const startIndex = before.lastIndexOf('// startoftest');
+			const endIndex = after.indexOf('// endoftest');
+
+			if (startIndex !== -1 && endIndex !== -1) {
+				const start = startIndex + '// startoftest'.length;
+				const end = searchIndex + endIndex;
+				const extracted = fileContent.slice(start, end).trim();
+
+				test = extracted;
+			} else {
+				console.warn('Could not find startoftest or endoftest around test ID');
+			}
+		} else {
+			console.warn('Test ID not found in file');
+		}
+	}
 	return {
+		test,
 		companies: await db.selectFrom('company').select(['id', 'lat', 'lng']).execute(),
 		areas: (await areasGeoJSON()).rows[0]
 	};
@@ -60,7 +100,7 @@ export const actions: Actions = {
 			.map((line) => '\t' + line)
 			.join('\n');
 		console.log({ indentedFormatted });
-		const newContent = `${before}\n\t${indentedFormatted},${after}`;
+		const newContent = `${before}\n// startoftest\n\t${indentedFormatted},\n// endoftest\n${after}`;
 
 		try {
 			fs.writeFileSync(testFilePath, newContent, 'utf-8');

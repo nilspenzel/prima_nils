@@ -60,12 +60,7 @@ export async function evaluateRequest(
 			insertionRanges.set(vehicle.id, getPossibleInsertions(vehicle, required, vehicle.events));
 		})
 	);
-	const routingResults = await routing(
-		companies,
-		userChosen,
-		busStops,
-		insertionRanges
-	);
+	const routingResults = await routing(companies, userChosen, busStops, insertionRanges);
 	const busStopTimes = busStops.map((bs) =>
 		bs.times.map(
 			(t) =>

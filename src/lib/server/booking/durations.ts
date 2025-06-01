@@ -47,7 +47,7 @@ export const getPrevLegDuration = (
 
 	const drivingTime = comesFromCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
-		: relevantRoutingResults.event[insertionInfo.idxInEvents-1];
+		: relevantRoutingResults.event[insertionInfo.idxInEvents - 1];
 	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
 		return undefined;
 	}
