@@ -12,7 +12,8 @@
 	import { Label } from '$lib/shadcn/label/index.js';
 	import type { Coordinates } from '$lib/util/Coordinates.js';
 	import type { Condition, TestParams } from '$lib/util/booking/testParams.js';
-	import { Input } from '$lib/shadcn/input/index.js';
+	import SortableTable from '$lib/ui/SortableTable.svelte';
+	import type { Column } from '$lib/ui/tableData.js';
 
 	const { data } = $props();
 
@@ -86,27 +87,33 @@
 		});
 	}
 
-	let currentTestEntity = $state(null);
-	let expectedRequestCount = $state('0');
-	let expectedTourCount = $state('0');
-	let expectedPosition = $state(null);
-	let afterRequest = $state('0');
-	let selectedRequest = $state(null);
+	let currentTestEntity = $state('-1');
+	let expectedRequestCount = $state(-1);
+	let expectedTourCount = $state(-1);
+	let expectedPosition = $state(-1);
+	let afterRequest = $state(-1);
+	let selectedRequest = $state(-1);
 
 	let conditions: Condition[] = $state([]);
 	let uuid = '1';
 	function addCondition() {
 		uuid = uuidv4();
 		conditions.push({
-			evalAfterStep: parseInt(afterRequest),
+			evalAfterStep: afterRequest,
 			entity: currentTestEntity!,
-			tourCount: parseInt(expectedTourCount),
-			requestCount: parseInt(expectedRequestCount),
-			expectedPosition: expectedPosition ? parseInt(expectedPosition) : null,
+			tourCount: expectedTourCount,
+			requestCount: expectedRequestCount,
+			expectedPosition: expectedPosition ? expectedPosition : null,
 			start: selectedRequest ? starts[selectedRequest] : null,
 			destination: selectedRequest ? destinations[selectedRequest] : null,
 			company: null
 		});
+		afterRequest = -1;
+		expectedRequestCount = -1;
+		expectedTourCount = -1;
+		currentTestEntity='-1';
+		expectedPosition=-1;
+		selectedRequest=-1;
 	}
 
 	function assignRequestToCompany(startIdx: number, start: Coordinates, company: Coordinates) {
@@ -183,6 +190,29 @@
 		test.conditions.forEach((i) => conditions.push(i));
 	}
 	readTest(data.test);
+
+	function conditionToString(c: Condition): string {
+		let str = '';
+		switch(c.entity) {
+			case 'requestCount': str = `Verify that there are exactly ${c.requestCount} requests.`;break;
+			case 'tourCount': str = `Verify that there are exactly ${c.tourCount} tours.`;break;
+			case 'startPosition': str = `Verify that pickup event of request with #${starts.findIndex((s)=>s.lat===c.start?.lat && s.lng ===c.start?.lng)+1} is at position ${c.expectedPosition} of its' tour.`;break;
+			case 'destinationPosition': str = `Verify that dropoff event of request with #${destinations.findIndex((s)=>s.lat===c.destination?.lat && s.lng ===c.destination?.lng)+1} is at position ${c.expectedPosition} of its' tour.`;break;
+			case 'requestCompanyMatch': str = `Verify that request #${starts.findIndex((s)=>s.lat===c.start?.lat && s.lng ===c.start?.lng)+1} is assigned to company with ${companies.findIndex((company)=> company.lat===c.company?.lat && company.lng === c.company?.lng)+1}.`;break;
+		}
+		return str;
+	}
+
+	const conditionCols: Column<Condition>[] = [
+		{
+			text: ['after Request'],
+			toTableEntry: (r: Condition) => r.evalAfterStep + 1,
+		},
+		{
+			text: ['condition'],
+			toTableEntry: (r: Condition) => conditionToString(r),
+		}
+	]
 </script>
 
 <div class="flex h-full w-screen">
@@ -267,7 +297,7 @@
 
 		<div class="mt-4 flex gap-4">
 			<select bind:value={afterRequest} class="rounded border border-gray-300 bg-white px-3 py-2">
-				<option value="-1">After Request #</option>
+				<option value={-1} disabled>After Request #</option>
 				{#each destinations.entries() as [i, _]}
 					<option value={i}>{i + 1}</option>
 				{/each}
@@ -277,7 +307,7 @@
 				bind:value={currentTestEntity}
 				class="rounded border border-gray-300 bg-white px-3 py-2"
 			>
-				<option value="" disabled selected hidden>Select test type</option>
+				<option value="-1" disabled>Select test type</option>
 				<option value="requestCount">requestCount</option>
 				<option value="tourCount">tourCount</option>
 				<option value="startPosition">startPosition</option>
@@ -289,7 +319,8 @@
 					bind:value={expectedRequestCount}
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
-					<option value="0" selected>0</option>
+					<option value={-1} disabled>request Count</option>
+					<option value={0}>0</option>
 					{#each destinations.entries() as [i, _]}
 						<option value={(i + 1).toString()}>{i + 1}</option>
 					{/each}
@@ -301,7 +332,8 @@
 					bind:value={expectedTourCount}
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
-					<option value="0" selected>0</option>
+					<option value={-1} disabled>tour Count</option>
+					<option value={0}>0</option>
 					{#each destinations.entries() as [i, _]}
 						<option value={(i + 1).toString()}>{i + 1}</option>
 					{/each}
@@ -313,7 +345,7 @@
 					bind:value={expectedPosition}
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
-					<option disabled selected hidden>Select position</option>
+					<option value={-1} disabled>Select position</option>
 					{#each destinations.entries() as [i, _]}
 						<option value={i.toString()}>{i}</option>
 					{/each}
@@ -322,19 +354,17 @@
 					bind:value={selectedRequest}
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
-					<option disabled selected hidden>Select request</option>
+					<option value={-1} disabled>Select position</option>
 					{#each destinations.entries() as [i, _]}
 						<option value={(i + 1).toString()}>{i + 1}</option>
 					{/each}
 				</select>
 			{/if}
-			{#if currentTestEntity !== '' && parseInt(afterRequest) !== -1}
+			{#if currentTestEntity !== '' && afterRequest !== -1}
 				<Button onclick={addCondition}>Add Condition</Button>
 			{/if}
 		</div>
 
-		<pre>
-			{json}
-		</pre>
+		<SortableTable rows={conditions} cols={conditionCols}></SortableTable>
 	</div>
 </div>
