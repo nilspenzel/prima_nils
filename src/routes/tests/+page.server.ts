@@ -77,7 +77,6 @@ export const actions: Actions = {
 			console.log('Invalid JSON input', { raw });
 			return { success: false, error: 'Invalid JSON input' };
 		}
-
 		const formatted = JSON.stringify(parsed, null, 2);
 
 		const testFilePath = path.resolve('src/lib/server/booking/tests/generatedTests/testJsons.ts');
