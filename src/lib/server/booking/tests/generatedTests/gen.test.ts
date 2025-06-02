@@ -6,6 +6,7 @@ import { bookingApi } from '$lib/server/booking/bookingApi';
 import { db } from '$lib/server/db';
 import type { Condition } from '$lib/util/booking/testParams';
 import { tests } from './testJsons';
+import { isSamePlace } from '../../isSamePlace';
 
 function filterByContainedEvent(
 	tours: {
@@ -41,13 +42,21 @@ describe('Concatenation tests', () => {
 					await setAvailability(taxi, 0, 8640000000000000);
 				}
 			}
+			const times = test.process.times.map((t) => {
+				const d = new Date(t);
+				const nextWednesday = new Date(d);
+				const dayOfWeek = d.getDay();
+				const daysUntilNextWednesday = (10 - dayOfWeek) % 7 || 7;
+				nextWednesday.setDate(d.getDate() + daysUntilNextWednesday);
+				return nextWednesday.getTime();
+			});
 			for (let requestIdx = 0; requestIdx != test.process.starts.length; ++requestIdx) {
 				const body = JSON.stringify({
 					start: test.process.starts[requestIdx],
 					target: test.process.destinations[requestIdx],
 					startBusStops: [],
 					targetBusStops: [],
-					directTimes: [test.process.times[requestIdx]],
+					directTimes: [times[requestIdx]],
 					startFixed: test.process.isDepartures[requestIdx],
 					capacities: { passengers: 1, luggage: 0, wheelchairs: 0, bikes: 0 }
 				});
@@ -106,11 +115,11 @@ describe('Concatenation tests', () => {
 									)
 									.select(['company.lat', 'company.lng'])
 									.execute();
+									console.log({toursWithCorrectRequest},{companiesWithCorrectRequest},condition.company)
 								expect(
 									companiesWithCorrectRequest.filter(
 										(c) =>
-											(c.lat === condition.company?.lat || c.lng === condition.company?.lng) &&
-											(c.lat === condition.company?.lat || c.lng === condition.company?.lng)
+											isSamePlace({lat:c.lat!, lng: c.lng!}, condition.company!)
 									).length
 								).not.toBe(0);
 								break;

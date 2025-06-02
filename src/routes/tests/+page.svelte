@@ -104,8 +104,8 @@
 			tourCount: expectedTourCount,
 			requestCount: expectedRequestCount,
 			expectedPosition: expectedPosition ? expectedPosition : null,
-			start: selectedRequest ? starts[selectedRequest] : null,
-			destination: selectedRequest ? destinations[selectedRequest] : null,
+			start: starts[selectedRequest] ? starts[selectedRequest] : null,
+			destination: destinations[selectedRequest] ? destinations[selectedRequest] : null,
 			company: null
 		});
 		afterRequest = -1;
