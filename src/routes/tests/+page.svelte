@@ -111,9 +111,9 @@
 		afterRequest = -1;
 		expectedRequestCount = -1;
 		expectedTourCount = -1;
-		currentTestEntity='-1';
-		expectedPosition=-1;
-		selectedRequest=-1;
+		currentTestEntity = '-1';
+		expectedPosition = -1;
+		selectedRequest = -1;
 	}
 
 	function assignRequestToCompany(startIdx: number, start: Coordinates, company: Coordinates) {
@@ -193,12 +193,22 @@
 
 	function conditionToString(c: Condition): string {
 		let str = '';
-		switch(c.entity) {
-			case 'requestCount': str = `Verify that there are exactly ${c.requestCount} requests.`;break;
-			case 'tourCount': str = `Verify that there are exactly ${c.tourCount} tours.`;break;
-			case 'startPosition': str = `Verify that pickup event of request with #${starts.findIndex((s)=>s.lat===c.start?.lat && s.lng ===c.start?.lng)+1} is at position ${c.expectedPosition} of its' tour.`;break;
-			case 'destinationPosition': str = `Verify that dropoff event of request with #${destinations.findIndex((s)=>s.lat===c.destination?.lat && s.lng ===c.destination?.lng)+1} is at position ${c.expectedPosition} of its' tour.`;break;
-			case 'requestCompanyMatch': str = `Verify that request #${starts.findIndex((s)=>s.lat===c.start?.lat && s.lng ===c.start?.lng)+1} is assigned to company with ${companies.findIndex((company)=> company.lat===c.company?.lat && company.lng === c.company?.lng)+1}.`;break;
+		switch (c.entity) {
+			case 'requestCount':
+				str = `Verify that there are exactly ${c.requestCount} requests.`;
+				break;
+			case 'tourCount':
+				str = `Verify that there are exactly ${c.tourCount} tours.`;
+				break;
+			case 'startPosition':
+				str = `Verify that pickup event of request with #${starts.findIndex((s) => s.lat === c.start?.lat && s.lng === c.start?.lng) + 1} is at position ${c.expectedPosition} of its' tour.`;
+				break;
+			case 'destinationPosition':
+				str = `Verify that dropoff event of request with #${destinations.findIndex((s) => s.lat === c.destination?.lat && s.lng === c.destination?.lng) + 1} is at position ${c.expectedPosition} of its' tour.`;
+				break;
+			case 'requestCompanyMatch':
+				str = `Verify that request #${starts.findIndex((s) => s.lat === c.start?.lat && s.lng === c.start?.lng) + 1} is assigned to company with ${companies.findIndex((company) => company.lat === c.company?.lat && company.lng === c.company?.lng) + 1}.`;
+				break;
 		}
 		return str;
 	}
@@ -206,13 +216,26 @@
 	const conditionCols: Column<Condition>[] = [
 		{
 			text: ['after Request'],
-			toTableEntry: (r: Condition) => r.evalAfterStep + 1,
+			toTableEntry: (r: Condition) => r.evalAfterStep + 1
 		},
 		{
 			text: ['condition'],
-			toTableEntry: (r: Condition) => conditionToString(r),
+			toTableEntry: (r: Condition) => conditionToString(r)
 		}
-	]
+	];
+
+	let currentStep = $state(-1);
+	async function nextStep() {
+		const formData = new FormData();
+		formData.append('currentStep', currentStep.toString());
+		formData.append('companies', JSON.stringify(companies));
+		formData.append('conditions', JSON.stringify(conditions));
+		await fetch('?/nextStep', {
+			method: 'POST',
+			body: formData
+		});
+		++currentStep;
+	}
 </script>
 
 <div class="flex h-full w-screen">
@@ -279,7 +302,7 @@
 			<Switch class="justify-self-end" bind:checked={departure} />
 			<Label class="flex items-center gap-2">Time fixed at start</Label>
 
-			<form method="POST">
+			<form method="POST" action="?/addTest">
 				<input type="hidden" name="value" value={json} />
 				<Button type="submit" name="intent">Add Test</Button>
 			</form>
@@ -366,5 +389,9 @@
 		</div>
 
 		<SortableTable rows={conditions} cols={conditionCols}></SortableTable>
+
+		<Button onclick={nextStep}
+			>{currentStep === -1 ? 'set up companies' : `run step #${currentStep}`}</Button
+		>
 	</div>
 </div>

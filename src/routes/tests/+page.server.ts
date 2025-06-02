@@ -5,6 +5,11 @@ import type { Translations } from '$lib/i18n/translation';
 import fs from 'fs';
 import path from 'path';
 import type { Actions, RequestEvent } from './$types';
+import type { Condition } from '$lib/util/booking/testParams';
+import { addCompany, addTaxi, clearDatabase, Zone } from '$lib/testHelpers';
+import { addAvailability } from '$lib/server/addAvailability';
+import { Interval } from '$lib/util/interval';
+import { DAY } from '$lib/util/time';
 
 export type BookingError = { msg: keyof Translations['msg'] };
 
@@ -56,7 +61,7 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	addTest: async ({ request }) => {
 		const formData = await request.formData();
 		const raw = formData.get('value');
 
@@ -110,6 +115,33 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+	nextStep: async ({ request }) => {
+		const formData = await request.formData();
+		const currentStepString = formData.get('currentStep');
+		const companiesString = formData.get('companies');
+		const conditionsString = formData.get('conditions');
+		if (
+			typeof currentStepString !== 'string' ||
+			typeof companiesString !== 'string' ||
+			typeof conditionsString !== 'string'
+		) {
+			return;
+		}
+		const currentStep = parseInt(currentStepString);
+		const companies = JSON.parse(companiesString) as { lat: number; lng: number }[];
+		const condition = (JSON.parse(conditionsString) as Condition[])[currentStep];
+		if (currentStep === -1) {
+			await clearDatabase();
+			for (const company of companies) {
+				const c = await addCompany(Zone.WEIßWASSER, company);
+				for (let i = 0; i != 10; ++i) {
+					const t = await addTaxi(c, { passengers: 10, bikes: 0, wheelchairs: 0, luggage: 0 });
+					await addAvailability(new Interval(Date.now() - DAY * 4, Date.now() + DAY * 20), c, t);
+				}
+			}
+		} else {
+		}
 	}
 };
 
