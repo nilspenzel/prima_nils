@@ -58,11 +58,11 @@ export async function routing(
 		userChosen: {
 			from: {
 				company: fromUserChosen.slice(0, companies.length),
-				event: toUserChosen.slice(companies.length)
+				event: fromUserChosen.slice(companies.length)
 			},
 			to: {
 				company: toUserChosen.slice(0, companies.length),
-				event: fromUserChosen.slice(companies.length)
+				event: toUserChosen.slice(companies.length)
 			}
 		},
 		busStops: {

@@ -249,4 +249,14 @@ export type BookingLogs = {
 	iter: number;
 	waitingTime?: number;
 	taxiDuration?: number;
+	pickupWaitingTime?: number;
+	dropoffWaitingTime?: number;
+	pickupTaxiDuration?: number;
+	dropoffTaxiDuration?: number;
+	cumulatedTaxiDrivingDelta?: number;
+	oldDrivingTime?: number;
+	passengerDuration?: number;
+	eventOverlap?: number;
+	pickupTime?: number;
+	dropoffTime?: number;
 };
