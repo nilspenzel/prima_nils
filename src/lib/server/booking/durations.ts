@@ -28,20 +28,20 @@ export const getPrevLegDuration = (
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
-			relevantRoutingResults = routingResults.userChosen.from;
+			relevantRoutingResults = routingResults.userChosen.to;
 			break;
 
 		case InsertWhat.BOTH:
 			console.assert(busStopIdx != undefined);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-					? routingResults.busStops.from[busStopIdx!]
-					: routingResults.userChosen.from;
+					? routingResults.busStops.to[busStopIdx!]
+					: routingResults.userChosen.to;
 			break;
 
 		case InsertWhat.BUS_STOP:
 			console.assert(busStopIdx != undefined);
-			relevantRoutingResults = routingResults.busStops.from[busStopIdx!];
+			relevantRoutingResults = routingResults.busStops.to[busStopIdx!];
 			break;
 	}
 
@@ -63,20 +63,20 @@ export const getNextLegDuration = (
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
-			relevantRoutingResults = routingResults.userChosen.to;
+			relevantRoutingResults = routingResults.userChosen.from;
 			break;
 
 		case InsertWhat.BOTH:
 			console.assert(busStopIdx != undefined);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-					? routingResults.userChosen.to
-					: routingResults.busStops.to[busStopIdx!];
+					? routingResults.userChosen.from
+					: routingResults.busStops.from[busStopIdx!];
 			break;
 
 		case InsertWhat.BUS_STOP:
 			console.assert(busStopIdx != undefined);
-			relevantRoutingResults = routingResults.busStops.to[busStopIdx!];
+			relevantRoutingResults = routingResults.busStops.from[busStopIdx!];
 			break;
 	}
 

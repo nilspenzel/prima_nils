@@ -334,16 +334,27 @@ export function evaluateBothInsertion(
 		prev,
 		next
 	);
+	let eventOverlap = 0;
+	const window = new Interval(pickupTime, dropoffTime);
+	if (prev && insertionCase.how !== InsertHow.APPEND) {
+		eventOverlap += window.intersect(prev.time)?.size() ?? 0;
+	}
+	if (next && insertionCase.how !== InsertHow.PREPEND) {
+		eventOverlap += window.intersect(next.time)?.size() ?? 0;
+	}
 	bookingLogs.push({
 		type: printInsertionType(insertionCase),
 		prevEvent: prev?.id,
 		nextEvent: next?.id,
 		prevLegDuration,
 		nextLegDuration,
-		cost: computeCost(passengerDuration, taxiDuration, taxiWaitingTime),
+		cost: computeCost(passengerDuration + eventOverlap, taxiDuration, taxiWaitingTime),
 		iter: iteration,
 		waitingTime: taxiWaitingTime,
-		taxiDuration
+		taxiDuration,
+		oldDrivingTime: getOldDrivingTime(insertionCase, prev, next),
+		passengerDuration: passengerDuration + eventOverlap,
+		eventOverlap
 	});
 	return {
 		pickupTime,
@@ -353,7 +364,7 @@ export function evaluateBothInsertion(
 		passengerDuration,
 		taxiDuration,
 		taxiWaitingTime,
-		cost: computeCost(passengerDuration, taxiDuration, taxiWaitingTime),
+		cost: computeCost(passengerDuration + eventOverlap, taxiDuration, taxiWaitingTime),
 		departure,
 		arrival,
 		pickupPrevLegDuration: prevLegDuration,
@@ -672,12 +683,31 @@ export function evaluatePairInsertions(
 						if (dropoff == undefined) {
 							continue;
 						}
-						const passengerDuration = dropoff.time! - pickup.time!;
-
+						const window = new Interval(pickup.time!, dropoff.time!);
+						let eventOverlap = 0;
+						if (pickupIdx !== 0 && window.covers(events[pickupIdx - 1].scheduledTimeEnd)) {
+							eventOverlap += window.intersect(events[pickupIdx - 1].time)?.size() ?? 0;
+						}
+						if (
+							pickupIdx < events.length - 1 &&
+							window.covers(events[pickupIdx + 1].scheduledTimeStart)
+						) {
+							eventOverlap += window.intersect(events[pickupIdx + 1].time)?.size() ?? 0;
+						}
+						if (dropoffIdx !== 0 && window.covers(events[dropoffIdx - 1].scheduledTimeEnd)) {
+							eventOverlap += window.intersect(events[dropoffIdx - 1].time)?.size() ?? 0;
+						}
+						if (
+							dropoffIdx < events.length - 1 &&
+							window.covers(events[dropoffIdx + 1].scheduledTimeStart)
+						) {
+							eventOverlap += window.intersect(events[dropoffIdx + 1].time)?.size() ?? 0;
+						}
 						const taxiDuration =
 							pickup.taxiDuration + dropoff.taxiDuration + cumulatedTaxiDrivingDelta;
 						const taxiWaitingTime =
 							dropoff.taxiWaitingTime + pickup.taxiWaitingTime + cumulatedTaxiWaitingDelta;
+						const passengerDuration = dropoff.time! - pickup.time! + eventOverlap;
 						const cost = computeCost(passengerDuration, taxiDuration, taxiWaitingTime);
 						bookingLogs.push({
 							pickupType: printInsertionType(pickup.case),
@@ -687,7 +717,15 @@ export function evaluatePairInsertions(
 							dropoffPrevLegDuration: dropoff.approachDuration,
 							dropoffNextLegDuration: dropoff.returnDuration,
 							cost,
-							iter: iteration
+							iter: iteration,
+							pickupWaitingTime: pickup.taxiWaitingTime,
+							dropoffWaitingTime: dropoff.taxiWaitingTime,
+							pickupTaxiDuration: pickup.taxiDuration,
+							dropoffTaxiDuration: dropoff.taxiDuration,
+							waitingTime: pickup.taxiWaitingTime + dropoff.taxiWaitingTime,
+							taxiDuration: taxiDuration,
+							cumulatedTaxiDrivingDelta,
+							passengerDuration
 						});
 						if (
 							bestEvaluations[busStopIdx][timeIdx] == undefined ||
