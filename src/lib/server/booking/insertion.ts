@@ -36,6 +36,7 @@ import { iterateAllInsertions } from './iterateAllInsertions';
 import { type Range } from '$lib/util/booking/getPossibleInsertions';
 import type { DebugInfo } from '../util/debugInfo';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
+import { bookingLogs, iteration } from '$lib/testHelpers';
 
 export type InsertionEvaluation = {
 	pickupTime: number;
@@ -169,19 +170,19 @@ export function evaluateSingleInsertion(
 	debugInfo?: DebugInfo
 ): SingleInsertionEvaluation | undefined {
 	console.assert(insertionCase.what != InsertWhat.BOTH);
-	const approachDuration = getPrevLegDuration(
+	const prevLegDuration = getPrevLegDuration(
 		insertionCase,
 		routingResults,
 		insertionInfo,
 		busStopIdx
 	);
-	const returnDuration = getNextLegDuration(
+	const nextLegDuration = getNextLegDuration(
 		insertionCase,
 		routingResults,
 		insertionInfo,
 		busStopIdx
 	);
-	if (approachDuration == undefined || returnDuration == undefined) {
+	if (prevLegDuration == undefined || nextLegDuration == undefined) {
 		return undefined;
 	}
 	const arrivalWindow = getArrivalWindow(
@@ -189,8 +190,8 @@ export function evaluateSingleInsertion(
 		windows,
 		0,
 		busStopWindow,
-		approachDuration,
-		returnDuration,
+		prevLegDuration,
+		nextLegDuration,
 		allowedTimes,
 		debugInfo &&
 			(debugInfo.vehicleId === undefined || insertionInfo.vehicle.id === debugInfo.vehicleId)
@@ -203,8 +204,8 @@ export function evaluateSingleInsertion(
 	const passengerDuration =
 		(insertionCase.what == InsertWhat.BUS_STOP) ==
 		(insertionCase.direction == InsertDirection.BUS_STOP_PICKUP)
-			? returnDuration - PASSENGER_CHANGE_DURATION
-			: approachDuration;
+			? nextLegDuration - PASSENGER_CHANGE_DURATION
+			: prevLegDuration;
 	if (
 		promisedTimes != undefined &&
 		!keepsPromises(insertionCase, arrivalWindow, passengerDuration, promisedTimes)
@@ -212,22 +213,22 @@ export function evaluateSingleInsertion(
 		return undefined;
 	}
 	const taxiDuration =
-		approachDuration + returnDuration - getOldDrivingTime(insertionCase, prev, next);
+		prevLegDuration + nextLegDuration - getOldDrivingTime(insertionCase, prev, next);
 	console.assert(insertionCase.what != InsertWhat.BOTH);
 	const time = isEarlierBetter(insertionCase) ? arrivalWindow.startTime : arrivalWindow.endTime;
 	const taxiWaitingTime = getTaxiWaitingDelta(
-		approachDuration + returnDuration,
+		prevLegDuration + nextLegDuration,
 		insertionCase,
-		new Date(time - approachDuration).getTime(),
-		new Date(time + returnDuration).getTime(),
+		new Date(time - prevLegDuration).getTime(),
+		new Date(time + nextLegDuration).getTime(),
 		prev,
 		next
 	);
 	const sie: SingleInsertionEvaluation = {
 		time,
 		window: arrivalWindow,
-		approachDuration: approachDuration,
-		returnDuration: returnDuration,
+		approachDuration: prevLegDuration,
+		returnDuration: nextLegDuration,
 		case: structuredClone(insertionCase),
 		passengerDuration,
 		taxiDuration,
@@ -333,6 +334,17 @@ export function evaluateBothInsertion(
 		prev,
 		next
 	);
+	bookingLogs.push({
+		type: printInsertionType(insertionCase),
+		prevEvent: prev?.id,
+		nextEvent: next?.id,
+		prevLegDuration,
+		nextLegDuration,
+		cost: computeCost(passengerDuration, taxiDuration, taxiWaitingTime),
+		iter: iteration,
+		waitingTime: taxiWaitingTime,
+		taxiDuration
+	});
 	return {
 		pickupTime,
 		dropoffTime,
@@ -667,6 +679,16 @@ export function evaluatePairInsertions(
 						const taxiWaitingTime =
 							dropoff.taxiWaitingTime + pickup.taxiWaitingTime + cumulatedTaxiWaitingDelta;
 						const cost = computeCost(passengerDuration, taxiDuration, taxiWaitingTime);
+						bookingLogs.push({
+							pickupType: printInsertionType(pickup.case),
+							dropoffType: printInsertionType(dropoff.case),
+							pickupPrevLegDuration: pickup.approachDuration,
+							pickupNextLegDuration: pickup.returnDuration,
+							dropoffPrevLegDuration: dropoff.approachDuration,
+							dropoffNextLegDuration: dropoff.returnDuration,
+							cost,
+							iter: iteration
+						});
 						if (
 							bestEvaluations[busStopIdx][timeIdx] == undefined ||
 							cost < bestEvaluations[busStopIdx][timeIdx]!.cost
@@ -751,7 +773,15 @@ function getTaxiWaitingDelta(
 		insertionCase.how == InsertHow.PREPEND ? departure! : getScheduledEventTime(prev!);
 	const nextTaskTime =
 		insertionCase.how == InsertHow.APPEND ? arrival! : getScheduledEventTime(next!);
-	const newWaitingTime = nextTaskTime - prevTaskTime - drivingDuration;
+	const newWaitingTime = Math.max(nextTaskTime - prevTaskTime - drivingDuration, 0);
+	if (insertionCase.how === InsertHow.INSERT && insertionCase.what === InsertWhat.BOTH) {
+		console.log(
+			{ nextT: getScheduledEventTime(next!) },
+			{ prevT: getScheduledEventTime(prev!) },
+			{ oldWaitingTime },
+			{ newWaitingTime }
+		);
+	}
 	return newWaitingTime - oldWaitingTime;
 }
 

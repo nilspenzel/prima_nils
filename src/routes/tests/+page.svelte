@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { v4 as uuidv4 } from 'uuid';
 	import maplibregl from 'maplibre-gl';
+	import pkg from 'maplibre-gl';
 	import { getStyle } from '$lib/map/style.js';
 	import Map from '$lib/map/Map.svelte';
 	import GeoJSON from '$lib/map/GeoJSON.svelte';
@@ -14,6 +15,7 @@
 	import type { Condition, TestParams } from '$lib/util/booking/testParams.js';
 	import SortableTable from '$lib/ui/SortableTable.svelte';
 	import type { Column } from '$lib/ui/tableData.js';
+	const { Popup } = pkg;
 
 	const { data } = $props();
 
@@ -42,7 +44,8 @@
 		markers: maplibregl.Marker[],
 		coordinates: { lat: number; lng: number }[],
 		color: string,
-		onDropNearCompany?: (start: number, company: number) => void
+		onDropNearCompany?: (start: number, company: number) => void,
+		tooltipPrefix?: (string | undefined)[]
 	) {
 		markers.forEach((marker) => marker.remove());
 		return coordinates.map((coordinate, i) => {
@@ -60,6 +63,19 @@
 				fontWeight: 'bold',
 				fontSize: '12px'
 			});
+			if (tooltipPrefix && tooltipPrefix[i]) {
+				const popup = new Popup({ closeButton: false, closeOnClick: false }).setText(
+					`${tooltipPrefix[i]}`
+				);
+
+				el.addEventListener('mouseenter', () => {
+					popup.setLngLat([coordinate.lng, coordinate.lat]).addTo(map!);
+				});
+
+				el.addEventListener('mouseleave', () => {
+					popup.remove();
+				});
+			}
 			const marker = new maplibregl.Marker({
 				element: el,
 				draggable: onDropNearCompany !== undefined
@@ -98,12 +114,13 @@
 	let uuid = '1';
 	function addCondition() {
 		uuid = uuidv4();
+		console.log({ selectedRequest }, { starts });
 		conditions.push({
 			evalAfterStep: afterRequest,
 			entity: currentTestEntity!,
 			tourCount: expectedTourCount,
 			requestCount: expectedRequestCount,
-			expectedPosition: expectedPosition ? expectedPosition : null,
+			expectedPosition: expectedPosition === -1 ? null : expectedPosition,
 			start: starts[selectedRequest] ? starts[selectedRequest] : null,
 			destination: destinations[selectedRequest] ? destinations[selectedRequest] : null,
 			company: null
@@ -114,6 +131,33 @@
 		currentTestEntity = '-1';
 		expectedPosition = -1;
 		selectedRequest = -1;
+	}
+
+	function isAddable() {
+		console.log({ expectedRequestCount });
+		switch (currentTestEntity) {
+			case 'requestCount':
+				if (expectedRequestCount === -1) {
+					return false;
+				}
+				break;
+			case 'tourCount':
+				if (expectedTourCount === -1) {
+					return false;
+				}
+				break;
+			case 'startPosition':
+				if (selectedRequest === -1 || expectedPosition === -1) {
+					return false;
+				}
+				break;
+			case 'destinationPosition':
+				if (selectedRequest === -1 || expectedPosition === -1) {
+					return false;
+				}
+				break;
+		}
+		return true;
 	}
 
 	function assignRequestToCompany(startIdx: number, start: Coordinates, company: Coordinates) {
@@ -133,10 +177,20 @@
 	$effect(() => {
 		if (!map) return;
 		companyMarkers = addMarkers(companyMarkers, companies, 'yellow');
-		startMarkers = addMarkers(startMarkers, starts, 'green', (s, c) =>
-			assignRequestToCompany(s, starts[s], companies[c])
+		startMarkers = addMarkers(
+			startMarkers,
+			starts,
+			'green',
+			(s, c) => assignRequestToCompany(s, starts[s], companies[c]),
+			isDepartures.map((dep, i) => (dep ? new Date(times[i]).toISOString() : undefined))
 		);
-		destinationMarkers = addMarkers(destinationMarkers, destinations, 'red');
+		destinationMarkers = addMarkers(
+			destinationMarkers,
+			destinations,
+			'red',
+			undefined,
+			isDepartures.map((dep, i) => (!dep ? new Date(times[i]).toISOString() : undefined))
+		);
 	});
 
 	$effect(() => {
@@ -345,7 +399,7 @@
 					<option value={-1} disabled>request Count</option>
 					<option value={0}>0</option>
 					{#each destinations.entries() as [i, _]}
-						<option value={(i + 1).toString()}>{i + 1}</option>
+						<option value={i + 1}>{i + 1}</option>
 					{/each}
 				</select>
 			{/if}
@@ -358,7 +412,7 @@
 					<option value={-1} disabled>tour Count</option>
 					<option value={0}>0</option>
 					{#each destinations.entries() as [i, _]}
-						<option value={(i + 1).toString()}>{i + 1}</option>
+						<option value={i + 1}>{i + 1}</option>
 					{/each}
 				</select>
 			{/if}
@@ -369,21 +423,21 @@
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
 					<option value={-1} disabled>Select position</option>
-					{#each destinations.entries() as [i, _]}
-						<option value={i.toString()}>{i}</option>
+					{#each Array(2 * destinations.length) as _, i}
+						<option value={i}>{i}</option>
 					{/each}
 				</select>
 				<select
 					bind:value={selectedRequest}
 					class="rounded border border-gray-300 bg-white px-3 py-2"
 				>
-					<option value={-1} disabled>Select position</option>
+					<option value={-1} disabled>Select request</option>
 					{#each destinations.entries() as [i, _]}
-						<option value={(i + 1).toString()}>{i + 1}</option>
+						<option value={i}>{i}</option>
 					{/each}
 				</select>
 			{/if}
-			{#if currentTestEntity !== '' && afterRequest !== -1}
+			{#if currentTestEntity !== '-1' && afterRequest !== -1 && isAddable()}
 				<Button onclick={addCondition}>Add Condition</Button>
 			{/if}
 		</div>
