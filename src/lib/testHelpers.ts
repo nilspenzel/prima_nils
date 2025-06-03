@@ -225,3 +225,28 @@ export function assertArraySizes<T>(
 		}
 	}
 }
+
+export const bookingLogs: BookingLogs[] = [];
+export let iteration = 0;
+
+export function increment() {
+	++iteration;
+}
+
+export type BookingLogs = {
+	type?: string;
+	pickupType?: string;
+	dropoffType?: string;
+	cost?: number;
+	prevEvent?: number;
+	nextEvent?: number;
+	pickupPrevLegDuration?: number;
+	pickupNextLegDuration?: number;
+	dropoffPrevLegDuration?: number;
+	dropoffNextLegDuration?: number;
+	prevLegDuration?: number;
+	nextLegDuration?: number;
+	iter: number;
+	waitingTime?: number;
+	taxiDuration?: number;
+};

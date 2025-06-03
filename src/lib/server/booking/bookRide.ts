@@ -13,6 +13,7 @@ import { getMergeTourList } from './getMergeToorList';
 import type { DebugInfo } from '../util/debugInfo';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
 import { printInsertionType } from './insertionTypes';
+import { bookingLogs, increment } from '$lib/testHelpers';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -50,6 +51,7 @@ export async function bookRide(
 	blockedVehicleId?: number,
 	debugInfo?: DebugInfo
 ) {
+	bookingLogs.push({ iter: -1 });
 	console.log('BS');
 	const searchInterval = new Interval(c.startTime, c.targetTime);
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 6, MAX_TRAVEL * 6);
@@ -161,6 +163,7 @@ export async function bookRide(
 	const nextPickupEvent = best.pickupIdx == undefined ? undefined : events[best.pickupIdx];
 	const prevDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx - 1];
 	const nextDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx];
+	increment();
 	return {
 		best,
 		tour: (() => {

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { prepareTest, white } from '../util';
-import { addCompany, addTaxi, getTours, setAvailability, Zone } from '$lib/testHelpers';
+import {
+	addCompany,
+	addTaxi,
+	bookingLogs,
+	getTours,
+	setAvailability,
+	Zone,
+	type BookingLogs
+} from '$lib/testHelpers';
 import type { ExpectedConnection } from '$lib/server/booking/bookRide';
 import { bookingApi } from '$lib/server/booking/bookingApi';
 import { db } from '$lib/server/db';
@@ -18,11 +26,9 @@ function filterByContainedEvent(
 	return tours.filter((t) =>
 		t.requests.some(
 			(r) =>
-				!r.events.some(
-					(e) =>
-						(e.lat !== condition.start?.lat || e.lng !== condition.start.lng) &&
-						(e.lat !== condition.destination?.lat || e.lng !== condition.destination.lng)
-				)
+				(condition.start !== null && r.events.some((e) => isSamePlace(e, condition.start!))) ||
+				(condition.destination !== null &&
+					r.events.some((e) => isSamePlace(e, condition.destination!)))
 		)
 	);
 }
@@ -31,6 +37,7 @@ describe('Concatenation tests', () => {
 	it('generated tests', async () => {
 		console.log({ testparams: JSON.stringify(tests, null, '\t') });
 		for (const test of tests) {
+			console.log('Running test with', { link: `http://localhost:5173/tests?test=${test.uuid}` });
 			expect(test.process.starts.length).toBe(test.process.destinations.length);
 			expect(test.process.starts.length).toBe(test.process.isDepartures.length);
 			expect(test.process.starts.length).toBe(test.process.times.length);
@@ -115,11 +122,9 @@ describe('Concatenation tests', () => {
 									)
 									.select(['company.lat', 'company.lng'])
 									.execute();
-									console.log({toursWithCorrectRequest},{companiesWithCorrectRequest},condition.company)
 								expect(
-									companiesWithCorrectRequest.filter(
-										(c) =>
-											isSamePlace({lat:c.lat!, lng: c.lng!}, condition.company!)
+									companiesWithCorrectRequest.filter((c) =>
+										isSamePlace({ lat: c.lat!, lng: c.lng! }, condition.company!)
 									).length
 								).not.toBe(0);
 								break;
@@ -133,6 +138,14 @@ describe('Concatenation tests', () => {
 							{ condition },
 							{ link: `http://localhost:5173/tests?test=${test.uuid}` }
 						);
+						const logsPerTest = split(bookingLogs, -1);
+						for (const logs of logsPerTest) {
+							logs.sort(
+								(log1, log2) =>
+									(log1.cost ?? Number.MAX_SAFE_INTEGER) - (log2.cost ?? Number.MAX_SAFE_INTEGER)
+							);
+							console.log(JSON.stringify(logs, null, '\t'));
+						}
 						throw err;
 					}
 				}
@@ -143,3 +156,25 @@ describe('Concatenation tests', () => {
 		);
 	});
 });
+
+function split(arr: BookingLogs[], splitVal: number) {
+	const result: BookingLogs[][] = [];
+	let temp: BookingLogs[] = [];
+
+	for (const item of arr) {
+		if (item.iter === splitVal) {
+			if (temp.length > 0) {
+				result.push(temp);
+				temp = [];
+			}
+		} else {
+			temp.push(item);
+		}
+	}
+
+	if (temp.length > 0) {
+		result.push(temp);
+	}
+
+	return result;
+}
