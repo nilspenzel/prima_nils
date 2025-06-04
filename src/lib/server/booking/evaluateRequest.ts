@@ -8,7 +8,6 @@ import type { Company } from './getBookingAvailability';
 import type { PromisedTimes } from './PromisedTimes';
 import type { Range } from '$lib/util/booking/getPossibleInsertions';
 import {
-	BUFFER_TIME,
 	EARLIEST_SHIFT_START,
 	LATEST_SHIFT_END,
 	MAX_PASSENGER_WAITING_TIME_DROPOFF,
@@ -51,8 +50,7 @@ export async function evaluateRequest(
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}
 	const directDurations = (await batchOneToManyCarRouting(userChosen, busStops, startFixed)).map(
-		(duration) =>
-			duration === undefined ? undefined : duration + PASSENGER_CHANGE_DURATION + BUFFER_TIME
+		(duration) => (duration === undefined ? undefined : duration + PASSENGER_CHANGE_DURATION)
 	);
 	const insertionRanges = new Map<number, Range[]>();
 	companies.forEach((company) =>

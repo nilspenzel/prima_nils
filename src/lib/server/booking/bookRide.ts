@@ -6,14 +6,15 @@ import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { MAX_TRAVEL } from '$lib/constants';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
 import type { Coordinates } from '$lib/util/Coordinates';
-import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
-import { getEventGroupInfo } from '$lib/server/booking/getEventGroupInfo';
-import { getDirectDurations } from './getDirectDrivingDurations';
+import { evaluateRequest, type Times } from '$lib/server/booking/evaluateRequest';
+import { getEventGroupInfo, type EventGroupUpdate } from '$lib/server/booking/getEventGroupInfo';
+import { getDirectDurations, type DirectDrivingDurations } from './getDirectDrivingDurations';
 import { getMergeTourList } from './getMergeToorList';
 import type { DebugInfo } from '../util/debugInfo';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
 import { printInsertionType } from './insertionTypes';
 import { bookingLogs, increment } from '$lib/testHelpers';
+import type { Insertion } from './insertion';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -50,7 +51,7 @@ export async function bookRide(
 	skipPromiseCheck?: boolean,
 	blockedVehicleId?: number,
 	debugInfo?: DebugInfo
-) {
+): Promise<undefined | BookRideResponse> {
 	bookingLogs.push({ iter: -1 });
 	console.log('BS');
 	const searchInterval = new Interval(c.startTime, c.targetTime);
@@ -192,6 +193,56 @@ export async function bookRide(
 			prevDropoff: best.dropoffCase.how == InsertHow.PREPEND ? undefined : prevDropoffEvent?.id,
 			nextDropoff: best.dropoffCase.how == InsertHow.APPEND ? undefined : nextDropoffEvent?.id
 		},
-		directDurations
+		directDurations,
+		scheduledTimeUpdates: {
+			prevPickupEndTime:
+				prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
+					? (best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2
+					: null,
+			newPickupStartTime:
+				prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
+					? (best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2
+					: null,
+			nextPickupStartTime:
+				nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime
+					? (best.pickupTime + nextPickupEvent.scheduledTimeEnd) / 2
+					: null,
+			prevDropoffEndTime:
+				prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
+					? (best.pickupTime + prevDropoffEvent.scheduledTimeStart) / 2
+					: null,
+			newDropoffStartTime:
+				prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
+					? (best.dropoffTime + prevDropoffEvent.scheduledTimeStart) / 2
+					: null,
+			nextDropoffStartTime:
+				nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < best.dropoffTime
+					? (best.dropoffTime + nextDropoffEvent.scheduledTimeEnd) / 2
+					: null
+		}
 	};
 }
+
+export type BookRideResponse = {
+	best: Insertion & Times;
+	tour: undefined | number;
+	mergeTourList: Set<number>;
+	eventGroupUpdateList: EventGroupUpdate[];
+	pickupEventGroup: string;
+	dropoffEventGroup: string;
+	neighbourIds: {
+		prevPickup: undefined | number;
+		nextPickup: undefined | number;
+		prevDropoff: undefined | number;
+		nextDropoff: undefined | number;
+	};
+	directDurations: DirectDrivingDurations;
+	scheduledTimeUpdates: {
+		prevPickupEndTime: number | null;
+		newPickupStartTime: number | null;
+		nextPickupStartTime: number | null;
+		prevDropoffEndTime: number | null;
+		newDropoffStartTime: number | null;
+		nextDropoffStartTime: number | null;
+	};
+};

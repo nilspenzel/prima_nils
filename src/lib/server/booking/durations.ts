@@ -1,4 +1,4 @@
-import { BUFFER_TIME, MAX_TRAVEL, PASSENGER_CHANGE_DURATION } from '$lib/constants';
+import { MAX_TRAVEL, PASSENGER_CHANGE_DURATION } from '$lib/constants';
 import { implication } from '$lib/server/util/implication';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
@@ -51,7 +51,12 @@ export const getPrevLegDuration = (
 	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
 		return undefined;
 	}
-	return drivingTime + BUFFER_TIME;
+	return (
+		drivingTime +
+		(insertionCase.how === InsertHow.NEW_TOUR || insertionCase.how === InsertHow.PREPEND
+			? 0
+			: PASSENGER_CHANGE_DURATION)
+	);
 };
 
 export const getNextLegDuration = (
@@ -86,7 +91,7 @@ export const getNextLegDuration = (
 	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
 		return undefined;
 	}
-	return drivingTime + PASSENGER_CHANGE_DURATION + BUFFER_TIME;
+	return drivingTime + PASSENGER_CHANGE_DURATION;
 };
 
 export function getAllowedOperationTimes(
