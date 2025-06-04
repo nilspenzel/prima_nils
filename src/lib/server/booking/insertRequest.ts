@@ -1,4 +1,4 @@
-import type { ExpectedConnection } from '$lib/server/booking/bookRide';
+import type { ExpectedConnection, ScheduledTimes } from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import type { DirectDrivingDurations } from '$lib/server/booking/getDirectDrivingDurations';
 import type { EventGroupUpdate } from '$lib/server/booking/getEventGroupInfo';
@@ -8,10 +8,9 @@ import { sql, Transaction } from 'kysely';
 import { sendNotifications } from '$lib/server/firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { env } from '$env/dynamic/public';
-import type { Times } from './evaluateRequest';
 
 export async function insertRequest(
-	connection: Insertion & Times,
+	connection: Insertion,
 	capacities: Capacities,
 	c: ExpectedConnection,
 	customer: number,
@@ -24,6 +23,7 @@ export async function insertRequest(
 	kidsZeroToTwo: number,
 	kidsThreeToFour: number,
 	kidsFiveToSix: number,
+	scheduledTimes: ScheduledTimes,
 	trx: Transaction<Database>
 ): Promise<number> {
 	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
@@ -62,8 +62,8 @@ export async function insertRequest(
 		await sql<{ request: number }>`
         SELECT create_and_merge_tours(
             ROW(${capacities.passengers}, ${kidsZeroToTwo}, ${kidsThreeToFour}, ${kidsFiveToSix}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}, ${customer}, ${ticketPrice}),
-            ROW(${true}, ${c.start.lat}, ${c.start.lng}, ${connection.scheduledPickupTimeStart}, ${connection.scheduledPickupTimeEnd}, ${connection.communicatedPickupTime}, ${connection.pickupPrevLegDuration}, ${connection.pickupNextLegDuration}, ${c.start.address}, ${startEventGroup}),
-            ROW(${false}, ${c.target.lat}, ${c.target.lng}, ${connection.scheduledDropoffTimeStart}, ${connection.scheduledDropoffTimeEnd}, ${connection.communicatedDropoffTime}, ${connection.dropoffPrevLegDuration}, ${connection.dropoffNextLegDuration}, ${c.target.address}, ${targetEventGroup}),
+            ROW(${true}, ${c.start.lat}, ${c.start.lng}, ${scheduledTimes.newPickupStartTime}, ${connection.pickupTime}, ${scheduledTimes.newPickupStartTime}, ${connection.pickupPrevLegDuration}, ${connection.pickupNextLegDuration}, ${c.start.address}, ${startEventGroup}),
+            ROW(${false}, ${c.target.lat}, ${c.target.lng}, ${connection.dropoffTime}, ${scheduledTimes.newDropoffEndTime}, ${scheduledTimes.newDropoffEndTime}, ${connection.dropoffPrevLegDuration}, ${connection.dropoffNextLegDuration}, ${c.target.address}, ${targetEventGroup}),
             ${mergeTourList},
             ROW(${connection.departure}, ${connection.arrival}, ${connection.vehicle}, ${direct.thisTour?.directDrivingDuration ?? null}, ${connection.tour ?? null}),
             ${JSON.stringify(updateEventGroupList)}::jsonb,

@@ -3,10 +3,10 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import type { Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
-import { MAX_TRAVEL } from '$lib/constants';
+import { MAX_TRAVEL, SCHEDULED_TIME_BUFFER } from '$lib/constants';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
 import type { Coordinates } from '$lib/util/Coordinates';
-import { evaluateRequest, type Times } from '$lib/server/booking/evaluateRequest';
+import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
 import { getEventGroupInfo, type EventGroupUpdate } from '$lib/server/booking/getEventGroupInfo';
 import { getDirectDurations, type DirectDrivingDurations } from './getDirectDrivingDurations';
 import { getMergeTourList } from './getMergeToorList';
@@ -194,7 +194,7 @@ export async function bookRide(
 			nextDropoff: best.dropoffCase.how == InsertHow.APPEND ? undefined : nextDropoffEvent?.id
 		},
 		directDurations,
-		scheduledTimeUpdates: {
+		scheduledTimes: {
 			prevPickupEndTime:
 				prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
 					? (best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2
@@ -202,7 +202,7 @@ export async function bookRide(
 			newPickupStartTime:
 				prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
 					? (best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2
-					: null,
+					: best.pickupTime - SCHEDULED_TIME_BUFFER,
 			nextPickupStartTime:
 				nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime
 					? (best.pickupTime + nextPickupEvent.scheduledTimeEnd) / 2
@@ -211,10 +211,10 @@ export async function bookRide(
 				prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
 					? (best.pickupTime + prevDropoffEvent.scheduledTimeStart) / 2
 					: null,
-			newDropoffStartTime:
+			newDropoffEndTime:
 				prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
 					? (best.dropoffTime + prevDropoffEvent.scheduledTimeStart) / 2
-					: null,
+					: best.dropoffTime + SCHEDULED_TIME_BUFFER,
 			nextDropoffStartTime:
 				nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < best.dropoffTime
 					? (best.dropoffTime + nextDropoffEvent.scheduledTimeEnd) / 2
@@ -223,8 +223,17 @@ export async function bookRide(
 	};
 }
 
+export type ScheduledTimes = {
+	prevPickupEndTime: number | null;
+	nextPickupStartTime: number | null;
+	prevDropoffEndTime: number | null;
+	nextDropoffStartTime: number | null;
+	newPickupStartTime: number;
+	newDropoffEndTime: number;
+};
+
 export type BookRideResponse = {
-	best: Insertion & Times;
+	best: Insertion;
 	tour: undefined | number;
 	mergeTourList: Set<number>;
 	eventGroupUpdateList: EventGroupUpdate[];
@@ -237,12 +246,5 @@ export type BookRideResponse = {
 		nextDropoff: undefined | number;
 	};
 	directDurations: DirectDrivingDurations;
-	scheduledTimeUpdates: {
-		prevPickupEndTime: number | null;
-		newPickupStartTime: number | null;
-		nextPickupStartTime: number | null;
-		prevDropoffEndTime: number | null;
-		newDropoffStartTime: number | null;
-		nextDropoffStartTime: number | null;
-	};
+	scheduledTimes: ScheduledTimes;
 };

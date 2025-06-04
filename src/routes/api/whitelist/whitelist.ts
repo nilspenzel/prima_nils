@@ -3,7 +3,7 @@ import { getBookingAvailability } from '$lib/server/booking/getBookingAvailabili
 import { MAX_TRAVEL } from '$lib/constants';
 import { Interval } from '$lib/util/interval';
 import type { Coordinates } from '$lib/util/Coordinates';
-import { evaluateRequest, type Times } from '$lib/server/booking/evaluateRequest';
+import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
 import { toBusStopWithISOStrings, type BusStop } from '$lib/server/booking/BusStop';
 import type { Insertion } from '$lib/server/booking/insertion';
 
@@ -12,7 +12,7 @@ export async function whitelist(
 	busStops: BusStop[],
 	required: Capacities,
 	startFixed: boolean
-): Promise<Array<((Insertion & Times) | undefined)[]>> {
+): Promise<Array<(Insertion | undefined)[]>> {
 	console.log(
 		'Whitelist Request: ',
 		JSON.stringify(
@@ -28,7 +28,7 @@ export async function whitelist(
 	);
 
 	if (!busStops.some((b) => b.times.length !== 0)) {
-		return new Array<((Insertion & Times) | undefined)[]>(busStops.length);
+		return new Array<(Insertion | undefined)[]>(busStops.length);
 	}
 
 	let lastTime = 0;
@@ -91,7 +91,7 @@ export async function whitelist(
 		required,
 		startFixed
 	);
-	const ret = new Array<((Insertion & Times) | undefined)[]>(filteredBusStops.length);
+	const ret = new Array<(Insertion | undefined)[]>(filteredBusStops.length);
 	for (let i = 0; i != filteredBusStops.length; ++i) {
 		if (filteredBusStops[i] == undefined) {
 			ret[i] = new Array<undefined>(busStops[i].times.length);
