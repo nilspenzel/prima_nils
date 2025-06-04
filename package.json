@@ -19,7 +19,8 @@
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
 		"sim": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/simulation/script.ts",
-		"health": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/healthCheck/script.ts"
+		"health": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/healthCheck/script.ts",
+		"test:one": "./setup-db.sh && vitest src/lib/server/booking/tests/concatenations/sameLocation.test.ts --fileParallelism false"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
