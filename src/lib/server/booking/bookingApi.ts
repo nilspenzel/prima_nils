@@ -1,5 +1,9 @@
 import { db } from '$lib/server/db';
-import { bookRide, type ExpectedConnection } from '$lib/server/booking/bookRide';
+import {
+	bookRide,
+	type BookRideResponse,
+	type ExpectedConnection
+} from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { signEntry } from '$lib/server/booking/signEntry';
 import { insertRequest } from './insertRequest';
@@ -75,8 +79,8 @@ export async function bookingApi(
 			.transaction()
 			.setIsolationLevel('serializable')
 			.execute(async (trx) => {
-				let firstConnection = undefined;
-				let secondConnection = undefined;
+				let firstConnection: undefined | BookRideResponse = undefined;
+				let secondConnection: undefined | BookRideResponse = undefined;
 				if (p.connection1 != null) {
 					firstConnection = await bookRide(p.connection1, p.capacities, trx, skipPromiseCheck);
 					if (firstConnection == undefined) {
@@ -116,47 +120,49 @@ export async function bookingApi(
 						secondConnection!.tour = newTour;
 					}
 				}
-				if (p.connection1 != null) {
+				if (firstConnection != null) {
 					request1Id =
 						(await insertRequest(
-							firstConnection!.best,
+							firstConnection.best,
 							p.capacities,
-							p.connection1,
+							p.connection1!,
 							customer,
-							firstConnection!.eventGroupUpdateList,
-							[...firstConnection!.mergeTourList],
-							firstConnection!.pickupEventGroup,
-							firstConnection!.dropoffEventGroup,
-							firstConnection!.neighbourIds,
-							firstConnection!.directDurations,
+							firstConnection.eventGroupUpdateList,
+							[...firstConnection.mergeTourList],
+							firstConnection.pickupEventGroup,
+							firstConnection.dropoffEventGroup,
+							firstConnection.neighbourIds,
+							firstConnection.directDurations,
 							kidsZeroToTwo,
 							kidsThreeToFour,
 							kidsFiveToSix,
+							firstConnection.scheduledTimes,
 							trx
 						)) ?? null;
+					communicatedPickup1 = firstConnection.best.pickupTime;
+					communicatedDropoff1 = firstConnection.best.dropoffTime;
 				}
-				communicatedPickup1 = firstConnection?.best.pickupTime;
-				communicatedDropoff1 = firstConnection?.best.dropoffTime;
-				if (p.connection2 != null) {
+				if (secondConnection != null) {
 					request2Id =
 						(await insertRequest(
-							secondConnection!.best,
+							secondConnection.best,
 							p.capacities,
-							p.connection2,
+							p.connection2!,
 							customer,
-							secondConnection!.eventGroupUpdateList,
-							[...secondConnection!.mergeTourList],
-							secondConnection!.pickupEventGroup,
-							secondConnection!.dropoffEventGroup,
-							secondConnection!.neighbourIds,
-							secondConnection!.directDurations,
+							secondConnection.eventGroupUpdateList,
+							[...secondConnection.mergeTourList],
+							secondConnection.pickupEventGroup,
+							secondConnection.dropoffEventGroup,
+							secondConnection.neighbourIds,
+							secondConnection.directDurations,
 							kidsZeroToTwo,
 							kidsThreeToFour,
 							kidsFiveToSix,
+							secondConnection.scheduledTimes,
 							trx
 						)) ?? null;
-					communicatedPickup2 = secondConnection?.best.pickupTime;
-					communicatedDropoff2 = secondConnection?.best.dropoffTime;
+					communicatedPickup2 = secondConnection.best.pickupTime;
+					communicatedDropoff2 = secondConnection.best.dropoffTime;
 				}
 				message = 'Die Anfrage wurde erfolgreich bearbeitet.';
 				success = true;
