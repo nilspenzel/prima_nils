@@ -270,10 +270,9 @@ async function updateLegDurations(
 			.executeTakeFirst();
 	};
 
-	events.filter((e) => e.requestid === requestId || e.cancelled === false);
-	events.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
-	const cancelled1Idx = events.findIndex((e) => e.requestid === requestId);
-	const cancelled2Idx = events.findLastIndex((e) => e.requestid === requestId);
+	const uncancelledEvents = events.filter((e) => e.requestid === requestId || e.cancelled === false).sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+	const cancelled1Idx = uncancelledEvents.findIndex((e) => e.requestid === requestId);
+	const cancelled2Idx = uncancelledEvents.findLastIndex((e) => e.requestid === requestId);
 	console.assert(
 		cancelled1Idx != -1 && cancelled2Idx != -1 && cancelled1Idx < cancelled2Idx,
 		'Invalid cancelledIdx in cancelRequest.ts',
@@ -281,9 +280,9 @@ async function updateLegDurations(
 		{ cancelled2Idx }
 	);
 	if (cancelled1Idx === cancelled2Idx - 1) {
-		await update(cancelled1Idx - 1, cancelled2Idx + 1, events, company, trx);
+		await update(cancelled1Idx - 1, cancelled2Idx + 1, uncancelledEvents, company, trx);
 		return;
 	}
-	await update(cancelled1Idx - 1, cancelled1Idx + 1, events, company, trx);
-	await update(cancelled2Idx - 1, cancelled2Idx + 1, events, company, trx);
+	await update(cancelled1Idx - 1, cancelled1Idx + 1, uncancelledEvents, company, trx);
+	await update(cancelled2Idx - 1, cancelled2Idx + 1, uncancelledEvents, company, trx);
 }
