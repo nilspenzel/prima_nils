@@ -1,4 +1,4 @@
-import { MAX_TRAVEL, PASSENGER_CHANGE_DURATION } from '$lib/constants';
+import { MAX_TRAVEL } from '$lib/constants';
 import { implication } from '$lib/server/util/implication';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
@@ -28,20 +28,20 @@ export const getPrevLegDuration = (
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
-			relevantRoutingResults = routingResults.userChosen.to;
+			relevantRoutingResults = routingResults.userChosen.toUserChosen;
 			break;
 
 		case InsertWhat.BOTH:
 			console.assert(busStopIdx != undefined);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-					? routingResults.busStops.to[busStopIdx!]
-					: routingResults.userChosen.to;
+					? routingResults.busStops.toBusStop[busStopIdx!]
+					: routingResults.userChosen.toUserChosen;
 			break;
 
 		case InsertWhat.BUS_STOP:
 			console.assert(busStopIdx != undefined);
-			relevantRoutingResults = routingResults.busStops.to[busStopIdx!];
+			relevantRoutingResults = routingResults.busStops.toBusStop[busStopIdx!];
 			break;
 	}
 
@@ -51,12 +51,7 @@ export const getPrevLegDuration = (
 	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
 		return undefined;
 	}
-	return (
-		drivingTime +
-		(insertionCase.how === InsertHow.NEW_TOUR || insertionCase.how === InsertHow.PREPEND
-			? 0
-			: PASSENGER_CHANGE_DURATION)
-	);
+	return drivingTime;
 };
 
 export const getNextLegDuration = (
@@ -68,20 +63,20 @@ export const getNextLegDuration = (
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
-			relevantRoutingResults = routingResults.userChosen.from;
+			relevantRoutingResults = routingResults.userChosen.fromUserChosen;
 			break;
 
 		case InsertWhat.BOTH:
 			console.assert(busStopIdx != undefined);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-					? routingResults.userChosen.from
-					: routingResults.busStops.from[busStopIdx!];
+					? routingResults.userChosen.fromUserChosen
+					: routingResults.busStops.fromBusStop[busStopIdx!];
 			break;
 
 		case InsertWhat.BUS_STOP:
 			console.assert(busStopIdx != undefined);
-			relevantRoutingResults = routingResults.busStops.from[busStopIdx!];
+			relevantRoutingResults = routingResults.busStops.fromBusStop[busStopIdx!];
 			break;
 	}
 
@@ -91,7 +86,7 @@ export const getNextLegDuration = (
 	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
 		return undefined;
 	}
-	return drivingTime + PASSENGER_CHANGE_DURATION;
+	return drivingTime;
 };
 
 export function getAllowedOperationTimes(

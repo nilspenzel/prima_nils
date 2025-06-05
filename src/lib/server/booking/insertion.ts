@@ -204,7 +204,7 @@ export function evaluateSingleInsertion(
 	const passengerDuration =
 		(insertionCase.what == InsertWhat.BUS_STOP) ==
 		(insertionCase.direction == InsertDirection.BUS_STOP_PICKUP)
-			? nextLegDuration - PASSENGER_CHANGE_DURATION
+			? nextLegDuration
 			: prevLegDuration;
 	if (
 		promisedTimes != undefined &&

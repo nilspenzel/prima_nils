@@ -6,6 +6,7 @@ import { type VehicleId } from './VehicleId';
 import type { Range } from '$lib/util/booking/getPossibleInsertions';
 import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 import { Interval } from '$lib/util/interval';
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 
 const inRothenburg1 = { lng: 14.962964035976825, lat: 51.34030696433544 };
 const inRothenburg2 = { lng: 14.96375266477358, lat: 51.335866895211666 };
@@ -126,10 +127,10 @@ describe('IterateAllInsertions tests', () => {
 					//}
 				}
 				fromUserChosenEvent.push(oneToManyCarRouting(userChosen, [event], false));
-				fromUserChosenEventRR.push(routingResults.userChosen.from.event[idx]);
+				fromUserChosenEventRR.push(routingResults.userChosen.fromUserChosen.event[idx]);
 				for (let i = 0; i != busStops.length; ++i) {
 					fromBusStopEvent[i].push(oneToManyCarRouting(busStops[i], [event], false));
-					fromBusStopEventRR[i].push(routingResults.busStops.from[i].event[idx]);
+					fromBusStopEventRR[i].push(routingResults.busStops.fromBusStop[i].event[idx]);
 				}
 			} else if (info.idxInEvents === info.vehicle.events.length) {
 				if (postEvent) {
@@ -138,59 +139,83 @@ describe('IterateAllInsertions tests', () => {
 					//	fromBusStopPostEvent[i].push(oneToManyCarRouting(busStops[i], [postEvent], false))
 					//}
 					toUserChosenEvent.push(oneToManyCarRouting(prevEvent, [userChosen], false));
-					toUserChosenEventRR.push(routingResults.userChosen.to.event[idx - 1]);
+					toUserChosenEventRR.push(routingResults.userChosen.toUserChosen.event[idx - 1]);
 					for (let i = 0; i != busStops.length; ++i) {
 						toBusStopEvent[i].push(oneToManyCarRouting(prevEvent, [busStops[i]], false));
-						toBusStopEventRR[i].push(routingResults.busStops.to[i].event[idx - 1]);
+						toBusStopEventRR[i].push(routingResults.busStops.toBusStop[i].event[idx - 1]);
 					}
 				}
 			} else {
 				toUserChosenEvent.push(oneToManyCarRouting(prevEvent, [userChosen], false));
-				toUserChosenEventRR.push(routingResults.userChosen.to.event[idx]);
+				toUserChosenEventRR.push(routingResults.userChosen.toUserChosen.event[idx]);
 
 				toUserChosenCompany.push(oneToManyCarRouting(company, [userChosen], false));
-				toUserChosenCompanyRR.push(routingResults.userChosen.to.company[info.companyIdx]);
+				toUserChosenCompanyRR.push(routingResults.userChosen.toUserChosen.company[info.companyIdx]);
 
 				fromUserChosenEvent.push(oneToManyCarRouting(userChosen, [event], false));
-				fromUserChosenEventRR.push(routingResults.userChosen.from.event[idx]);
+				fromUserChosenEventRR.push(routingResults.userChosen.fromUserChosen.event[idx]);
 
 				fromUserChosenCompany.push(oneToManyCarRouting(userChosen, [company], false));
-				fromUserChosenCompanyRR.push(routingResults.userChosen.from.company[info.companyIdx]);
+				fromUserChosenCompanyRR.push(
+					routingResults.userChosen.fromUserChosen.company[info.companyIdx]
+				);
 
 				for (let i = 0; i != busStops.length; ++i) {
 					toBusStopEvent[i].push(oneToManyCarRouting(prevEvent, [busStops[i]], false));
-					toBusStopEventRR[i].push(routingResults.busStops.to[i].event[idx]);
+					toBusStopEventRR[i].push(routingResults.busStops.toBusStop[i].event[idx]);
 
 					toBusStopCompany[i].push(oneToManyCarRouting(company, [busStops[i]], false));
-					toBusStopCompanyRR[i].push(routingResults.busStops.to[i].company[info.companyIdx]);
+					toBusStopCompanyRR[i].push(routingResults.busStops.toBusStop[i].company[info.companyIdx]);
 
 					fromBusStopEvent[i].push(oneToManyCarRouting(busStops[i], [event], false));
-					fromBusStopEventRR[i].push(routingResults.busStops.from[i].event[idx]);
+					fromBusStopEventRR[i].push(routingResults.busStops.fromBusStop[i].event[idx]);
 
 					fromBusStopCompany[i].push(oneToManyCarRouting(busStops[i], [company], false));
-					fromBusStopCompanyRR[i].push(routingResults.busStops.from[i].company[info.companyIdx]);
+					fromBusStopCompanyRR[i].push(
+						routingResults.busStops.fromBusStop[i].company[info.companyIdx]
+					);
 				}
 			}
 		});
 		let oneToManyResults: (number | undefined)[] = [];
 		let rr: (number | undefined)[] = [];
 		oneToManyResults = oneToManyResults.concat(
-			toUserChosenEvent.length === 0 ? [] : (await Promise.all(toUserChosenEvent))[0]
+			toUserChosenEvent.length === 0
+				? []
+				: (await Promise.all(toUserChosenEvent))[0].map((d) =>
+						d ? d + PASSENGER_CHANGE_DURATION : undefined
+					)
 		);
 		oneToManyResults = oneToManyResults.concat(
 			toUserChosenCompany.length === 0 ? [] : (await Promise.all(toUserChosenCompany))[0]
 		);
 		oneToManyResults = oneToManyResults.concat(
-			toUserChosenPredEvent.length === 0 ? [] : (await Promise.all(toUserChosenPredEvent))[0]
+			toUserChosenPredEvent.length === 0
+				? []
+				: (await Promise.all(toUserChosenPredEvent))[0].map((d) =>
+						d ? d + PASSENGER_CHANGE_DURATION : undefined
+					)
 		);
 		oneToManyResults = oneToManyResults.concat(
-			fromUserChosenEvent.length === 0 ? [] : (await Promise.all(fromUserChosenEvent))[0]
+			fromUserChosenEvent.length === 0
+				? []
+				: (await Promise.all(fromUserChosenEvent))[0].map((d) =>
+						d ? d + PASSENGER_CHANGE_DURATION : undefined
+					)
 		);
 		oneToManyResults = oneToManyResults.concat(
-			fromUserChosenCompany.length === 0 ? [] : (await Promise.all(fromUserChosenCompany))[0]
+			fromUserChosenCompany.length === 0
+				? []
+				: (await Promise.all(fromUserChosenCompany))[0].map((d) =>
+						d ? d + PASSENGER_CHANGE_DURATION : undefined
+					)
 		);
 		oneToManyResults = oneToManyResults.concat(
-			fromUserChosenPostEvent.length === 0 ? [] : (await Promise.all(fromUserChosenPostEvent))[0]
+			fromUserChosenPostEvent.length === 0
+				? []
+				: (await Promise.all(fromUserChosenPostEvent))[0].map((d) =>
+						d ? d + PASSENGER_CHANGE_DURATION : undefined
+					)
 		);
 		rr = rr.concat(toUserChosenEventRR);
 		rr = rr.concat(toUserChosenCompanyRR);
@@ -200,22 +225,42 @@ describe('IterateAllInsertions tests', () => {
 		rr = rr.concat(fromUserChosenPostEventRR);
 		for (let i = 0; i != busStops.length; ++i) {
 			oneToManyResults = oneToManyResults.concat(
-				toBusStopEvent[i].length === 0 ? [] : (await Promise.all(toBusStopEvent[i]))[0]
+				toBusStopEvent[i].length === 0
+					? []
+					: (await Promise.all(toBusStopEvent[i]))[0].map((d) =>
+							d ? d + PASSENGER_CHANGE_DURATION : undefined
+						)
 			);
 			oneToManyResults = oneToManyResults.concat(
 				toBusStopCompany[i].length === 0 ? [] : (await Promise.all(toBusStopCompany[i]))[0]
 			);
 			oneToManyResults = oneToManyResults.concat(
-				toBusStopPredEvent[i].length === 0 ? [] : (await Promise.all(toBusStopPredEvent[i]))[0]
+				toBusStopPredEvent[i].length === 0
+					? []
+					: (await Promise.all(toBusStopPredEvent[i]))[0].map((d) =>
+							d ? d + PASSENGER_CHANGE_DURATION : undefined
+						)
 			);
 			oneToManyResults = oneToManyResults.concat(
-				fromBusStopEvent[i].length === 0 ? [] : (await Promise.all(fromBusStopEvent[i]))[0]
+				fromBusStopEvent[i].length === 0
+					? []
+					: (await Promise.all(fromBusStopEvent[i]))[0].map((d) =>
+							d ? d + PASSENGER_CHANGE_DURATION : undefined
+						)
 			);
 			oneToManyResults = oneToManyResults.concat(
-				fromBusStopCompany[i].length === 0 ? [] : (await Promise.all(fromBusStopCompany[i]))[0]
+				fromBusStopCompany[i].length === 0
+					? []
+					: (await Promise.all(fromBusStopCompany[i]))[0].map((d) =>
+							d ? d + PASSENGER_CHANGE_DURATION : undefined
+						)
 			);
 			oneToManyResults = oneToManyResults.concat(
-				fromBusStopPostEvent[i].length === 0 ? [] : (await Promise.all(fromBusStopPostEvent[i]))[0]
+				fromBusStopPostEvent[i].length === 0
+					? []
+					: (await Promise.all(fromBusStopPostEvent[i]))[0].map((d) =>
+							d ? d + PASSENGER_CHANGE_DURATION : undefined
+						)
 			);
 
 			rr = rr.concat(toBusStopEventRR[i]);
