@@ -1,13 +1,47 @@
 <script lang="ts">
 	import type { TourWithRequestsEvent } from '$lib/util/getToursTypes';
 	import { format, differenceInMinutes, setHours, setMinutes } from 'date-fns';
+	import {
+		DateFormatter,
+		fromDate,
+		toCalendarDate,
+		getLocalTimeZone,
+		type DateValue
+	} from '@internationalized/date';
+
+	import CalendarIcon from 'lucide-svelte/icons/calendar';
+	import { Calendar } from '$lib/shadcn/calendar';
+	import * as Popover from '$lib/shadcn/popover';
+
+	import { SvelteDate } from 'svelte/reactivity';
+	import { Button, buttonVariants } from '$lib/shadcn/button';
+	import * as Card from '$lib/shadcn/card';
+	import { ChevronRight, ChevronLeft } from 'lucide-svelte';
+	import { EARLIEST_SHIFT_START, LATEST_SHIFT_END, LOCALE, TZ } from '$lib/constants.js';
+
+	import { goto, invalidateAll } from '$app/navigation';
+
+	import TourDialog from '$lib/ui/TourDialog.svelte';
+	import { onMount } from 'svelte';
+	import Message from '$lib/ui/Message.svelte';
+	import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
+	import type { LngLatLike } from 'maplibre-gl';
+	import { DAY, HOUR, MINUTE } from '$lib/util/time';
+	import type { ToursWithRequests, TourWithRequests } from '$lib/util/getToursTypes';
+	import { getAllowedTimes } from '$lib/util/getAllowedTimes';
+	import { getLatestEventTime } from '$lib/util/getLatestEventTime';
+	import { getAlterableTimeframe } from '$lib/util/getAlterableTimeframe';
+	import { getPossibleInsertions } from '$lib/util/booking/getPossibleInsertions';
+	import type { Msg } from '$lib/msg';
+
 	const { data } = $props();
-	const now = new Date();
-	const scheduleStart = setHours(setMinutes(now, 0), 2).getTime();
-	const scheduleEnd = setHours(setMinutes(now, 0), 24).getTime();
-	const totalMinutes = differenceInMinutes(scheduleEnd, scheduleStart);
+	let value = $state<DateValue>(toCalendarDate(fromDate(data.utcDate!, TZ)));
+	const date = $derived(new Date(value.year, value.month-1, value.day, 2));
+	const scheduleStart = $derived(date.getTime());
+	const scheduleEnd = $derived(date.getTime() + HOUR * 21);
+	const totalMinutes = $derived((scheduleEnd - scheduleStart)/MINUTE);
 	function getOffsetMinutes(ts: number) {
-		return Math.max(0, differenceInMinutes(ts, scheduleStart));
+		return Math.max(0, ts - scheduleStart) / MINUTE;
 	}
 	const tourColorMaps = new Map();
 	const colorPalette = [
@@ -57,7 +91,7 @@
 		const startHour = 2;
 		const endHour = 24;
 		for (let hour = startHour; hour <= endHour; hour++) {
-			const timestamp = setHours(setMinutes(now, 0), hour);
+			const timestamp = setHours(setMinutes(date, 0), hour);
 			const offsetMinutes = getOffsetMinutes(timestamp.getTime());
 			const leftPercent = (offsetMinutes / totalMinutes) * 100;
 			timestamps.push({
@@ -67,10 +101,46 @@
 		}
 		return timestamps;
 	}
+
+	let day = $derived(new SvelteDate(value));
+	const df = new DateFormatter(LOCALE, { dateStyle: 'long' });
+
+	$effect(() => {
+		const offset = value.toDate('UTC').getTimezoneOffset();
+		goto(
+			`/visualize?offset=${offset}&date=${value.toDate('UTC').toISOString().slice(0, 10)}`
+		);
+	});
+
+	const tours = $derived(data.tours.filter((t) => t.startTime>=scheduleStart && t.endTime <= scheduleEnd));
 </script>
 
 <div class="h-screen w-screen overflow-auto bg-gray-50 p-6">
 	<h1 class="mb-4 text-2xl font-semibold text-gray-800">Tour Schedule Timeline</h1>
+	<div class="flex gap-4 p-6 font-semibold leading-none tracking-tight">
+			<div class="flex gap-1">
+				<Button variant="outline" size="icon" onclick={() => (value = value.add({ days: -1 }))}>
+					<ChevronLeft class="size-4" />
+				</Button>
+				<Popover.Root>
+					<Popover.Trigger
+						class={buttonVariants({
+							variant: 'outline',
+							class: 'w-fit justify-start text-left font-normal'
+						})}
+					>
+						<CalendarIcon class="mr-2 size-4" />
+						{df.format(value.toDate(getLocalTimeZone()))}
+					</Popover.Trigger>
+					<Popover.Content class="w-auto p-0">
+						<Calendar type="single" bind:value locale={LOCALE} />
+					</Popover.Content>
+				</Popover.Root>
+				<Button variant="outline" size="icon" onclick={() => (value = value.add({ days: 1 }))}>
+					<ChevronRight class="size-4" />
+				</Button>
+			</div>
+		</div>
 	<div class="relative mb-2" style="min-width: 1000px; height: 20px;">
 		{#each generateHourTimestamps() as timestamp}
 			<div class="absolute text-xs font-medium text-gray-600" style="left: {timestamp.left};">
@@ -80,9 +150,9 @@
 	</div>
 	<div
 		class="timeline-grid relative border-t border-gray-300"
-		style="height: {data.tours.length * laneHeight}px; min-width: 1000px;"
+		style="height: {tours.length * laneHeight}px; min-width: 1000px;"
 	>
-		{#each data.tours as tour, tourIndex}
+		{#each tours as tour, tourIndex}
 			{#each tour.requests as request}
 				{#each request.events as event}
 					<div
