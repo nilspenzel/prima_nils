@@ -11,29 +11,16 @@ export type BookingError = { msg: keyof Translations['msg'] };
 
 export const load: PageServerLoad = async (event: RequestEvent) => {
 	const url = event.url;
-	const day = url.searchParams.get('day');
-	let time = new Interval(Date.now() - DAY * 4, Date.now() + DAY * 20);
-	if (day) {
-		const d = new Date(day);
-		time = new Interval(d.getTime(), d.getTime() + DAY);
-	}
-	const availabilities = await db
-		.selectFrom('availability')
-		.where('availability.startTime', '<=', time.endTime)
-		.where('availability.endTime', '>=', time.startTime)
-		.selectAll()
-		.execute();
-	const avas = groupBy(
-		availabilities,
-		(a) => a.vehicle,
-		(a) => new Interval(a.startTime, a.endTime)
-	);
-	const ab: Interval[] = [];
-	avas.forEach((a, _) => ab.concat(Interval.merge(a)));
+	const localDateParam = url.searchParams.get('date');
+	const timezoneOffset = url.searchParams.get('offset');
+	const utcDate =
+		localDateParam && timezoneOffset
+			? new Date(new Date(localDateParam!).getTime() + Number(timezoneOffset) * 60 * 1000)
+			: new Date();
 	return {
-		availabilities: ab,
-		tours: (await getToursWithRequests(false, undefined, [time.startTime, time.endTime])).sort(
+		tours: (await getToursWithRequests(false)).sort(
 			(t1, t2) => t1.tourId - t2.tourId
-		)
+		),
+		utcDate
 	};
 };
