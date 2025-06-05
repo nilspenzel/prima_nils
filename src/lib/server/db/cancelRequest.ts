@@ -270,7 +270,9 @@ async function updateLegDurations(
 			.executeTakeFirst();
 	};
 
-	const uncancelledEvents = events.filter((e) => e.requestid === requestId || e.cancelled === false).sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+	const uncancelledEvents = events
+		.filter((e) => e.requestid === requestId || e.cancelled === false)
+		.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 	const cancelled1Idx = uncancelledEvents.findIndex((e) => e.requestid === requestId);
 	const cancelled2Idx = uncancelledEvents.findLastIndex((e) => e.requestid === requestId);
 	console.assert(
