@@ -1,10 +1,6 @@
 import type { PageServerLoad } from './$types';
-import { db } from '$lib/server/db';
 import type { Translations } from '$lib/i18n/translation';
 import type { RequestEvent } from './$types';
-import { Interval } from '$lib/util/interval';
-import { DAY } from '$lib/util/time';
-import { groupBy } from '$lib/util/groupBy';
 import { getToursWithRequests } from '$lib/server/db/getTours';
 
 export type BookingError = { msg: keyof Translations['msg'] };
