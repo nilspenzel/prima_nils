@@ -32,6 +32,21 @@ export async function up(db) {
         `.execute(db);
 
     await sql`
+        DROP FUNCTION public.create_and_merge_tours(
+            request_type,
+            event_type,
+            event_type,
+            integer[],
+            tour_type,
+            jsonb,
+            jsonb,
+            jsonb,
+            direct_duration_type,
+            direct_duration_type
+        );
+    `.execute(db);
+
+    await sql`
         CREATE OR REPLACE FUNCTION create_and_merge_tours(
             p_request request_type,
             p_event1 event_type,

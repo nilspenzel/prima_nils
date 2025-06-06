@@ -197,27 +197,27 @@ export async function bookRide(
 		scheduledTimes: {
 			prevPickupEndTime:
 				prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
-					? (best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2
+					? Math.ceil((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2)
 					: null,
 			newPickupStartTime:
 				prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
-					? (best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2
+					? Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2)
 					: best.pickupTime - SCHEDULED_TIME_BUFFER,
 			nextPickupStartTime:
 				nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime
-					? (best.pickupTime + nextPickupEvent.scheduledTimeEnd) / 2
+					? Math.floor((best.pickupTime + nextPickupEvent.scheduledTimeEnd) / 2)
 					: null,
 			prevDropoffEndTime:
 				prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
-					? (best.pickupTime + prevDropoffEvent.scheduledTimeStart) / 2
+					? Math.ceil((best.pickupTime + prevDropoffEvent.scheduledTimeStart) / 2)
 					: null,
 			newDropoffEndTime:
 				prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
-					? (best.dropoffTime + prevDropoffEvent.scheduledTimeStart) / 2
+					? Math.ceil((best.dropoffTime + prevDropoffEvent.scheduledTimeStart) / 2)
 					: best.dropoffTime + SCHEDULED_TIME_BUFFER,
 			nextDropoffStartTime:
 				nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < best.dropoffTime
-					? (best.dropoffTime + nextDropoffEvent.scheduledTimeEnd) / 2
+					? Math.floor((best.dropoffTime + nextDropoffEvent.scheduledTimeEnd) / 2)
 					: null
 		}
 	};
