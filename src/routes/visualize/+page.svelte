@@ -15,24 +15,11 @@
 
 	import { SvelteDate } from 'svelte/reactivity';
 	import { Button, buttonVariants } from '$lib/shadcn/button';
-	import * as Card from '$lib/shadcn/card';
 	import { ChevronRight, ChevronLeft } from 'lucide-svelte';
-	import { EARLIEST_SHIFT_START, LATEST_SHIFT_END, LOCALE, TZ } from '$lib/constants.js';
+	import { LOCALE, TZ } from '$lib/constants.js';
 
-	import { goto, invalidateAll } from '$app/navigation';
-
-	import TourDialog from '$lib/ui/TourDialog.svelte';
-	import { onMount } from 'svelte';
-	import Message from '$lib/ui/Message.svelte';
-	import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
-	import type { LngLatLike } from 'maplibre-gl';
-	import { DAY, HOUR, MINUTE } from '$lib/util/time';
-	import type { ToursWithRequests, TourWithRequests } from '$lib/util/getToursTypes';
-	import { getAllowedTimes } from '$lib/util/getAllowedTimes';
-	import { getLatestEventTime } from '$lib/util/getLatestEventTime';
-	import { getAlterableTimeframe } from '$lib/util/getAlterableTimeframe';
-	import { getPossibleInsertions } from '$lib/util/booking/getPossibleInsertions';
-	import type { Msg } from '$lib/msg';
+	import { goto } from '$app/navigation';
+	import { HOUR, MINUTE } from '$lib/util/time';
 
 	const { data } = $props();
 	let value = $state<DateValue>(toCalendarDate(fromDate(data.utcDate!, TZ)));
