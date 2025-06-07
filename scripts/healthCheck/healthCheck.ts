@@ -2,6 +2,7 @@ import { getToursWithRequests } from '../../src/lib/server/db/getTours';
 import type { ToursWithRequests, TourWithRequestsEvent } from '../../src/lib/util/getToursTypes';
 import { groupBy } from '../../src/lib/util/groupBy';
 import { Interval } from '../../src/lib/util/interval';
+import { HOUR } from '../../src/lib/util/time';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -228,11 +229,11 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 					continue;
 				}
 				const e2 = laterEvents[0];
-				const earlierTourEnd = e1.scheduledTimeEnd;
-				const laterTourStart = e2.scheduledTimeStart;
+				const earlierTourEnd = e1.scheduledTimeStart;
+				const laterTourStart = e2.scheduledTimeEnd;
 				if (
 					0 < laterTourStart - earlierTourEnd &&
-					laterTourStart - earlierTourEnd <= 3 * 3600 * 1000
+					laterTourStart - earlierTourEnd <= 3 * HOUR
 				) {
 					const expectedDuration = await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng);
 					const expectedDuration2 = await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true);
