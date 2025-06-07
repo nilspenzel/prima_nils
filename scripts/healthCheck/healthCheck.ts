@@ -231,10 +231,7 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 				const e2 = laterEvents[0];
 				const earlierTourEnd = e1.scheduledTimeStart;
 				const laterTourStart = e2.scheduledTimeEnd;
-				if (
-					0 < laterTourStart - earlierTourEnd &&
-					laterTourStart - earlierTourEnd <= 3 * HOUR
-				) {
+				if (0 < laterTourStart - earlierTourEnd && laterTourStart - earlierTourEnd <= 3 * HOUR) {
 					const expectedDuration = await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng);
 					const expectedDuration2 = await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true);
 					if (expectedDuration === null || expectedDuration2 === null) {
