@@ -399,7 +399,7 @@ BEGIN
 	CALL update_next_leg_durations(p_update_next_leg_durations);
 	CALL update_prev_leg_durations(p_update_prev_leg_durations);
 	IF p_tour.id IS NULL THEN
-			CALL insert_tour(p_tour, v_tour_id);
+		CALL insert_tour(p_tour, v_tour_id);
 	ELSE
 		v_tour_id := p_tour.id;
 		CALL merge_tours(p_merge_tour_list, v_tour_id, p_tour.arrival, p_tour.departure);

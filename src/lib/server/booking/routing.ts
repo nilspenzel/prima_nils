@@ -28,7 +28,7 @@ export async function routing(
 		coordinatesOne: Coordinates,
 		coordinatesMany: Coordinates[],
 		routingResult: (number | undefined)[],
-		isApproach: boolean
+		comesFromCompany: boolean
 	) => {
 		console.assert(
 			coordinatesMany.length == routingResult.length,
@@ -38,7 +38,7 @@ export async function routing(
 		for (let i = 0; i != coordinatesMany.length; ++i) {
 			if (isSamePlace(coordinatesOne, coordinatesMany[i])) {
 				routingResult[i] = 0;
-			} else if (!isApproach && routingResult[i] !== undefined) {
+			} else if (!comesFromCompany && routingResult[i] !== undefined) {
 				routingResult[i]! += PASSENGER_CHANGE_DURATION;
 			}
 		}
