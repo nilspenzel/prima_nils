@@ -293,9 +293,9 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			);
 			if (
 				expectedDuration !== null &&
-				expectedDuration + (i === 0 ? 0 : 58) > earlierEvent.nextLegDuration / 1000 &&
+				expectedDuration + 60 > earlierEvent.nextLegDuration / 1000 &&
 				expectedDuration2 !== null &&
-				expectedDuration2 + (i === 0 ? 0 : 58) > earlierEvent.nextLegDuration / 1000
+				expectedDuration2 + 60 > earlierEvent.nextLegDuration / 1000
 			) {
 				console.log(
 					`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \
