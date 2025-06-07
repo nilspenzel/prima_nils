@@ -216,8 +216,8 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 		for (let tourIdx = 1; tourIdx != companyTours.length; tourIdx++) {
 			const earlierTour = companyTours[tourIdx - 1];
 			const laterTour = companyTours[tourIdx];
-			const earlierEvents = earlierTour.requests.flatMap((r) => r.events);
-			const laterEvents = laterTour.requests.flatMap((r) => r.events);
+			const earlierEvents = earlierTour.requests.flatMap((r) => r.events).sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+			const laterEvents = laterTour.requests.flatMap((r) => r.events).sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 			if (laterTour.vehicleId === earlierTour.vehicleId) {
 				if (earlierTour.requests.length === 0) {
 					console.log(`earlier tour has no requests`);
@@ -247,12 +247,12 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 						fail = true;
 					} else {
 						if (
-							expectedDuration !== null &&
+							expectedDuration !== null && expectedDuration2 !== null && 
 							Math.abs(expectedDuration - laterTour.directDuration / 1000) > 2 &&
-							Math.abs(expectedDuration2! - laterTour.directDuration / 1000) > 2
+							Math.abs(expectedDuration2 - laterTour.directDuration / 1000) > 2
 						) {
 							console.log(`Direct duration mismatch for earlier tour ${earlierTour.tourId} and later tour ${laterTour.tourId}: \
-                  Expected ${expectedDuration} or ${expectedDuration2} seconds, Found ${laterTour.directDuration / 1000} seconds`);
+                  Expected ${expectedDuration} or ${expectedDuration2} seconds, Found ${laterTour.directDuration / 1000} seconds, lat1: ${e1.lat} lng1:${e1.lng}, lat2: ${e2.lat} lng:${e2.lng}`);
 							fail = true;
 						}
 					}
@@ -309,12 +309,12 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			const timeDiff = (laterEventEnd - earlierEventStart) / 1000;
 			if (
 				expectedDuration !== null &&
-				timeDiff < expectedDuration + 58 &&
+				timeDiff < expectedDuration + 60 &&
 				expectedDuration2 !== null &&
-				timeDiff < expectedDuration2 + 58
+				timeDiff < expectedDuration2 + 60
 			) {
 				console.log(
-					`Time difference expected duration ${expectedDuration + 58} seconds exceeds difference in event times ${timeDiff} seconds for event_id ${earlierEvent.id} and event_id ${laterEvent.id}`
+					`Time difference expected duration ${expectedDuration + 60} seconds exceeds difference in event times ${timeDiff} seconds for event_id ${earlierEvent.id} and event_id ${laterEvent.id}`
 				);
 				fail = true;
 			}

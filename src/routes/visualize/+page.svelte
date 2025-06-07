@@ -13,7 +13,6 @@
 	import { Calendar } from '$lib/shadcn/calendar';
 	import * as Popover from '$lib/shadcn/popover';
 
-	import { SvelteDate } from 'svelte/reactivity';
 	import { Button, buttonVariants } from '$lib/shadcn/button';
 	import { ChevronRight, ChevronLeft } from 'lucide-svelte';
 	import { LOCALE, TZ } from '$lib/constants.js';
