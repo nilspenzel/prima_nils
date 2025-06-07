@@ -10,6 +10,7 @@ import { db, type Database } from '$lib/server/db';
 import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
 import { HOUR } from '$lib/util/time';
 import { retry } from './retryQuery';
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 
 export const cancelRequest = async (requestId: number, userId: number) => {
 	console.log(
@@ -236,7 +237,7 @@ async function updateLegDurations(
 			}
 			await trx
 				.updateTable('event')
-				.set({ nextLegDuration: routingResult[0] })
+				.set({ nextLegDuration: routingResult[0] + PASSENGER_CHANGE_DURATION })
 				.where('event.id', '=', events[prevIdx].eventid)
 				.executeTakeFirst();
 			return;
@@ -258,14 +259,15 @@ async function updateLegDurations(
 			);
 			return;
 		}
+		const r = routingResult[0] + (prevIdx === 0 ? 0 : PASSENGER_CHANGE_DURATION);
 		await trx
 			.updateTable('event')
-			.set({ nextLegDuration: routingResult[0] })
+			.set({ nextLegDuration: r })
 			.where('event.id', '=', events[prevIdx].eventid)
 			.executeTakeFirst();
 		await trx
 			.updateTable('event')
-			.set({ prevLegDuration: routingResult[0] })
+			.set({ prevLegDuration: r })
 			.where('event.id', '=', events[nextIdx].eventid)
 			.executeTakeFirst();
 	};

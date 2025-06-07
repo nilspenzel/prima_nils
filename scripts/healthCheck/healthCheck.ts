@@ -297,8 +297,11 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				expectedDuration2 !== null &&
 				expectedDuration2 + (i === 0 ? 0 : 58) > earlierEvent.nextLegDuration / 1000
 			) {
-				console.log(`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \
-              Expected ${expectedDuration + 60} or ${expectedDuration2 + 60} seconds, Found ${earlierEvent.nextLegDuration / 1000} seconds`, {i});
+				console.log(
+					`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \
+              Expected ${expectedDuration + 60} or ${expectedDuration2 + 60} seconds, Found ${earlierEvent.nextLegDuration / 1000} seconds`,
+					{ i }
+				);
 				fail = true;
 			}
 			const earlierEventStart = earlierEvent.scheduledTimeStart;
