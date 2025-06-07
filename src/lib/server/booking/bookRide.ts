@@ -165,6 +165,46 @@ export async function bookRide(
 	const prevDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx - 1];
 	const nextDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx];
 	increment();
+	const scheduledTimes: ScheduledTimes = {
+		newPickupStartTime:
+			prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
+				? Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2)
+				: best.pickupTime - SCHEDULED_TIME_BUFFER,
+
+		newDropoffEndTime:
+			prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
+				? Math.ceil((best.dropoffTime + prevDropoffEvent.scheduledTimeStart) / 2)
+				: best.dropoffTime + SCHEDULED_TIME_BUFFER,
+		updates: []
+	};
+	if (prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime) {
+		scheduledTimes.updates.push({
+			time: Math.ceil((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2),
+			start: false,
+			event_id: prevPickupEvent.id
+		});
+	}
+	if (nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime) {
+		scheduledTimes.updates.push({
+			time: Math.floor((best.pickupTime + nextPickupEvent.scheduledTimeEnd) / 2),
+			start: true,
+			event_id: nextPickupEvent.id
+		});
+	}
+	if (prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime) {
+		scheduledTimes.updates.push({
+			time: Math.ceil((best.pickupTime + prevDropoffEvent.scheduledTimeStart) / 2),
+			start: false,
+			event_id: prevDropoffEvent.id
+		});
+	}
+	if (nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < best.dropoffTime) {
+		scheduledTimes.updates.push({
+			time: Math.floor((best.dropoffTime + nextDropoffEvent.scheduledTimeEnd) / 2),
+			start: true,
+			event_id: nextDropoffEvent.id
+		});
+	}
 	return {
 		best,
 		tour: (() => {
@@ -194,40 +234,16 @@ export async function bookRide(
 			nextDropoff: best.dropoffCase.how == InsertHow.APPEND ? undefined : nextDropoffEvent?.id
 		},
 		directDurations,
-		scheduledTimes: {
-			prevPickupEndTime:
-				prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
-					? Math.ceil((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2)
-					: null,
-			newPickupStartTime:
-				prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
-					? Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2)
-					: best.pickupTime - SCHEDULED_TIME_BUFFER,
-			nextPickupStartTime:
-				nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime
-					? Math.floor((best.pickupTime + nextPickupEvent.scheduledTimeEnd) / 2)
-					: null,
-			prevDropoffEndTime:
-				prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
-					? Math.ceil((best.pickupTime + prevDropoffEvent.scheduledTimeStart) / 2)
-					: null,
-			newDropoffEndTime:
-				prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
-					? Math.ceil((best.dropoffTime + prevDropoffEvent.scheduledTimeStart) / 2)
-					: best.dropoffTime + SCHEDULED_TIME_BUFFER,
-			nextDropoffStartTime:
-				nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < best.dropoffTime
-					? Math.floor((best.dropoffTime + nextDropoffEvent.scheduledTimeEnd) / 2)
-					: null
-		}
+		scheduledTimes
 	};
 }
 
 export type ScheduledTimes = {
-	prevPickupEndTime: number | null;
-	nextPickupStartTime: number | null;
-	prevDropoffEndTime: number | null;
-	nextDropoffStartTime: number | null;
+	updates: {
+		event_id: number;
+		time: number;
+		start: boolean;
+	}[];
 	newPickupStartTime: number;
 	newDropoffEndTime: number;
 };

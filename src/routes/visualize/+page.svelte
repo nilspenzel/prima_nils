@@ -23,10 +23,10 @@
 
 	const { data } = $props();
 	let value = $state<DateValue>(toCalendarDate(fromDate(data.utcDate!, TZ)));
-	const date = $derived(new Date(value.year, value.month-1, value.day, 2));
+	const date = $derived(new Date(value.year, value.month - 1, value.day, 2));
 	const scheduleStart = $derived(date.getTime());
 	const scheduleEnd = $derived(date.getTime() + HOUR * 21);
-	const totalMinutes = $derived((scheduleEnd - scheduleStart)/MINUTE);
+	const totalMinutes = $derived((scheduleEnd - scheduleStart) / MINUTE);
 	function getOffsetMinutes(ts: number) {
 		return Math.max(0, ts - scheduleStart) / MINUTE;
 	}
@@ -89,45 +89,44 @@
 		return timestamps;
 	}
 
-	let day = $derived(new SvelteDate(value));
 	const df = new DateFormatter(LOCALE, { dateStyle: 'long' });
 
 	$effect(() => {
 		const offset = value.toDate('UTC').getTimezoneOffset();
-		goto(
-			`/visualize?offset=${offset}&date=${value.toDate('UTC').toISOString().slice(0, 10)}`
-		);
+		goto(`/visualize?offset=${offset}&date=${value.toDate('UTC').toISOString().slice(0, 10)}`);
 	});
 
-	const tours = $derived(data.tours.filter((t) => t.startTime>=scheduleStart && t.endTime <= scheduleEnd));
+	const tours = $derived(
+		data.tours.filter((t) => t.startTime >= scheduleStart && t.endTime <= scheduleEnd)
+	);
 </script>
 
 <div class="h-screen w-screen overflow-auto bg-gray-50 p-6">
 	<h1 class="mb-4 text-2xl font-semibold text-gray-800">Tour Schedule Timeline</h1>
 	<div class="flex gap-4 p-6 font-semibold leading-none tracking-tight">
-			<div class="flex gap-1">
-				<Button variant="outline" size="icon" onclick={() => (value = value.add({ days: -1 }))}>
-					<ChevronLeft class="size-4" />
-				</Button>
-				<Popover.Root>
-					<Popover.Trigger
-						class={buttonVariants({
-							variant: 'outline',
-							class: 'w-fit justify-start text-left font-normal'
-						})}
-					>
-						<CalendarIcon class="mr-2 size-4" />
-						{df.format(value.toDate(getLocalTimeZone()))}
-					</Popover.Trigger>
-					<Popover.Content class="w-auto p-0">
-						<Calendar type="single" bind:value locale={LOCALE} />
-					</Popover.Content>
-				</Popover.Root>
-				<Button variant="outline" size="icon" onclick={() => (value = value.add({ days: 1 }))}>
-					<ChevronRight class="size-4" />
-				</Button>
-			</div>
+		<div class="flex gap-1">
+			<Button variant="outline" size="icon" onclick={() => (value = value.add({ days: -1 }))}>
+				<ChevronLeft class="size-4" />
+			</Button>
+			<Popover.Root>
+				<Popover.Trigger
+					class={buttonVariants({
+						variant: 'outline',
+						class: 'w-fit justify-start text-left font-normal'
+					})}
+				>
+					<CalendarIcon class="mr-2 size-4" />
+					{df.format(value.toDate(getLocalTimeZone()))}
+				</Popover.Trigger>
+				<Popover.Content class="w-auto p-0">
+					<Calendar type="single" bind:value locale={LOCALE} />
+				</Popover.Content>
+			</Popover.Root>
+			<Button variant="outline" size="icon" onclick={() => (value = value.add({ days: 1 }))}>
+				<ChevronRight class="size-4" />
+			</Button>
 		</div>
+	</div>
 	<div class="relative mb-2" style="min-width: 1000px; height: 20px;">
 		{#each generateHourTimestamps() as timestamp}
 			<div class="absolute text-xs font-medium text-gray-600" style="left: {timestamp.left};">
