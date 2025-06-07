@@ -29,6 +29,7 @@ export async function updateDirectDurations(
 					.where('tour.departure', '<=', departure)
 					.orderBy('tour.departure', 'desc')
 					.orderBy('event.scheduledTimeEnd', 'desc')
+					.orderBy('event.scheduledTimeStart', 'desc')
 					.limit(1)
 					.select(['event.lat', 'event.lng', 'request.tour', 'event.scheduledTimeStart'])
 			).as('prevtour'),
@@ -42,6 +43,7 @@ export async function updateDirectDurations(
 					.where('tour.departure', '>', departure)
 					.orderBy('tour.departure', 'asc')
 					.orderBy('event.scheduledTimeEnd', 'asc')
+					.orderBy('event.scheduledTimeStart', 'asc')
 					.limit(1)
 					.select(['event.lat', 'event.lng', 'request.tour', 'event.scheduledTimeStart'])
 			).as('nexttour'),
@@ -57,6 +59,7 @@ export async function updateDirectDurations(
 								.where('request.cancelled', '=', false)
 								.whereRef('request.tour', '=', 'tour.id')
 								.orderBy('event.scheduledTimeEnd', 'asc')
+								.orderBy('event.scheduledTimeStart', 'asc')
 								.select(['event.lat', 'event.lng', 'event.scheduledTimeStart'])
 						).as('events')
 					])
