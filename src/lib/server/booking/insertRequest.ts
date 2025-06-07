@@ -55,32 +55,6 @@ export async function insertRequest(
 		});
 	}
 
-	const scheduledEventTimes: {
-		event_id: number;
-		time: number;
-		start: boolean;
-	}[] = [];
-	if(scheduledTimes.prevPickupEndTime) {
-		scheduledEventTimes.push({
-			event_id: -1, time: scheduledTimes.prevPickupEndTime, start: false
-		});
-	}
-	if(scheduledTimes.nextPickupStartTime) {
-		scheduledEventTimes.push({
-			event_id: -1, time: scheduledTimes.nextPickupStartTime, start: true
-		});
-	}
-	if(scheduledTimes.prevDropoffEndTime) {
-		scheduledEventTimes.push({
-			event_id: -1, time: scheduledTimes.prevDropoffEndTime, start: false
-		});
-	}
-	if(scheduledTimes.nextDropoffStartTime) {
-		scheduledEventTimes.push({
-			event_id: -1, time: scheduledTimes.nextDropoffStartTime, start: true
-		});
-	}
-
 	const ticketPrice =
 		(capacities.passengers - kidsZeroToTwo - kidsThreeToFour - kidsFiveToSix) *
 		parseInt(env.PUBLIC_FIXED_PRICE);
@@ -97,7 +71,7 @@ export async function insertRequest(
             ${JSON.stringify(approachDurations)}::jsonb,
             ROW(${direct.nextTour?.tourId ?? null}, ${direct.nextTour?.directDrivingDuration ?? null}),
             ROW(${direct.thisTour?.tourId ?? null}, ${direct.thisTour?.directDrivingDuration ?? null}),
-			${JSON.stringify(scheduledEventTimes)}::jsonb
+			${JSON.stringify(scheduledTimes.updates)}::jsonb
        ) AS request`.execute(trx)
 	).rows[0].request;
 

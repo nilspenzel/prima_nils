@@ -14,9 +14,7 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 			? new Date(new Date(localDateParam!).getTime() + Number(timezoneOffset) * 60 * 1000)
 			: new Date();
 	return {
-		tours: (await getToursWithRequests(false)).sort(
-			(t1, t2) => t1.tourId - t2.tourId
-		),
+		tours: (await getToursWithRequests(false)).sort((t1, t2) => t1.tourId - t2.tourId),
 		utcDate
 	};
 };
