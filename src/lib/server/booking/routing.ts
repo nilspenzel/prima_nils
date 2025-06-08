@@ -76,6 +76,7 @@ export async function routing(
 	const toBusStop = await Promise.all(
 		busStops.map((b) => batchOneToManyCarRouting(b, coords, true))
 	);
+	console.log('stuf1: ', { coords }, { userChosen }, { busStops });
 	return {
 		userChosen: {
 			fromUserChosen: {
@@ -83,8 +84,8 @@ export async function routing(
 				event: fromUserChosen.slice(companies.length)
 			},
 			toUserChosen: {
-				company: toUserChosen.slice(0, companies.length),
-				event: toUserChosen.slice(companies.length)
+				company: companyToUserChosen,
+				event: eventToUserChosen
 			}
 		},
 		busStops: {

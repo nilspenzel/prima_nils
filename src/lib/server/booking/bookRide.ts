@@ -160,10 +160,10 @@ export async function bookRide(
 		events[best.pickupIdx ?? -1]?.tourId
 	);
 	console.log('BE');
-	const prevPickupEvent = best.pickupIdx == undefined ? undefined : events[best.pickupIdx - 1];
-	const nextPickupEvent = best.pickupIdx == undefined ? undefined : events[best.pickupIdx];
-	const prevDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx - 1];
-	const nextDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx];
+	const prevPickupEvent = events.find((e) => e.id === best.prevPickupId);
+	const nextPickupEvent = events.find((e) => e.id === best.nextPickupId);
+	const prevDropoffEvent = events.find((e) => e.id === best.prevDropoffId);
+	const nextDropoffEvent = events.find((e) => e.id === best.nextDropoffId);
 	increment();
 	const communicatedPickup = best.pickupTime - SCHEDULED_TIME_BUFFER;
 	const communicatedDropoff = best.dropoffTime + SCHEDULED_TIME_BUFFER;
