@@ -60,6 +60,10 @@ export type Insertion = InsertionEvaluation & {
 	company: number;
 	vehicle: number;
 	tour: number | undefined;
+	prevPickupId: number | undefined;
+	nextPickupId: number | undefined;
+	prevDropoffId: number | undefined;
+	nextDropoffId: number | undefined;
 };
 
 type SingleInsertionEvaluation = {
@@ -72,6 +76,8 @@ type SingleInsertionEvaluation = {
 	taxiDuration: number;
 	passengerDuration: number;
 	cost: number;
+	prevId: number | undefined;
+	nextId: number | undefined;
 };
 
 type Evaluations = {
@@ -232,7 +238,9 @@ export function evaluateSingleInsertion(
 		passengerDuration,
 		taxiDuration,
 		taxiWaitingTime,
-		cost: computeCost(passengerDuration, taxiDuration, taxiWaitingTime)
+		cost: computeCost(passengerDuration, taxiDuration, taxiWaitingTime),
+		prevId: prev?.id,
+		nextId: next?.id
 	};
 	return sie;
 }
@@ -454,7 +462,11 @@ export function evaluateNewTours(
 							vehicle: vehicle.id,
 							tour: undefined,
 							pickupIdx: undefined,
-							dropoffIdx: undefined
+							dropoffIdx: undefined,
+							prevPickupId: undefined,
+							nextPickupId: undefined,
+							prevDropoffId: undefined,
+							nextDropoffId: undefined
 						};
 					}
 				}
@@ -573,7 +585,11 @@ export function evaluateSingleInsertions(
 								vehicle: insertionInfo.vehicle.id,
 								tour: insertionCase.how == InsertHow.APPEND ? prev!.tourId : next!.tourId,
 								pickupIdx: insertionInfo.idxInEvents,
-								dropoffIdx: insertionInfo.idxInEvents
+								dropoffIdx: insertionInfo.idxInEvents,
+								prevPickupId: prev?.id,
+								nextPickupId: next?.id,
+								prevDropoffId: prev?.id,
+								nextDropoffId: next?.id
 							};
 						}
 
@@ -754,7 +770,11 @@ export function evaluatePairInsertions(
 								pickupPrevLegDuration: pickup.approachDuration,
 								pickupNextLegDuration: pickup.returnDuration,
 								dropoffPrevLegDuration: dropoff.approachDuration,
-								dropoffNextLegDuration: dropoff.returnDuration
+								dropoffNextLegDuration: dropoff.returnDuration,
+								prevPickupId: pickup.prevId,
+								nextPickupId: pickup.nextId,
+								prevDropoffId: dropoff.prevId,
+								nextDropoffId: dropoff.nextId
 							};
 						}
 					}

@@ -152,7 +152,9 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 				const event2 = events[j];
 
 				if (overlaps(event1, event2)) {
-					console.log(`Overlap detected between eventId ${event1.id} and eventId ${event2.id}`);
+					console.log(
+						`Overlap detected between eventId ${event1.id} and eventId ${event2.id}, ${new Interval(event1.scheduledTimeStart, event1.scheduledTimeEnd).toString()} and ${new Interval(event2.scheduledTimeStart, event2.scheduledTimeEnd).toString()}`
+					);
 					fail = true;
 				}
 			}
@@ -216,8 +218,12 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 		for (let tourIdx = 1; tourIdx != companyTours.length; tourIdx++) {
 			const earlierTour = companyTours[tourIdx - 1];
 			const laterTour = companyTours[tourIdx];
-			const earlierEvents = earlierTour.requests.flatMap((r) => r.events).sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
-			const laterEvents = laterTour.requests.flatMap((r) => r.events).sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+			const earlierEvents = earlierTour.requests
+				.flatMap((r) => r.events)
+				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+			const laterEvents = laterTour.requests
+				.flatMap((r) => r.events)
+				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 			if (laterTour.vehicleId === earlierTour.vehicleId) {
 				if (earlierTour.requests.length === 0) {
 					console.log(`earlier tour has no requests`);
@@ -247,7 +253,8 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 						fail = true;
 					} else {
 						if (
-							expectedDuration !== null && expectedDuration2 !== null && 
+							expectedDuration !== null &&
+							expectedDuration2 !== null &&
 							Math.abs(expectedDuration - laterTour.directDuration / 1000) > 2 &&
 							Math.abs(expectedDuration2 - laterTour.directDuration / 1000) > 2
 						) {
