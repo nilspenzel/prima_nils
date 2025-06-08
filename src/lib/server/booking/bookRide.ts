@@ -165,19 +165,21 @@ export async function bookRide(
 	const prevDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx - 1];
 	const nextDropoffEvent = best.dropoffIdx == undefined ? undefined : events[best.dropoffIdx];
 	increment();
+	const communicatedPickup = best.pickupTime - SCHEDULED_TIME_BUFFER;
+	const communicatedDropoff = best.dropoffTime + SCHEDULED_TIME_BUFFER;
 	const scheduledTimes: ScheduledTimes = {
 		newPickupStartTime:
-			prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime
+			prevPickupEvent && prevPickupEvent.scheduledTimeEnd > communicatedPickup
 				? Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2)
-				: best.pickupTime - SCHEDULED_TIME_BUFFER,
+				: communicatedPickup,
 
 		newDropoffEndTime:
-			prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime
+			prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > communicatedDropoff
 				? Math.ceil((best.dropoffTime + prevDropoffEvent.scheduledTimeStart) / 2)
-				: best.dropoffTime + SCHEDULED_TIME_BUFFER,
+				: communicatedDropoff,
 		updates: []
 	};
-	if (prevPickupEvent && prevPickupEvent.scheduledTimeEnd > best.pickupTime) {
+	if (prevPickupEvent && prevPickupEvent.scheduledTimeEnd > communicatedPickup) {
 		scheduledTimes.updates.push({
 			time: Math.ceil((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2),
 			start: false,
@@ -186,19 +188,19 @@ export async function bookRide(
 	}
 	if (nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime) {
 		scheduledTimes.updates.push({
-			time: Math.floor((best.pickupTime + nextPickupEvent.scheduledTimeEnd) / 2),
+			time: best.pickupTime,
 			start: true,
 			event_id: nextPickupEvent.id
 		});
 	}
 	if (prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime) {
 		scheduledTimes.updates.push({
-			time: Math.ceil((best.pickupTime + prevDropoffEvent.scheduledTimeStart) / 2),
+			time: best.dropoffTime,
 			start: false,
 			event_id: prevDropoffEvent.id
 		});
 	}
-	if (nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < best.dropoffTime) {
+	if (nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < communicatedDropoff) {
 		scheduledTimes.updates.push({
 			time: Math.floor((best.dropoffTime + nextDropoffEvent.scheduledTimeEnd) / 2),
 			start: true,
