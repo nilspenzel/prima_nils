@@ -248,7 +248,7 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 					}
 					if (!laterTour.directDuration) {
 						console.log(
-							`direct duration is null unexpectedly for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}`
+							`direct duration is null unexpectedly for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}, expected ${expectedDuration} or ${expectedDuration2}`
 						);
 						fail = true;
 					} else {
