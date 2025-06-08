@@ -137,22 +137,14 @@ export async function bookRide(
 		best.dropoffIdx,
 		best.dropoffCase.how
 	);
-	const prevEventIdxOtherTour =
-		best.pickupCase.how == InsertHow.NEW_TOUR
-			? events.findLastIndex((e) => e.communicatedTime <= best.pickupTime)
-			: prevPickupEventIdx;
 	const prevEventInOtherTour =
-		prevEventIdxOtherTour == undefined || prevEventIdxOtherTour == -1
-			? undefined
-			: events[prevEventIdxOtherTour];
-	const nextEventIdxOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR
-			? events.findIndex((e) => e.communicatedTime >= best.dropoffTime)
-			: prevPickupEventIdx;
+			? events.findLast((e) => e.communicatedTime <= best.pickupTime)
+			: events.find((e) => e.id === best.prevPickupId);
 	const nextEventInOtherTour =
-		nextEventIdxOtherTour == undefined || nextEventIdxOtherTour == -1
-			? undefined
-			: events[nextEventIdxOtherTour];
+		best.pickupCase.how == InsertHow.NEW_TOUR
+			? events.find((e) => e.communicatedTime >= best.dropoffTime)
+			: events.find((e)=> best.nextDropoffId === e.id);
 	const directDurations = await getDirectDurations(
 		best,
 		prevEventInOtherTour,
@@ -183,27 +175,13 @@ export async function bookRide(
 		: events.find((e) => e.id === best.nextDropoffId);
 
 	increment();
-	const communicatedPickup = best.pickupTime - SCHEDULED_TIME_BUFFER;
-	const communicatedDropoff = best.dropoffTime + SCHEDULED_TIME_BUFFER;
+	const communicatedPickup = Math.max(prevDropoffEvent?.scheduledTimeEnd ?? 0, best.pickupTime - SCHEDULED_TIME_BUFFER);
+	const communicatedDropoff = Math.min(nextDropoffEvent?.scheduledTimeStart ?? Number.MAX_VALUE, best.dropoffTime + SCHEDULED_TIME_BUFFER);
 	const scheduledTimes: ScheduledTimes = {
-		newPickupStartTime:
-			prevPickupEvent && prevPickupEvent.scheduledTimeEnd > communicatedPickup
-				? Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeEnd) / 2)
-				: communicatedPickup,
-
-		newDropoffEndTime:
-			nextDropoffEvent && nextDropoffEvent.scheduledTimeStart > communicatedDropoff
-				? Math.ceil((best.dropoffTime + nextDropoffEvent.scheduledTimeStart) / 2)
-				: communicatedDropoff,
+		newPickupStartTime: communicatedPickup,
+		newDropoffEndTime: communicatedDropoff,
 		updates: []
 	};
-	if (prevPickupEvent && prevPickupEvent.scheduledTimeEnd > communicatedPickup) {
-		scheduledTimes.updates.push({
-			time: Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeEnd) / 2),
-			start: false,
-			event_id: prevPickupEvent.id
-		});
-	}
 	if (nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime) {
 		scheduledTimes.updates.push({
 			time: best.pickupTime,
@@ -216,13 +194,6 @@ export async function bookRide(
 			time: best.dropoffTime,
 			start: false,
 			event_id: prevDropoffEvent.id
-		});
-	}
-	if (nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < communicatedDropoff) {
-		scheduledTimes.updates.push({
-			time: Math.ceil((best.dropoffTime + nextDropoffEvent.scheduledTimeStart) / 2),
-			start: true,
-			event_id: nextDropoffEvent.id
 		});
 	}
 	return {
