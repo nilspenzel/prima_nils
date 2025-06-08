@@ -15,6 +15,7 @@ import { InsertHow } from '$lib/util/booking/insertionTypes';
 import { printInsertionType } from './insertionTypes';
 import { bookingLogs, increment } from '$lib/testHelpers';
 import type { Insertion } from './insertion';
+import { comesFromCompany, returnsToCompany } from './durations';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -160,10 +161,27 @@ export async function bookRide(
 		events[best.pickupIdx ?? -1]?.tourId
 	);
 	console.log('BE');
-	const prevPickupEvent = events.find((e) => e.id === best.prevPickupId);
-	const nextPickupEvent = events.find((e) => e.id === best.nextPickupId);
-	const prevDropoffEvent = events.find((e) => e.id === best.prevDropoffId);
-	const nextDropoffEvent = events.find((e) => e.id === best.nextDropoffId);
+	const prevPickupEvent = comesFromCompany(best.pickupCase)
+		? best.pickupIdx == undefined
+			? undefined
+			: events[best.pickupIdx - 1]
+		: events.find((e) => e.id === best.prevPickupId);
+	const nextPickupEvent = returnsToCompany(best.pickupCase)
+		? best.pickupIdx == undefined
+			? undefined
+			: events[best.pickupIdx]
+		: events.find((e) => e.id === best.nextPickupId);
+	const prevDropoffEvent = comesFromCompany(best.dropoffCase)
+		? best.dropoffIdx == undefined
+			? undefined
+			: events[best.dropoffIdx - 1]
+		: events.find((e) => e.id === best.prevDropoffId);
+	const nextDropoffEvent = returnsToCompany(best.dropoffCase)
+		? best.dropoffIdx == undefined
+			? undefined
+			: events[best.dropoffIdx]
+		: events.find((e) => e.id === best.nextDropoffId);
+
 	increment();
 	const communicatedPickup = best.pickupTime - SCHEDULED_TIME_BUFFER;
 	const communicatedDropoff = best.dropoffTime + SCHEDULED_TIME_BUFFER;
@@ -202,7 +220,7 @@ export async function bookRide(
 	}
 	if (nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < communicatedDropoff) {
 		scheduledTimes.updates.push({
-			time: Math.floor((best.dropoffTime + nextDropoffEvent.scheduledTimeEnd) / 2),
+			time: Math.floor((best.dropoffTime + nextDropoffEvent.scheduledTimeStart) / 2),
 			start: true,
 			event_id: nextDropoffEvent.id
 		});
