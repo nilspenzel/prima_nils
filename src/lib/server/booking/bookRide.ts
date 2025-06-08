@@ -199,7 +199,7 @@ export async function bookRide(
 	};
 	if (prevPickupEvent && prevPickupEvent.scheduledTimeEnd > communicatedPickup) {
 		scheduledTimes.updates.push({
-			time: Math.ceil((best.pickupTime + prevPickupEvent.scheduledTimeEnd) / 2),
+			time: Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeEnd) / 2),
 			start: false,
 			event_id: prevPickupEvent.id
 		});
@@ -220,7 +220,7 @@ export async function bookRide(
 	}
 	if (nextDropoffEvent && nextDropoffEvent.scheduledTimeStart < communicatedDropoff) {
 		scheduledTimes.updates.push({
-			time: Math.floor((best.dropoffTime + nextDropoffEvent.scheduledTimeStart) / 2),
+			time: Math.ceil((best.dropoffTime + nextDropoffEvent.scheduledTimeStart) / 2),
 			start: true,
 			event_id: nextDropoffEvent.id
 		});

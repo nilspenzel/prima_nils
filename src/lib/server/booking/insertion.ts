@@ -64,6 +64,8 @@ export type Insertion = InsertionEvaluation & {
 	nextPickupId: number | undefined;
 	prevDropoffId: number | undefined;
 	nextDropoffId: number | undefined;
+	pickupIdxInEvents: number | undefined;
+	dropoffIdxInEvents: number | undefined;
 };
 
 type SingleInsertionEvaluation = {
@@ -78,6 +80,7 @@ type SingleInsertionEvaluation = {
 	cost: number;
 	prevId: number | undefined;
 	nextId: number | undefined;
+	idxInEvents: number;
 };
 
 type Evaluations = {
@@ -240,7 +243,8 @@ export function evaluateSingleInsertion(
 		taxiWaitingTime,
 		cost: computeCost(passengerDuration, taxiDuration, taxiWaitingTime),
 		prevId: prev?.id,
-		nextId: next?.id
+		nextId: next?.id,
+		idxInEvents: insertionInfo.idxInEvents
 	};
 	return sie;
 }
@@ -466,7 +470,9 @@ export function evaluateNewTours(
 							prevPickupId: undefined,
 							nextPickupId: undefined,
 							prevDropoffId: undefined,
-							nextDropoffId: undefined
+							nextDropoffId: undefined,
+							pickupIdxInEvents: undefined,
+							dropoffIdxInEvents: undefined
 						};
 					}
 				}
@@ -589,7 +595,9 @@ export function evaluateSingleInsertions(
 								prevPickupId: prev?.id,
 								nextPickupId: next?.id,
 								prevDropoffId: prev?.id,
-								nextDropoffId: next?.id
+								nextDropoffId: next?.id,
+								pickupIdxInEvents: insertionInfo.idxInEvents,
+								dropoffIdxInEvents: insertionInfo.idxInEvents
 							};
 						}
 
@@ -774,7 +782,9 @@ export function evaluatePairInsertions(
 								prevPickupId: pickup.prevId,
 								nextPickupId: pickup.nextId,
 								prevDropoffId: dropoff.prevId,
-								nextDropoffId: dropoff.nextId
+								nextDropoffId: dropoff.nextId,
+								pickupIdxInEvents: pickup.idxInEvents,
+								dropoffIdxInEvents: dropoff.idxInEvents,
 							};
 						}
 					}
