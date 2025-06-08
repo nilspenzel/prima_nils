@@ -170,12 +170,12 @@ export async function bookRide(
 	const scheduledTimes: ScheduledTimes = {
 		newPickupStartTime:
 			prevPickupEvent && prevPickupEvent.scheduledTimeEnd > communicatedPickup
-				? Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeStart) / 2)
+				? Math.floor((best.pickupTime + prevPickupEvent.scheduledTimeEnd) / 2)
 				: communicatedPickup,
 
 		newDropoffEndTime:
-			prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > communicatedDropoff
-				? Math.ceil((best.dropoffTime + prevDropoffEvent.scheduledTimeStart) / 2)
+			nextDropoffEvent && nextDropoffEvent.scheduledTimeStart > communicatedDropoff
+				? Math.ceil((best.dropoffTime + nextDropoffEvent.scheduledTimeStart) / 2)
 				: communicatedDropoff,
 		updates: []
 	};
