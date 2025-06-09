@@ -1,4 +1,3 @@
-import { MAX_TRAVEL } from '$lib/constants';
 import { implication } from '$lib/server/util/implication';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
@@ -44,14 +43,9 @@ export const getPrevLegDuration = (
 			relevantRoutingResults = routingResults.busStops.toBusStop[busStopIdx!];
 			break;
 	}
-
-	const drivingTime = comesFromCompany(insertionCase)
+	return comesFromCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
 		: relevantRoutingResults.event[insertionInfo.idxInEvents - 1];
-	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
-		return undefined;
-	}
-	return drivingTime;
 };
 
 export const getNextLegDuration = (
@@ -79,14 +73,9 @@ export const getNextLegDuration = (
 			relevantRoutingResults = routingResults.busStops.fromBusStop[busStopIdx!];
 			break;
 	}
-
-	const drivingTime = returnsToCompany(insertionCase)
+	return returnsToCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
 		: relevantRoutingResults.event[insertionInfo.idxInEvents];
-	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
-		return undefined;
-	}
-	return drivingTime;
 };
 
 export function getAllowedOperationTimes(
