@@ -258,7 +258,7 @@ export async function bookRide(
 				case InsertHow.NEW_TOUR:
 					return undefined;
 				case InsertHow.PREPEND:
-					return nextDropoffEvent!.tourId;
+					return nextPickupEvent!.tourId;
 				default:
 					return prevPickupEvent!.tourId;
 			}
