@@ -209,14 +209,6 @@ function validateNoOverlappingTours(tours: ToursWithRequests): boolean {
 			}
 		}
 	}
-	const t1 = tours.find((t) => t.tourId === 66);
-	const t2 = tours.find((t) => t.tourId === 27);
-	console.log("66start: ",new Date(t1.startTime).toISOString());
-	console.log("66start: ",new Date(t1.endTime).toISOString());
-	console.log(t1.requests.flatMap((r) => r.events.map((e)=> new Interval(e.scheduledTimeStart,e.scheduledTimeEnd).toString())));
-	console.log("27start: ",new Date(t2.startTime).toISOString());
-	console.log("27start: ",new Date(t2.endTime).toISOString());
-	console.log(t2.requests.flatMap((r) => r.events.map((e)=> new Interval(e.scheduledTimeStart,e.scheduledTimeEnd).toString())));
 	return fail;
 }
 
