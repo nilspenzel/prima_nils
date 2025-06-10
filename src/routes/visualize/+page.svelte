@@ -24,7 +24,7 @@
 	let value = $state<DateValue>(toCalendarDate(fromDate(data.utcDate!, TZ)));
 	const date = $derived(new Date(value.year, value.month - 1, value.day, 2));
 	const scheduleStart = $derived(date.getTime());
-	const scheduleEnd = $derived(date.getTime() + HOUR * 21);
+	const scheduleEnd = $derived(date.getTime() + HOUR * 24);
 	const totalMinutes = $derived((scheduleEnd - scheduleStart) / MINUTE);
 	function getOffsetMinutes(ts: number) {
 		return Math.max(0, ts - scheduleStart) / MINUTE;

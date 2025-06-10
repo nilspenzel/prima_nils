@@ -175,6 +175,51 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 	return fail;
 }
 
+function validateEventsAreInsideTours(tours: ToursWithRequests): boolean {
+	let fail = false;
+	console.log('Validating that all events of a tour happen inside of departure-arrival...');
+	for(const tour of tours) {
+		const tourInterval = new Interval(tour.startTime, tour.endTime);
+		for(const event of tour.requests.flatMap((r) => r.events)) {
+			if(!new Interval(event.scheduledTimeStart, event.scheduledTimeEnd).overlaps(tourInterval)) {
+				console.log(`event with id: ${event.id} is outside of its' tour.`)
+				fail = true;
+			}
+		}
+	}
+}
+
+function validateNoOverlappingTours(tours: ToursWithRequests): boolean {
+	let fail = false;
+	console.log('Validating that tours do not overlap more than a single point...');
+	const byVehicle = groupBy(
+		tours.filter((t) => !t.cancelled),
+		(t) => t.vehicleId,
+		(t) => t
+	);
+	for(const [v,vTours] of byVehicle) {
+		for(let i=0;i!=vTours.length;++i){
+				const i1 = new Interval(vTours[i].startTime, vTours[i].endTime);
+			for(let j=i+1;j!=vTours.length;++j){
+				const i2 = new Interval(vTours[j].startTime, vTours[j].endTime);
+				if(i1.overlaps(i2)) {
+					console.log(`Found overlapping tours of same vehicle, ids: ${vTours[i].tourId} and ${vTours[j].tourId}`);
+					fail = true;
+				}
+			}
+		}
+	}
+	const t1 = tours.find((t) => t.tourId === 66);
+	const t2 = tours.find((t) => t.tourId === 27);
+	console.log("66start: ",new Date(t1.startTime).toISOString());
+	console.log("66start: ",new Date(t1.endTime).toISOString());
+	console.log(t1.requests.flatMap((r) => r.events.map((e)=> new Interval(e.scheduledTimeStart,e.scheduledTimeEnd).toString())));
+	console.log("27start: ",new Date(t2.startTime).toISOString());
+	console.log("27start: ",new Date(t2.endTime).toISOString());
+	console.log(t2.requests.flatMap((r) => r.events.map((e)=> new Interval(e.scheduledTimeStart,e.scheduledTimeEnd).toString())));
+	return fail;
+}
+
 async function oneToMany(
 	fromLat: number,
 	fromLng: number,
@@ -428,6 +473,8 @@ export async function healthCheck() {
 		fail = validateTourAndRequestCancelled(tours) ? true : fail;
 		fail = validateEventParameters(tours) ? true : fail;
 		fail = validateEventTimeNoOverlap(tours) ? true : fail;
+		fail = validateNoOverlappingTours(tours) ? true : fail;
+		fail = validateEventsAreInsideTours(tours) ? true : fail;
 		fail = (await validateDirectDurations(tours)) ? true : fail;
 		fail = (await validateLegDurations(tours)) ? true : fail;
 		fail = (await validateCompanyDurations(tours)) ? true : fail;
