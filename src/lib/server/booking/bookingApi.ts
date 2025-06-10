@@ -57,6 +57,16 @@ export async function bookingApi(
 	communicatedPickup2?: number;
 	communicatedDropoff2?: number;
 }> {
+	console.log(
+		'BOOKING API PARAMS: ',
+		JSON.stringify(p, null, 2),
+		JSON.stringify(customer, null, 2),
+		JSON.stringify(isLocalhost, null, 2),
+		JSON.stringify(kidsZeroToTwo, null, 2),
+		JSON.stringify(kidsThreeToFour, null, 2),
+		JSON.stringify(kidsFiveToSix, null, 2),
+		JSON.stringify(skipPromiseCheck, null, 2)
+	);
 	if (p.connection1 == null && p.connection2 == null) {
 		return {
 			message: 'Es wurde weder eine Anfrage für die erste noch für die letzte Meile gestellt.',

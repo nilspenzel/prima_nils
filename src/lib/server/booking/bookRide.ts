@@ -11,7 +11,7 @@ import { getEventGroupInfo, type EventGroupUpdate } from '$lib/server/booking/ge
 import { getDirectDurations, type DirectDrivingDurations } from './getDirectDrivingDurations';
 import { getMergeTourList } from './getMergeToorList';
 import type { DebugInfo } from '../util/debugInfo';
-import { InsertHow } from '$lib/util/booking/insertionTypes';
+import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { printInsertionType } from './insertionTypes';
 import { bookingLogs, increment } from '$lib/testHelpers';
 import type { Insertion } from './insertion';
@@ -107,6 +107,7 @@ export async function bookRide(
 		console.log('surprisingly no possible connection found: ', userChosen, busStop, busTime, best);
 		return undefined;
 	}
+	console.log({ best }, printInsertionType(best.pickupCase), printInsertionType(best.dropoffCase));
 	if (debugInfo) {
 		console.log(
 			'BOOK RIDE DEBUG INFO: ',
@@ -144,7 +145,7 @@ export async function bookRide(
 	const nextEventInOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR
 			? events.find((e) => e.communicatedTime >= best.dropoffTime)
-			: events.find((e)=> best.nextDropoffId === e.id);
+			: events.find((e) => best.nextDropoffId === e.id);
 	const directDurations = await getDirectDurations(
 		best,
 		prevEventInOtherTour,
@@ -158,30 +159,80 @@ export async function bookRide(
 			? undefined
 			: events[best.pickupIdx - 1]
 		: events.find((e) => e.id === best.prevPickupId);
-	const nextPickupEvent = returnsToCompany(best.pickupCase)
-		? best.pickupIdx == undefined
+	const nextPickupEvent =
+		InsertWhat.BOTH === best.pickupCase.what
 			? undefined
-			: events[best.pickupIdx]
-		: events.find((e) => e.id === best.nextPickupId);
-	const prevDropoffEvent = comesFromCompany(best.dropoffCase)
-		? best.dropoffIdx == undefined
+			: returnsToCompany(best.pickupCase)
+				? best.pickupIdx == undefined
+					? undefined
+					: events[best.pickupIdx]
+				: events.find((e) => e.id === best.nextPickupId);
+	const prevDropoffEvent =
+		InsertWhat.BOTH === best.pickupCase.what
 			? undefined
-			: events[best.dropoffIdx - 1]
-		: events.find((e) => e.id === best.prevDropoffId);
+			: comesFromCompany(best.dropoffCase)
+				? best.dropoffIdx == undefined
+					? undefined
+					: events[best.dropoffIdx - 1]
+				: events.find((e) => e.id === best.prevDropoffId);
 	const nextDropoffEvent = returnsToCompany(best.dropoffCase)
 		? best.dropoffIdx == undefined
 			? undefined
 			: events[best.dropoffIdx]
 		: events.find((e) => e.id === best.nextDropoffId);
-
 	increment();
-	const communicatedPickup = Math.max(prevDropoffEvent?.scheduledTimeEnd ?? 0, best.pickupTime - SCHEDULED_TIME_BUFFER);
-	const communicatedDropoff = Math.min(nextDropoffEvent?.scheduledTimeStart ?? Number.MAX_VALUE, best.dropoffTime + SCHEDULED_TIME_BUFFER);
+	let communicatedPickup = best.pickupTime - SCHEDULED_TIME_BUFFER;
+	let communicatedDropoff = best.dropoffTime + SCHEDULED_TIME_BUFFER;
+	const dropoffInterval = new Interval(best.dropoffTime, communicatedDropoff);
+	const pickupInterval = new Interval(communicatedPickup, best.pickupTime);
 	const scheduledTimes: ScheduledTimes = {
 		newPickupStartTime: communicatedPickup,
 		newDropoffEndTime: communicatedDropoff,
 		updates: []
 	};
+	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupInterval)) {
+		communicatedPickup =
+			(Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +
+				Math.min(best.pickupTime, prevPickupEvent.scheduledTimeEnd)) /
+			2;
+		scheduledTimes.newPickupStartTime = Math.ceil(communicatedPickup);
+		scheduledTimes.updates.push({
+			event_id: prevPickupEvent.id,
+			start: false,
+			time: Math.floor(communicatedPickup)
+		});
+	}
+	if (nextPickupEvent && nextPickupEvent.time.overlaps(pickupInterval)) {
+		console.assert(nextPickupEvent.time.covers(best.pickupTime), 'das ist schlecht beim pickup!');
+		scheduledTimes.updates.push({
+			event_id: nextPickupEvent.id,
+			start: true,
+			time: best.pickupTime
+		});
+	}
+	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffInterval)) {
+		communicatedDropoff =
+			(Math.max(best.dropoffTime, nextDropoffEvent.scheduledTimeStart) +
+				Math.min(communicatedDropoff, nextDropoffEvent.scheduledTimeEnd)) /
+			2;
+		scheduledTimes.newDropoffEndTime = Math.floor(communicatedDropoff);
+		scheduledTimes.updates.push({
+			event_id: nextDropoffEvent.id,
+			start: true,
+			time: Math.ceil(communicatedDropoff)
+		});
+	}
+	if (prevDropoffEvent && prevDropoffEvent.time.overlaps(dropoffInterval)) {
+		console.assert(
+			prevDropoffEvent.time.covers(best.dropoffTime),
+			'das ist schlecht beim dropoff!'
+		);
+		scheduledTimes.updates.push({
+			event_id: prevDropoffEvent.id,
+			start: false,
+			time: best.dropoffTime
+		});
+	}
 	if (nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime) {
 		scheduledTimes.updates.push({
 			time: best.pickupTime,
@@ -196,6 +247,10 @@ export async function bookRide(
 			event_id: prevDropoffEvent.id
 		});
 	}
+	console.log({ nextDropoffEvent });
+	console.log({ prevDropoffEvent });
+	console.log({ prevPickupEvent });
+	console.log({ nextPickupEvent });
 	return {
 		best,
 		tour: (() => {
@@ -203,7 +258,7 @@ export async function bookRide(
 				case InsertHow.NEW_TOUR:
 					return undefined;
 				case InsertHow.PREPEND:
-					return nextPickupEvent!.tourId;
+					return nextDropoffEvent!.tourId;
 				default:
 					return prevPickupEvent!.tourId;
 			}

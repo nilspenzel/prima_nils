@@ -130,6 +130,7 @@ export const isEarlierBetter = (insertionCase: InsertionType) => {
 export type InsertionInfo = {
 	companyIdx: number;
 	vehicle: VehicleWithInterval;
-	idxInEvents: number;
+	idxInVehicleEvents: number;
+	insertionIdx: number;
 	currentRange: Range;
 };

@@ -3,29 +3,27 @@ import type { InsertionInfo } from './insertionTypes';
 import type { VehicleId } from './VehicleId';
 import type { Range } from '$lib/util/booking/getPossibleInsertions';
 
-export function iterateAllInsertions(
+export async function iterateAllInsertions(
 	companies: Company[],
 	insertions: Map<VehicleId, Range[]>,
-	insertionFn: (info: InsertionInfo, insertionCounter: number) => void
+	insertionFn: (info: InsertionInfo) => void
 ) {
 	let insertionIdx = 0;
 	companies.forEach((company, companyIdx) => {
-		company.vehicles.forEach((vehicle) => {
+		company.vehicles.forEach((vehicle, vIdx) => {
 			insertions.get(vehicle.id)!.forEach((insertion) => {
 				for (
 					let idxInEvents = insertion.earliestPickup;
 					idxInEvents != insertion.latestDropoff + 1;
 					++idxInEvents
 				) {
-					insertionFn(
-						{
-							idxInEvents,
-							companyIdx,
-							vehicle,
-							currentRange: insertion
-						},
+					insertionFn({
+						idxInVehicleEvents: idxInEvents,
+						companyIdx,
+						vehicle,
+						currentRange: insertion,
 						insertionIdx
-					);
+					});
 					insertionIdx++;
 				}
 			});

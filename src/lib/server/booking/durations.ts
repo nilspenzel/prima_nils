@@ -45,7 +45,7 @@ export const getPrevLegDuration = (
 	}
 	return comesFromCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
-		: relevantRoutingResults.event[insertionInfo.idxInEvents - 1];
+		: relevantRoutingResults.event[insertionInfo.insertionIdx - 1];
 };
 
 export const getNextLegDuration = (
@@ -75,7 +75,7 @@ export const getNextLegDuration = (
 	}
 	return returnsToCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
-		: relevantRoutingResults.event[insertionInfo.idxInEvents];
+		: relevantRoutingResults.event[insertionInfo.insertionIdx];
 };
 
 export function getAllowedOperationTimes(
