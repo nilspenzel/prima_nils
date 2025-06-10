@@ -22,10 +22,9 @@ import {
 	type Insertion
 } from './insertion';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
-import { DAY, MINUTE } from '$lib/util/time';
+import { DAY } from '$lib/util/time';
 import type { DebugInfo } from '../util/debugInfo';
 import { routing } from './routing';
-import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 
 export async function evaluateRequest(
 	companies: Company[],

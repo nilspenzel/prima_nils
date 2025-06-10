@@ -45,7 +45,7 @@ export const getPrevLegDuration = (
 	}
 	return comesFromCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
-		: relevantRoutingResults.event[insertionInfo.insertionIdx - 1];
+		: relevantRoutingResults.event[insertionInfo.insertionIdx];
 };
 
 export const getNextLegDuration = (
