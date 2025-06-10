@@ -24,15 +24,6 @@ export const getDirectDurations = async (
 	tourIdPickup: number | undefined
 ): Promise<DirectDrivingDurations> => {
 	const direct: DirectDrivingDurations = {};
-
-	//console.log(
-	//	'stuff7: ',
-	//	JSON.stringify(c, null, '\t'),
-	//	{ pickupPredEvent },
-	//	{ dropOffSuccEvent },
-	//	printInsertionType(best.pickupCase),
-	//	printInsertionType(best.dropoffCase)
-	//);
 	if (
 		(best.pickupCase.how == InsertHow.PREPEND || best.pickupCase.how == InsertHow.NEW_TOUR) &&
 		pickupPredEvent != undefined
@@ -54,6 +45,5 @@ export const getDirectDurations = async (
 			tourId: dropOffSuccEvent.tourId
 		};
 	}
-
 	return direct;
 };

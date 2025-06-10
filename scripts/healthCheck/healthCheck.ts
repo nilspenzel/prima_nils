@@ -236,8 +236,8 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 					continue;
 				}
 				const e2 = laterEvents[0];
-				const earlierTourEnd = e1.scheduledTimeStart;
-				const laterTourStart = e2.scheduledTimeEnd;
+				const earlierTourEnd = earlierTour.endTime;
+				const laterTourStart = laterTour.startTime;
 				if (0 < laterTourStart - earlierTourEnd && laterTourStart - earlierTourEnd <= 3 * HOUR) {
 					const expectedDuration = await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng);
 					const expectedDuration2 = await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true);
@@ -247,9 +247,9 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 						);
 						fail = true;
 					}
-					if (!laterTour.directDuration) {
+					if (!laterTour.directDuration && !expectedDuration && !expectedDuration2) {
 						console.log(
-							`direct duration is null unexpectedly for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}, expected ${expectedDuration} or ${expectedDuration2}`
+							`direct duration is null unexpectedly for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}, expected ${expectedDuration} or ${expectedDuration2} seconds`
 						);
 						fail = true;
 					} else {
@@ -260,7 +260,7 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 							Math.abs(expectedDuration2 - laterTour.directDuration / 1000) > 2
 						) {
 							console.log(`Direct duration mismatch for earlier tour ${earlierTour.tourId} and later tour ${laterTour.tourId}: \
-                  Expected ${expectedDuration} or ${expectedDuration2} seconds, Found ${laterTour.directDuration / 1000} seconds, lat1: ${e1.lat} lng1:${e1.lng}, lat2: ${e2.lat} lng:${e2.lng}`);
+                  Expected ${expectedDuration} or ${expectedDuration2} seconds, Found ${laterTour.directDuration / 1000} seconds, lat1: ${e1.lat} lng1:${e1.lng}, lat2: ${e2.lat} lng:${e2.lng} time difference: ${new Date(laterTourStart - earlierTourEnd).toISOString()}`);
 							fail = true;
 						}
 					}

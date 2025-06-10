@@ -26,7 +26,7 @@ export async function routing(
 ): Promise<RoutingResults> {
 	const setZeroDistanceForMatchingPlaces = (
 		coordinatesOne: Coordinates,
-		coordinatesMany: Coordinates[],
+		coordinatesMany: (Coordinates|undefined)[],
 		routingResult: (number | undefined)[],
 		comesFromCompany: boolean
 	) => {
@@ -37,7 +37,10 @@ export async function routing(
 		);
 		const result = new Array<number | undefined>(routingResult.length);
 		for (let i = 0; i != coordinatesMany.length; ++i) {
-			if (isSamePlace(coordinatesOne, coordinatesMany[i])) {
+			if(coordinatesMany[i] === undefined) {
+				continue;
+			}
+			if (isSamePlace(coordinatesOne, coordinatesMany[i]!)) {
 				result[i] = 0;
 			} else if (!comesFromCompany && routingResult[i] !== undefined) {
 				result[i] = routingResult[i]! + PASSENGER_CHANGE_DURATION;
@@ -48,26 +51,16 @@ export async function routing(
 		return result;
 	};
 
-	const forward: (Coordinates & { id: number; idx: number })[] = companies.map((c) => {
-		return { lat: c.lat, lng: c.lng, id: c.id, idx: -1 };
+	const forward: ((Coordinates & { id: number })|undefined)[] = companies.map((c) => {
+		return { lat: c.lat, lng: c.lng, id: c.id };
 	});
 
-	const backward: (Coordinates & { id: number; idx: number })[] = companies.map((c) => {
-		return { lat: c.lat, lng: c.lng, id: c.id, idx: -1 };
+	const backward: ((Coordinates & { id: number })|undefined)[] = companies.map((c) => {
+		return { lat: c.lat, lng: c.lng, id: c.id };
 	});
 	iterateAllInsertions(companies, insertionRanges, (info) => {
-		if (info.idxInVehicleEvents !== info.vehicle.events.length) {
-			forward.push({
-				...info.vehicle.events[info.idxInVehicleEvents],
-				idx: info.idxInVehicleEvents
-			});
-		}
-		if (info.idxInVehicleEvents !== 0) {
-			backward.push({
-				...info.vehicle.events[info.idxInVehicleEvents - 1],
-				idx: info.idxInVehicleEvents - 1
-			});
-		}
+		forward.push(info.idxInVehicleEvents === info.vehicle.events.length ? undefined : info.vehicle.events[info.idxInVehicleEvents]);
+			backward.push(info.idxInVehicleEvents === 0 ? undefined : info.vehicle.events[info.idxInVehicleEvents - 1]);
 	});
 	let fromUserChosen = await batchOneToManyCarRouting(userChosen, forward, false);
 	const toUserChosen = await batchOneToManyCarRouting(userChosen, backward, true);

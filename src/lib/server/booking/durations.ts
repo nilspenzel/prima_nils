@@ -73,6 +73,9 @@ export const getNextLegDuration = (
 			relevantRoutingResults = routingResults.busStops.fromBusStop[busStopIdx!];
 			break;
 	}
+	if(insertionCase.how === InsertHow.PREPEND && insertionCase.what === InsertWhat.BOTH){
+		console.log({insertionInfo}, {relevantRoutingResults}, relevantRoutingResults.event[insertionInfo.insertionIdx])
+	}
 	return returnsToCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
 		: relevantRoutingResults.event[insertionInfo.insertionIdx];

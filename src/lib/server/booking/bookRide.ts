@@ -118,7 +118,8 @@ export async function bookRide(
 		);
 		return undefined;
 	}
-	const events = companies[best.company].vehicles.find((v) => v.id == best.vehicle)!.events;
+	const vehicle = companies[best.company].vehicles.find((v) => v.id === best.vehicle)!;
+	const events = vehicle.events;
 	let prevPickupEventIdx = best.pickupIdx == undefined ? undefined : best.pickupIdx - 1;
 	if (best.pickupCase.how == InsertHow.NEW_TOUR) {
 		prevPickupEventIdx = events.findLastIndex((e) => e.communicatedTime <= best.pickupTime);
@@ -138,14 +139,22 @@ export async function bookRide(
 		best.dropoffIdx,
 		best.dropoffCase.how
 	);
-	const prevEventInOtherTour =
+	let prevEventInOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR
 			? events.findLast((e) => e.communicatedTime <= best.pickupTime)
 			: events.find((e) => e.id === best.prevPickupId);
-	const nextEventInOtherTour =
+	if(prevEventInOtherTour === undefined) {
+		console.log("updated prevEventInOtherTour")
+		prevEventInOtherTour = vehicle.lastEventBefore;
+	}
+	let nextEventInOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR
 			? events.find((e) => e.communicatedTime >= best.dropoffTime)
 			: events.find((e) => best.nextDropoffId === e.id);
+	if(nextEventInOtherTour === undefined) {
+		console.log("updated nextEventInOtherTour")
+		nextEventInOtherTour = vehicle.firstEventAfter;
+	}
 	const directDurations = await getDirectDurations(
 		best,
 		prevEventInOtherTour,
@@ -203,7 +212,6 @@ export async function bookRide(
 		});
 	}
 	if (nextPickupEvent && nextPickupEvent.time.overlaps(pickupInterval)) {
-		console.assert(nextPickupEvent.time.covers(best.pickupTime), 'das ist schlecht beim pickup!');
 		scheduledTimes.updates.push({
 			event_id: nextPickupEvent.id,
 			start: true,
@@ -223,10 +231,6 @@ export async function bookRide(
 		});
 	}
 	if (prevDropoffEvent && prevDropoffEvent.time.overlaps(dropoffInterval)) {
-		console.assert(
-			prevDropoffEvent.time.covers(best.dropoffTime),
-			'das ist schlecht beim dropoff!'
-		);
 		scheduledTimes.updates.push({
 			event_id: prevDropoffEvent.id,
 			start: false,
@@ -247,10 +251,6 @@ export async function bookRide(
 			event_id: prevDropoffEvent.id
 		});
 	}
-	console.log({ nextDropoffEvent });
-	console.log({ prevDropoffEvent });
-	console.log({ prevPickupEvent });
-	console.log({ nextPickupEvent });
 	return {
 		best,
 		tour: (() => {

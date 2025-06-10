@@ -29,19 +29,6 @@ export const load: PageServerLoad = async (event: RequestEvent) => {
 			);
 		}
 	}
-	//console.log("stuffy1: ", results.filter((r) => r.res === 175000))
-	//console.log("stuffy: ", await oneToManyCarRouting(events.filter((e) => e.id === 63)[0], events.filter((e) => e.id === 90), false));
-	//console.log("stuffy: ", await oneToManyCarRouting(events.filter((e) => e.id === 63)[0], events.filter((e) => e.id === 90), true));
-	//console.log("stuffy: ", await oneToManyCarRouting(events.filter((e) => e.id === 90)[0], events.filter((e) => e.id === 63), false));
-	//console.log("stuffy: ", await oneToManyCarRouting(events.filter((e) => e.id === 90)[0], events.filter((e) => e.id === 63), true));
-
-	/*
-	72 -> busstop
-	71 -> userChosen
-	coords[0] -> companyid===57
-	coords[1] -> companyid===59
-	coords[2] -> eventid===60
-*/
 
 	const url = event.url;
 	const tourParam = url.searchParams.get('tourId');
