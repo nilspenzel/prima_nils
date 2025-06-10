@@ -33,7 +33,8 @@ export const oneToManyCarRouting = async (
 				'ROUTING: ',
 				lngLatToStr(one),
 				lngLatToStr(many[i]),
-				new Date(secondToMilli(d.duration ?? 0)).toISOString()
+				new Date(secondToMilli(d.duration ?? 0)).toISOString(),
+				secondToMilli(d.duration ?? 0)
 			);
 			return d.duration != undefined && d.duration != null ? secondToMilli(d.duration) : undefined;
 		});

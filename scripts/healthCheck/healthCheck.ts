@@ -275,9 +275,13 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 	console.log('Validating leg durations...');
 	const uncancelledTours = tours.filter((t) => !t.cancelled);
 	for (const tour of uncancelledTours) {
-		const events = [...tour.requests.flatMap((r) => r.events)].sort(
-			(a, b) => a.scheduledTimeStart - b.scheduledTimeStart
-		);
+		const events = [...tour.requests.flatMap((r) => r.events)].sort((a, b) => {
+			const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
+			if (startDiff !== 0) {
+				return startDiff;
+			}
+			return a.scheduledTimeEnd - b.scheduledTimeEnd;
+		});
 		for (let i = 0; i < events.length - 1; i++) {
 			const earlierEvent = events[i];
 			const laterEvent = events[i + 1];
@@ -307,7 +311,36 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				console.log(
 					`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \
               Expected ${expectedDuration + 60} or ${expectedDuration2 + 60} seconds, Found ${earlierEvent.nextLegDuration / 1000} seconds`,
-					{ i }
+					{
+						startTimes: events.map(
+							(e) => `id: ${e.id} ${new Date(e.scheduledTimeStart).toISOString()}`
+						)
+					},
+					{
+						endTimes: events.map((e) => `id: ${e.id} ${new Date(e.scheduledTimeEnd).toISOString()}`)
+					},
+					{
+						idsStart: events
+							.sort((e1, e2) => {
+								const startDiff = e1.scheduledTimeStart - e2.scheduledTimeStart;
+								if (startDiff !== 0) {
+									return startDiff;
+								}
+								return e1.scheduledTimeEnd - e2.scheduledTimeEnd;
+							})
+							.map((e) => e.id)
+					},
+					{
+						idsEnd: events
+							.sort((e1, e2) => {
+								const startDiff = e1.scheduledTimeEnd - e2.scheduledTimeEnd;
+								if (startDiff !== 0) {
+									return startDiff;
+								}
+								return e1.scheduledTimeStart - e2.scheduledTimeStart;
+							})
+							.map((e) => e.id)
+					}
 				);
 				fail = true;
 			}

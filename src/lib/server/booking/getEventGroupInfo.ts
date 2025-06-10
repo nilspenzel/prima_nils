@@ -39,7 +39,7 @@ export const getEventGroupInfo = (
 	}
 	return {
 		newEventGroup,
-		updateList: getEventGroupUpdates(events, coordinates, nextEventIdx, how, newEventGroup)
+		updateList: [] //getEventGroupUpdates(events, coordinates, nextEventIdx, how, newEventGroup)
 	};
 };
 

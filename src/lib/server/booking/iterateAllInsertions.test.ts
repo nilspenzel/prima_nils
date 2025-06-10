@@ -112,14 +112,14 @@ describe('IterateAllInsertions tests', () => {
 			fromBusStopCompanyRR[i] = new Array<number | undefined>();
 			fromBusStopPostEventRR[i] = new Array<number | undefined>();
 		}
-		iterateAllInsertions(companies, insertions, (info, _) => {
-			const idx = info.idxInEvents;
+		iterateAllInsertions(companies, insertions, (info) => {
+			const idx = info.idxInVehicleEvents;
 			const event = info.vehicle.events[idx];
 			const prevEvent = info.vehicle.events[idx];
 			const predEvent = info.vehicle.lastEventBefore;
 			const postEvent = info.vehicle.firstEventAfter;
 			const company = companies[info.companyIdx];
-			if (info.idxInEvents === 0) {
+			if (info.idxInVehicleEvents === 0) {
 				if (predEvent) {
 					//toUserChosenPredEvent.push(oneToManyCarRouting(predEvent, [userChosen] , false))
 					//for(let i=0;i!=busStops.length;++i){
@@ -132,7 +132,7 @@ describe('IterateAllInsertions tests', () => {
 					fromBusStopEvent[i].push(oneToManyCarRouting(busStops[i], [event], false));
 					fromBusStopEventRR[i].push(routingResults.busStops.fromBusStop[i].event[idx]);
 				}
-			} else if (info.idxInEvents === info.vehicle.events.length) {
+			} else if (info.idxInVehicleEvents === info.vehicle.events.length) {
 				if (postEvent) {
 					//fromUserChosenPostEvent.push(oneToManyCarRouting(userChosen , [postEvent] , false))
 					//for(let i=0;i!=busStops.length;++i){
