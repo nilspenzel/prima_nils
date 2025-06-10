@@ -3,6 +3,7 @@ import type { ToursWithRequests, TourWithRequestsEvent } from '../../src/lib/uti
 import { groupBy } from '../../src/lib/util/groupBy';
 import { Interval } from '../../src/lib/util/interval';
 import { HOUR } from '../../src/lib/util/time';
+import { isSamePlace } from '../../src/lib/server/booking/isSamePlace';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -304,9 +305,9 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			);
 			if (
 				expectedDuration !== null &&
-				expectedDuration + 60 > earlierEvent.nextLegDuration / 1000 &&
+				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration + 60) > earlierEvent.nextLegDuration / 1000 &&
 				expectedDuration2 !== null &&
-				expectedDuration2 + 60 > earlierEvent.nextLegDuration / 1000
+				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration2 + 60) > earlierEvent.nextLegDuration / 1000
 			) {
 				console.log(
 					`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \
