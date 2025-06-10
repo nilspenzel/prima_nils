@@ -3,6 +3,7 @@ import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 import type { Insertion } from './insertion';
 import { type Event } from './getBookingAvailability';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
+import { printInsertionType } from './insertionTypes';
 
 export type DirectDrivingDurations = {
 	thisTour?: {
@@ -24,6 +25,14 @@ export const getDirectDurations = async (
 ): Promise<DirectDrivingDurations> => {
 	const direct: DirectDrivingDurations = {};
 
+	//console.log(
+	//	'stuff7: ',
+	//	JSON.stringify(c, null, '\t'),
+	//	{ pickupPredEvent },
+	//	{ dropOffSuccEvent },
+	//	printInsertionType(best.pickupCase),
+	//	printInsertionType(best.dropoffCase)
+	//);
 	if (
 		(best.pickupCase.how == InsertHow.PREPEND || best.pickupCase.how == InsertHow.NEW_TOUR) &&
 		pickupPredEvent != undefined

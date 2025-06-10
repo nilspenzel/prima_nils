@@ -22,9 +22,10 @@ import {
 	type Insertion
 } from './insertion';
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
-import { DAY } from '$lib/util/time';
+import { DAY, MINUTE } from '$lib/util/time';
 import type { DebugInfo } from '../util/debugInfo';
 import { routing } from './routing';
+import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 
 export async function evaluateRequest(
 	companies: Company[],
@@ -48,7 +49,54 @@ export async function evaluateRequest(
 			insertionRanges.set(vehicle.id, getPossibleInsertions(vehicle, required, vehicle.events));
 		})
 	);
+
 	const routingResults = await routing(companies, userChosen, busStops, insertionRanges);
+
+	let insertionIdx = 0;
+	//console.log(JSON.stringify(routingResults,null,2))
+	console.log('stuffy1');
+	for (const [companyIdx, company] of companies.entries()) {
+		for (const [vIdx, vehicle] of company.vehicles.entries()) {
+			for (const insertion of insertionRanges.get(vehicle.id)!) {
+				for (
+					let idxInEvents = insertion.earliestPickup;
+					idxInEvents != insertion.latestDropoff + 1;
+					++idxInEvents
+				) {
+					const info = {
+						idxInVehicleEvents: idxInEvents,
+						companyIdx,
+						vIdx,
+						vehicle,
+						currentRange: insertion,
+						insertionIdx
+					};
+					console.log(
+						{ info: info.insertionIdx },
+						info.idxInVehicleEvents,
+						info.vIdx,
+						info.companyIdx,
+						info.idxInVehicleEvents,
+						' eventId: ',
+						vehicle.events[info.idxInVehicleEvents]?.lat,
+						' prev: ',
+						vehicle.events[info.idxInVehicleEvents - 1]?.lat
+					);
+					if (info.vehicle.events[info.idxInVehicleEvents]) {
+						//const rr1= await oneToManyCarRouting(userChosen, [info.vehicle.events[info.idxInVehicleEvents]], false);
+						//const rr2= await oneToManyCarRouting(info.vehicle.events[info.idxInVehicleEvents], [userChosen], true);
+						//console.log("error in rrFrom: ", info.insertionIdx, {rr1: (rr1[0]??-MINUTE*2)+MINUTE}, {rr2: (rr2[0]??-MINUTE*2)+MINUTE}, {routingResult: routingResults.userChosen.fromUserChosen.event[info.insertionIdx]});
+					}
+					if (info.vehicle.events[info.idxInVehicleEvents - 1]) {
+						//const rr1 = await oneToManyCarRouting(info.vehicle.events[info.idxInVehicleEvents-1], [userChosen], false);
+						//const rr2 = await oneToManyCarRouting(userChosen, [info.vehicle.events[info.idxInVehicleEvents-1]], true);
+						//console.log("error in rrTo: ", info.insertionIdx, {rr: (rr1[0]??-MINUTE*2)+MINUTE}, {rr: (rr2[0]??-MINUTE*2)+MINUTE}, {routingResult: routingResults.userChosen.toUserChosen.event[info.insertionIdx-1]});
+					}
+					insertionIdx++;
+				}
+			}
+		}
+	}
 	const busStopTimes = busStops.map((bs) =>
 		bs.times.map(
 			(t) =>
@@ -124,5 +172,18 @@ export async function evaluateRequest(
 		userChosenEvaluations
 	);
 	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
+	//console.log('stuf0: ', JSON.stringify(routingResults, null, '\t'));
+	//iterateAllInsertions(companies, insertionRanges, (insertionInfo, idx) => {
+	//	for(let i=0;i!=busStops.length;++i) {
+	//	console.log("idxInEvents: ", insertionInfo.idxInEvents, " companyFrombusStop: ", routingResults.busStops.fromBusStop[i].event[insertionInfo.idxInEvents], insertionInfo.vehicle.events[insertionInfo.idxInEvents]);
+	//	console.log("companyFrombusStop: ", routingResults.busStops.fromBusStop[i].company[insertionInfo.companyIdx], companies[insertionInfo.companyIdx]);
+	//	console.log("idxInEvents: ", insertionInfo.idxInEvents, " companyTobusStop: ", routingResults.busStops.toBusStop[i].event[insertionInfo.idxInEvents], insertionInfo.vehicle.events[insertionInfo.idxInEvents]);
+	//	console.log("companyTobusStop: ", routingResults.busStops.toBusStop[i].company[insertionInfo.companyIdx], companies[insertionInfo.companyIdx]);
+	//	}
+	//	console.log("idxInEvents: ", insertionInfo.idxInEvents, " companyFromUserChosen: ", routingResults.userChosen.fromUserChosen.event[insertionInfo.idxInEvents], insertionInfo.vehicle.events[insertionInfo.idxInEvents]);
+	//	console.log("companyFromUserChosen: ", routingResults.userChosen.fromUserChosen.company[insertionInfo.companyIdx], companies[insertionInfo.companyIdx]);
+	//	console.log("idxInEvents: ", insertionInfo.idxInEvents, " companyToUserChosen: ", routingResults.userChosen.toUserChosen.event[insertionInfo.idxInEvents], insertionInfo.vehicle.events[insertionInfo.idxInEvents]);
+	//	console.log("companyToUserChosen: ", routingResults.userChosen.toUserChosen.company[insertionInfo.companyIdx], companies[insertionInfo.companyIdx]);
+	//})
 	return best;
 }
