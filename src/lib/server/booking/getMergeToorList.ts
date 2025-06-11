@@ -8,7 +8,7 @@ export const getMergeTourList = (
 	pickupIdx: number | undefined,
 	dropoffIdx: number | undefined
 ): Event[] => {
-	if (events.length == 0) {
+	if (events.length == 0 || pickupHow === InsertHow.NEW_TOUR) {
 		return [];
 	}
 	const tours = new Set<number>();
