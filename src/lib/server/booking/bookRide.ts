@@ -3,7 +3,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import type { Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
-import { MAX_TRAVEL, SCHEDULED_TIME_BUFFER } from '$lib/constants';
+import { MAX_TRAVEL, PASSENGER_CHANGE_DURATION, SCHEDULED_TIME_BUFFER } from '$lib/constants';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
@@ -16,6 +16,9 @@ import { printInsertionType } from './insertionTypes';
 import { bookingLogs, increment } from '$lib/testHelpers';
 import type { Insertion } from './insertion';
 import { comesFromCompany, returnsToCompany } from './durations';
+import { groupBy } from '$lib/util/groupBy';
+import type { Event } from '$lib/server/booking/getBookingAvailability';
+import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -143,16 +146,14 @@ export async function bookRide(
 		best.pickupCase.how == InsertHow.NEW_TOUR
 			? events.findLast((e) => e.communicatedTime <= best.pickupTime)
 			: events.find((e) => e.id === best.prevPickupId);
-	if(prevEventInOtherTour === undefined) {
-		console.log("updated prevEventInOtherTour")
+	if (prevEventInOtherTour === undefined) {
 		prevEventInOtherTour = vehicle.lastEventBefore;
 	}
 	let nextEventInOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR
 			? events.find((e) => e.communicatedTime >= best.dropoffTime)
 			: events.find((e) => best.nextDropoffId === e.id);
-	if(nextEventInOtherTour === undefined) {
-		console.log("updated nextEventInOtherTour")
+	if (nextEventInOtherTour === undefined) {
 		nextEventInOtherTour = vehicle.firstEventAfter;
 	}
 	const directDurations = await getDirectDurations(
@@ -251,6 +252,86 @@ export async function bookRide(
 			event_id: prevDropoffEvent.id
 		});
 	}
+	const mergeTourList = getMergeTourList(
+		events,
+		best.pickupCase.how,
+		best.dropoffCase.how,
+		best.pickupIdx,
+		best.dropoffIdx
+	);
+	let departure = Number.MAX_SAFE_INTEGER;
+	let arrival = -1;
+	if (mergeTourList.size !== 0) {
+		for (const tour of mergeTourList) {
+			if (departure > tour.departure) {
+				departure = tour.departure;
+			}
+			if (arrival < tour.arrival) {
+				arrival = tour.arrival;
+			}
+			if (best.pickupCase.how !== InsertHow.PREPEND) {
+				best.departure = departure;
+			}
+			if (best.dropoffCase.how !== InsertHow.APPEND) {
+				best.arrival = arrival;
+			}
+		}
+	}
+	const tours = [...mergeTourList];
+	const filteredEvents = groupBy(
+		events.filter((e) => tours.some((t) => t.tourId === e.tourId)),
+		(e) => e.tourId,
+		(e) => e
+	);
+	const firstEvents: Event[] = [];
+	const lastEvents: Event[] = [];
+	for (const [_, tour] of filteredEvents) {
+		tour.sort((e1, e2) =>
+			e1.scheduledTimeStart === e2.scheduledTimeStart
+				? e1.scheduledTimeEnd - e2.scheduledTimeEnd
+				: e1.scheduledTimeStart - e2.scheduledTimeStart
+		);
+		const firstEvent = tour[0];
+		const lastEvent = tour[tour.length - 1];
+		if (
+			firstEvent.departure !== departure &&
+			firstEvent.id !== best.nextPickupId &&
+			firstEvent.id !== best.nextDropoffId
+		) {
+			firstEvents.push(firstEvent);
+		}
+		if (
+			lastEvent.arrival !== arrival &&
+			lastEvent.id !== best.prevPickupId &&
+			lastEvent.id !== best.prevDropoffId
+		) {
+			lastEvents.push(lastEvent);
+		}
+	}
+	if (firstEvents.length !== lastEvents.length) {
+		throw new Error();
+	}
+
+	const prevLegRouting = firstEvents.map((e, i) => oneToManyCarRouting(lastEvents[i], [e], false));
+	const prevLegRoutingResults = await Promise.all(prevLegRouting);
+	const prevLegDurations: { event: number; duration: number | null }[] = [];
+	prevLegRoutingResults.forEach((rr, i) =>
+		prevLegDurations.push({
+			event: firstEvents[i].id,
+			duration: rr[0] ? rr[0] + PASSENGER_CHANGE_DURATION : null
+		})
+	);
+
+	const nextLegRouting = lastEvents.map((e, i) => oneToManyCarRouting(e, [lastEvents[i]], false));
+	const nextLegRoutingResults = await Promise.all(nextLegRouting);
+	const nextLegDurations: { event: number; duration: number | null }[] = [];
+	nextLegRoutingResults.forEach((rr, i) =>
+		nextLegDurations.push({
+			event: lastEvents[i].id,
+			duration: rr[0] ? rr[0] + PASSENGER_CHANGE_DURATION : null
+		})
+	);
+
 	return {
 		best,
 		tour: (() => {
@@ -258,18 +339,14 @@ export async function bookRide(
 				case InsertHow.NEW_TOUR:
 					return undefined;
 				case InsertHow.PREPEND:
-					return best.pickupCase.what === InsertWhat.BOTH ? nextDropoffEvent!.tourId : nextPickupEvent!.tourId;
+					return best.pickupCase.what === InsertWhat.BOTH
+						? nextDropoffEvent!.tourId
+						: nextPickupEvent!.tourId;
 				default:
 					return prevPickupEvent!.tourId;
 			}
 		})(),
-		mergeTourList: getMergeTourList(
-			events,
-			best.pickupCase.how,
-			best.dropoffCase.how,
-			best.pickupIdx,
-			best.dropoffIdx
-		),
+		mergeTourList: Array.from(mergeTourList).map((t) => t.tourId),
 		eventGroupUpdateList: pickupEventGroupInfo.updateList.concat(dropoffEventGroupInfo.updateList),
 		pickupEventGroup: pickupEventGroupInfo.newEventGroup,
 		dropoffEventGroup: dropoffEventGroupInfo.newEventGroup,
@@ -280,6 +357,8 @@ export async function bookRide(
 			nextDropoff: best.dropoffCase.how == InsertHow.APPEND ? undefined : nextDropoffEvent?.id
 		},
 		directDurations,
+		prevLegDurations,
+		nextLegDurations,
 		scheduledTimes
 	};
 }
@@ -297,7 +376,7 @@ export type ScheduledTimes = {
 export type BookRideResponse = {
 	best: Insertion;
 	tour: undefined | number;
-	mergeTourList: Set<number>;
+	mergeTourList: number[];
 	eventGroupUpdateList: EventGroupUpdate[];
 	pickupEventGroup: string;
 	dropoffEventGroup: string;
@@ -308,5 +387,7 @@ export type BookRideResponse = {
 		nextDropoff: undefined | number;
 	};
 	directDurations: DirectDrivingDurations;
+	prevLegDurations: { event: number; duration: number | null }[];
+	nextLegDurations: { event: number; duration: number | null }[];
 	scheduledTimes: ScheduledTimes;
 };

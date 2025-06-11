@@ -26,7 +26,7 @@ export async function routing(
 ): Promise<RoutingResults> {
 	const setZeroDistanceForMatchingPlaces = (
 		coordinatesOne: Coordinates,
-		coordinatesMany: (Coordinates|undefined)[],
+		coordinatesMany: (Coordinates | undefined)[],
 		routingResult: (number | undefined)[],
 		comesFromCompany: boolean
 	) => {
@@ -37,7 +37,7 @@ export async function routing(
 		);
 		const result = new Array<number | undefined>(routingResult.length);
 		for (let i = 0; i != coordinatesMany.length; ++i) {
-			if(coordinatesMany[i] === undefined) {
+			if (coordinatesMany[i] === undefined) {
 				continue;
 			}
 			if (isSamePlace(coordinatesOne, coordinatesMany[i]!)) {
@@ -51,16 +51,22 @@ export async function routing(
 		return result;
 	};
 
-	const forward: ((Coordinates & { id: number })|undefined)[] = companies.map((c) => {
+	const forward: ((Coordinates & { id: number }) | undefined)[] = companies.map((c) => {
 		return { lat: c.lat, lng: c.lng, id: c.id };
 	});
 
-	const backward: ((Coordinates & { id: number })|undefined)[] = companies.map((c) => {
+	const backward: ((Coordinates & { id: number }) | undefined)[] = companies.map((c) => {
 		return { lat: c.lat, lng: c.lng, id: c.id };
 	});
 	iterateAllInsertions(companies, insertionRanges, (info) => {
-		forward.push(info.idxInVehicleEvents === info.vehicle.events.length ? undefined : info.vehicle.events[info.idxInVehicleEvents]);
-			backward.push(info.idxInVehicleEvents === 0 ? undefined : info.vehicle.events[info.idxInVehicleEvents - 1]);
+		forward.push(
+			info.idxInVehicleEvents === info.vehicle.events.length
+				? undefined
+				: info.vehicle.events[info.idxInVehicleEvents]
+		);
+		backward.push(
+			info.idxInVehicleEvents === 0 ? undefined : info.vehicle.events[info.idxInVehicleEvents - 1]
+		);
 	});
 	let fromUserChosen = await batchOneToManyCarRouting(userChosen, forward, false);
 	const toUserChosen = await batchOneToManyCarRouting(userChosen, backward, true);

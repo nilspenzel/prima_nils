@@ -178,11 +178,11 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 function validateEventsAreInsideTours(tours: ToursWithRequests): boolean {
 	let fail = false;
 	console.log('Validating that all events of a tour happen inside of departure-arrival...');
-	for(const tour of tours) {
+	for (const tour of tours) {
 		const tourInterval = new Interval(tour.startTime, tour.endTime);
-		for(const event of tour.requests.flatMap((r) => r.events)) {
-			if(!new Interval(event.scheduledTimeStart, event.scheduledTimeEnd).overlaps(tourInterval)) {
-				console.log(`event with id: ${event.id} is outside of its' tour.`)
+		for (const event of tour.requests.flatMap((r) => r.events)) {
+			if (!new Interval(event.scheduledTimeStart, event.scheduledTimeEnd).overlaps(tourInterval)) {
+				console.log(`event with id: ${event.id} is outside of its' tour.`);
 				fail = true;
 			}
 		}
@@ -197,13 +197,15 @@ function validateNoOverlappingTours(tours: ToursWithRequests): boolean {
 		(t) => t.vehicleId,
 		(t) => t
 	);
-	for(const [v,vTours] of byVehicle) {
-		for(let i=0;i!=vTours.length;++i){
-				const i1 = new Interval(vTours[i].startTime, vTours[i].endTime);
-			for(let j=i+1;j!=vTours.length;++j){
+	for (const [v, vTours] of byVehicle) {
+		for (let i = 0; i != vTours.length; ++i) {
+			const i1 = new Interval(vTours[i].startTime, vTours[i].endTime);
+			for (let j = i + 1; j != vTours.length; ++j) {
 				const i2 = new Interval(vTours[j].startTime, vTours[j].endTime);
-				if(i1.overlaps(i2)) {
-					console.log(`Found overlapping tours of same vehicle, ids: ${vTours[i].tourId} and ${vTours[j].tourId}`);
+				if (i1.overlaps(i2)) {
+					console.log(
+						`Found overlapping tours of same vehicle, ids: ${vTours[i].tourId} and ${vTours[j].tourId}`
+					);
 					fail = true;
 				}
 			}
@@ -342,9 +344,11 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			);
 			if (
 				expectedDuration !== null &&
-				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration + 60) > earlierEvent.nextLegDuration / 1000 &&
+				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration + 60) >
+					earlierEvent.nextLegDuration / 1000 &&
 				expectedDuration2 !== null &&
-				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration2 + 60) > earlierEvent.nextLegDuration / 1000
+				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration2 + 60) >
+					earlierEvent.nextLegDuration / 1000
 			) {
 				console.log(
 					`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \

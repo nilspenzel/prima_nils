@@ -3,14 +3,16 @@ import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
 
 export const batchOneToManyCarRouting = async (
 	one: Coordinates,
-	many: (Coordinates|undefined)[],
+	many: (Coordinates | undefined)[],
 	startFixed: boolean
 ) => {
 	const batches = [];
 	const batchSize = 100;
 	let currentPos = 0;
-	const definedIndices = many.map((m,i) => m !== undefined ? i : undefined).filter((m) => m!==undefined);
-	const definedMany = many.filter((m) => m!== undefined);
+	const definedIndices = many
+		.map((m, i) => (m !== undefined ? i : undefined))
+		.filter((m) => m !== undefined);
+	const definedMany = many.filter((m) => m !== undefined);
 	while (currentPos < many.length) {
 		batches.push(
 			oneToManyCarRouting(

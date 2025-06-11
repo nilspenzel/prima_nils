@@ -15,9 +15,9 @@ export type BookingParameters = {
 	capacities: Capacities;
 };
 
-const getCommonTour = (l1: Set<number>, l2: Set<number>) => {
+const getCommonTour = (l1: number[], l2: number[]) => {
 	for (const e of l1) {
-		if (l2.has(e)) {
+		if (l2.find((l) => l === e)) {
 			return e;
 		}
 	}
@@ -138,11 +138,13 @@ export async function bookingApi(
 							p.connection1!,
 							customer,
 							firstConnection.eventGroupUpdateList,
-							[...firstConnection.mergeTourList],
+							firstConnection.mergeTourList,
 							firstConnection.pickupEventGroup,
 							firstConnection.dropoffEventGroup,
 							firstConnection.neighbourIds,
 							firstConnection.directDurations,
+							firstConnection.prevLegDurations,
+							firstConnection.nextLegDurations,
 							kidsZeroToTwo,
 							kidsThreeToFour,
 							kidsFiveToSix,
@@ -160,11 +162,13 @@ export async function bookingApi(
 							p.connection2!,
 							customer,
 							secondConnection.eventGroupUpdateList,
-							[...secondConnection.mergeTourList],
+							secondConnection.mergeTourList,
 							secondConnection.pickupEventGroup,
 							secondConnection.dropoffEventGroup,
 							secondConnection.neighbourIds,
 							secondConnection.directDurations,
+							secondConnection.prevLegDurations,
+							secondConnection.nextLegDurations,
 							kidsZeroToTwo,
 							kidsThreeToFour,
 							kidsFiveToSix,

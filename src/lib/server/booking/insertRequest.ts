@@ -35,6 +35,8 @@ export async function insertRequest(
 	targetEventGroup: string,
 	neighbourIds: NeighbourIds,
 	direct: DirectDrivingDurations,
+	prevLegDurations: { event: number; duration: number | null }[],
+	nextLegDurations: { event: number; duration: number | null }[],
 	kidsZeroToTwo: number,
 	kidsThreeToFour: number,
 	kidsFiveToSix: number,
@@ -101,7 +103,9 @@ export async function insertRequest(
             ${JSON.stringify(approachDurations)}::jsonb,
             ROW(${direct.nextTour?.tourId ?? null}, ${direct.nextTour?.directDrivingDuration ?? null}),
             ROW(${direct.thisTour?.tourId ?? null}, ${direct.thisTour?.directDrivingDuration ?? null}),
-			${JSON.stringify(scheduledTimes.updates)}::jsonb
+			${JSON.stringify(scheduledTimes.updates)}::jsonb,
+			${JSON.stringify(prevLegDurations)}::jsonb,
+			${JSON.stringify(nextLegDurations)}::jsonb
        ) AS request`.execute(trx)
 	).rows[0].request;
 
