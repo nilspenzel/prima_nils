@@ -261,7 +261,7 @@ export async function bookRide(
 	);
 	let departure = Number.MAX_SAFE_INTEGER;
 	let arrival = -1;
-	if (mergeTourList.size !== 0) {
+	if (mergeTourList.length !== 0) {
 		for (const tour of mergeTourList) {
 			if (departure > tour.departure) {
 				departure = tour.departure;

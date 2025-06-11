@@ -7,22 +7,22 @@ export const getMergeTourList = (
 	dropoffHow: InsertHow,
 	pickupIdx: number | undefined,
 	dropoffIdx: number | undefined
-): Set<{ tourId: number; departure: number; arrival: number }> => {
+): Event[] => {
 	if (events.length == 0) {
-		return new Set<{ tourId: number; departure: number; arrival: number }>();
+		return [];
 	}
-	const tours = new Set<{ tourId: number; departure: number; arrival: number }>();
+	const tours = new Set<number>();
 	if (pickupHow == InsertHow.CONNECT) {
-		tours.add(events[pickupIdx! - 1]);
+		tours.add(events[pickupIdx! - 1].tourId);
 	}
 	if (dropoffHow == InsertHow.CONNECT) {
-		tours.add(events[dropoffIdx!]); // TODO testcase
+		tours.add(events[dropoffIdx!].tourId); // TODO testcase
 	}
 	events.slice(pickupIdx ?? 0, dropoffIdx ?? events.length - 1).forEach((ev) => {
-		tours.add(ev);
+		tours.add(ev.tourId);
 	});
 	if (tours.size == 1) {
-		return new Set<{ tourId: number; departure: number; arrival: number }>();
+		return [];
 	}
-	return tours;
+	return [...tours].map((t) => events.find((e) => t === e.tourId)).filter((e) => e !== undefined);
 };
