@@ -215,6 +215,9 @@ async function oneToMany(
 		}
 
 		const data = await response.json();
+		if(data?.length === 0) {
+			console.log("Error with oneToMany api call. ", {response})
+		}
 		return data[0].duration;
 	} catch (error) {
 		console.error(`Error with one-to-many API: ${error}`);
@@ -254,15 +257,15 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 				const earlierTourEnd = earlierTour.endTime;
 				const laterTourStart = laterTour.startTime;
 				if (0 < laterTourStart - earlierTourEnd && laterTourStart - earlierTourEnd <= 3 * HOUR) {
-					const expectedDuration = await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng);
-					const expectedDuration2 = await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true);
-					if (expectedDuration === null || expectedDuration2 === null) {
+					const expectedDuration = await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng) ?? null;
+					const expectedDuration2 = await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true) ?? null;
+					if (expectedDuration === null && expectedDuration2 === null && laterTour.directDuration !== null) {
 						console.log(
 							`Found unexpected null in direct Duration for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}`
 						);
 						fail = true;
 					}
-					if (!laterTour.directDuration && !expectedDuration && !expectedDuration2) {
+					if (laterTour.directDuration === null && expectedDuration !== null && expectedDuration2 !== null) {
 						console.log(
 							`direct duration is null unexpectedly for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}, expected ${expectedDuration} or ${expectedDuration2} seconds`
 						);
