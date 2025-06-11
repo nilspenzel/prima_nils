@@ -6,6 +6,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import { db, type Database } from '$lib/server/db';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { covers } from '$lib/server/db/covers';
+import { DAY } from '$lib/util/time';
 
 const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 	return jsonArrayFrom(
@@ -235,7 +236,7 @@ export const getBookingAvailability = async (
 	trx?: Transaction<Database>
 ) => {
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 3, MAX_TRAVEL * 3);
-	const twiceExpandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 6, MAX_TRAVEL * 6);
+	const twiceExpandedSearchInterval = searchInterval.expand(DAY, DAY);
 	console.log(
 		'getBookingAvailability params: ',
 		JSON.stringify(

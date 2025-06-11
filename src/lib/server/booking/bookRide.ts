@@ -142,27 +142,6 @@ export async function bookRide(
 		best.dropoffIdx,
 		best.dropoffCase.how
 	);
-	let prevEventInOtherTour =
-		best.pickupCase.how == InsertHow.NEW_TOUR
-			? events.findLast((e) => e.communicatedTime <= best.pickupTime)
-			: events.find((e) => e.id === best.prevPickupId);
-	if (prevEventInOtherTour === undefined) {
-		prevEventInOtherTour = vehicle.lastEventBefore;
-	}
-	let nextEventInOtherTour =
-		best.pickupCase.how == InsertHow.NEW_TOUR
-			? events.find((e) => e.communicatedTime >= best.dropoffTime)
-			: events.find((e) => best.nextDropoffId === e.id);
-	if (nextEventInOtherTour === undefined) {
-		nextEventInOtherTour = vehicle.firstEventAfter;
-	}
-	const directDurations = await getDirectDurations(
-		best,
-		prevEventInOtherTour,
-		nextEventInOtherTour,
-		c,
-		events[best.pickupIdx ?? -1]?.tourId
-	);
 	console.log('BE');
 	const prevPickupEvent = comesFromCompany(best.pickupCase)
 		? best.pickupIdx == undefined
@@ -277,9 +256,8 @@ export async function bookRide(
 			}
 		}
 	}
-	const tours = [...mergeTourList];
 	const filteredEvents = groupBy(
-		events.filter((e) => tours.some((t) => t.tourId === e.tourId)),
+		events.filter((e) => mergeTourList.some((t) => t.tourId === e.tourId)),
 		(e) => e.tourId,
 		(e) => e
 	);
@@ -332,6 +310,31 @@ export async function bookRide(
 		})
 	);
 
+	let prevEventInOtherTour =
+		best.pickupCase.how == InsertHow.NEW_TOUR
+			? events.findLast((e) => e.scheduledTimeStart <= best.pickupTime)
+			: events.find((e) => e.id === best.prevPickupId);
+	if (prevEventInOtherTour === undefined) {
+		prevEventInOtherTour = vehicle.lastEventBefore;
+	}
+	let nextEventInOtherTour =
+		best.pickupCase.how == InsertHow.NEW_TOUR
+			? events.find((e) => e.scheduledTimeEnd >= best.dropoffTime)
+			: events.find((e) => best.nextDropoffId === e.id);
+	if (nextEventInOtherTour === undefined) {
+		nextEventInOtherTour = vehicle.firstEventAfter;
+	}
+	const directDurations = await getDirectDurations(
+		best,
+		prevEventInOtherTour,
+		nextEventInOtherTour,
+		c,
+		events[best.pickupIdx ?? -1]?.tourId,
+		mergeTourList.length !== 0,
+		departure,
+		arrival,
+		vehicle
+	);
 	return {
 		best,
 		tour: (() => {
