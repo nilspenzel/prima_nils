@@ -303,7 +303,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 	console.log('Validating leg durations...');
 	const uncancelledTours = tours.filter((t) => !t.cancelled);
 	for (const tour of uncancelledTours) {
-		const events = [...tour.requests.flatMap((r) => r.events)].sort((a, b) => {
+		const events = [...tour.requests.flatMap((r) => r.events)].filter((e) => !e.cancelled).sort((a, b) => {
 			const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
 			if (startDiff !== 0) {
 				return startDiff;

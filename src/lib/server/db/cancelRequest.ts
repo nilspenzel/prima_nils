@@ -204,7 +204,6 @@ async function updateLegDurations(
 	) => {
 		if (prevIdx === -1) {
 			const routingResult = await oneToManyCarRouting(company, [events[nextIdx]], false, HOUR * 10);
-			console.log({ routingResult });
 			if (
 				routingResult === undefined ||
 				routingResult.length === 0 ||
