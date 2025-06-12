@@ -216,20 +216,20 @@ async function main() {
 				break;
 		}
 		counter++;
-			const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '_');
-			const FILE_NAME = `full_backup_${timestamp}${counter}.sql`;
-			const BACKUP_FILE_PATH = path.join(BACKUP_DIR, FILE_NAME);
-			const command = `PGPASSWORD=${dbPassword} pg_dump --dbname=${dbUrl} --username=${dbUser} --no-password --format=plain --file="${BACKUP_FILE_PATH}"`;
-			exec(command, (error, _, stderr) => {
-				if (error) {
-					console.error(`Error during backup: ${error.message}`);
-					return;
-				}
-				if (stderr) {
-					console.warn(`Backup stderr: ${stderr}`);
-				}
-				console.log(`Full backup successful! Backup saved to ${BACKUP_FILE_PATH}`);
-			});
+		const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '_');
+		const FILE_NAME = `full_backup_${timestamp}${counter}.sql`;
+		const BACKUP_FILE_PATH = path.join(BACKUP_DIR, FILE_NAME);
+		const command = `PGPASSWORD=${dbPassword} pg_dump --dbname=${dbUrl} --username=${dbUser} --no-password --format=plain --file="${BACKUP_FILE_PATH}"`;
+		exec(command, (error, _, stderr) => {
+			if (error) {
+				console.error(`Error during backup: ${error.message}`);
+				return;
+			}
+			if (stderr) {
+				console.warn(`Backup stderr: ${stderr}`);
+			}
+			console.log(`Full backup successful! Backup saved to ${BACKUP_FILE_PATH}`);
+		});
 		console.log('');
 		if (healthChecks && (await healthCheck())) {
 			process.exit(0);
