@@ -310,6 +310,18 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			}
 			return a.scheduledTimeEnd - b.scheduledTimeEnd;
 		});
+		const expected1: Promise<number | null>[] = [];
+		const expected2: Promise<number | null>[] = [];
+		for (let i = 0; i < events.length - 1; i++) {
+			const earlierEvent = events[i];
+			const laterEvent = events[i + 1];
+			expected1.push(oneToMany(earlierEvent.lat, earlierEvent.lng, laterEvent.lat, laterEvent.lng));
+			expected2.push(
+				oneToMany(laterEvent.lat, laterEvent.lng, earlierEvent.lat, earlierEvent.lng, true)
+			);
+		}
+		const expectedDurations1 = await Promise.all(expected1);
+		const expectedDurations2 = await Promise.all(expected2);
 		for (let i = 0; i < events.length - 1; i++) {
 			const earlierEvent = events[i];
 			const laterEvent = events[i + 1];
@@ -317,19 +329,8 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				console.log(`Leg duration mismatch between events ${earlierEvent.id} and ${laterEvent.id}`);
 				fail = true;
 			}
-			const expectedDuration = await oneToMany(
-				earlierEvent.lat,
-				earlierEvent.lng,
-				laterEvent.lat,
-				laterEvent.lng
-			);
-			const expectedDuration2 = await oneToMany(
-				laterEvent.lat,
-				laterEvent.lng,
-				earlierEvent.lat,
-				earlierEvent.lng,
-				true
-			);
+			const expectedDuration = expectedDurations1[i];
+			const expectedDuration2 = expectedDurations2[i];
 			if (
 				expectedDuration !== null &&
 				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration + 60) >

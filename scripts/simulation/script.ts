@@ -36,9 +36,9 @@ type ActionT = {
 };
 
 const actionProbabilities: ActionT[] = [
-	{ action: Action.BOOKING, probability: 1, text: 'booking' },
+	{ action: Action.BOOKING, probability: 0.9, text: 'booking' },
 	{ action: Action.CANCEL_REQUEST, probability: 0, text: 'cancel request' },
-	{ action: Action.CANCEL_TOUR, probability: 0, text: 'cancel tour' },
+	{ action: Action.CANCEL_TOUR, probability: 0.1, text: 'cancel tour' },
 	{ action: Action.MOVE_TOUR, probability: 0, text: 'move tour' },
 	{ action: Action.ADD_AVAILABILITY, probability: 0, text: 'add availability' },
 	{ action: Action.REMOVE_AVAILBILITY, probability: 0, text: 'remove availability' },

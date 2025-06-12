@@ -105,3 +105,6 @@ export async function up(db) {
         $$ LANGUAGE plpgsql;
         `.execute(db);
 }
+
+export async function down() {
+}

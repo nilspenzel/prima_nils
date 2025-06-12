@@ -229,7 +229,6 @@ export async function bookRide(
 	if (firstEvents.length !== lastEvents.length) {
 		throw new Error();
 	}
-
 	const prevLegRouting = firstEvents.map((e, i) => oneToManyCarRouting(lastEvents[i], [e], false));
 	const prevLegRoutingResults = await Promise.all(prevLegRouting);
 	const prevLegDurations: { event: number; duration: number | null }[] = [];
@@ -240,7 +239,7 @@ export async function bookRide(
 		})
 	);
 
-	const nextLegRouting = lastEvents.map((e, i) => oneToManyCarRouting(e, [lastEvents[i]], false));
+	const nextLegRouting = firstEvents.map((e, i) => oneToManyCarRouting(e, [lastEvents[i]], false));
 	const nextLegRoutingResults = await Promise.all(nextLegRouting);
 	const nextLegDurations: { event: number; duration: number | null }[] = [];
 	nextLegRoutingResults.forEach((rr, i) =>
