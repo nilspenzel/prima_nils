@@ -3,7 +3,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import type { Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
-import { MAX_TRAVEL, PASSENGER_CHANGE_DURATION, SCHEDULED_TIME_BUFFER } from '$lib/constants';
+import { MAX_TRAVEL } from '$lib/constants';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
@@ -18,8 +18,8 @@ import type { Insertion } from './insertion';
 import { comesFromCompany, returnsToCompany } from './durations';
 import { groupBy } from '$lib/util/groupBy';
 import type { Event } from '$lib/server/booking/getBookingAvailability';
-import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 import { getScheduledTimes, type ScheduledTimes } from './getScheduledTimes';
+import { getLegDurationUpdates } from './getLegDurationUpdates';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -229,25 +229,7 @@ export async function bookRide(
 	if (firstEvents.length !== lastEvents.length) {
 		throw new Error();
 	}
-	const prevLegRouting = firstEvents.map((e, i) => oneToManyCarRouting(lastEvents[i], [e], false));
-	const prevLegRoutingResults = await Promise.all(prevLegRouting);
-	const prevLegDurations: { event: number; duration: number | null }[] = [];
-	prevLegRoutingResults.forEach((rr, i) =>
-		prevLegDurations.push({
-			event: firstEvents[i].id,
-			duration: rr[0] ? rr[0] + PASSENGER_CHANGE_DURATION : null
-		})
-	);
-
-	const nextLegRouting = firstEvents.map((e, i) => oneToManyCarRouting(e, [lastEvents[i]], false));
-	const nextLegRoutingResults = await Promise.all(nextLegRouting);
-	const nextLegDurations: { event: number; duration: number | null }[] = [];
-	nextLegRoutingResults.forEach((rr, i) =>
-		nextLegDurations.push({
-			event: lastEvents[i].id,
-			duration: rr[0] ? rr[0] + PASSENGER_CHANGE_DURATION : null
-		})
-	);
+	const {prevLegDurations, nextLegDurations} = await getLegDurationUpdates(firstEvents, lastEvents);
 
 	let prevEventInOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR

@@ -181,7 +181,7 @@ function validateEventsAreInsideTours(tours: ToursWithRequests): boolean {
 	console.log('Validating that all events of a tour happen inside of departure-arrival...');
 	for (const tour of tours) {
 		const tourInterval = new Interval(tour.startTime, tour.endTime);
-		for (const event of tour.requests.flatMap((r) => r.events)) {
+		for (const event of tour.requests.flatMap((r) => r.events.filter((e) => !e.cancelled))) {
 			if (!tourInterval.overlaps(new Interval(event.scheduledTimeStart, event.scheduledTimeEnd))) {
 				console.log(`event with id: ${event.id} is outside of its' tour.`);
 				fail = true;
@@ -242,7 +242,7 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 				.flatMap((r) => r.events.filter((e) => !e.cancelled))
 				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 			const laterEvents = laterTour.requests
-				.flatMap((r) => r.events)
+				.flatMap((r) => r.events.filter((e) => !e.cancelled))
 				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 			if (laterTour.vehicleId === earlierTour.vehicleId) {
 				if (earlierTour.requests.length === 0) {
@@ -326,7 +326,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			const earlierEvent = events[i];
 			const laterEvent = events[i + 1];
 			if (earlierEvent.nextLegDuration !== laterEvent.prevLegDuration) {
-				console.log(`Leg duration mismatch between events ${earlierEvent.id} and ${laterEvent.id}`);
+				console.log(`Leg duration mismatch between events ${earlierEvent.id} and ${laterEvent.id}, durations: ${earlierEvent.nextLegDuration} and ${laterEvent.prevLegDuration} routing results: ${expectedDurations1[i]} and ${expectedDurations2[i]}`);
 				fail = true;
 			}
 			const expectedDuration = expectedDurations1[i];
