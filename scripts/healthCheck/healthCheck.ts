@@ -239,7 +239,7 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 			const earlierTour = companyTours[tourIdx - 1];
 			const laterTour = companyTours[tourIdx];
 			const earlierEvents = earlierTour.requests
-				.flatMap((r) => r.events)
+				.flatMap((r) => r.events.filter((e) => !e.cancelled))
 				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 			const laterEvents = laterTour.requests
 				.flatMap((r) => r.events)
