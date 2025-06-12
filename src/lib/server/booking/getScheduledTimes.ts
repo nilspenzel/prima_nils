@@ -29,7 +29,6 @@ export function getScheduledTimes(
 		newDropoffEndTime: communicatedDropoff,
 		updates: []
 	};
-	console.log({ prevPickupEvent }, { prevDropoffEvent }, { nextDropoffEvent }, { nextPickupEvent });
 	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupInterval)) {
 		communicatedPickup =
 			(Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +

@@ -3,7 +3,7 @@ import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 import type { Insertion } from './insertion';
 import { type Event, type VehicleWithInterval } from './getBookingAvailability';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
-import { printInsertionType } from './insertionTypes';
+import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 
 export type DirectDrivingDurations = {
 	thisTour?: {
@@ -51,11 +51,16 @@ export const getDirectDurations = async (
 	}
 	if (doesConnectTours) {
 		const lastEventBeforeDeparture =
-			vehicle.events.findLast((e) => e.scheduledTimeStart <= departure) ?? vehicle.lastEventBefore;
-		const firstEventAfterDeparture = vehicle.events.find((e) => e.scheduledTimeStart > departure);
+			vehicle.events.findLast((e) => getScheduledEventTime(e) <= departure) ??
+			vehicle.lastEventBefore;
+		const firstEventAfterDeparture = vehicle.events.find(
+			(e) => getScheduledEventTime(e) > departure
+		);
 		const firstEventAfterArrival =
-			vehicle.events.find((e) => e.scheduledTimeEnd >= arrival) ?? vehicle.firstEventAfter;
-		const lastEventBeforeArrival = vehicle.events.findLast((e) => e.scheduledTimeEnd < arrival);
+			vehicle.events.find((e) => getScheduledEventTime(e) >= arrival) ?? vehicle.firstEventAfter;
+		const lastEventBeforeArrival = vehicle.events.findLast(
+			(e) => getScheduledEventTime(e) < arrival
+		);
 		if (best.pickupCase.how !== InsertHow.PREPEND && lastEventBeforeDeparture !== undefined) {
 			direct.thisTour = {
 				directDrivingDuration:
