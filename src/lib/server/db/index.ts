@@ -108,6 +108,34 @@ export interface Database {
 		company: number;
 		fcmToken: string;
 	};
+	bookingApiParameters: {
+		id: Generated<number>;
+		start_lat1: number | null;
+		start_lng1: number | null;
+		target_lat1: number | null;
+		target_lng1: number | null;
+		start_time1: number | null;
+		target_time1: number | null;
+		start_address1: string | null;
+		target_address1: string | null;
+		start_fixed1: boolean | null;
+		start_lat2: number | null;
+		start_lng2: number | null;
+		target_lat2: number | null;
+		target_lng2: number | null;
+		start_time2: number | null;
+		target_time2: number | null;
+		start_address2: string | null;
+		target_address2: string | null;
+		start_fixed2: boolean | null;
+		kidsZeroToTwo: number;
+		kidsThreeToFour: number;
+		kidsFiveToSix: number;
+		passengers: number;
+		wheelchairs: number;
+		bikes: number;
+		luggage: number;
+	};
 }
 
 export const pool = new pg.Pool({ connectionString: env.DATABASE_URL });

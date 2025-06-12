@@ -84,6 +84,14 @@ export async function bookingApi(
 	let communicatedDropoff2: number | undefined = undefined;
 	let message: string | undefined = undefined;
 	let success = false;
+	const bookingApiParameters = {
+		p,
+		customer,
+		kidsZeroToTwo,
+		isLocalhost,
+		kidsThreeToFour,
+		kidsFiveToSix
+	};
 	await retry(() =>
 		db
 			.transaction()
@@ -149,6 +157,7 @@ export async function bookingApi(
 							kidsThreeToFour,
 							kidsFiveToSix,
 							firstConnection.scheduledTimes,
+							bookingApiParameters,
 							trx
 						)) ?? null;
 					communicatedPickup1 = firstConnection.best.pickupTime;
@@ -173,6 +182,7 @@ export async function bookingApi(
 							kidsThreeToFour,
 							kidsFiveToSix,
 							secondConnection.scheduledTimes,
+							bookingApiParameters,
 							trx
 						)) ?? null;
 					communicatedPickup2 = secondConnection.best.pickupTime;

@@ -12,6 +12,16 @@ import { exec } from 'child_process';
 import path from 'path';
 import { config } from 'dotenv';
 import type { ScheduledTimes } from './getScheduledTimes';
+import type { BookingParameters } from './bookingApi';
+
+export type BookingApiParameters = {
+	p: BookingParameters;
+	customer: number;
+	isLocalhost: boolean;
+	kidsZeroToTwo: number;
+	kidsThreeToFour: number;
+	kidsFiveToSix: number;
+};
 
 config();
 
@@ -42,6 +52,7 @@ export async function insertRequest(
 	kidsThreeToFour: number,
 	kidsFiveToSix: number,
 	scheduledTimes: ScheduledTimes,
+	bookingApiParameters: BookingApiParameters,
 	trx: Transaction<Database>
 ): Promise<number> {
 	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
@@ -109,6 +120,39 @@ export async function insertRequest(
 			${JSON.stringify(nextLegDurations)}::jsonb
        ) AS request`.execute(trx)
 	).rows[0].request;
+
+	if (bookingApiParameters.isLocalhost && bookingApiParameters.kidsFiveToSix === -5) {
+		trx
+			.insertInto('bookingApiParameters')
+			.values({
+				start_lat1: bookingApiParameters.p.connection1?.start.lat ?? null,
+				start_lng1: bookingApiParameters.p.connection1?.start.lat ?? null,
+				target_lat1: bookingApiParameters.p.connection1?.target.lat,
+				target_lng1: bookingApiParameters.p.connection1?.target.lng,
+				start_time1: bookingApiParameters.p.connection1?.startTime,
+				target_time1: bookingApiParameters.p.connection1?.targetTime,
+				start_address1: bookingApiParameters.p.connection1?.start.address,
+				target_address1: bookingApiParameters.p.connection1?.target.address,
+				start_fixed1: bookingApiParameters.p.connection1?.startFixed,
+				start_lat2: bookingApiParameters.p.connection2?.start.lat,
+				start_lng2: bookingApiParameters.p.connection2?.start.lng,
+				target_lat2: bookingApiParameters.p.connection2?.target.lat,
+				target_lng2: bookingApiParameters.p.connection2?.target.lng,
+				start_time2: bookingApiParameters.p.connection2?.startTime,
+				target_time2: bookingApiParameters.p.connection2?.targetTime,
+				start_address2: bookingApiParameters.p.connection2?.start.address,
+				target_address2: bookingApiParameters.p.connection2?.target.address,
+				start_fixed2: bookingApiParameters.p.connection2?.startFixed,
+				kidsZeroToTwo: bookingApiParameters.kidsZeroToTwo,
+				kidsThreeToFour: bookingApiParameters.kidsThreeToFour,
+				kidsFiveToSix: bookingApiParameters.kidsFiveToSix,
+				passengers: bookingApiParameters.p.capacities.passengers,
+				wheelchairs: bookingApiParameters.p.capacities.wheelchairs,
+				bikes: bookingApiParameters.p.capacities.bikes,
+				luggage: bookingApiParameters.p.capacities.luggage
+			})
+			.execute();
+	}
 
 	const notificationParams = await trx
 		.selectFrom('tour')
