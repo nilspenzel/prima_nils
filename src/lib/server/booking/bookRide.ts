@@ -19,6 +19,7 @@ import { comesFromCompany, returnsToCompany } from './durations';
 import { groupBy } from '$lib/util/groupBy';
 import type { Event } from '$lib/server/booking/getBookingAvailability';
 import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
+import { getScheduledTimes, type ScheduledTimes } from './getScheduledTimes';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -170,67 +171,6 @@ export async function bookRide(
 			: events[best.dropoffIdx]
 		: events.find((e) => e.id === best.nextDropoffId);
 	increment();
-	let communicatedPickup = best.pickupTime - SCHEDULED_TIME_BUFFER;
-	let communicatedDropoff = best.dropoffTime + SCHEDULED_TIME_BUFFER;
-	const dropoffInterval = new Interval(best.dropoffTime, communicatedDropoff);
-	const pickupInterval = new Interval(communicatedPickup, best.pickupTime);
-	const scheduledTimes: ScheduledTimes = {
-		newPickupStartTime: communicatedPickup,
-		newDropoffEndTime: communicatedDropoff,
-		updates: []
-	};
-	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupInterval)) {
-		communicatedPickup =
-			(Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +
-				Math.min(best.pickupTime, prevPickupEvent.scheduledTimeEnd)) /
-			2;
-		scheduledTimes.newPickupStartTime = Math.ceil(communicatedPickup);
-		scheduledTimes.updates.push({
-			event_id: prevPickupEvent.id,
-			start: false,
-			time: Math.floor(communicatedPickup)
-		});
-	}
-	if (nextPickupEvent && nextPickupEvent.time.overlaps(pickupInterval)) {
-		scheduledTimes.updates.push({
-			event_id: nextPickupEvent.id,
-			start: true,
-			time: best.pickupTime
-		});
-	}
-	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffInterval)) {
-		communicatedDropoff =
-			(Math.max(best.dropoffTime, nextDropoffEvent.scheduledTimeStart) +
-				Math.min(communicatedDropoff, nextDropoffEvent.scheduledTimeEnd)) /
-			2;
-		scheduledTimes.newDropoffEndTime = Math.floor(communicatedDropoff);
-		scheduledTimes.updates.push({
-			event_id: nextDropoffEvent.id,
-			start: true,
-			time: Math.ceil(communicatedDropoff)
-		});
-	}
-	if (prevDropoffEvent && prevDropoffEvent.time.overlaps(dropoffInterval)) {
-		scheduledTimes.updates.push({
-			event_id: prevDropoffEvent.id,
-			start: false,
-			time: best.dropoffTime
-		});
-	}
-	if (nextPickupEvent && nextPickupEvent.scheduledTimeStart < best.pickupTime) {
-		scheduledTimes.updates.push({
-			time: best.pickupTime,
-			start: true,
-			event_id: nextPickupEvent.id
-		});
-	}
-	if (prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > best.dropoffTime) {
-		scheduledTimes.updates.push({
-			time: best.dropoffTime,
-			start: false,
-			event_id: prevDropoffEvent.id
-		});
-	}
 	const mergeTourList = getMergeTourList(
 		events,
 		best.pickupCase.how,
@@ -362,19 +302,9 @@ export async function bookRide(
 		directDurations,
 		prevLegDurations,
 		nextLegDurations,
-		scheduledTimes
+		scheduledTimes: getScheduledTimes(best.pickupTime, best.dropoffTime,prevPickupEvent,nextPickupEvent,nextDropoffEvent,prevDropoffEvent)
 	};
 }
-
-export type ScheduledTimes = {
-	updates: {
-		event_id: number;
-		time: number;
-		start: boolean;
-	}[];
-	newPickupStartTime: number;
-	newDropoffEndTime: number;
-};
 
 export type BookRideResponse = {
 	best: Insertion;

@@ -4,6 +4,7 @@ import { groupBy } from '../../src/lib/util/groupBy';
 import { Interval } from '../../src/lib/util/interval';
 import { HOUR } from '../../src/lib/util/time';
 import { isSamePlace } from '../../src/lib/server/booking/isSamePlace';
+import { getScheduledEventTime } from '../../src/lib/util/getScheduledEventTime';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -365,8 +366,8 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				);
 				fail = true;
 			}
-			const earlierEventStart = earlierEvent.scheduledTimeStart;
-			const laterEventEnd = laterEvent.scheduledTimeEnd;
+			const earlierEventStart = getScheduledEventTime(earlierEvent.scheduledTimeStart);
+			const laterEventEnd = getScheduledEventTime(laterEvent.scheduledTimeEnd);
 			const timeDiff = isSamePlace(earlierEvent, laterEvent) ? 0 : (laterEventEnd - earlierEventStart) / 1000;
 			if (
 				expectedDuration !== null &&

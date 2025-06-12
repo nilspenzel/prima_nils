@@ -1,4 +1,4 @@
-import type { ExpectedConnection, ScheduledTimes } from '$lib/server/booking/bookRide';
+import type { ExpectedConnection } from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import type { DirectDrivingDurations } from '$lib/server/booking/getDirectDrivingDurations';
 import type { EventGroupUpdate } from '$lib/server/booking/getEventGroupInfo';
@@ -11,6 +11,7 @@ import { env } from '$env/dynamic/public';
 import { exec } from 'child_process';
 import path from 'path';
 import { config } from 'dotenv';
+import type { ScheduledTimes } from './getScheduledTimes';
 
 config();
 
