@@ -367,7 +367,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			}
 			const earlierEventStart = earlierEvent.scheduledTimeStart;
 			const laterEventEnd = laterEvent.scheduledTimeEnd;
-			const timeDiff = (laterEventEnd - earlierEventStart) / 1000;
+			const timeDiff = isSamePlace(earlierEvent, laterEvent) ? 0 : (laterEventEnd - earlierEventStart) / 1000;
 			if (
 				expectedDuration !== null &&
 				timeDiff < (isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration + 60) &&
