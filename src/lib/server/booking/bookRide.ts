@@ -302,7 +302,14 @@ export async function bookRide(
 		directDurations,
 		prevLegDurations,
 		nextLegDurations,
-		scheduledTimes: getScheduledTimes(best.pickupTime, best.dropoffTime,prevPickupEvent,nextPickupEvent,nextDropoffEvent,prevDropoffEvent)
+		scheduledTimes: getScheduledTimes(
+			best.pickupTime,
+			best.dropoffTime,
+			prevPickupEvent,
+			nextPickupEvent,
+			nextDropoffEvent,
+			prevDropoffEvent
+		)
 	};
 }
 

@@ -49,23 +49,29 @@ export const getDirectDurations = async (
 			tourId: dropOffSuccEvent.tourId
 		};
 	}
-	if(doesConnectTours) {
-		const lastEventBeforeDeparture = vehicle.events.findLast((e) => e.scheduledTimeStart <= departure) ?? vehicle.lastEventBefore;
+	if (doesConnectTours) {
+		const lastEventBeforeDeparture =
+			vehicle.events.findLast((e) => e.scheduledTimeStart <= departure) ?? vehicle.lastEventBefore;
 		const firstEventAfterDeparture = vehicle.events.find((e) => e.scheduledTimeStart > departure);
-		const firstEventAfterArrival = vehicle.events.find((e) => e.scheduledTimeEnd >= arrival) ?? vehicle.firstEventAfter;
+		const firstEventAfterArrival =
+			vehicle.events.find((e) => e.scheduledTimeEnd >= arrival) ?? vehicle.firstEventAfter;
 		const lastEventBeforeArrival = vehicle.events.findLast((e) => e.scheduledTimeEnd < arrival);
-		if(best.pickupCase.how !== InsertHow.PREPEND && lastEventBeforeDeparture !== undefined) {
+		if (best.pickupCase.how !== InsertHow.PREPEND && lastEventBeforeDeparture !== undefined) {
 			direct.thisTour = {
 				directDrivingDuration:
-					(await oneToManyCarRouting(lastEventBeforeDeparture, [firstEventAfterDeparture!], false))[0] ?? null,
-					tourId: tourIdPickup ?? null
+					(
+						await oneToManyCarRouting(lastEventBeforeDeparture, [firstEventAfterDeparture!], false)
+					)[0] ?? null,
+				tourId: tourIdPickup ?? null
 			};
 		}
-		if(best.dropoffCase.how !== InsertHow.APPEND && firstEventAfterArrival !== undefined) {
+		if (best.dropoffCase.how !== InsertHow.APPEND && firstEventAfterArrival !== undefined) {
 			direct.nextTour = {
 				directDrivingDuration:
-					(await oneToManyCarRouting(lastEventBeforeArrival!, [firstEventAfterArrival], false))[0] ?? null,
-					tourId: firstEventAfterArrival.tourId ?? null
+					(
+						await oneToManyCarRouting(lastEventBeforeArrival!, [firstEventAfterArrival], false)
+					)[0] ?? null,
+				tourId: firstEventAfterArrival.tourId ?? null
 			};
 		}
 	}

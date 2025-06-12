@@ -216,8 +216,8 @@ async function oneToMany(
 		}
 
 		const data = await response.json();
-		if(data?.length === 0) {
-			console.log("Error with oneToMany api call. ", {response})
+		if (data?.length === 0) {
+			console.log('Error with oneToMany api call. ', { response });
 		}
 		return data[0].duration;
 	} catch (error) {
@@ -258,15 +258,23 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 				const earlierTourEnd = earlierTour.endTime;
 				const laterTourStart = laterTour.startTime;
 				if (0 < laterTourStart - earlierTourEnd && laterTourStart - earlierTourEnd <= 3 * HOUR) {
-					const expectedDuration = await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng) ?? null;
-					const expectedDuration2 = await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true) ?? null;
-					if (expectedDuration === null && expectedDuration2 === null && laterTour.directDuration !== null) {
+					const expectedDuration = (await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng)) ?? null;
+					const expectedDuration2 = (await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true)) ?? null;
+					if (
+						expectedDuration === null &&
+						expectedDuration2 === null &&
+						laterTour.directDuration !== null
+					) {
 						console.log(
 							`Found unexpected null in direct Duration for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}`
 						);
 						fail = true;
 					}
-					if (laterTour.directDuration === null && expectedDuration !== null && expectedDuration2 !== null) {
+					if (
+						laterTour.directDuration === null &&
+						expectedDuration !== null &&
+						expectedDuration2 !== null
+					) {
 						console.log(
 							`direct duration is null unexpectedly for earlier tour: ${earlierTour.tourId} and later tour: ${laterTour.tourId}, expected ${expectedDuration} or ${expectedDuration2} seconds`
 						);
@@ -368,7 +376,9 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			}
 			const earlierEventStart = getScheduledEventTime(earlierEvent.scheduledTimeStart);
 			const laterEventEnd = getScheduledEventTime(laterEvent.scheduledTimeEnd);
-			const timeDiff = isSamePlace(earlierEvent, laterEvent) ? 0 : (laterEventEnd - earlierEventStart) / 1000;
+			const timeDiff = isSamePlace(earlierEvent, laterEvent)
+				? 0
+				: (laterEventEnd - earlierEventStart) / 1000;
 			if (
 				expectedDuration !== null &&
 				timeDiff < (isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration + 60) &&

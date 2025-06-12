@@ -1,18 +1,25 @@
-import { SCHEDULED_TIME_BUFFER } from "$lib/constants";
-import { Interval } from "$lib/util/interval";
+import { SCHEDULED_TIME_BUFFER } from '$lib/constants';
+import { Interval } from '$lib/util/interval';
 import type { Event } from '$lib/server/booking/getBookingAvailability';
 
 export type ScheduledTimes = {
-    updates: {
-        event_id: number;
-        time: number;
-        start: boolean;
-    }[];
-    newPickupStartTime: number;
-    newDropoffEndTime: number;
+	updates: {
+		event_id: number;
+		time: number;
+		start: boolean;
+	}[];
+	newPickupStartTime: number;
+	newDropoffEndTime: number;
 };
 
-export function getScheduledTimes(pickupTime: number, dropoffTime: number, prevPickupEvent: undefined | (Event & {time: Interval}), nextPickupEvent: undefined | (Event & {time: Interval}), nextDropoffEvent: undefined|(Event & {time: Interval}), prevDropoffEvent: undefined|(Event & {time: Interval})) {
+export function getScheduledTimes(
+	pickupTime: number,
+	dropoffTime: number,
+	prevPickupEvent: undefined | (Event & { time: Interval }),
+	nextPickupEvent: undefined | (Event & { time: Interval }),
+	nextDropoffEvent: undefined | (Event & { time: Interval }),
+	prevDropoffEvent: undefined | (Event & { time: Interval })
+) {
 	let communicatedPickup = pickupTime - SCHEDULED_TIME_BUFFER;
 	let communicatedDropoff = dropoffTime + SCHEDULED_TIME_BUFFER;
 	const dropoffInterval = new Interval(dropoffTime, communicatedDropoff);
@@ -22,7 +29,7 @@ export function getScheduledTimes(pickupTime: number, dropoffTime: number, prevP
 		newDropoffEndTime: communicatedDropoff,
 		updates: []
 	};
-    console.log({prevPickupEvent},{prevDropoffEvent},{nextDropoffEvent},{nextPickupEvent})
+	console.log({ prevPickupEvent }, { prevDropoffEvent }, { nextDropoffEvent }, { nextPickupEvent });
 	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupInterval)) {
 		communicatedPickup =
 			(Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +
