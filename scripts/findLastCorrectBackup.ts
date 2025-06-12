@@ -60,9 +60,9 @@ const restoreDatabase = async () => {
 			await restoreFullBackup(backupFile);
 			if (await healthCheck()) {
 				await restoreFullBackup(fullBackupFiles[middle - 1]);
-				if (await healthCheck()) {
+				if (!await healthCheck()) {
 					searchedIdx = middle - 1;
-		            console.log({ searchedIdx });
+		            console.log({ searchedIdx }, {file:fullBackupFiles[middle-1]});
                     return;
 				} else {
 					maxBuFileIdx = middle;
@@ -72,7 +72,7 @@ const restoreDatabase = async () => {
 				await restoreFullBackup(fullBackupFiles[middle + 1]);
 				if (await healthCheck()) {
 					searchedIdx = middle;
-		            console.log({ searchedIdx });
+		            console.log({ searchedIdx },{file:fullBackupFiles[middle+1]});
                     return;
 				} else {
 					minBuFileIdx = middle + 1;
