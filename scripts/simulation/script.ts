@@ -48,10 +48,10 @@ type ActionT = {
 };
 
 const actionProbabilities: ActionT[] = [
-	{ action: Action.BOOKING, probability: 0.9, text: 'booking' },
-	{ action: Action.CANCEL_REQUEST, probability: 0, text: 'cancel request' },
-	{ action: Action.CANCEL_TOUR, probability: 0.1, text: 'cancel tour' },
-	{ action: Action.MOVE_TOUR, probability: 0, text: 'move tour' },
+	{ action: Action.BOOKING, probability: 0.8, text: 'booking' },
+	{ action: Action.CANCEL_REQUEST, probability: 0.07, text: 'cancel request' },
+	{ action: Action.CANCEL_TOUR, probability: 0.03, text: 'cancel tour' },
+	{ action: Action.MOVE_TOUR, probability: 0.1, text: 'move tour' },
 	{ action: Action.ADD_AVAILABILITY, probability: 0, text: 'add availability' },
 	{ action: Action.REMOVE_AVAILBILITY, probability: 0, text: 'remove availability' },
 	{ action: Action.ADD_VEHICLE, probability: 0, text: 'add vehicle' }
@@ -236,7 +236,7 @@ async function main() {
 	}
 
 	const probabilitySum = actionProbabilities.reduce((sum, curr) => sum + curr.probability, 0);
-	if (probabilitySum !== 1) {
+	if (Math.abs(probabilitySum - 1) > 0.00000001) {
 		console.log('The probabilities in actionProbabilies must add to 1 exactly. ', {
 			probabilitySum
 		});
