@@ -27,8 +27,7 @@ const executeCommand = (command: string): Promise<void> => {
 };
 
 const restoreFullBackup = async (fullBackupFile: string) => {
-    const dbUrlWithoutDb = DATABASE_URL?.replace(/\/[^/]+$/, '');
-    clearDatabase();
+    await clearDatabase();
 	const fullBackupPath = path.join(BACKUP_FOLDER, fullBackupFile);
 	const restoreCommand = `PGPASSWORD=${PGPASSWORD} psql ${DATABASE_URL} -f ${fullBackupPath}`;
 	console.log(`Restoring full backup from ${fullBackupFile}...`);
