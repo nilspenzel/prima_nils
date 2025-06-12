@@ -121,28 +121,28 @@ export async function insertRequest(
        ) AS request`.execute(trx)
 	).rows[0].request;
 
-	if (bookingApiParameters.isLocalhost && bookingApiParameters.kidsFiveToSix === -5) {
+	if (bookingApiParameters.isLocalhost) {
 		trx
 			.insertInto('bookingApiParameters')
 			.values({
-				start_lat1: bookingApiParameters.p.connection1?.start.lat ?? null,
-				start_lng1: bookingApiParameters.p.connection1?.start.lat ?? null,
-				target_lat1: bookingApiParameters.p.connection1?.target.lat,
-				target_lng1: bookingApiParameters.p.connection1?.target.lng,
-				start_time1: bookingApiParameters.p.connection1?.startTime,
-				target_time1: bookingApiParameters.p.connection1?.targetTime,
-				start_address1: bookingApiParameters.p.connection1?.start.address,
-				target_address1: bookingApiParameters.p.connection1?.target.address,
-				start_fixed1: bookingApiParameters.p.connection1?.startFixed,
-				start_lat2: bookingApiParameters.p.connection2?.start.lat,
-				start_lng2: bookingApiParameters.p.connection2?.start.lng,
-				target_lat2: bookingApiParameters.p.connection2?.target.lat,
-				target_lng2: bookingApiParameters.p.connection2?.target.lng,
-				start_time2: bookingApiParameters.p.connection2?.startTime,
-				target_time2: bookingApiParameters.p.connection2?.targetTime,
-				start_address2: bookingApiParameters.p.connection2?.start.address,
-				target_address2: bookingApiParameters.p.connection2?.target.address,
-				start_fixed2: bookingApiParameters.p.connection2?.startFixed,
+				startLat1: bookingApiParameters.p.connection1?.start.lat ?? null,
+				startLng1: bookingApiParameters.p.connection1?.start.lat ?? null,
+				targetLat1: bookingApiParameters.p.connection1?.target.lat,
+				targetLng1: bookingApiParameters.p.connection1?.target.lng,
+				startTime1: bookingApiParameters.p.connection1?.startTime,
+				targetTime1: bookingApiParameters.p.connection1?.targetTime,
+				startAddress1: bookingApiParameters.p.connection1?.start.address,
+				targetAddress1: bookingApiParameters.p.connection1?.target.address,
+				startFixed1: bookingApiParameters.p.connection1?.startFixed,
+				startLat2: bookingApiParameters.p.connection2?.start.lat,
+				startLng2: bookingApiParameters.p.connection2?.start.lng,
+				targetLat2: bookingApiParameters.p.connection2?.target.lat,
+				targetLng2: bookingApiParameters.p.connection2?.target.lng,
+				startTime2: bookingApiParameters.p.connection2?.startTime,
+				targetTime2: bookingApiParameters.p.connection2?.targetTime,
+				startAddress2: bookingApiParameters.p.connection2?.start.address,
+				targetAddress2: bookingApiParameters.p.connection2?.target.address,
+				startFixed2: bookingApiParameters.p.connection2?.startFixed,
 				kidsZeroToTwo: bookingApiParameters.kidsZeroToTwo,
 				kidsThreeToFour: bookingApiParameters.kidsThreeToFour,
 				kidsFiveToSix: bookingApiParameters.kidsFiveToSix,
