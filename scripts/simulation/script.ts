@@ -21,7 +21,6 @@ import { logHelp } from './logHelp';
 import { exec } from 'child_process';
 import path from 'path';
 
-
 const BACKUP_DIR = './scripts/simulation/backups/';
 
 const dbUrl = 'postgresql://postgres:pw@localhost:6500/prima';

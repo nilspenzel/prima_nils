@@ -27,7 +27,7 @@ const executeCommand = (command: string): Promise<void> => {
 };
 
 const restoreFullBackup = async (fullBackupFile: string) => {
-    await clearDatabase();
+	await clearDatabase();
 	const fullBackupPath = path.join(BACKUP_FOLDER, fullBackupFile);
 	const restoreCommand = `PGPASSWORD=${PGPASSWORD} psql ${DATABASE_URL} -f ${fullBackupPath}`;
 	console.log(`Restoring full backup from ${fullBackupFile}...`);
@@ -47,7 +47,7 @@ const restoreDatabase = async () => {
 			console.log('No full backup found. Exiting...');
 			return;
 		}
-        fullBackupFiles.sort((f1,f2) => f1<f2?-1:1);
+		fullBackupFiles.sort((f1, f2) => (f1 < f2 ? -1 : 1));
 		let minBuFileIdx = 0;
 		let maxBuFileIdx = fullBackupFiles.length - 1;
 		let searchedIdx = -1;
@@ -55,15 +55,15 @@ const restoreDatabase = async () => {
 		let updateMax = false;
 		while (minBuFileIdx != maxBuFileIdx) {
 			const middle = Math.floor((minBuFileIdx + maxBuFileIdx) / 2);
-            console.log({minBuFileIdx}, {maxBuFileIdx}, {middle});
+			console.log({ minBuFileIdx }, { maxBuFileIdx }, { middle });
 			const backupFile = fullBackupFiles[middle];
 			await restoreFullBackup(backupFile);
 			if (await healthCheck()) {
 				await restoreFullBackup(fullBackupFiles[middle - 1]);
-				if (!await healthCheck()) {
+				if (!(await healthCheck())) {
 					searchedIdx = middle - 1;
-		            console.log({ searchedIdx }, {file:fullBackupFiles[middle-1]});
-                    return;
+					console.log({ searchedIdx }, { file: fullBackupFiles[middle - 1] });
+					return;
 				} else {
 					maxBuFileIdx = middle;
 					updateMax = true;
@@ -72,15 +72,15 @@ const restoreDatabase = async () => {
 				await restoreFullBackup(fullBackupFiles[middle + 1]);
 				if (await healthCheck()) {
 					searchedIdx = middle;
-		            console.log({ searchedIdx },{file:fullBackupFiles[middle+1]});
-                    return;
+					console.log({ searchedIdx }, { file: fullBackupFiles[middle + 1] });
+					return;
 				} else {
 					minBuFileIdx = middle + 1;
 					updateMin = true;
 				}
 			}
 		}
-        console.log("no error found", {updateMax}, {updateMin});
+		console.log('no error found', { updateMax }, { updateMin });
 	} catch (error) {
 		console.error('Error during restore:', error);
 	}
