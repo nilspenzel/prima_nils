@@ -3,7 +3,7 @@ import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { debugInfoMatches, type DebugInfo } from '../util/debugInfo';
-import type { DbEvent, VehicleWithInterval } from './getBookingAvailability';
+import type { DbEvent, Event, VehicleWithInterval } from './getBookingAvailability';
 import {
 	InsertDirection,
 	printInsertionType,
@@ -80,8 +80,8 @@ export const getNextLegDuration = (
 
 export function getAllowedOperationTimes(
 	insertionCase: InsertionType,
-	prev: DbEvent | undefined,
-	next: DbEvent | undefined,
+	prev: Event | undefined,
+	next: Event | undefined,
 	expandedSearchInterval: Interval,
 	prepTime: UnixtimeMs,
 	vehicle: VehicleWithInterval,
@@ -124,6 +124,7 @@ export function getAllowedOperationTimes(
 				: prev.scheduledTimeStart;
 	windowStartTime = Math.max(windowStartTime, prepTime);
 	const window = new Interval(windowStartTime, windowEndTime);
+
 	if (
 		debugInfo &&
 		debugInfoMatches(debugInfo, insertionCase.how, undefined, prev?.id, next?.id, vehicle.id)
@@ -203,6 +204,7 @@ export function getArrivalWindow(
 			printInsertionType(insertionCase)
 		);
 	}
+
 	let arrivalWindows = directWindows
 		.map((window) =>
 			window.shrink(
