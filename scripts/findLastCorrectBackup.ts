@@ -1,8 +1,9 @@
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { healthCheck } from './healthCheck/healthCheck';
+import { clearDatabase } from '../src/lib/testHelpers';
 
 dotenv.config();
 
@@ -26,6 +27,8 @@ const executeCommand = (command: string): Promise<void> => {
 };
 
 const restoreFullBackup = async (fullBackupFile: string) => {
+    const dbUrlWithoutDb = DATABASE_URL?.replace(/\/[^/]+$/, '');
+    clearDatabase();
 	const fullBackupPath = path.join(BACKUP_FOLDER, fullBackupFile);
 	const restoreCommand = `PGPASSWORD=${PGPASSWORD} psql ${DATABASE_URL} -f ${fullBackupPath}`;
 	console.log(`Restoring full backup from ${fullBackupFile}...`);
@@ -49,13 +52,16 @@ const restoreDatabase = async () => {
 		let maxBuFileIdx = fullBackupFiles.length - 1;
 		let searchedIdx = -1;
 		while (minBuFileIdx != maxBuFileIdx) {
-			const middle = (minBuFileIdx + maxBuFileIdx) / 2;
+			const middle = Math.floor((minBuFileIdx + maxBuFileIdx) / 2);
+            console.log({minBuFileIdx}, {maxBuFileIdx}, {middle});
 			const backupFile = fullBackupFiles[middle];
 			await restoreFullBackup(backupFile);
 			if (await healthCheck()) {
 				await restoreFullBackup(fullBackupFiles[middle - 1]);
 				if (await healthCheck()) {
 					searchedIdx = middle - 1;
+		            console.log({ searchedIdx });
+                    return;
 				} else {
 					maxBuFileIdx = middle;
 				}
@@ -63,12 +69,14 @@ const restoreDatabase = async () => {
 				await restoreFullBackup(fullBackupFiles[middle + 1]);
 				if (await healthCheck()) {
 					searchedIdx = middle;
+		            console.log({ searchedIdx });
+                    return;
 				} else {
-					minBuFileIdx = middle;
+					minBuFileIdx = middle + 1;
 				}
 			}
 		}
-		console.log({ searchedIdx });
+        console.log("nothing found");
 	} catch (error) {
 		console.error('Error during restore:', error);
 	}
