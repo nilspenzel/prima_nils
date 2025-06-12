@@ -558,7 +558,7 @@ export function evaluateSingleInsertions(
 				if (twoAfter && twoAfter?.tourId != next.tourId) {
 					const tourDifference = twoAfter.departure - next.arrival;
 					const scheduledTimeLength = next.scheduledTimeEnd - next.scheduledTimeStart;
-					windows[0].startTime -= Math.max(0, scheduledTimeLength - tourDifference);
+					windows[0].endTime -= Math.max(0, scheduledTimeLength - tourDifference);
 				}
 			}
 			for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
