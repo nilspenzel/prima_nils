@@ -364,9 +364,9 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 					{
 						idsEnd: events
 							.sort((e1, e2) => {
-								const startDiff = e1.scheduledTimeEnd - e2.scheduledTimeEnd;
-								if (startDiff !== 0) {
-									return startDiff;
+								const endDiff = e1.scheduledTimeEnd - e2.scheduledTimeEnd;
+								if (endDiff !== 0) {
+									return endDiff;
 								}
 								return e1.scheduledTimeStart - e2.scheduledTimeStart;
 							})

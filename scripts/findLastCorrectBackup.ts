@@ -48,9 +48,12 @@ const restoreDatabase = async () => {
 			console.log('No full backup found. Exiting...');
 			return;
 		}
+        fullBackupFiles.sort((f1,f2) => f1<f2?-1:1);
 		let minBuFileIdx = 0;
 		let maxBuFileIdx = fullBackupFiles.length - 1;
 		let searchedIdx = -1;
+		let updateMin = false;
+		let updateMax = false;
 		while (minBuFileIdx != maxBuFileIdx) {
 			const middle = Math.floor((minBuFileIdx + maxBuFileIdx) / 2);
             console.log({minBuFileIdx}, {maxBuFileIdx}, {middle});
@@ -64,6 +67,7 @@ const restoreDatabase = async () => {
                     return;
 				} else {
 					maxBuFileIdx = middle;
+					updateMax = true;
 				}
 			} else {
 				await restoreFullBackup(fullBackupFiles[middle + 1]);
@@ -73,10 +77,11 @@ const restoreDatabase = async () => {
                     return;
 				} else {
 					minBuFileIdx = middle + 1;
+					updateMin = true;
 				}
 			}
 		}
-        console.log("nothing found");
+        console.log("no error found", {updateMax}, {updateMin});
 	} catch (error) {
 		console.error('Error during restore:', error);
 	}
