@@ -50,8 +50,8 @@ describe('Concatenation tests', () => {
 				}
 			}
 			const times = test.process.times.map((t) => {
-				const d = new Date(t);
-				const nextWednesday = new Date(d);
+				const d = new Date();
+				const nextWednesday = new Date(t);
 				const dayOfWeek = d.getDay();
 				const daysUntilNextWednesday = (10 - dayOfWeek) % 7 || 7;
 				nextWednesday.setDate(d.getDate() + daysUntilNextWednesday);
