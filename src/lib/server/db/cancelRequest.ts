@@ -288,4 +288,49 @@ async function updateLegDurations(
 	}
 	await update(cancelled1Idx - 1, cancelled1Idx + 1, uncancelledEvents, company, trx);
 	await update(cancelled2Idx - 1, cancelled2Idx + 1, uncancelledEvents, company, trx);
+
+	if (cancelled1Idx === 0 && uncancelledEvents.length > 2) {
+		const lastEventPrevTour = await trx
+			.selectFrom('event')
+			.where('event.cancelled', '=', false)
+			.where('event.scheduledTimeStart', '<', uncancelledEvents[0].scheduledTimeStart)
+			.orderBy('event.scheduledTimeEnd', 'desc')
+			.limit(1)
+			.selectAll()
+			.executeTakeFirst();
+		const firstUncancelledEvent = uncancelledEvents[cancelled2Idx === 1 ? 2 : 1];
+		if (lastEventPrevTour) {
+			await trx
+				.updateTable('tour')
+				.set({
+					directDuration:
+						(await oneToManyCarRouting(lastEventPrevTour, [firstUncancelledEvent], false))[0] ??
+						null
+				})
+				.where('tour.id', '=', firstUncancelledEvent.tourid)
+				.execute();
+		}
+	}
+	if (cancelled2Idx === uncancelledEvents.length - 1 && uncancelledEvents.length > 2) {
+		const firstEventNextTour = await trx
+			.selectFrom('event')
+			.where('event.cancelled', '=', false)
+			.where('event.scheduledTimeEnd', '>', uncancelledEvents[0].scheduledTimeEnd)
+			.orderBy('event.scheduledTimeEnd', 'asc')
+			.limit(1)
+			.selectAll()
+			.executeTakeFirst();
+		const lastUncancelledEvent = uncancelledEvents[cancelled2Idx === 1 ? 2 : 1];
+		if (firstEventNextTour) {
+			await trx
+				.updateTable('tour')
+				.set({
+					directDuration:
+						(await oneToManyCarRouting(firstEventNextTour, [lastUncancelledEvent], false))[0] ??
+						null
+				})
+				.where('tour.id', '=', lastUncancelledEvent.tourid)
+				.execute();
+		}
+	}
 }

@@ -1,5 +1,5 @@
-import { PASSENGER_CHANGE_DURATION } from "$lib/constants";
-import { oneToManyCarRouting } from "../util/oneToManyCarRouting";
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
+import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 import type { Event } from '$lib/server/booking/getBookingAvailability';
 
 export async function getLegDurationUpdates(firstEvents: Event[], lastEvents: Event[]) {
@@ -7,7 +7,7 @@ export async function getLegDurationUpdates(firstEvents: Event[], lastEvents: Ev
 	const nextLegDurations: { event: number; duration: number | null }[] = [];
 	const routing = firstEvents.map((e, i) => oneToManyCarRouting(e, [lastEvents[i]], false));
 	const routingResults = await Promise.all(routing);
-	const durations = routingResults.map((r) => r[0] ? r[0] + PASSENGER_CHANGE_DURATION : null)
+	const durations = routingResults.map((r) => (r[0] ? r[0] + PASSENGER_CHANGE_DURATION : null));
 	durations.forEach((d, i) =>
 		prevLegDurations.push({
 			event: firstEvents[i].id,
@@ -20,5 +20,5 @@ export async function getLegDurationUpdates(firstEvents: Event[], lastEvents: Ev
 			duration: d
 		})
 	);
-	return {prevLegDurations, nextLegDurations};
+	return { prevLegDurations, nextLegDurations };
 }

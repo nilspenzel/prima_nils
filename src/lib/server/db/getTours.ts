@@ -112,6 +112,7 @@ export const getToursWithRequests = async (
 						'request.ticketChecked',
 						'request.ticketPrice',
 						'request.id as requestId',
+						'request.cancelled',
 						jsonArrayFrom(
 							eb
 								.selectFrom('event')

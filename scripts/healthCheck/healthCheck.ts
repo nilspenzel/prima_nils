@@ -303,13 +303,15 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 	console.log('Validating leg durations...');
 	const uncancelledTours = tours.filter((t) => !t.cancelled);
 	for (const tour of uncancelledTours) {
-		const events = [...tour.requests.flatMap((r) => r.events)].filter((e) => !e.cancelled).sort((a, b) => {
-			const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
-			if (startDiff !== 0) {
-				return startDiff;
-			}
-			return a.scheduledTimeEnd - b.scheduledTimeEnd;
-		});
+		const events = [...tour.requests.flatMap((r) => r.events)]
+			.filter((e) => !e.cancelled)
+			.sort((a, b) => {
+				const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
+				if (startDiff !== 0) {
+					return startDiff;
+				}
+				return a.scheduledTimeEnd - b.scheduledTimeEnd;
+			});
 		const expected1: Promise<number | null>[] = [];
 		const expected2: Promise<number | null>[] = [];
 		for (let i = 0; i < events.length - 1; i++) {
@@ -326,7 +328,9 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			const earlierEvent = events[i];
 			const laterEvent = events[i + 1];
 			if (earlierEvent.nextLegDuration !== laterEvent.prevLegDuration) {
-				console.log(`Leg duration mismatch between events ${earlierEvent.id} and ${laterEvent.id}, durations: ${earlierEvent.nextLegDuration} and ${laterEvent.prevLegDuration} routing results: ${expectedDurations1[i]} and ${expectedDurations2[i]}`);
+				console.log(
+					`Leg duration mismatch between events ${earlierEvent.id} and ${laterEvent.id}, durations: ${earlierEvent.nextLegDuration} and ${laterEvent.prevLegDuration} routing results: ${expectedDurations1[i]} and ${expectedDurations2[i]}`
+				);
 				fail = true;
 			}
 			const expectedDuration = expectedDurations1[i];
@@ -452,18 +456,30 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 
 export async function healthCheck() {
 	const tours = await getToursWithRequests(true);
+	const uncancelledTours = tours
+		.filter((t) => !t.cancelled)
+		.map((t) => {
+			return {
+				...t,
+				requests: t.requests
+					.filter((r) => !r.cancelled)
+					.map((r) => {
+						return { ...r, events: r.events.filter((e) => !e.cancelled) };
+					})
+			};
+		});
 	let fail = false;
 	if (tours) {
 		console.log('Validating tours...');
-		fail = validateRequestHas2Events(tours) ? true : fail;
-		fail = validateRequestsWithNoEvents(tours) ? true : fail;
+		fail = validateRequestHas2Events(uncancelledTours) ? true : fail;
+		fail = validateRequestsWithNoEvents(uncancelledTours) ? true : fail;
 		fail = validateTourAndRequestCancelled(tours) ? true : fail;
-		fail = validateEventParameters(tours) ? true : fail;
-		fail = validateEventTimeNoOverlap(tours) ? true : fail;
-		fail = validateEventsAreInsideTours(tours) ? true : fail;
-		fail = (await validateDirectDurations(tours)) ? true : fail;
-		fail = (await validateLegDurations(tours)) ? true : fail;
-		fail = (await validateCompanyDurations(tours)) ? true : fail;
+		fail = validateEventParameters(uncancelledTours) ? true : fail;
+		fail = validateEventTimeNoOverlap(uncancelledTours) ? true : fail;
+		fail = validateEventsAreInsideTours(uncancelledTours) ? true : fail;
+		fail = (await validateDirectDurations(uncancelledTours)) ? true : fail;
+		fail = (await validateLegDurations(uncancelledTours)) ? true : fail;
+		fail = (await validateCompanyDurations(uncancelledTours)) ? true : fail;
 	} else {
 		console.log('No tours found or there was an error fetching the data.');
 	}

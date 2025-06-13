@@ -229,7 +229,10 @@ export async function bookRide(
 	if (firstEvents.length !== lastEvents.length) {
 		throw new Error();
 	}
-	const {prevLegDurations, nextLegDurations} = await getLegDurationUpdates(firstEvents, lastEvents);
+	const { prevLegDurations, nextLegDurations } = await getLegDurationUpdates(
+		firstEvents,
+		lastEvents
+	);
 
 	let prevEventInOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR
