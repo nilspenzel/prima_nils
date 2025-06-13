@@ -218,7 +218,7 @@ async function updateLegDurations(
 			}
 			await trx
 				.updateTable('event')
-				.set({ prevLegDuration: routingResult[0] + PASSENGER_CHANGE_DURATION })
+				.set({ prevLegDuration: routingResult[0] })
 				.where('event.id', '=', events[nextIdx].eventid)
 				.executeTakeFirst();
 			return;
