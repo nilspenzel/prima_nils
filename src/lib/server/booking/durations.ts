@@ -3,7 +3,7 @@ import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { debugInfoMatches, type DebugInfo } from '../util/debugInfo';
-import type { DbEvent, Event, VehicleWithInterval } from './getBookingAvailability';
+import type { Event, VehicleWithInterval } from './getBookingAvailability';
 import {
 	InsertDirection,
 	printInsertionType,

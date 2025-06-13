@@ -302,7 +302,6 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(event1.isPickup).not.toBe(event2.isPickup);
 		const pickup = event1.isPickup ? event1 : event2;
 		const dropoff = !event1.isPickup ? event1 : event2;
-		expect(pickup.eventGroup).not.toBe(dropoff.eventGroup);
 		expect(pickup.address).toBe('start address');
 		expect(
 			Math.abs(inNiesky1.lat - pickup.lat) + Math.abs(inNiesky1.lng - pickup.lng)

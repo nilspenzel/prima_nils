@@ -32,8 +32,7 @@ const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 				'request.wheelchairs',
 				'event.isPickup',
 				'event.prevLegDuration',
-				'event.nextLegDuration',
-				'event.eventGroup'
+				'event.nextLegDuration'
 			])
 	).as('events');
 };

@@ -9,7 +9,7 @@ const parameters = {
 };
 
 async function main() {
-	const response = await cancelRequest(parameters.requestId, parameters.userId);
+	await cancelRequest(parameters.requestId, parameters.userId);
 }
 
 main().catch((err) => {

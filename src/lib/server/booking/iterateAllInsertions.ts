@@ -10,7 +10,7 @@ export async function iterateAllInsertions(
 ) {
 	let insertionIdx = 0;
 	companies.forEach((company, companyIdx) => {
-		company.vehicles.forEach((vehicle, vIdx) => {
+		company.vehicles.forEach((vehicle) => {
 			insertions.get(vehicle.id)!.forEach((insertion) => {
 				for (
 					let idxInEvents = insertion.earliestPickup;

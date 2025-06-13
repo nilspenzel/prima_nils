@@ -29,8 +29,6 @@ const parameters = {
 	}
 };
 
-const companyId = 1;
-const isFlagged = true;
 const kidsThreeToFour = 0;
 const kidsZeroToTwo = 0;
 const kidsFiveToSix = 0;
