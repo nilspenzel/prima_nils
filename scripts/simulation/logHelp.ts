@@ -18,6 +18,9 @@ export function logHelp() {
 	console.log(
 		'--health: performs some necessary checks for the database state to be healthy after each simulation action. Will stop if any errors are found. Be aware: the checks take a lot longer than the simulation actions.'
 	);
+	console.log(
+		'--bu: The script will do backups iff this flag is set. Backups happen after each simulated action as full backups via pg_dump.'
+	);
 	console.log('--runs=x: Sets the amount of simulation actions to perform');
 	console.log('--second=x: Sets the amount of seconds after which the script is terminated');
 	console.log(
