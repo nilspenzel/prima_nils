@@ -282,11 +282,11 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 						if (
 							expectedDuration !== null &&
 							expectedDuration2 !== null &&
-							Math.abs(expectedDuration - laterTour.directDuration / 1000) > 2 &&
-							Math.abs(expectedDuration2 - laterTour.directDuration / 1000) > 2
+							Math.abs(expectedDuration - laterTour.directDuration / 1000) > 1 &&
+							Math.abs(expectedDuration2 - laterTour.directDuration / 1000) > 1
 						) {
 							console.log(`Direct duration mismatch for earlier tour ${earlierTour.tourId} and later tour ${laterTour.tourId}: \
-                  Expected ${expectedDuration} or ${expectedDuration2} seconds, Found ${laterTour.directDuration / 1000} seconds, lat1: ${e1.lat} lng1:${e1.lng}, lat2: ${e2.lat} lng:${e2.lng} time difference: ${new Date(laterTourStart - earlierTourEnd).toISOString()}`);
+                  				Expected ${expectedDuration} or ${expectedDuration2} seconds, Found ${laterTour.directDuration / 1000} seconds, lat1: ${e1.lat} lng1:${e1.lng}, lat2: ${e2.lat} lng:${e2.lng} time difference: ${new Date(laterTourStart - earlierTourEnd).toISOString()}`);
 							fail = true;
 						}
 					}
@@ -415,17 +415,18 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 			events[0].lat,
 			events[0].lng,
 			tour.companyLat!,
-			tour.companyLng!
+			tour.companyLng!,
+			true
 		);
 
 		if (
 			fromCompanyFwd !== null &&
 			fromCompanyBwd !== null &&
-			Math.abs(fromCompanyFwd - events[0].prevLegDuration / 1000) > 5 &&
-			Math.abs(fromCompanyBwd - events[0].prevLegDuration / 1000) > 5
+			Math.abs(fromCompanyFwd - events[0].prevLegDuration / 1000) > 1 &&
+			Math.abs(fromCompanyBwd - events[0].prevLegDuration / 1000) > 1
 		) {
 			console.log(
-				`Duration from company to first event does not match in tour with id: ${tour.tourId}, duration in db: ${events[0].prevLegDuration / 1000} duration: ${fromCompanyFwd}`
+				`Duration from company to first event does not match in tour with id: ${tour.tourId} with first event: ${events[0].id}, duration in db: ${events[0].prevLegDuration / 1000} duration: ${fromCompanyFwd} or ${fromCompanyBwd}`
 			);
 			fail = true;
 		}

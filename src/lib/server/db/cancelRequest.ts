@@ -225,7 +225,6 @@ async function updateLegDurations(
 		}
 		if (nextIdx === events.length) {
 			const routingResult = await oneToManyCarRouting(events[prevIdx], [company], false, HOUR * 10);
-			console.log({ routingResult });
 			if (
 				routingResult === undefined ||
 				routingResult.length === 0 ||
@@ -249,7 +248,6 @@ async function updateLegDurations(
 			false,
 			HOUR * 10
 		);
-		console.log({ routingResult });
 		if (
 			routingResult === undefined ||
 			routingResult.length === 0 ||

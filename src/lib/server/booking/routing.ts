@@ -30,11 +30,6 @@ export async function routing(
 		routingResult: (number | undefined)[],
 		comesFromCompany: boolean
 	) => {
-		console.assert(
-			coordinatesMany.length == routingResult.length,
-			{ coordinatesMany },
-			{ routingResult }
-		);
 		const result = new Array<number | undefined>(routingResult.length);
 		for (let i = 0; i != coordinatesMany.length; ++i) {
 			if (coordinatesMany[i] === undefined) {
