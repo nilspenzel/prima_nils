@@ -3,7 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { healthCheck } from './healthCheck/healthCheck';
-import { clearDatabase } from '../src/lib/testHelpers';
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 dotenv.config();
 
@@ -27,7 +28,15 @@ const executeCommand = (command: string): Promise<void> => {
 };
 
 const restoreFullBackup = async (fullBackupFile: string) => {
-	await clearDatabase();
+	await sleep(1000);
+
+	console.log('Dropping and recreating the database...');
+	await executeCommand(`echo "DROP DATABASE prima;" | psql ${DATABASE_URL}`);
+	await executeCommand(`echo "CREATE DATABASE prima;" | psql ${DATABASE_URL}`);
+
+	console.log('Running latest migrations...');
+	await executeCommand('pnpm run kysely migrate:latest');
+
 	const fullBackupPath = path.join(BACKUP_FOLDER, fullBackupFile);
 	const restoreCommand = `PGPASSWORD=${PGPASSWORD} psql ${DATABASE_URL} -f ${fullBackupPath}`;
 	console.log(`Restoring full backup from ${fullBackupFile}...`);
@@ -35,7 +44,7 @@ const restoreFullBackup = async (fullBackupFile: string) => {
 	console.log(`Full backup restored from ${fullBackupFile}`);
 };
 
-const restoreDatabase = async () => {
+const findLastCorrectBackup = async () => {
 	try {
 		const files = fs.readdirSync(BACKUP_FOLDER);
 
@@ -86,4 +95,4 @@ const restoreDatabase = async () => {
 	}
 };
 
-restoreDatabase();
+findLastCorrectBackup();
