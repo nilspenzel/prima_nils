@@ -547,7 +547,7 @@ export function evaluateSingleInsertions(
 				insertionInfo.vehicle,
 				debugInfo
 			);
-			if (insertHow === InsertHow.INSERT && prev && next && windows.length!= 0) {
+			if (insertHow === InsertHow.INSERT && prev && next && windows.length != 0) {
 				const twoBefore = insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents - 2];
 				if (twoBefore && twoBefore?.tourId != prev.tourId) {
 					const tourDifference = prev.departure - twoBefore.arrival;
@@ -555,7 +555,7 @@ export function evaluateSingleInsertions(
 					windows[0].startTime += Math.max(0, scheduledTimeLength - tourDifference);
 				}
 				const twoAfter = insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents + 1];
-				if (twoAfter && twoAfter?.tourId != next.tourId && windows.length!= 0) {
+				if (twoAfter && twoAfter?.tourId != next.tourId && windows.length != 0) {
 					const tourDifference = twoAfter.departure - next.arrival;
 					const scheduledTimeLength = next.scheduledTimeEnd - next.scheduledTimeStart;
 					windows[0].endTime -= Math.max(0, scheduledTimeLength - tourDifference);

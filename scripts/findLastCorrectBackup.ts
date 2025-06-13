@@ -4,7 +4,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { healthCheck } from './healthCheck/healthCheck';
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 dotenv.config();
 

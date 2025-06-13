@@ -190,7 +190,7 @@ export function getArrivalWindow(
 	const directWindows = Interval.intersect(
 		allowedTimes,
 		windows
-			.map((window) => window.shrink(prevLegDuration+1, 1+nextLegDuration))
+			.map((window) => window.shrink(prevLegDuration + 1, 1 + nextLegDuration))
 			.filter((window) => window != undefined)
 	);
 	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
