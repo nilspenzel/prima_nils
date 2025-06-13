@@ -42,4 +42,5 @@ function updateEventGroups(tours: Tours) {
 			events
 		};
 	}
+	return toursWithEventGroups;
 }
