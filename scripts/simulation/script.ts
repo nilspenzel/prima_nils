@@ -287,6 +287,9 @@ async function main() {
 		process.exit(0);
 	}
 	const coordinates = await readCoordinates();
+	// The following coordinates are used to restrict either start or target (which is chosen at random) in each booking.
+	// The restriction is a 'square' roughly matching the town of schleife.
+	// This can be activated by using the --restrict flag.
 	const maxLat = 51.54675239279669;
 	const minLat = 51.52743007431573;
 	const maxLng = 14.540862766349306;
