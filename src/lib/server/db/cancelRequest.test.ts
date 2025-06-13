@@ -90,7 +90,7 @@ describe('tests for cancelling requests', () => {
 		expect(events.length).toBe(4);
 		events.forEach((e) => {
 			if (e.eventid == e2) {
-				expect(e.nextLegDuration).toBe(nextLeg[0]);
+				expect(e.nextLegDuration).toBe(nextLeg[0] + PASSENGER_CHANGE_DURATION);
 			}
 			if (e.eventid == e3 || e.eventid == e4) {
 				expect(e.requestid).toBe(r2);
