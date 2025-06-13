@@ -145,8 +145,7 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 		return start1 < end2 && start2 < end1;
 	}
 
-	const uncancelledTours = tours.filter((t) => !t.cancelled);
-	for (const [tourId1, tour] of uncancelledTours.entries()) {
+	for (const [tourId1, tour] of tours.entries()) {
 		const events = tour.requests.flatMap((r) => r.events.filter((e) => !e.requestCancelled));
 		for (let i = 0; i < events.length; i++) {
 			for (let j = i + 1; j < events.length; j++) {
@@ -161,8 +160,8 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 				}
 			}
 		}
-		for (let tourId2 = tourId1 + 1; tourId2 != uncancelledTours.length; ++tourId2) {
-			const tour2 = uncancelledTours[tourId2];
+		for (let tourId2 = tourId1 + 1; tourId2 != tours.length; ++tourId2) {
+			const tour2 = tours[tourId2];
 			const i1 = new Interval(tour.startTime, tour.endTime);
 			const i2 = new Interval(tour2.startTime, tour2.endTime);
 			if (i1.overlaps(i2) && tour.vehicleId === tour2.vehicleId) {
@@ -181,7 +180,7 @@ function validateEventsAreInsideTours(tours: ToursWithRequests): boolean {
 	console.log('Validating that all events of a tour happen inside of departure-arrival...');
 	for (const tour of tours) {
 		const tourInterval = new Interval(tour.startTime, tour.endTime);
-		for (const event of tour.requests.flatMap((r) => r.events.filter((e) => !e.cancelled))) {
+		for (const event of tour.requests.flatMap((r) => r.events)) {
 			if (!tourInterval.overlaps(new Interval(event.scheduledTimeStart, event.scheduledTimeEnd))) {
 				console.log(`event with id: ${event.id} is outside of its' tour.`);
 				fail = true;
@@ -229,20 +228,20 @@ async function oneToMany(
 async function validateDirectDurations(tours: ToursWithRequests): Promise<boolean> {
 	let fail = false;
 	console.log('Validating direct durations...');
-	const uncancelledTours = groupBy(
-		tours.filter((t) => !t.cancelled).sort((a, b) => a.startTime - b.startTime),
+	const toursByVehicle = groupBy(
+		tours.sort((a, b) => a.startTime - b.startTime),
 		(t) => t.vehicleId,
 		(t) => t
 	);
-	for (const [_, companyTours] of uncancelledTours) {
+	for (const [_, companyTours] of toursByVehicle) {
 		for (let tourIdx = 1; tourIdx != companyTours.length; tourIdx++) {
 			const earlierTour = companyTours[tourIdx - 1];
 			const laterTour = companyTours[tourIdx];
 			const earlierEvents = earlierTour.requests
-				.flatMap((r) => r.events.filter((e) => !e.cancelled))
+				.flatMap((r) => r.events)
 				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 			const laterEvents = laterTour.requests
-				.flatMap((r) => r.events.filter((e) => !e.cancelled))
+				.flatMap((r) => r.events)
 				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 			if (laterTour.vehicleId === earlierTour.vehicleId) {
 				if (earlierTour.requests.length === 0) {
@@ -301,17 +300,14 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> {
 	let fail = false;
 	console.log('Validating leg durations...');
-	const uncancelledTours = tours.filter((t) => !t.cancelled);
-	for (const tour of uncancelledTours) {
-		const events = [...tour.requests.flatMap((r) => r.events)]
-			.filter((e) => !e.cancelled)
-			.sort((a, b) => {
-				const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
-				if (startDiff !== 0) {
-					return startDiff;
-				}
-				return a.scheduledTimeEnd - b.scheduledTimeEnd;
-			});
+	for (const tour of tours) {
+		const events = [...tour.requests.flatMap((r) => r.events)].sort((a, b) => {
+			const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
+			if (startDiff !== 0) {
+				return startDiff;
+			}
+			return a.scheduledTimeEnd - b.scheduledTimeEnd;
+		});
 		const expected1: Promise<number | null>[] = [];
 		const expected2: Promise<number | null>[] = [];
 		for (let i = 0; i < events.length - 1; i++) {
@@ -403,8 +399,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 async function validateCompanyDurations(tours: ToursWithRequests): Promise<boolean> {
 	let fail = false;
 	console.log('Validating leg durations from/to company...');
-	const uncancelledTours = tours.filter((t) => !t.cancelled);
-	for (const tour of uncancelledTours) {
+	for (const tour of tours) {
 		if (tour.requests.length === 0) continue;
 
 		const events = [...tour.requests.flatMap((r) => r.events)].sort(
@@ -455,8 +450,8 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 }
 
 export async function healthCheck() {
-	const tours = await getToursWithRequests(true);
-	const uncancelledTours = tours
+	const allTours = await getToursWithRequests(true);
+	const uncancelledTours = allTours
 		.filter((t) => !t.cancelled)
 		.map((t) => {
 			return {
@@ -469,11 +464,11 @@ export async function healthCheck() {
 			};
 		});
 	let fail = false;
-	if (tours) {
+	if (allTours) {
 		console.log('Validating tours...');
 		fail = validateRequestHas2Events(uncancelledTours) ? true : fail;
 		fail = validateRequestsWithNoEvents(uncancelledTours) ? true : fail;
-		fail = validateTourAndRequestCancelled(tours) ? true : fail;
+		fail = validateTourAndRequestCancelled(allTours) ? true : fail;
 		fail = validateEventParameters(uncancelledTours) ? true : fail;
 		fail = validateEventTimeNoOverlap(uncancelledTours) ? true : fail;
 		fail = validateEventsAreInsideTours(uncancelledTours) ? true : fail;

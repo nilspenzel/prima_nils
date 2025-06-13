@@ -3,16 +3,13 @@
 import 'dotenv/config';
 import { cancelRequest } from '../src/lib/server/db/cancelRequest';
 
-const parameters =  {
-    requestId: 45,
-    userId: 1
+const parameters = {
+	requestId: 45,
+	userId: 1
 };
 
 async function main() {
-	const response = await cancelRequest(
-		parameters.requestId,
-		parameters.userId
-	);
+	const response = await cancelRequest(parameters.requestId, parameters.userId);
 }
 
 main().catch((err) => {

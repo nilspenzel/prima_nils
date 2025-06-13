@@ -276,24 +276,24 @@ async function updateLegDurations(
 	const uncancelledEvents = events
 		.filter((e) => e.requestid === requestId || e.cancelled === false)
 		.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
-	const cancelled1Idx = uncancelledEvents.findIndex((e) => e.requestid === requestId);
-	const cancelled2Idx = uncancelledEvents.findLastIndex((e) => e.requestid === requestId);
-	const cancelledEvent1 = uncancelledEvents[cancelled1Idx];
-	const cancelledEvent2 = uncancelledEvents[cancelled2Idx];
+	const cancelledIdx1 = uncancelledEvents.findIndex((e) => e.requestid === requestId);
+	const cancelledIdx2 = uncancelledEvents.findLastIndex((e) => e.requestid === requestId);
+	const cancelledEvent1 = uncancelledEvents[cancelledIdx1];
+	const cancelledEvent2 = uncancelledEvents[cancelledIdx2];
 	console.assert(
-		cancelled1Idx != -1 && cancelled2Idx != -1 && cancelled1Idx < cancelled2Idx,
+		cancelledIdx1 != -1 && cancelledIdx2 != -1 && cancelledIdx1 < cancelledIdx2,
 		'Invalid cancelledIdx in cancelRequest.ts',
-		{ cancelled1Idx },
-		{ cancelled2Idx }
+		{ cancelled1Idx: cancelledIdx1 },
+		{ cancelled2Idx: cancelledIdx2 }
 	);
-	if (cancelled1Idx === cancelled2Idx - 1) {
-		await update(cancelled1Idx - 1, cancelled2Idx + 1, uncancelledEvents, company, trx);
+	if (cancelledIdx1 === cancelledIdx2 - 1) {
+		await update(cancelledIdx1 - 1, cancelledIdx2 + 1, uncancelledEvents, company, trx);
 	} else {
-		await update(cancelled1Idx - 1, cancelled1Idx + 1, uncancelledEvents, company, trx);
-		await update(cancelled2Idx - 1, cancelled2Idx + 1, uncancelledEvents, company, trx);
+		await update(cancelledIdx1 - 1, cancelledIdx1 + 1, uncancelledEvents, company, trx);
+		await update(cancelledIdx2 - 1, cancelledIdx2 + 1, uncancelledEvents, company, trx);
 	}
 
-	if (cancelled1Idx === 0 && uncancelledEvents.length > 2) {
+	if (cancelledIdx1 === 0 && uncancelledEvents.length > 2) {
 		const lastEventPrevTour = await trx
 			.selectFrom('tour')
 			.innerJoin('request', 'request.tour', 'tour.id')
@@ -305,7 +305,7 @@ async function updateLegDurations(
 			.limit(1)
 			.select(['event.lat', 'event.lng', 'event.id'])
 			.executeTakeFirst();
-		const firstUncancelledEvent = uncancelledEvents[cancelled2Idx === 1 ? 2 : 1];
+		const firstUncancelledEvent = uncancelledEvents[cancelledIdx2 === 1 ? 2 : 1];
 		if (lastEventPrevTour) {
 			await trx
 				.updateTable('tour')
@@ -318,7 +318,7 @@ async function updateLegDurations(
 				.execute();
 		}
 	}
-	if (cancelled2Idx === uncancelledEvents.length - 1 && uncancelledEvents.length > 2) {
+	if (cancelledIdx2 === uncancelledEvents.length - 1 && uncancelledEvents.length > 2) {
 		const firstEventNextTour = await trx
 			.selectFrom('tour')
 			.innerJoin('request', 'request.tour', 'tour.id')
@@ -332,7 +332,7 @@ async function updateLegDurations(
 			.executeTakeFirst();
 		const lastUncancelledEvent =
 			uncancelledEvents[
-				uncancelledEvents.length - (cancelled1Idx === uncancelledEvents.length - 2 ? 3 : 2)
+				uncancelledEvents.length - (cancelledIdx1 === uncancelledEvents.length - 2 ? 3 : 2)
 			];
 		if (firstEventNextTour) {
 			await trx
