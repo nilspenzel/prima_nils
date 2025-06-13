@@ -11,12 +11,19 @@ export async function prepareTest() {
 	return mockUserId;
 }
 
+export function getNextWednesday(dateWithCorrectDayTime: Date, dateRelativeToNextWednesday: Date) {
+	const ret = new Date(dateWithCorrectDayTime);
+	const dayOfWeek = dateRelativeToNextWednesday.getDay();
+	const daysUntilNextWednesday = (10 - dayOfWeek) % 7 || 7;
+	ret.setDate(dateRelativeToNextWednesday.getDate() + daysUntilNextWednesday)
+	return ret.getTime();
+}
+
 const now = new Date();
 const baseDate = new Date(
 	Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 2, 13, 0, 0, 0)
 );
-
-const BASE_DATE = baseDate.getTime();
+const BASE_DATE = getNextWednesday(baseDate, baseDate);
 
 export const dateInXMinutes = (x: number) => new Date(BASE_DATE + x * MINUTE);
 export const inXMinutes = (x: number) => BASE_DATE + x * MINUTE;

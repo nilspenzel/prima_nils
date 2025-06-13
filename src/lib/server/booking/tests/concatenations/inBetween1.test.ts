@@ -84,7 +84,7 @@ describe('Concatenation tests', () => {
 			.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
 		expect(isSamePlace(events[0], inRothenburg2)).toBe(true);
 		expect(isSamePlace(events[1], inGeheege)).toBe(true);
-		expect(isSamePlace(events[2], inHorka1)).toBe(true);
-		expect(isSamePlace(events[3], inHorka2)).toBe(true);
+		expect(isSamePlace(events[2], inHorka2)).toBe(true);
+		expect(isSamePlace(events[3], inHorka1)).toBe(true);
 	});
 });

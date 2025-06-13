@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { prepareTest, white } from '../util';
+import { getNextWednesday, prepareTest, white } from '../util';
 import {
 	addCompany,
 	addTaxi,
@@ -49,14 +49,7 @@ describe('Concatenation tests', () => {
 					await setAvailability(taxi, 0, 8640000000000000);
 				}
 			}
-			const times = test.process.times.map((t) => {
-				const d = new Date();
-				const nextWednesday = new Date(t);
-				const dayOfWeek = d.getDay();
-				const daysUntilNextWednesday = (10 - dayOfWeek) % 7 || 7;
-				nextWednesday.setDate(d.getDate() + daysUntilNextWednesday);
-				return nextWednesday.getTime();
-			});
+			const times = test.process.times.map((t) => getNextWednesday(new Date(t), new Date(Date.now())));
 			for (let requestIdx = 0; requestIdx != test.process.starts.length; ++requestIdx) {
 				const body = JSON.stringify({
 					start: test.process.starts[requestIdx],

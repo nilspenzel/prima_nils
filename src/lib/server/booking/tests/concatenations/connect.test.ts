@@ -114,8 +114,8 @@ describe('Concatenation tests', () => {
 		expect(isSamePlace(events[0], inHorka1)).toBe(true);
 		expect(isSamePlace(events[1], inRothenburg2)).toBe(true);
 		expect(isSamePlace(events[2], inRothenburg2)).toBe(true);
-		expect(isSamePlace(events[3], inGeheege)).toBe(true);
-		expect(isSamePlace(events[4], inHorka2)).toBe(true);
+		expect(isSamePlace(events[3], inHorka2)).toBe(true);
+		expect(isSamePlace(events[4], inGeheege)).toBe(true);
 		expect(isSamePlace(events[5], inRothenburg2)).toBe(true);
 	});
 });

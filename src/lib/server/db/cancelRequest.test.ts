@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { cancelRequest } from './cancelRequest';
 import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
 import { HOUR } from '$lib/util/time';
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 
 beforeEach(async () => {
 	await clearDatabase();
@@ -138,13 +139,13 @@ describe('tests for cancelling requests', () => {
 		expect(events.length).toBe(6);
 		events.forEach((e) => {
 			if (e.eventid == e3) {
-				expect(e.nextLegDuration).toBe(nextLeg3[0]);
+				expect(e.nextLegDuration).toBe(nextLeg3[0]! + PASSENGER_CHANGE_DURATION);
 			}
 			if (e.eventid === e2) {
-				expect(e.nextLegDuration).toBe(nextLeg2[0]);
+				expect(e.nextLegDuration).toBe(nextLeg2[0]! + PASSENGER_CHANGE_DURATION);
 			}
 			if (e.eventid === e4) {
-				expect(e.prevLegDuration).toBe(nextLeg2[0]);
+				expect(e.prevLegDuration).toBe(nextLeg2[0]! + PASSENGER_CHANGE_DURATION);
 			}
 			if (e.eventid == e5 || e.eventid == e6) {
 				expect(e.requestid).toBe(r3);
