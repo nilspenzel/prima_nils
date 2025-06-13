@@ -15,7 +15,7 @@ export function getNextWednesday(dateWithCorrectDayTime: Date, dateRelativeToNex
 	const ret = new Date(dateWithCorrectDayTime);
 	const dayOfWeek = dateRelativeToNextWednesday.getDay();
 	const daysUntilNextWednesday = (10 - dayOfWeek) % 7 || 7;
-	ret.setDate(dateRelativeToNextWednesday.getDate() + daysUntilNextWednesday)
+	ret.setDate(dateRelativeToNextWednesday.getDate() + daysUntilNextWednesday);
 	return ret.getTime();
 }
 

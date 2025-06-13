@@ -49,7 +49,9 @@ describe('Concatenation tests', () => {
 					await setAvailability(taxi, 0, 8640000000000000);
 				}
 			}
-			const times = test.process.times.map((t) => getNextWednesday(new Date(t), new Date(Date.now())));
+			const times = test.process.times.map((t) =>
+				getNextWednesday(new Date(t), new Date(Date.now()))
+			);
 			for (let requestIdx = 0; requestIdx != test.process.starts.length; ++requestIdx) {
 				const body = JSON.stringify({
 					start: test.process.starts[requestIdx],
