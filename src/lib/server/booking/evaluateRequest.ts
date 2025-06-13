@@ -126,18 +126,5 @@ export async function evaluateRequest(
 		userChosenEvaluations
 	);
 	const best = takeBest(takeBest(bothEvaluations, newTourEvaluations), pairEvaluations);
-	//console.log('stuf0: ', JSON.stringify(routingResults, null, '\t'));
-	//iterateAllInsertions(companies, insertionRanges, (insertionInfo, idx) => {
-	//	for(let i=0;i!=busStops.length;++i) {
-	//	console.log("idxInEvents: ", insertionInfo.idxInEvents, " companyFrombusStop: ", routingResults.busStops.fromBusStop[i].event[insertionInfo.idxInEvents], insertionInfo.vehicle.events[insertionInfo.idxInEvents]);
-	//	console.log("companyFrombusStop: ", routingResults.busStops.fromBusStop[i].company[insertionInfo.companyIdx], companies[insertionInfo.companyIdx]);
-	//	console.log("idxInEvents: ", insertionInfo.idxInEvents, " companyTobusStop: ", routingResults.busStops.toBusStop[i].event[insertionInfo.idxInEvents], insertionInfo.vehicle.events[insertionInfo.idxInEvents]);
-	//	console.log("companyTobusStop: ", routingResults.busStops.toBusStop[i].company[insertionInfo.companyIdx], companies[insertionInfo.companyIdx]);
-	//	}
-	//	console.log("idxInEvents: ", insertionInfo.idxInEvents, " companyFromUserChosen: ", routingResults.userChosen.fromUserChosen.event[insertionInfo.idxInEvents], insertionInfo.vehicle.events[insertionInfo.idxInEvents]);
-	//	console.log("companyFromUserChosen: ", routingResults.userChosen.fromUserChosen.company[insertionInfo.companyIdx], companies[insertionInfo.companyIdx]);
-	//	console.log("idxInEvents: ", insertionInfo.idxInEvents, " companyToUserChosen: ", routingResults.userChosen.toUserChosen.event[insertionInfo.idxInEvents], insertionInfo.vehicle.events[insertionInfo.idxInEvents]);
-	//	console.log("companyToUserChosen: ", routingResults.userChosen.toUserChosen.company[insertionInfo.companyIdx], companies[insertionInfo.companyIdx]);
-	//})
 	return best;
 }

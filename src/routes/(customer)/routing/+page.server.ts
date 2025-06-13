@@ -198,9 +198,6 @@ export const actions = {
 		const request2: number | null = bookingResult.request2Id ?? null;
 		const communicatedPickup1: number | undefined = bookingResult.communicatedPickup1;
 		const communicatedDropoff1: number | undefined = bookingResult.communicatedDropoff1;
-		//const communicatedPickup2: number | undefined = bookingResult.communicatedPickup2;
-		//const communicatedDropoff2: number | undefined = bookingResult.communicatedDropoff2;
-		console.log({ bookingResult });
 		parsedJson.legs[firstOdmIndex].scheduledStartTime = new Date(
 			communicatedPickup1!
 		).toISOString();
