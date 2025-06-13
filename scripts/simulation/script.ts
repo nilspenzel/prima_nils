@@ -41,13 +41,13 @@ enum Action {
 	ADD_VEHICLE
 }
 
-type ActionT = {
+type ActionType = {
 	action: Action;
 	probability: number;
 	text: string;
 };
 
-const actionProbabilities: ActionT[] = [
+const actionProbabilities: ActionType[] = [
 	{ action: Action.BOOKING, probability: 0.8, text: 'booking' },
 	{ action: Action.CANCEL_REQUEST, probability: 0.07, text: 'cancel request' },
 	{ action: Action.CANCEL_TOUR, probability: 0.03, text: 'cancel tour' },
@@ -71,7 +71,7 @@ async function readCoordinates(): Promise<Coordinates[]> {
 
 	for await (const line of rl) {
 		if (isFirstLine) {
-			isFirstLine = false; // skip header
+			isFirstLine = false;
 			continue;
 		}
 
@@ -104,7 +104,7 @@ async function addInitialAvailabilities(company: number, vehicle: number) {
 	await addAvailability(interval, company, vehicle);
 }
 
-const isActionChosen = (r: number, a: ActionT) => {
+const isActionChosen = (r: number, a: ActionType) => {
 	if (r <= a.probability) {
 		return true;
 	}
@@ -214,7 +214,7 @@ async function main() {
 				await addVehicleLocal();
 				break;
 		}
-		if(backups) {
+		if (backups) {
 			counter++;
 			const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '_');
 			const FILE_NAME = `full_backup_${timestamp}${counter}.sql`;
