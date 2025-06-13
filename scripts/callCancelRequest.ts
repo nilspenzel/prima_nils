@@ -4,7 +4,7 @@ import 'dotenv/config';
 import { cancelRequest } from '../src/lib/server/db/cancelRequest';
 
 const parameters = {
-	requestId: 45,
+	requestId: 32,
 	userId: 1
 };
 

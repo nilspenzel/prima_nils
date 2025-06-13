@@ -218,7 +218,7 @@ async function updateLegDurations(
 			}
 			await trx
 				.updateTable('event')
-				.set({ prevLegDuration: routingResult[0] })
+				.set({ prevLegDuration: routingResult[0] + PASSENGER_CHANGE_DURATION })
 				.where('event.id', '=', events[nextIdx].eventid)
 				.executeTakeFirst();
 			return;
@@ -258,7 +258,7 @@ async function updateLegDurations(
 			);
 			return;
 		}
-		const r = routingResult[0] + (prevIdx === 0 ? 0 : PASSENGER_CHANGE_DURATION);
+		const r = routingResult[0] + PASSENGER_CHANGE_DURATION;
 		await trx
 			.updateTable('event')
 			.set({ nextLegDuration: r })
