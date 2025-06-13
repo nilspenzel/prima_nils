@@ -68,7 +68,6 @@ export async function up(db) {
             p_event2 event_type,
             p_merge_tour_list INTEGER[],
             p_tour tour_type,
-            p_update_event_groups jsonb,
             p_update_next_leg_durations jsonb,
             p_update_prev_leg_durations jsonb,
             p_update_direct_duration_dropoff direct_duration_type,
@@ -81,7 +80,6 @@ export async function up(db) {
             v_request_id INTEGER;
             v_tour_id INTEGER;
         BEGIN
-            CALL update_event_groups(p_update_event_groups);
             CALL update_direct_duration(p_update_direct_duration_dropoff);
             CALL update_next_leg_durations(p_update_next_leg_durations);
             CALL update_prev_leg_durations(p_update_prev_leg_durations);

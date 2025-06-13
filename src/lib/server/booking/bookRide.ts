@@ -7,7 +7,6 @@ import { MAX_TRAVEL } from '$lib/constants';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
-import { getEventGroupInfo, type EventGroupUpdate } from '$lib/server/booking/getEventGroupInfo';
 import { getDirectDurations, type DirectDrivingDurations } from './getDirectDrivingDurations';
 import { getMergeTourList } from './getMergeToorList';
 import type { DebugInfo } from '../util/debugInfo';
@@ -124,25 +123,6 @@ export async function bookRide(
 	}
 	const vehicle = companies[best.company].vehicles.find((v) => v.id === best.vehicle)!;
 	const events = vehicle.events;
-	let prevPickupEventIdx = best.pickupIdx == undefined ? undefined : best.pickupIdx - 1;
-	if (best.pickupCase.how == InsertHow.NEW_TOUR) {
-		prevPickupEventIdx = events.findLastIndex((e) => e.communicatedTime <= best.pickupTime);
-	}
-	const pickupEventGroupInfo = getEventGroupInfo(
-		events,
-		c.start,
-		prevPickupEventIdx,
-		best.pickupIdx,
-		best.pickupCase.how
-	);
-	const prevDropoffEventIdx = best.dropoffIdx == undefined ? undefined : best.dropoffIdx - 1;
-	const dropoffEventGroupInfo = getEventGroupInfo(
-		events,
-		c.target,
-		prevDropoffEventIdx,
-		best.dropoffIdx,
-		best.dropoffCase.how
-	);
 	console.log('BE');
 	const prevPickupEvent = comesFromCompany(best.pickupCase)
 		? best.pickupIdx == undefined
@@ -274,9 +254,6 @@ export async function bookRide(
 			}
 		})(),
 		mergeTourList: Array.from(mergeTourList).map((t) => t.tourId),
-		eventGroupUpdateList: pickupEventGroupInfo.updateList.concat(dropoffEventGroupInfo.updateList),
-		pickupEventGroup: pickupEventGroupInfo.newEventGroup,
-		dropoffEventGroup: dropoffEventGroupInfo.newEventGroup,
 		neighbourIds: {
 			prevPickup: best.pickupCase.how == InsertHow.PREPEND ? undefined : prevPickupEvent?.id,
 			nextPickup: best.pickupCase.how == InsertHow.APPEND ? undefined : nextPickupEvent?.id,
@@ -301,9 +278,6 @@ export type BookRideResponse = {
 	best: Insertion;
 	tour: undefined | number;
 	mergeTourList: number[];
-	eventGroupUpdateList: EventGroupUpdate[];
-	pickupEventGroup: string;
-	dropoffEventGroup: string;
 	neighbourIds: {
 		prevPickup: undefined | number;
 		nextPickup: undefined | number;
