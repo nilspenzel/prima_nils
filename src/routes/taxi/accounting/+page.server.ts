@@ -1,35 +1,7 @@
 import { getCompanyCosts } from '$lib/server/db/getCompanyCosts';
-import { getToursWithRequests } from '$lib/server/db/getTours.js';
-import { db } from '$lib/server/db/index.js';
-import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting.js';
 import type { PageServerLoad, RequestEvent } from './$types.js';
 
 export const load: PageServerLoad = async (event: RequestEvent) => {
-	const tours2 = getToursWithRequests(false);
-	const events = (await tours2).flatMap((t) => t.requests.flatMap((r) => r.events));
-	const companies = await db.selectFrom('company').selectAll().execute();
-	const results: { res: number | undefined; e1: number; e2: number }[] = [];
-	const events1 = events.filter((e) => e.id === 71 || e.id === 72);
-	const events2 = events.filter((e) => e.id === 57 || e.id === 59 || e.id === 60);
-	for (let i = 0; i != events1.length; ++i) {
-		for (let j = 0; j != events2.length; ++j) {
-			console.log(
-				{ e1: events1[i].id },
-				{ e2: events2[j].id },
-				{ result: (await oneToManyCarRouting(events1[i], [events[j]], false))[0] }
-			);
-		}
-	}
-	for (let i = 0; i != events2.length; ++i) {
-		for (let j = 0; j != events1.length; ++j) {
-			console.log(
-				{ e1: events1[j].id },
-				{ e2: events2[i].id },
-				{ result: (await oneToManyCarRouting(events2[i], [events1[j]], false))[0] }
-			);
-		}
-	}
-
 	const url = event.url;
 	const tourParam = url.searchParams.get('tourId');
 	const tourId = tourParam === null || isNaN(parseInt(tourParam)) ? undefined : parseInt(tourParam);
