@@ -19,6 +19,7 @@ import { groupBy } from '$lib/util/groupBy';
 import type { Event } from '$lib/server/booking/getBookingAvailability';
 import { getScheduledTimes, type ScheduledTimes } from './getScheduledTimes';
 import { getLegDurationUpdates } from './getLegDurationUpdates';
+import { HOUR, MINUTE } from '$lib/util/time';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -58,7 +59,7 @@ export async function bookRide(
 ): Promise<undefined | BookRideResponse> {
 	bookingLogs.push({ iter: -1 });
 	console.log('BS');
-	const searchInterval = new Interval(c.startTime, c.targetTime);
+	const searchInterval = new Interval(c.startTime - 5 * HOUR, 5 * HOUR + c.targetTime);
 	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 6, MAX_TRAVEL * 6);
 	const userChosen = !c.startFixed ? c.start : c.target;
 	const busStop = c.startFixed ? c.start : c.target;

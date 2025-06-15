@@ -36,6 +36,16 @@ export async function evaluateRequest(
 	promisedTimes?: PromisedTimes,
 	debugInfo?: DebugInfo
 ): Promise<(Insertion | undefined)[][]> {
+	console.log(
+		'EVALUATE REQUEST PARAMS: ',
+		{ companies: JSON.stringify(companies, null, 2) },
+		{ expandedSearchInterval: expandedSearchInterval.toString() },
+		{ userChosen },
+		{ busStops: JSON.stringify(busStops, null, 2) },
+		{ required },
+		{ startFixed },
+		{ promisedTimes }
+	);
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}

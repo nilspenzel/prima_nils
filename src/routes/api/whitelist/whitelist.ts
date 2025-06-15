@@ -5,7 +5,7 @@ import { Interval } from '$lib/util/interval';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
 import { toBusStopWithISOStrings, type BusStop } from '$lib/server/booking/BusStop';
-import type { Insertion } from '$lib/server/booking/insertion';
+import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
 
 export async function whitelist(
 	userChosen: Coordinates,
@@ -99,6 +99,14 @@ export async function whitelist(
 			ret[i] = bestEvals[filteredBusStops[i]!];
 		}
 	}
+	console.log(
+		'WHITELIST RESULT: ',
+		JSON.stringify(
+			ret.map((arr) => arr.map((i) => toInsertionWithISOStrings(i))),
+			null,
+			2
+		)
+	);
 	console.log('WLE');
 	return ret;
 }

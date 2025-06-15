@@ -10,8 +10,8 @@ export const WGS84 = 4326;
 export const MAX_MATCHING_DISTANCE = 250;
 export const COORDINATE_ROUNDING_ERROR_THRESHOLD = 0.00001;
 export const PASSENGER_CHANGE_DURATION = MINUTE;
-export const TAXI_DRIVING_TIME_COST_FACTOR = 1; // 2,2€ für die ersten 2km, danach 3,6€ alles pro km (bei 60kmh schnitt ca. 180€ / h)
-export const TAXI_WAITING_TIME_COST_FACTOR = 0.1; // 35€ / h  ==> 35 / 180 ~= 0.2 sinnvoller Startwert
+export const TAXI_DRIVING_TIME_COST_FACTOR = 1;
+export const TAXI_WAITING_TIME_COST_FACTOR = 0.6;
 export const PASSENGER_TIME_COST_FACTOR = 0.3;
 export const EARLIEST_SHIFT_START = 4 * HOUR;
 export const LATEST_SHIFT_END = 23 * HOUR;

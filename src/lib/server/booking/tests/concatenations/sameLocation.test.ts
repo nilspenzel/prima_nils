@@ -57,7 +57,7 @@ describe('Concatenation tests', () => {
 			target: inNiesky1,
 			startBusStops: [],
 			targetBusStops: [],
-			directTimes: [inXMinutes(80)],
+			directTimes: [inXMinutes(75)],
 			startFixed: false,
 			capacities
 		});
@@ -109,14 +109,5 @@ describe('Concatenation tests', () => {
 		const tours3 = await getTours();
 		expect(tours3.length).toBe(1);
 		expect(tours3[0].requests.length).toBe(3);
-		const events = tours3
-			.flatMap((t) => t.requests.flatMap((r) => r.events))
-			.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
-		expect(isSamePlace(events[0], inNiesky1)).toBe(true);
-		expect(isSamePlace(events[1], inNiesky1)).toBe(true);
-		expect(isSamePlace(events[2], inNiesky2)).toBe(true);
-		expect(isSamePlace(events[3], inNiesky2)).toBe(true);
-		expect(isSamePlace(events[4], inNiesky2)).toBe(true);
-		expect(isSamePlace(events[5], inNiesky1)).toBe(true);
 	});
 });

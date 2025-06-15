@@ -263,6 +263,11 @@ export function evaluateBothInsertion(
 	promisedTimes?: PromisedTimes,
 	debugInfo?: DebugInfo
 ): InsertionEvaluation | undefined {
+	console.log(
+		promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
+		'start of bothevaluation',
+		printInsertionType(insertionCase)
+	);
 	console.assert(
 		insertionCase.what == InsertWhat.BOTH,
 		'Not inserting both in evaluateBothInsertion.'
@@ -302,16 +307,16 @@ export function evaluateBothInsertion(
 	);
 	if (arrivalWindow == undefined) {
 		console.log(
+			promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
 			'arrival window undefined',
-			insertionCase,
-			windows,
-			passengerDuration,
-			busStopWindow,
-			prevLegDuration,
-			nextLegDuration,
-			allowedTimes
+			printInsertionType(insertionCase),
+			{ windows: windows.toString() },
+			{ passengerDuration: passengerDuration.toString() },
+			{ busStopWindow: busStopWindow?.toString() },
+			{ prevLegDuration: prevLegDuration.toString() },
+			{ nextLegDuration: nextLegDuration.toString() },
+			{ allowedTimes: allowedTimes.toString() }
 		);
-
 		return undefined;
 	}
 	if (
@@ -367,6 +372,13 @@ export function evaluateBothInsertion(
 		passengerDuration: passengerDuration + eventOverlap,
 		eventOverlap
 	});
+	console.log(
+		promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
+		'bothevaluation',
+		printInsertionType(insertionCase),
+		{ pickupTime: pickupTime.toString() },
+		{ dropoffTime: dropoffTime.toString() }
+	);
 	return {
 		pickupTime,
 		dropoffTime,
