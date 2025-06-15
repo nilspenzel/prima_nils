@@ -1,16 +1,16 @@
-import { InsertHow } from "$lib/util/booking/insertionTypes";
-import type { Insertion } from "./insertion";
+import { InsertHow } from '$lib/util/booking/insertionTypes';
+import type { Insertion } from './insertion';
 import type { Event } from '$lib/server/booking/getBookingAvailability';
-import { groupBy } from "$lib/util/groupBy";
+import { groupBy } from '$lib/util/groupBy';
 
-export function getFirstAndLastEvents(mergeTourList: Event[], best: Insertion, events: Event[]){
-	if(best.pickupCase.how===InsertHow.NEW_TOUR) {
+export function getFirstAndLastEvents(mergeTourList: Event[], best: Insertion, events: Event[]) {
+	if (best.pickupCase.how === InsertHow.NEW_TOUR) {
 		return {
 			departure: -1,
 			arrival: -1,
-			firstEvents : [],
+			firstEvents: [],
 			lastEvents: []
-		}
+		};
 	}
 	let departure = Number.MAX_SAFE_INTEGER;
 	let arrival = -1;
@@ -65,5 +65,5 @@ export function getFirstAndLastEvents(mergeTourList: Event[], best: Insertion, e
 		lastEvents,
 		departure,
 		arrival
-	}
+	};
 }

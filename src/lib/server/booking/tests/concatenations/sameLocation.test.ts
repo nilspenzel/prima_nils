@@ -3,7 +3,6 @@ import { addCompany, addTaxi, getTours, setAvailability, Zone } from '$lib/testH
 import { describe, it, expect } from 'vitest';
 import type { ExpectedConnection } from '$lib/server/booking/bookRide';
 import { bookingApi } from '$lib/server/booking/bookingApi';
-import { isSamePlace } from '../../isSamePlace';
 
 const inNiesky1 = { lat: 51.29468377345111, lng: 14.833542206420248 };
 const inNiesky2 = { lat: 51.29544187321241, lng: 14.820560314788537 };

@@ -225,6 +225,21 @@ async function oneToMany(
 	}
 }
 
+function validateScheduledTimeStartBeforeEnd(tours: ToursWithRequests): boolean {
+	let fail = false;
+	console.log('Validating scheduledTimeEnd not before scheduledTimeStart...');
+	for (const event of tours.flatMap((t) => t.requests.flatMap((r) => r.events))) {
+		if (event.scheduledTimeEnd < event.scheduledTimeStart) {
+			console.log(
+				'Found an event where scheduledTimeEnd is before scheduledTimeStart, eventId: ',
+				event.id
+			);
+			fail = true;
+		}
+	}
+	return fail;
+}
+
 async function validateDirectDurations(tours: ToursWithRequests): Promise<boolean> {
 	let fail = false;
 	console.log('Validating direct durations...');
@@ -474,6 +489,7 @@ export async function healthCheck() {
 		fail = validateEventParameters(uncancelledTours) ? true : fail;
 		fail = validateEventTimeNoOverlap(uncancelledTours) ? true : fail;
 		fail = validateEventsAreInsideTours(uncancelledTours) ? true : fail;
+		fail = validateScheduledTimeStartBeforeEnd(uncancelledTours) ? true : fail;
 		fail = (await validateDirectDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateLegDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateCompanyDurations(uncancelledTours)) ? true : fail;

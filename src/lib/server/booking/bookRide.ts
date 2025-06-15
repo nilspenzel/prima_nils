@@ -157,7 +157,11 @@ export async function bookRide(
 		best.pickupIdx,
 		best.dropoffIdx
 	);
-	const {firstEvents, lastEvents, departure, arrival} = getFirstAndLastEvents(mergeTourList, best,events);
+	const { firstEvents, lastEvents, departure, arrival } = getFirstAndLastEvents(
+		mergeTourList,
+		best,
+		events
+	);
 	if (mergeTourList.length == 1) {
 		mergeTourList = [];
 	}
@@ -203,18 +207,30 @@ export async function bookRide(
 		best.dropoffPrevLegDuration,
 		best.dropoffNextLegDuration
 	);
-	if(best.pickupCase.how === InsertHow.INSERT && prevPickupEvent) {
-		const update = scheduledTimes.updates.find((upd) => upd.event_id === prevPickupEvent.id && !upd.start && prevPickupEvent.isPickup);
-		const sameTourEvents = events.filter((e) => e.tourId === prevPickupEvent.tourId).sort((e1,e2) => e1.scheduledTimeStart-e2.scheduledTimeStart);
-		if(update && sameTourEvents[0].id === prevPickupEvent.id) {
-			best.departure = (best.departure ?? prevPickupEvent.departure) - (prevPickupEvent.scheduledTimeEnd - update.time);
+	if (best.pickupCase.how === InsertHow.INSERT && prevPickupEvent) {
+		const update = scheduledTimes.updates.find(
+			(upd) => upd.event_id === prevPickupEvent.id && !upd.start && prevPickupEvent.isPickup
+		);
+		const sameTourEvents = events
+			.filter((e) => e.tourId === prevPickupEvent.tourId)
+			.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+		if (update && sameTourEvents[0].id === prevPickupEvent.id) {
+			best.departure =
+				(best.departure ?? prevPickupEvent.departure) -
+				(prevPickupEvent.scheduledTimeEnd - update.time);
 		}
 	}
-	if(best.pickupCase.how === InsertHow.INSERT && nextDropoffEvent) {
-		const update = scheduledTimes.updates.find((upd) => upd.event_id === nextDropoffEvent.id && upd.start && !nextDropoffEvent.isPickup);
-		const sameTourEvents = events.filter((e) => e.tourId === nextDropoffEvent.tourId).sort((e1,e2) => e2.scheduledTimeStart-e1.scheduledTimeStart);
-		if(update && sameTourEvents[0].id === nextDropoffEvent.id) {
-			best.arrival = (best.arrival ?? nextDropoffEvent.arrival) + (update.time - nextDropoffEvent.scheduledTimeStart);
+	if (best.pickupCase.how === InsertHow.INSERT && nextDropoffEvent) {
+		const update = scheduledTimes.updates.find(
+			(upd) => upd.event_id === nextDropoffEvent.id && upd.start && !nextDropoffEvent.isPickup
+		);
+		const sameTourEvents = events
+			.filter((e) => e.tourId === nextDropoffEvent.tourId)
+			.sort((e1, e2) => e2.scheduledTimeStart - e1.scheduledTimeStart);
+		if (update && sameTourEvents[0].id === nextDropoffEvent.id) {
+			best.arrival =
+				(best.arrival ?? nextDropoffEvent.arrival) +
+				(update.time - nextDropoffEvent.scheduledTimeStart);
 		}
 	}
 	return {
