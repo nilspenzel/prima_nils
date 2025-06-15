@@ -24,6 +24,92 @@ export const tests: TestParams[] = [
 				start: null,
 				destination: null,
 				company: null
+			},
+			{
+				evalAfterStep: 2,
+				entity: 'requestCount',
+				tourCount: -1,
+				requestCount: 3,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			},
+			{
+				evalAfterStep: 2,
+				entity: 'tourCount',
+				tourCount: 1,
+				requestCount: -1,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			}
+		],
+		process: {
+			starts: [
+				{
+					lat: 51.527358114107585,
+					lng: 14.697645909939212
+				},
+				{
+					lat: 51.48886873577544,
+					lng: 14.629302941137638
+				},
+				{
+					lat: 51.518385803966225,
+					lng: 14.661366479080641
+				}
+			],
+			destinations: [
+				{
+					lat: 51.520202846066724,
+					lng: 14.664217543076205
+				},
+				{
+					lat: 51.47846438451026,
+					lng: 14.661735025493101
+				},
+				{
+					lat: 51.49116349369399,
+					lng: 14.625863174614835
+				}
+			],
+			times: [1750247670692, 1750248850692, 1750247940000],
+			isDepartures: [true, true, true],
+			companies: [
+				{
+					lat: 51.530278670149244,
+					lng: 14.706657669152918
+				}
+			]
+		},
+		uuid: '4f6728fa-2cd0-42e4-9c49-eb7386d3fcff'
+	},
+	// endoftest
+
+	// startoftest
+	{
+		conditions: [
+			{
+				evalAfterStep: 1,
+				entity: 'requestCount',
+				tourCount: -1,
+				requestCount: 2,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			},
+			{
+				evalAfterStep: 1,
+				entity: 'tourCount',
+				tourCount: 1,
+				requestCount: -1,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
 			}
 		],
 		process: {

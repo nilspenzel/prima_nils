@@ -17,6 +17,7 @@ import { tests } from './testJsons';
 import { isSamePlace } from '../../isSamePlace';
 import { healthCheck } from '$lib/server/util/healthCheck';
 
+const uuid: string | undefined = '4f6728fa-2cd0-42e4-9c49-eb7386d3fcff';
 function filterByContainedEvent(
 	tours: {
 		id: number;
@@ -38,6 +39,9 @@ describe('Concatenation tests', () => {
 	it('generated tests', async () => {
 		console.log({ testparams: JSON.stringify(tests, null, '\t') });
 		for (const test of tests) {
+			if (uuid !== undefined && uuid !== test.uuid) {
+				continue;
+			}
 			console.log('Running test with', { link: `http://localhost:5173/tests?test=${test.uuid}` });
 			expect(test.process.starts.length).toBe(test.process.destinations.length);
 			expect(test.process.starts.length).toBe(test.process.isDepartures.length);
@@ -134,15 +138,16 @@ describe('Concatenation tests', () => {
 							{ condition },
 							{ link: `http://localhost:5173/tests?test=${test.uuid}` }
 						);
+						throw err;
+					} finally {
 						const logsPerTest = split(bookingLogs, -1);
 						for (const logs of logsPerTest) {
 							logs.sort(
 								(log1, log2) =>
 									(log1.cost ?? Number.MAX_SAFE_INTEGER) - (log2.cost ?? Number.MAX_SAFE_INTEGER)
 							);
-							console.log(JSON.stringify(logs, null, '\t'));
+							console.log('Booking Logs: ', JSON.stringify(logs, null, '\t'));
 						}
-						throw err;
 					}
 					if (await healthCheck()) {
 						expect(false).toBeTruthy();

@@ -259,4 +259,6 @@ export type BookingLogs = {
 	eventOverlap?: number;
 	pickupTime?: number;
 	dropoffTime?: number;
+	pickupNextId?: number;
+	dropoffPrevId?: number;
 };

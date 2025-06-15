@@ -95,19 +95,5 @@ export function getScheduledTimes(
 			time: dropoffTime - dropoffPrevLegDuration
 		});
 	}
-	if (nextPickupEvent && nextPickupEvent.scheduledTimeStart < pickupTime) {
-		scheduledTimes.updates.push({
-			time: pickupTime,
-			start: true,
-			event_id: nextPickupEvent.id
-		});
-	}
-	if (prevDropoffEvent && prevDropoffEvent.scheduledTimeEnd > dropoffTime) {
-		scheduledTimes.updates.push({
-			time: dropoffTime,
-			start: false,
-			event_id: prevDropoffEvent.id
-		});
-	}
 	return scheduledTimes;
 }

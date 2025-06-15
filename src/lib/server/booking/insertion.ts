@@ -712,6 +712,13 @@ export function evaluatePairInsertions(
 						: busStopEvaluations[busStopIdx][timeIdx][
 								insertionInfo.insertionIdx + dropoffIdx - pickupIdx
 							];
+					if (
+						pickup &&
+						dropoff &&
+						pickup.time + pickup.returnDuration + 2 >= dropoff.time - dropoff.approachDuration
+					) {
+						continue;
+					}
 					if (dropoff == undefined) {
 						continue;
 					}
@@ -757,7 +764,11 @@ export function evaluatePairInsertions(
 						waitingTime: pickup.taxiWaitingTime + dropoff.taxiWaitingTime,
 						taxiDuration: taxiDuration,
 						cumulatedTaxiDrivingDelta,
-						passengerDuration
+						passengerDuration,
+						pickupTime: pickup.time,
+						dropoffTime: dropoff.time,
+						pickupNextId: pickup.nextId,
+						dropoffPrevId: dropoff.prevId
 					});
 					if (
 						bestEvaluations[busStopIdx][timeIdx] == undefined ||
@@ -767,8 +778,8 @@ export function evaluatePairInsertions(
 						bestEvaluations[busStopIdx][timeIdx] = {
 							pickupTime: pickup.time,
 							dropoffTime: dropoff.time,
-							pickupCase: pickup.case,
-							dropoffCase: dropoff.case,
+							pickupCase: structuredClone(pickup.case),
+							dropoffCase: structuredClone(dropoff.case),
 							pickupIdx,
 							dropoffIdx,
 							taxiWaitingTime,
