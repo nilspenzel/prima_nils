@@ -1,4 +1,4 @@
-import { healthCheck } from './healthCheck';
+import { healthCheck } from '../../src/lib/server/util/healthCheck';
 
 async function main(): Promise<void> {
 	healthCheck();

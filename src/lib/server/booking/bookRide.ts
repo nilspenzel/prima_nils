@@ -7,18 +7,17 @@ import { getBookingAvailability } from '$lib/server/booking/getBookingAvailabili
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
 import { getDirectDurations, type DirectDrivingDurations } from './getDirectDrivingDurations';
-import { getMergeTourList } from './getMergeToorList';
+import { getMergeTourList } from './getMergeTourList';
 import type { DebugInfo } from '../util/debugInfo';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { printInsertionType } from './insertionTypes';
 import { bookingLogs, increment } from '$lib/testHelpers';
 import type { Insertion } from './insertion';
 import { comesFromCompany, returnsToCompany } from './durations';
-import { groupBy } from '$lib/util/groupBy';
-import type { Event } from '$lib/server/booking/getBookingAvailability';
 import { getScheduledTimes, type ScheduledTimes } from './getScheduledTimes';
 import { getLegDurationUpdates } from './getLegDurationUpdates';
 import { DAY } from '$lib/util/time';
+import { getFirstAndLastEvents } from './getFirstAndLastEvents';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -151,63 +150,16 @@ export async function bookRide(
 			: events[best.dropoffIdx]
 		: events.find((e) => e.id === best.nextDropoffId);
 	increment();
-	const mergeTourList = getMergeTourList(
+	let mergeTourList = getMergeTourList(
 		events,
 		best.pickupCase.how,
 		best.dropoffCase.how,
 		best.pickupIdx,
 		best.dropoffIdx
 	);
-	let departure = Number.MAX_SAFE_INTEGER;
-	let arrival = -1;
-	if (mergeTourList.length !== 0) {
-		for (const tour of mergeTourList) {
-			if (departure > tour.departure) {
-				departure = tour.departure;
-			}
-			if (arrival < tour.arrival) {
-				arrival = tour.arrival;
-			}
-			if (best.pickupCase.how !== InsertHow.PREPEND) {
-				best.departure = departure;
-			}
-			if (best.dropoffCase.how !== InsertHow.APPEND) {
-				best.arrival = arrival;
-			}
-		}
-	}
-	const filteredEvents = groupBy(
-		events.filter((e) => mergeTourList.some((t) => t.tourId === e.tourId)),
-		(e) => e.tourId,
-		(e) => e
-	);
-	const firstEvents: Event[] = [];
-	const lastEvents: Event[] = [];
-	for (const [_, tour] of filteredEvents) {
-		tour.sort((e1, e2) =>
-			e1.scheduledTimeStart === e2.scheduledTimeStart
-				? e1.scheduledTimeEnd - e2.scheduledTimeEnd
-				: e1.scheduledTimeStart - e2.scheduledTimeStart
-		);
-		const firstEvent = tour[0];
-		const lastEvent = tour[tour.length - 1];
-		if (
-			firstEvent.departure !== departure &&
-			firstEvent.id !== best.nextPickupId &&
-			firstEvent.id !== best.nextDropoffId
-		) {
-			firstEvents.push(firstEvent);
-		}
-		if (
-			lastEvent.arrival !== arrival &&
-			lastEvent.id !== best.prevPickupId &&
-			lastEvent.id !== best.prevDropoffId
-		) {
-			lastEvents.push(lastEvent);
-		}
-	}
-	if (firstEvents.length !== lastEvents.length) {
-		throw new Error();
+	const {firstEvents, lastEvents, departure, arrival} = getFirstAndLastEvents(mergeTourList, best,events);
+	if (mergeTourList.length == 1) {
+		mergeTourList = [];
 	}
 	const { prevLegDurations, nextLegDurations } = await getLegDurationUpdates(
 		firstEvents,
@@ -239,6 +191,32 @@ export async function bookRide(
 		arrival,
 		vehicle
 	);
+	const scheduledTimes = getScheduledTimes(
+		best.pickupTime,
+		best.dropoffTime,
+		prevPickupEvent,
+		nextPickupEvent,
+		nextDropoffEvent,
+		prevDropoffEvent,
+		best.pickupPrevLegDuration,
+		best.pickupNextLegDuration,
+		best.dropoffPrevLegDuration,
+		best.dropoffNextLegDuration
+	);
+	if(best.pickupCase.how === InsertHow.INSERT && prevPickupEvent) {
+		const update = scheduledTimes.updates.find((upd) => upd.event_id === prevPickupEvent.id && !upd.start && prevPickupEvent.isPickup);
+		const sameTourEvents = events.filter((e) => e.tourId === prevPickupEvent.tourId).sort((e1,e2) => e1.scheduledTimeStart-e2.scheduledTimeStart);
+		if(update && sameTourEvents[0].id === prevPickupEvent.id) {
+			best.departure = (best.departure ?? prevPickupEvent.departure) - (prevPickupEvent.scheduledTimeEnd - update.time);
+		}
+	}
+	if(best.pickupCase.how === InsertHow.INSERT && nextDropoffEvent) {
+		const update = scheduledTimes.updates.find((upd) => upd.event_id === nextDropoffEvent.id && upd.start && !nextDropoffEvent.isPickup);
+		const sameTourEvents = events.filter((e) => e.tourId === nextDropoffEvent.tourId).sort((e1,e2) => e2.scheduledTimeStart-e1.scheduledTimeStart);
+		if(update && sameTourEvents[0].id === nextDropoffEvent.id) {
+			best.arrival = (best.arrival ?? nextDropoffEvent.arrival) + (update.time - nextDropoffEvent.scheduledTimeStart);
+		}
+	}
 	return {
 		best,
 		tour: (() => {
@@ -263,14 +241,7 @@ export async function bookRide(
 		directDurations,
 		prevLegDurations,
 		nextLegDurations,
-		scheduledTimes: getScheduledTimes(
-			best.pickupTime,
-			best.dropoffTime,
-			prevPickupEvent,
-			nextPickupEvent,
-			nextDropoffEvent,
-			prevDropoffEvent
-		)
+		scheduledTimes
 	};
 }
 

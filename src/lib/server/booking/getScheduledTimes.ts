@@ -18,22 +18,28 @@ export function getScheduledTimes(
 	prevPickupEvent: undefined | (Event & { time: Interval }),
 	nextPickupEvent: undefined | (Event & { time: Interval }),
 	nextDropoffEvent: undefined | (Event & { time: Interval }),
-	prevDropoffEvent: undefined | (Event & { time: Interval })
+	prevDropoffEvent: undefined | (Event & { time: Interval }),
+	pickupPrevLegDuration: number,
+	pickupNextLegDuration: number,
+	dropoffPrevLegDuration: number,
+	dropoffNextLegDuration: number
 ) {
 	let communicatedPickup = pickupTime - SCHEDULED_TIME_BUFFER;
 	let communicatedDropoff = dropoffTime + SCHEDULED_TIME_BUFFER;
 	const dropoffInterval = new Interval(dropoffTime, communicatedDropoff);
-	const pickupInterval = new Interval(communicatedPickup, pickupTime);
+	const pickupCommunicatedInterval = new Interval(communicatedPickup, pickupTime);
+	const pickupPrevInterval = new Interval(pickupTime - pickupPrevLegDuration, pickupTime);
+	const pickupNextInterval = new Interval(pickupTime, pickupTime + pickupNextLegDuration);
 	const scheduledTimes: ScheduledTimes = {
 		newPickupStartTime: communicatedPickup,
 		newDropoffEndTime: communicatedDropoff,
 		updates: []
 	};
-	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupInterval)) {
+	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupCommunicatedInterval)) {
 		communicatedPickup =
-			(Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +
+			Math.min(pickupTime - pickupPrevLegDuration, (Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +
 				Math.min(pickupTime, prevPickupEvent.scheduledTimeEnd)) /
-			2;
+			2);
 		scheduledTimes.newPickupStartTime = Math.ceil(communicatedPickup);
 		scheduledTimes.updates.push({
 			event_id: prevPickupEvent.id,
@@ -41,18 +47,18 @@ export function getScheduledTimes(
 			time: Math.floor(communicatedPickup)
 		});
 	}
-	if (nextPickupEvent && nextPickupEvent.time.overlaps(pickupInterval)) {
+	if (nextPickupEvent && (nextPickupEvent.time.overlaps(pickupCommunicatedInterval) || nextPickupEvent.time.overlaps(pickupNextInterval))) {
 		scheduledTimes.updates.push({
 			event_id: nextPickupEvent.id,
 			start: true,
-			time: pickupTime
+			time: pickupTime + pickupNextLegDuration
 		});
 	}
-	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffInterval)) {
+	if (nextDropoffEvent && (nextDropoffEvent.time.overlaps(dropoffInterval) || nextDropoffEvent?.time.overlaps(new Interval(dropoffTime, dropoffTime + dropoffNextLegDuration)))) {
 		communicatedDropoff =
-			(Math.max(dropoffTime, nextDropoffEvent.scheduledTimeStart) +
+			Math.max(dropoffTime + dropoffNextLegDuration, (Math.max(dropoffTime, nextDropoffEvent.scheduledTimeStart) +
 				Math.min(communicatedDropoff, nextDropoffEvent.scheduledTimeEnd)) /
-			2;
+			2);
 		scheduledTimes.newDropoffEndTime = Math.floor(communicatedDropoff);
 		scheduledTimes.updates.push({
 			event_id: nextDropoffEvent.id,

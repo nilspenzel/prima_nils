@@ -16,7 +16,7 @@ import { randomInt } from './randomInt';
 import * as fs from 'fs';
 import * as readline from 'readline';
 import { DAY } from '../../src/lib/util/time';
-import { healthCheck } from '../healthCheck/healthCheck';
+import { healthCheck } from '../../src/lib/server/util/healthCheck';
 import { logHelp } from './logHelp';
 import { exec } from 'child_process';
 import path from 'path';
