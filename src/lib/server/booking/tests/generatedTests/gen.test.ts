@@ -15,6 +15,7 @@ import { db } from '$lib/server/db';
 import type { Condition } from '$lib/util/booking/testParams';
 import { tests } from './testJsons';
 import { isSamePlace } from '../../isSamePlace';
+import { healthCheck } from '$lib/server/util/healthCheck';
 
 function filterByContainedEvent(
 	tours: {
@@ -142,6 +143,9 @@ describe('Concatenation tests', () => {
 							console.log(JSON.stringify(logs, null, '\t'));
 						}
 						throw err;
+					}
+					if(await healthCheck()) {
+						expect(false).toBeTruthy()
 					}
 				}
 			}

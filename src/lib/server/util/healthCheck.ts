@@ -1,10 +1,10 @@
-import { getToursWithRequests } from '../../src/lib/server/db/getTours';
-import type { ToursWithRequests, TourWithRequestsEvent } from '../../src/lib/util/getToursTypes';
-import { groupBy } from '../../src/lib/util/groupBy';
-import { Interval } from '../../src/lib/util/interval';
-import { HOUR } from '../../src/lib/util/time';
-import { isSamePlace } from '../../src/lib/server/booking/isSamePlace';
-import { getScheduledEventTime } from '../../src/lib/util/getScheduledEventTime';
+import { getToursWithRequests } from '../db/getTours';
+import type { ToursWithRequests, TourWithRequestsEvent } from '../../util/getToursTypes';
+import { groupBy } from '../../util/groupBy';
+import { Interval } from '../../util/interval';
+import { HOUR } from '../../util/time';
+import { isSamePlace } from '../booking/isSamePlace';
+import { getScheduledEventTime } from '../../util/getScheduledEventTime';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -280,6 +280,7 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 						fail = true;
 					} else {
 						if (
+							laterTour.directDuration !== null &&
 							expectedDuration !== null &&
 							expectedDuration2 !== null &&
 							Math.abs(expectedDuration - laterTour.directDuration / 1000) > 1 &&
@@ -375,8 +376,8 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				);
 				fail = true;
 			}
-			const earlierEventStart = getScheduledEventTime(earlierEvent.scheduledTimeStart);
-			const laterEventEnd = getScheduledEventTime(laterEvent.scheduledTimeEnd);
+			const earlierEventStart = getScheduledEventTime(earlierEvent);
+			const laterEventEnd = getScheduledEventTime(laterEvent);
 			const timeDiff = isSamePlace(earlierEvent, laterEvent)
 				? 0
 				: (laterEventEnd - earlierEventStart) / 1000;

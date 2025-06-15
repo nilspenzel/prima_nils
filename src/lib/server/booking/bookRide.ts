@@ -3,7 +3,6 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import type { Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
-import { MAX_TRAVEL } from '$lib/constants';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
@@ -19,7 +18,7 @@ import { groupBy } from '$lib/util/groupBy';
 import type { Event } from '$lib/server/booking/getBookingAvailability';
 import { getScheduledTimes, type ScheduledTimes } from './getScheduledTimes';
 import { getLegDurationUpdates } from './getLegDurationUpdates';
-import { HOUR, MINUTE } from '$lib/util/time';
+import { DAY } from '$lib/util/time';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -59,8 +58,8 @@ export async function bookRide(
 ): Promise<undefined | BookRideResponse> {
 	bookingLogs.push({ iter: -1 });
 	console.log('BS');
-	const searchInterval = new Interval(c.startTime - 5 * HOUR, 5 * HOUR + c.targetTime);
-	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 6, MAX_TRAVEL * 6);
+	const searchInterval = new Interval(c.startTime, c.targetTime);
+	const expandedSearchInterval = searchInterval.expand(DAY, DAY);
 	const userChosen = !c.startFixed ? c.start : c.target;
 	const busStop = c.startFixed ? c.start : c.target;
 	const { companies, filteredBusStops } = await getBookingAvailability(
