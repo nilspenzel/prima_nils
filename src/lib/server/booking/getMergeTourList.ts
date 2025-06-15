@@ -21,8 +21,5 @@ export const getMergeTourList = (
 	events.slice(pickupIdx ?? 0, dropoffIdx ?? events.length - 1).forEach((ev) => {
 		tours.add(ev.tourId);
 	});
-	if (tours.size == 1) {
-		return [];
-	}
 	return [...tours].map((t) => events.find((e) => t === e.tourId)).filter((e) => e !== undefined);
 };
