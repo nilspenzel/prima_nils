@@ -5,8 +5,6 @@ import { bookingApi } from '../../src/lib/server/booking/bookingApi';
 import { cancelRequest } from '../../src/lib/server/db/cancelRequest';
 import { moveTour } from '../../src/lib/server/moveTour';
 import { addAvailability } from '../../src/lib/server/addAvailability';
-//import { removeAvailability } from '../../src/lib/server/removeAvailability';
-//import { addVehicle } from '../../src/lib/server/addVehicle';
 import { getToursWithRequests } from '../../src/lib/server/db/getTours';
 import { cancelTour } from '../../src/lib/server/cancelTour';
 import { type Coordinates } from '../../src/lib/util/Coordinates';
@@ -178,7 +176,14 @@ async function removeAvailabilityLocal() {}
 
 async function addVehicleLocal() {}
 
-async function main() {
+export async function simulation(params: {
+	backups?: boolean;
+	healthChecks?: boolean;
+	restrict?: boolean;
+	ongoing?: boolean;
+	runs?: number;
+	finishTime?: number;
+}): Promise<boolean> {
 	async function mainLoop(i: number) {
 		const r = Math.random();
 		console.log('RANDOM API ITERATION: ', i, ' with random value: ', r);
@@ -186,7 +191,7 @@ async function main() {
 		if (actionIdx === undefined || actionIdx < 0 || actionIdx >= actionProbabilities.length) {
 			console.log('chose: nothing', { actionIdx }, { r });
 			errors++;
-			return;
+			return true;
 		}
 		const action = actionProbabilities[actionIdx];
 		chosen[actionIdx] += 1;
@@ -214,7 +219,7 @@ async function main() {
 				await addVehicleLocal();
 				break;
 		}
-		if (backups) {
+		if (params.backups) {
 			counter++;
 			const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '_');
 			const FILE_NAME = `full_backup_${timestamp}${counter}.sql`;
@@ -232,8 +237,8 @@ async function main() {
 			});
 		}
 		console.log('');
-		if (healthChecks && (await healthCheck())) {
-			process.exit(0);
+		if (params.healthChecks && (await healthCheck())) {
+			return true;
 		}
 	}
 
@@ -244,6 +249,54 @@ async function main() {
 		});
 		process.exit(1);
 	}
+	const coordinates = await readCoordinates();
+	// The following coordinates are used to restrict either start or target (which is chosen at random) in each booking.
+	// The restriction is a 'square' roughly matching the town of schleife.
+	// This can be activated by using the --restrict flag.
+	const maxLat = 51.54675239279669;
+	const minLat = 51.52743007431573;
+	const maxLng = 14.540862766349306;
+	const minLng = 14.511228293715078;
+	const restrictedCoordinates = params.restrict
+		? coordinates.filter(
+				(c) => c.lat <= maxLat && c.lat >= minLat && c.lng <= maxLng && c.lng >= minLng
+			)
+		: undefined;
+	await addInitialAvailabilities(1, 1);
+	await addInitialAvailabilities(1, 2);
+	const chosen = Array.from({ length: actionProbabilities.length }, (_) => 0);
+	let errors = 0;
+	if (params.ongoing) {
+		let idx = 0;
+		while (true) {
+			await mainLoop(idx++);
+		}
+	} else if (params.finishTime) {
+		let idx = 0;
+		while (Date.now() < params.finishTime) {
+			await mainLoop(idx);
+			++idx;
+		}
+	} else if (params.runs) {
+		for (let i = 0; i != params.runs; ++i) {
+			await mainLoop(i);
+		}
+	} else {
+		await mainLoop(0);
+	}
+	for (const [i, a] of actionProbabilities.entries()) {
+		console.log('action ', a.text, ' was chosen ', chosen[i], ' times.');
+	}
+	console.log('There were ', errors, ' errors.');
+	const tours = await getToursWithRequests(false);
+	console.log(
+		`There are currently ${tours.reduce((acc, curr) => (acc = acc + curr.requests.length), 0)} uncancelled requests across ${tours.length} tours.`
+	);
+	console.log('RANDOM API END');
+	return false;
+}
+
+async function main() {
 	let healthChecks = false;
 	let runs: number | undefined = undefined;
 	let finishTime: number | undefined = undefined;
@@ -282,51 +335,13 @@ async function main() {
 			help = true;
 		}
 	}
+
 	if (help) {
 		logHelp();
 		process.exit(0);
 	}
-	const coordinates = await readCoordinates();
-	// The following coordinates are used to restrict either start or target (which is chosen at random) in each booking.
-	// The restriction is a 'square' roughly matching the town of schleife.
-	// This can be activated by using the --restrict flag.
-	const maxLat = 51.54675239279669;
-	const minLat = 51.52743007431573;
-	const maxLng = 14.540862766349306;
-	const minLng = 14.511228293715078;
-	const restrictedCoordinates = restrict
-		? coordinates.filter(
-				(c) => c.lat <= maxLat && c.lat >= minLat && c.lng <= maxLng && c.lng >= minLng
-			)
-		: undefined;
-	await addInitialAvailabilities(1, 1);
-	await addInitialAvailabilities(1, 2);
-	const chosen = Array.from({ length: actionProbabilities.length }, (_) => 0);
-	let errors = 0;
-	if (ongoing) {
-		let idx = 0;
-		while (true) {
-			await mainLoop(idx++);
-		}
-	} else if (finishTime) {
-		let idx = 0;
-		while (Date.now() < finishTime) {
-			await mainLoop(idx++);
-		}
-	} else if (runs) {
-		for (let i = 0; i != runs; ++i) {
-			await mainLoop(i);
-		}
-	} else {
-		await mainLoop(0);
-	}
-	for (const [i, a] of actionProbabilities.entries()) {
-		console.log('action ', a.text, ' was chosen ', chosen[i], ' times.');
-	}
-	console.log('There were ', errors, ' errors.');
-	console.log('RANDOM API END');
+	simulation({ backups, healthChecks, restrict, ongoing, runs, finishTime });
 }
-
 main().catch((err) => {
 	console.error(err);
 	process.exit(1);

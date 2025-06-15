@@ -26,7 +26,8 @@
 		"call": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/callBookingApi.ts",
 		"restore": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/restore.ts",
 		"find": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/findLastCorrectBackup.ts",
-		"cancelr": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/callCancelRequest.ts"
+		"cancelr": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/callCancelRequest.ts",
+		"test:fuzzy": "./setup-db.sh && vitest src/lib/server/booking/tests/fuzzy.test.ts --fileParallelism false"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
