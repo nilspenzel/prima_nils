@@ -144,8 +144,8 @@ describe('Concatenation tests', () => {
 						}
 						throw err;
 					}
-					if(await healthCheck()) {
-						expect(false).toBeTruthy()
+					if (await healthCheck()) {
+						expect(false).toBeTruthy();
 					}
 				}
 			}
