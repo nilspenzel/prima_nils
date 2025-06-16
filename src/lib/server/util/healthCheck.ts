@@ -404,8 +404,8 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				);
 				fail = true;
 			}
-			const earlierEventStart = getScheduledEventTime(earlierEvent);
-			const laterEventEnd = getScheduledEventTime(laterEvent);
+			const earlierEventStart = earlierEvent.scheduledTimeStart;
+			const laterEventEnd = laterEvent.scheduledTimeEnd;
 			const timeDiff = isSamePlace(earlierEvent, laterEvent)
 				? 0
 				: (laterEventEnd - earlierEventStart) / 1000;
@@ -416,7 +416,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				timeDiff < (isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration2 + 60)
 			) {
 				console.log(
-					`Time difference expected duration ${expectedDuration + 60} seconds exceeds difference in event times ${timeDiff} seconds for event_id ${earlierEvent.id} and event_id ${laterEvent.id}`
+					`Time difference expected duration ${expectedDuration + 60} seconds exceeds difference in event times ${timeDiff} seconds for event_id ${earlierEvent.id} and event_id ${laterEvent.id} ${new Date(earlierEvent.scheduledTimeStart).toISOString()} to ${new Date(laterEvent.scheduledTimeEnd).toISOString()}`
 				);
 				fail = true;
 			}

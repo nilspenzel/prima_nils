@@ -58,7 +58,7 @@ export function getScheduledTimes(
 			start: false,
 			time: Math.floor(Math.min(pickupTime - pickupPrevLegDuration, communicatedPickup))
 		});
-	}
+	}/*
 	if (
 		nextPickupEvent &&
 		(nextPickupEvent.time.overlaps(pickupCommunicatedInterval) ||
@@ -70,7 +70,7 @@ export function getScheduledTimes(
 			start: true,
 			time: Math.floor(pickupTime + pickupNextLegDuration)
 		});
-	}
+	}*/
 	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffInterval)) {
 		console.log('critical4');
 		communicatedDropoff =
@@ -89,9 +89,10 @@ export function getScheduledTimes(
 		scheduledTimes.updates.push({
 			event_id: nextDropoffEvent.id,
 			start: true,
-			time: Math.ceil(Math.max(dropoffTime + dropoffNextLegDuration, communicatedDropoff))
+			time: Math.ceil(dropoffTime + dropoffNextLegDuration)
 		});
-	}
+		console.log(new Date(dropoffTime + dropoffNextLegDuration))
+	}/*
 	if (
 		prevDropoffEvent &&
 		(prevDropoffEvent.time.overlaps(dropoffInterval) ||
@@ -103,6 +104,6 @@ export function getScheduledTimes(
 			start: false,
 			time: Math.ceil(Math.max(communicatedDropoff, dropoffTime - dropoffPrevLegDuration))
 		});
-	}
+	}*/
 	return scheduledTimes;
 }
