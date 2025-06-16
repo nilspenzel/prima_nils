@@ -269,20 +269,28 @@ export async function simulation(params: {
 	if (params.ongoing) {
 		let idx = 0;
 		while (true) {
-			await mainLoop(idx++);
+			if (await mainLoop(idx++)) {
+				return true;
+			}
 		}
 	} else if (params.finishTime) {
 		let idx = 0;
 		while (Date.now() < params.finishTime) {
-			await mainLoop(idx);
+			if (await mainLoop(idx)) {
+				return true;
+			}
 			++idx;
 		}
 	} else if (params.runs) {
 		for (let i = 0; i != params.runs; ++i) {
-			await mainLoop(i);
+			if (await mainLoop(i)) {
+				return true;
+			}
 		}
 	} else {
-		await mainLoop(0);
+		if (await mainLoop(0)) {
+			return true;
+		}
 	}
 	for (const [i, a] of actionProbabilities.entries()) {
 		console.log('action ', a.text, ' was chosen ', chosen[i], ' times.');
