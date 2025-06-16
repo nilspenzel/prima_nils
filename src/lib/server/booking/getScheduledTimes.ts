@@ -49,7 +49,7 @@ export function getScheduledTimes(
 		} else {
 			scheduledTimes.newPickupStartTime = Math.max(
 				communicatedPickup,
-				pickupTime - prevPickupLeeway
+				pickupTime - prevPickupLeeway + prevPickupEvent.time.size()
 			);
 		}
 	}
@@ -86,7 +86,7 @@ export function getScheduledTimes(
 		} else {
 			scheduledTimes.newDropoffEndTime = Math.min(
 				communicatedDropoff,
-				dropoffTime + nextDropoffLeeway
+				dropoffTime + nextDropoffLeeway - nextDropoffEvent.time.size()
 			);
 		}
 	}
