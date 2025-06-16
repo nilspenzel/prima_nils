@@ -149,9 +149,12 @@ describe('Concatenation tests', () => {
 							console.log('Booking Logs: ', JSON.stringify(logs, null, '\t'));
 						}
 					}
-					if (await healthCheck()) {
-						expect(false).toBeTruthy();
-					}
+				}
+				if (await healthCheck()) {
+					console.error(`❌ Condition failed:`, {
+						link: `http://localhost:5173/tests?test=${test.uuid}`
+					});
+					expect(false).toBeTruthy();
 				}
 			}
 		}
