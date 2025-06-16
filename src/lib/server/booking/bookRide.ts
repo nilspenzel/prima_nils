@@ -217,8 +217,7 @@ export async function bookRide(
 		if (update && sameTourEvents[0].id === prevPickupEvent.id) {
 			best.departure =
 				(best.departure ?? prevPickupEvent.departure) -
-				(prevPickupEvent.scheduledTimeEnd - update.time) -
-				best.pickupPrevLegDuration;
+				(prevPickupEvent.scheduledTimeEnd - update.time);
 		}
 	}
 	if (best.pickupCase.how === InsertHow.INSERT && nextDropoffEvent) {
@@ -231,8 +230,7 @@ export async function bookRide(
 		if (update && sameTourEvents[0].id === nextDropoffEvent.id) {
 			best.arrival =
 				(best.arrival ?? nextDropoffEvent.arrival) +
-				(update.time - nextDropoffEvent.scheduledTimeStart) +
-				best.dropoffNextLegDuration;
+				(update.time - nextDropoffEvent.scheduledTimeStart);
 		}
 	}
 	return {
