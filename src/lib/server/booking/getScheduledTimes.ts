@@ -58,7 +58,7 @@ export function getScheduledTimes(
 			start: false,
 			time: Math.floor(Math.min(pickupTime - pickupPrevLegDuration, communicatedPickup))
 		});
-	}/*
+	} /*
 	if (
 		nextPickupEvent &&
 		(nextPickupEvent.time.overlaps(pickupCommunicatedInterval) ||
@@ -91,8 +91,8 @@ export function getScheduledTimes(
 			start: true,
 			time: Math.ceil(dropoffTime + dropoffNextLegDuration)
 		});
-		console.log(new Date(dropoffTime + dropoffNextLegDuration))
-	}/*
+		console.log(new Date(dropoffTime + dropoffNextLegDuration));
+	} /*
 	if (
 		prevDropoffEvent &&
 		(prevDropoffEvent.time.overlaps(dropoffInterval) ||
