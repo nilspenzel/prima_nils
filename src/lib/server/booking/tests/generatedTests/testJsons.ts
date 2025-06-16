@@ -124,7 +124,7 @@ export const tests: TestParams[] = [
 			{
 				evalAfterStep: 2,
 				entity: 'tourCount',
-				tourCount: 2,
+				tourCount: 1,
 				requestCount: -1,
 				expectedPosition: null,
 				start: null,

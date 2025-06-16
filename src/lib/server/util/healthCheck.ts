@@ -403,8 +403,8 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 				);
 				fail = true;
 			}
-			const earlierEventStart = earlierEvent.scheduledTimeStart;
-			const laterEventEnd = laterEvent.scheduledTimeEnd;
+			const earlierEventStart = earlierEvent.scheduledTimeEnd;
+			const laterEventEnd = laterEvent.scheduledTimeStart;
 			const timeDiff = isSamePlace(earlierEvent, laterEvent)
 				? 0
 				: (laterEventEnd - earlierEventStart) / 1000;

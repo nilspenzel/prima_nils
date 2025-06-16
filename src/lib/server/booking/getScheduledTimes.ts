@@ -24,86 +24,87 @@ export function getScheduledTimes(
 	dropoffPrevLegDuration: number,
 	dropoffNextLegDuration: number
 ) {
-	let communicatedPickup = pickupTime - SCHEDULED_TIME_BUFFER;
-	let communicatedDropoff = dropoffTime + SCHEDULED_TIME_BUFFER;
-	const dropoffInterval = new Interval(dropoffTime, communicatedDropoff);
-	const pickupCommunicatedInterval = new Interval(communicatedPickup, pickupTime);
-	const pickupPrevInterval = new Interval(pickupTime - pickupPrevLegDuration, pickupTime);
-	const pickupNextInterval = new Interval(pickupTime, pickupTime + pickupNextLegDuration);
-	const dropoffPrevInterval = new Interval(dropoffTime - dropoffPrevLegDuration, dropoffTime);
-	const dropoffNextInterval = new Interval(dropoffTime, dropoffTime + dropoffNextLegDuration);
+	const communicatedPickup = pickupTime - SCHEDULED_TIME_BUFFER;
+	const communicatedDropoff = dropoffTime + SCHEDULED_TIME_BUFFER;
 	const scheduledTimes: ScheduledTimes = {
 		newPickupStartTime: communicatedPickup,
 		newDropoffEndTime: communicatedDropoff,
 		updates: []
 	};
-	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupCommunicatedInterval)) {
-		console.log('critical1');
-		communicatedPickup =
-			(Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +
-				Math.min(pickupTime, prevPickupEvent.scheduledTimeEnd)) /
-			2;
-		scheduledTimes.newPickupStartTime = Math.ceil(communicatedPickup);
-		scheduledTimes.updates.push({
-			event_id: prevPickupEvent.id,
-			start: false,
-			time: Math.floor(communicatedPickup)
-		});
+	if (prevPickupEvent) {
+		const prevPickupLeeway =
+			pickupTime - prevPickupEvent.scheduledTimeStart - pickupPrevLegDuration;
+		if (prevPickupLeeway < 0) {
+			console.log('errortype1');
+			throw new Error();
+		}
+		console.log('critical1', { prevPickupLeeway: new Date(prevPickupLeeway).toISOString() });
+		if (prevPickupLeeway < prevPickupEvent.time.size()) {
+			scheduledTimes.updates.push({
+				event_id: prevPickupEvent.id,
+				start: false,
+				time: prevPickupEvent.scheduledTimeStart + prevPickupLeeway
+			});
+			scheduledTimes.newPickupStartTime = pickupTime;
+		} else {
+			scheduledTimes.newPickupStartTime = Math.max(
+				communicatedPickup,
+				pickupTime - prevPickupLeeway
+			);
+		}
 	}
-
-	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupPrevInterval)) {
-		console.log('critical2');
-		scheduledTimes.updates.push({
-			event_id: prevPickupEvent.id,
-			start: false,
-			time: Math.floor(Math.min(pickupTime - pickupPrevLegDuration, communicatedPickup))
-		});
-	} /*
-	if (
-		nextPickupEvent &&
-		(nextPickupEvent.time.overlaps(pickupCommunicatedInterval) ||
-			nextPickupEvent.time.overlaps(pickupNextInterval))
-	) {
-		console.log('critical3');
-		scheduledTimes.updates.push({
-			event_id: nextPickupEvent.id,
-			start: true,
-			time: Math.floor(pickupTime + pickupNextLegDuration)
-		});
-	}*/
-	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffInterval)) {
-		console.log('critical4');
-		communicatedDropoff =
-			(Math.max(dropoffTime, nextDropoffEvent.scheduledTimeStart) +
-				Math.min(communicatedDropoff, nextDropoffEvent.scheduledTimeEnd)) /
-			2;
-		scheduledTimes.newDropoffEndTime = Math.floor(communicatedDropoff);
-		scheduledTimes.updates.push({
-			event_id: nextDropoffEvent.id,
-			start: true,
-			time: Math.ceil(communicatedDropoff)
-		});
+	if (nextPickupEvent) {
+		const nextPickupLeeway = nextPickupEvent.scheduledTimeEnd - pickupTime - pickupNextLegDuration;
+		if (nextPickupLeeway < 0) {
+			console.log('errortype2');
+			throw new Error();
+		}
+		console.log('critical2', { nextPickupLeeway: new Date(nextPickupLeeway).toISOString() });
+		if (nextPickupLeeway < nextPickupEvent.time.size()) {
+			scheduledTimes.updates.push({
+				event_id: nextPickupEvent.id,
+				start: true,
+				time: nextPickupEvent.scheduledTimeEnd - nextPickupLeeway
+			});
+		}
 	}
-	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffNextInterval)) {
-		console.log('critical5');
-		scheduledTimes.updates.push({
-			event_id: nextDropoffEvent.id,
-			start: true,
-			time: Math.ceil(dropoffTime + dropoffNextLegDuration)
-		});
-		console.log(new Date(dropoffTime + dropoffNextLegDuration));
-	} /*
-	if (
-		prevDropoffEvent &&
-		(prevDropoffEvent.time.overlaps(dropoffInterval) ||
-			prevDropoffEvent?.time.overlaps(dropoffPrevInterval))
-	) {
-		console.log('critical6');
-		scheduledTimes.updates.push({
-			event_id: prevDropoffEvent.id,
-			start: false,
-			time: Math.ceil(Math.max(communicatedDropoff, dropoffTime - dropoffPrevLegDuration))
-		});
-	}*/
+	if (nextDropoffEvent) {
+		const nextDropoffLeeway =
+			nextDropoffEvent.scheduledTimeEnd - dropoffTime - dropoffNextLegDuration;
+		if (nextDropoffLeeway < 0) {
+			console.log('errortype3');
+			throw new Error();
+		}
+		console.log('critical3', { nextDropoffLeeway: new Date(nextDropoffLeeway).toISOString() });
+		if (nextDropoffLeeway < nextDropoffEvent.time.size()) {
+			scheduledTimes.updates.push({
+				event_id: nextDropoffEvent.id,
+				start: true,
+				time: nextDropoffEvent.scheduledTimeEnd - nextDropoffLeeway
+			});
+			scheduledTimes.newDropoffEndTime = dropoffTime;
+		} else {
+			scheduledTimes.newDropoffEndTime = Math.min(
+				communicatedDropoff,
+				dropoffTime + nextDropoffLeeway
+			);
+		}
+	}
+	if (prevDropoffEvent) {
+		const prevDropoffLeeway =
+			dropoffTime - prevDropoffEvent.scheduledTimeStart - dropoffPrevLegDuration;
+		if (prevDropoffLeeway < 0) {
+			console.log('errortype4');
+			throw new Error();
+		}
+		console.log('critical4', { prevDropoffLeeway: new Date(prevDropoffLeeway).toISOString() });
+		if (prevDropoffLeeway < prevDropoffEvent.time.size()) {
+			scheduledTimes.updates.push({
+				event_id: prevDropoffEvent.id,
+				start: false,
+				time: prevDropoffEvent.scheduledTimeStart + prevDropoffLeeway
+			});
+		}
+	}
 	return scheduledTimes;
 }
