@@ -37,18 +37,21 @@ export function getScheduledTimes(
 		newDropoffEndTime: communicatedDropoff,
 		updates: []
 	};
-	if (
-		prevPickupEvent &&
-		(prevPickupEvent.time.overlaps(pickupCommunicatedInterval) ||
-			prevPickupEvent.time.overlaps(pickupPrevInterval))
-	) {
-		communicatedPickup = Math.min(
-			pickupTime - pickupPrevLegDuration,
+	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupCommunicatedInterval)) {
+		communicatedPickup =
 			(Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +
 				Math.min(pickupTime, prevPickupEvent.scheduledTimeEnd)) /
-				2
-		);
+			2;
 		scheduledTimes.newPickupStartTime = Math.ceil(communicatedPickup);
+		scheduledTimes.updates.push({
+			event_id: prevPickupEvent.id,
+			start: false,
+			time: Math.floor(communicatedPickup)
+		});
+	}
+
+	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupPrevInterval)) {
+		communicatedPickup = pickupTime - pickupPrevLegDuration;
 		scheduledTimes.updates.push({
 			event_id: prevPickupEvent.id,
 			start: false,
@@ -80,7 +83,6 @@ export function getScheduledTimes(
 	}
 	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffNextInterval)) {
 		communicatedDropoff = dropoffTime + dropoffNextLegDuration;
-		console.log('critical', { communicatedDropoff });
 		scheduledTimes.updates.push({
 			event_id: nextDropoffEvent.id,
 			start: true,
