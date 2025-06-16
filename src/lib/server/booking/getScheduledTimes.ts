@@ -68,7 +68,7 @@ export function getScheduledTimes(
 		scheduledTimes.updates.push({
 			event_id: nextPickupEvent.id,
 			start: true,
-			time: pickupTime + pickupNextLegDuration
+			time: Math.floor(pickupTime + pickupNextLegDuration)
 		});
 	}
 	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffInterval)) {
@@ -101,7 +101,7 @@ export function getScheduledTimes(
 		scheduledTimes.updates.push({
 			event_id: prevDropoffEvent.id,
 			start: false,
-			time: Math.max(communicatedDropoff, dropoffTime - dropoffPrevLegDuration)
+			time: Math.ceil(Math.max(communicatedDropoff, dropoffTime - dropoffPrevLegDuration))
 		});
 	}
 	return scheduledTimes;
