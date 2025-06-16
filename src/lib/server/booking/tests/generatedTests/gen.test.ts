@@ -17,7 +17,7 @@ import { tests } from './testJsons';
 import { isSamePlace } from '../../isSamePlace';
 import { healthCheck } from '$lib/server/util/healthCheck';
 
-const uuid: string | undefined = '4f6728fa-2cd0-42e4-9c49-eb7386d3fcff';
+const filterByUuid: string | undefined = undefined;
 function filterByContainedEvent(
 	tours: {
 		id: number;
@@ -39,7 +39,7 @@ describe('Concatenation tests', () => {
 	it('generated tests', async () => {
 		console.log({ testparams: JSON.stringify(tests, null, '\t') });
 		for (const test of tests) {
-			if (uuid !== undefined && uuid !== test.uuid) {
+			if (filterByUuid !== undefined && filterByUuid !== test.uuid) {
 				continue;
 			}
 			console.log('Running test with', { link: `http://localhost:5173/tests?test=${test.uuid}` });
