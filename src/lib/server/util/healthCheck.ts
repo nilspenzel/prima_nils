@@ -5,6 +5,7 @@ import { Interval } from '../../util/interval';
 import { HOUR } from '../../util/time';
 import { isSamePlace } from '../booking/isSamePlace';
 import { getScheduledEventTime } from '../../util/getScheduledEventTime';
+import { SCHEDULED_TIME_BUFFER } from '$lib/constants';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -234,6 +235,18 @@ function validateScheduledTimeStartBeforeEnd(tours: ToursWithRequests): boolean 
 				'Found an event where scheduledTimeEnd is before scheduledTimeStart, eventId: ',
 				event.id
 			);
+			fail = true;
+		}
+	}
+	return fail;
+}
+
+function validateScheduledScheduledIntervalSize(tours: ToursWithRequests): boolean {
+	let fail = false;
+	console.log('Validating scheduled time intervals are growing...');
+	for (const event of tours.flatMap((t) => t.requests.flatMap((r) => r.events))) {
+		if (event.scheduledTimeEnd - event.scheduledTimeStart > SCHEDULED_TIME_BUFFER) {
+			console.log('Found an event where the scheduled time interval grew, eventId: ', event.id);
 			fail = true;
 		}
 	}
@@ -490,6 +503,7 @@ export async function healthCheck() {
 		fail = validateEventTimeNoOverlap(uncancelledTours) ? true : fail;
 		fail = validateEventsAreInsideTours(uncancelledTours) ? true : fail;
 		fail = validateScheduledTimeStartBeforeEnd(uncancelledTours) ? true : fail;
+		fail = validateScheduledScheduledIntervalSize(uncancelledTours) ? true : fail;
 		fail = (await validateDirectDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateLegDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateCompanyDurations(uncancelledTours)) ? true : fail;
