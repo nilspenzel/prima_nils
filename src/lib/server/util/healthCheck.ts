@@ -4,7 +4,6 @@ import { groupBy } from '../../util/groupBy';
 import { Interval } from '../../util/interval';
 import { HOUR } from '../../util/time';
 import { isSamePlace } from '../booking/isSamePlace';
-import { getScheduledEventTime } from '../../util/getScheduledEventTime';
 import { SCHEDULED_TIME_BUFFER } from '$lib/constants';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
