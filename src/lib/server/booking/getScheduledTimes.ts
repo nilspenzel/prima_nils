@@ -38,6 +38,7 @@ export function getScheduledTimes(
 		updates: []
 	};
 	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupCommunicatedInterval)) {
+		console.log('critical1');
 		communicatedPickup =
 			(Math.max(communicatedPickup, prevPickupEvent.scheduledTimeStart) +
 				Math.min(pickupTime, prevPickupEvent.scheduledTimeEnd)) /
@@ -51,11 +52,11 @@ export function getScheduledTimes(
 	}
 
 	if (prevPickupEvent && prevPickupEvent.time.overlaps(pickupPrevInterval)) {
-		communicatedPickup = pickupTime - pickupPrevLegDuration;
+		console.log('critical2');
 		scheduledTimes.updates.push({
 			event_id: prevPickupEvent.id,
 			start: false,
-			time: Math.floor(communicatedPickup)
+			time: Math.floor(Math.min(pickupTime - pickupPrevLegDuration, communicatedPickup))
 		});
 	}
 	if (
@@ -63,6 +64,7 @@ export function getScheduledTimes(
 		(nextPickupEvent.time.overlaps(pickupCommunicatedInterval) ||
 			nextPickupEvent.time.overlaps(pickupNextInterval))
 	) {
+		console.log('critical3');
 		scheduledTimes.updates.push({
 			event_id: nextPickupEvent.id,
 			start: true,
@@ -70,6 +72,7 @@ export function getScheduledTimes(
 		});
 	}
 	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffInterval)) {
+		console.log('critical4');
 		communicatedDropoff =
 			(Math.max(dropoffTime, nextDropoffEvent.scheduledTimeStart) +
 				Math.min(communicatedDropoff, nextDropoffEvent.scheduledTimeEnd)) /
@@ -82,11 +85,11 @@ export function getScheduledTimes(
 		});
 	}
 	if (nextDropoffEvent && nextDropoffEvent.time.overlaps(dropoffNextInterval)) {
-		communicatedDropoff = dropoffTime + dropoffNextLegDuration;
+		console.log('critical5');
 		scheduledTimes.updates.push({
 			event_id: nextDropoffEvent.id,
 			start: true,
-			time: Math.ceil(communicatedDropoff)
+			time: Math.ceil(Math.max(dropoffTime + dropoffNextLegDuration, communicatedDropoff))
 		});
 	}
 	if (
@@ -94,10 +97,11 @@ export function getScheduledTimes(
 		(prevDropoffEvent.time.overlaps(dropoffInterval) ||
 			prevDropoffEvent?.time.overlaps(dropoffPrevInterval))
 	) {
+		console.log('critical6');
 		scheduledTimes.updates.push({
 			event_id: prevDropoffEvent.id,
 			start: false,
-			time: dropoffTime - dropoffPrevLegDuration
+			time: Math.max(communicatedDropoff, dropoffTime - dropoffPrevLegDuration)
 		});
 	}
 	return scheduledTimes;
