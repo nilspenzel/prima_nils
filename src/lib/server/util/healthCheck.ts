@@ -297,9 +297,9 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 					let expectedDuration = (await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng)) ?? null;
 					let expectedDuration2 = (await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true)) ?? null;
 					expectedDuration =
-						expectedDuration === null ? null : expectedDuration + PASSENGER_CHANGE_DURATION;
+						expectedDuration === null ? null : expectedDuration + PASSENGER_CHANGE_DURATION / 1000;
 					expectedDuration2 =
-						expectedDuration2 === null ? null : expectedDuration2 + PASSENGER_CHANGE_DURATION;
+						expectedDuration2 === null ? null : expectedDuration2 + PASSENGER_CHANGE_DURATION / 1000;
 					if (
 						expectedDuration === null &&
 						expectedDuration2 === null &&
