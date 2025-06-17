@@ -205,7 +205,9 @@ export async function bookRide(
 		best.pickupPrevLegDuration,
 		best.pickupNextLegDuration,
 		best.dropoffPrevLegDuration,
-		best.dropoffNextLegDuration
+		best.dropoffNextLegDuration,
+		firstEvents,
+		lastEvents
 	);
 	if (best.pickupCase.how === InsertHow.INSERT && prevPickupEvent) {
 		const update = scheduledTimes.updates.find(
@@ -220,7 +222,7 @@ export async function bookRide(
 				(prevPickupEvent.scheduledTimeEnd - update.time);
 		}
 	}
-	if (best.pickupCase.how === InsertHow.INSERT && nextDropoffEvent) {
+	if (best.dropoffCase.how === InsertHow.INSERT && nextDropoffEvent) {
 		const update = scheduledTimes.updates.find(
 			(upd) => upd.event_id === nextDropoffEvent.id && upd.start && !nextDropoffEvent.isPickup
 		);

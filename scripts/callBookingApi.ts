@@ -6,23 +6,23 @@ import { bookingApi } from '../src/lib/server/booking/bookingApi';
 const parameters = {
 	connection1: {
 		start: {
-			lng: 14.5366817,
-			lat: 51.5286634,
-			address: 'Rohner Weg 6'
+			lng: 14.5316092,
+			lat: 51.5393992,
+			address: 'Strugaaue 2'
 		},
 		target: {
-			lng: 14.5270988,
-			lat: 51.4265192,
-			address: 'WSG 4km'
+			lng: 14.6226502,
+			lat: 51.5241162,
+			address: 'Weißwasser/O.L.'
 		},
-		startTime: 1751250787858,
-		targetTime: 1751253057338,
+		startTime: 1751353769004,
+		targetTime: 1751354673335,
 		signature: '',
-		startFixed: true
+		startFixed: false
 	},
 	connection2: null,
 	capacities: {
-		passengers: 2,
+		passengers: 1,
 		bikes: 0,
 		luggage: 0,
 		wheelchairs: 0

@@ -8,7 +8,7 @@ import { groupBy } from '../../util/groupBy';
 import { Interval } from '../../util/interval';
 import { HOUR } from '../../util/time';
 import { isSamePlace } from '../booking/isSamePlace';
-import { SCHEDULED_TIME_BUFFER } from '$lib/constants';
+import { PASSENGER_CHANGE_DURATION, SCHEDULED_TIME_BUFFER } from '$lib/constants';
 
 function sortEventsByTime(events: TourWithRequestsEvents): TourWithRequestsEvents {
 	return events.sort((a, b) => {
@@ -294,8 +294,12 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 				const earlierTourEnd = earlierTour.endTime;
 				const laterTourStart = laterTour.startTime;
 				if (0 < laterTourStart - earlierTourEnd && laterTourStart - earlierTourEnd <= 3 * HOUR) {
-					const expectedDuration = (await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng)) ?? null;
-					const expectedDuration2 = (await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true)) ?? null;
+					let expectedDuration = (await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng)) ?? null;
+					let expectedDuration2 = (await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true)) ?? null;
+					expectedDuration =
+						expectedDuration === null ? null : expectedDuration + PASSENGER_CHANGE_DURATION;
+					expectedDuration2 =
+						expectedDuration2 === null ? null : expectedDuration2 + PASSENGER_CHANGE_DURATION;
 					if (
 						expectedDuration === null &&
 						expectedDuration2 === null &&

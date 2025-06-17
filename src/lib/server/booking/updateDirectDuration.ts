@@ -2,6 +2,7 @@ import type { Transaction } from 'kysely';
 import { type Database } from '$lib/server/db';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/postgres';
 import { oneToManyCarRouting } from '../util/oneToManyCarRouting';
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 
 export async function updateDirectDurations(
 	oldVehicleId: number,
@@ -77,7 +78,11 @@ export async function updateDirectDurations(
 		await trx
 			.updateTable('tour')
 			.set({
-				directDuration: routingResult ? (routingResult[0] ?? null) : null
+				directDuration: routingResult
+					? routingResult[0] === undefined
+						? null
+						: routingResult[0] + PASSENGER_CHANGE_DURATION
+					: null
 			})
 			.where('id', '=', oldVehicle.nexttour.tour)
 			.executeTakeFirst();
@@ -93,7 +98,11 @@ export async function updateDirectDurations(
 		await trx
 			.updateTable('tour')
 			.set({
-				directDuration: routingResultPrevTour ? (routingResultPrevTour[0] ?? null) : null
+				directDuration: routingResultPrevTour
+					? routingResultPrevTour[0] === undefined
+						? null
+						: routingResultPrevTour[0] + PASSENGER_CHANGE_DURATION
+					: null
 			})
 			.where('id', '=', tourId)
 			.executeTakeFirst();
@@ -106,7 +115,11 @@ export async function updateDirectDurations(
 			await trx
 				.updateTable('tour')
 				.set({
-					directDuration: routingResultNextTour ? (routingResultNextTour[0] ?? null) : null
+					directDuration: routingResultNextTour
+						? routingResultNextTour[0] === undefined
+							? null
+							: routingResultNextTour[0] + PASSENGER_CHANGE_DURATION
+						: null
 				})
 				.where('id', '=', newVehicle.nexttour.tour)
 				.executeTakeFirst();

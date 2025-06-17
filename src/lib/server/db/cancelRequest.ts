@@ -305,12 +305,13 @@ async function updateLegDurations(
 			.executeTakeFirst();
 		const firstUncancelledEvent = uncancelledEvents[cancelledIdx2 === 1 ? 2 : 1];
 		if (lastEventPrevTour) {
+			const routing = (
+				await oneToManyCarRouting(lastEventPrevTour, [firstUncancelledEvent], false)
+			)[0];
 			await trx
 				.updateTable('tour')
 				.set({
-					directDuration:
-						(await oneToManyCarRouting(lastEventPrevTour, [firstUncancelledEvent], false))[0] ??
-						null
+					directDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION
 				})
 				.where('tour.id', '=', firstUncancelledEvent.tourid)
 				.execute();
@@ -333,12 +334,13 @@ async function updateLegDurations(
 				uncancelledEvents.length - (cancelledIdx1 === uncancelledEvents.length - 2 ? 3 : 2)
 			];
 		if (firstEventNextTour) {
+			const routing = (
+				await oneToManyCarRouting(lastUncancelledEvent, [firstEventNextTour], false)
+			)[0];
 			await trx
 				.updateTable('tour')
 				.set({
-					directDuration:
-						(await oneToManyCarRouting(lastUncancelledEvent, [firstEventNextTour], false))[0] ??
-						null
+					directDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION
 				})
 				.where('tour.id', '=', firstEventNextTour.tourId)
 				.execute();

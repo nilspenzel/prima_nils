@@ -712,14 +712,13 @@ export function evaluatePairInsertions(
 						: busStopEvaluations[busStopIdx][timeIdx][
 								insertionInfo.insertionIdx + dropoffIdx - pickupIdx
 							];
-					if (
-						pickup &&
-						dropoff &&
-						pickup.time + pickup.returnDuration + 2 >= dropoff.time - dropoff.approachDuration
-					) {
+					if (dropoff == undefined) {
 						continue;
 					}
-					if (dropoff == undefined) {
+					if (
+						pickup &&
+						pickup.time + pickup.returnDuration + 2 >= dropoff.time - dropoff.approachDuration
+					) {
 						continue;
 					}
 					const window = new Interval(pickup.time!, dropoff.time!);
