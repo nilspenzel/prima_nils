@@ -29,6 +29,7 @@
 		"reset": "scripts/reset-db.sh",
 		"find": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/findLastCorrectBackup.ts",
 		"cancelr": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/callCancelRequest.ts",
+		"cancelt": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/callCancelTour.ts",
 		"test:fuzzy": "./setup-db.sh && vitest src/lib/server/booking/tests/fuzzy.test.ts --fileParallelism false"
 	},
 	"devDependencies": {
