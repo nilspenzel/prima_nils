@@ -1,10 +1,24 @@
 import { getToursWithRequests } from '../db/getTours';
-import type { ToursWithRequests, TourWithRequestsEvent } from '../../util/getToursTypes';
+import type {
+	ToursWithRequests,
+	TourWithRequestsEvent,
+	TourWithRequestsEvents
+} from '../../util/getToursTypes';
 import { groupBy } from '../../util/groupBy';
 import { Interval } from '../../util/interval';
 import { HOUR } from '../../util/time';
 import { isSamePlace } from '../booking/isSamePlace';
 import { SCHEDULED_TIME_BUFFER } from '$lib/constants';
+
+function sortEventsByTime(events: TourWithRequestsEvents): TourWithRequestsEvents {
+	return events.sort((a, b) => {
+		const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
+		if (startDiff !== 0) {
+			return startDiff;
+		}
+		return a.scheduledTimeEnd - b.scheduledTimeEnd;
+	});
+}
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -264,12 +278,8 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 		for (let tourIdx = 1; tourIdx != companyTours.length; tourIdx++) {
 			const earlierTour = companyTours[tourIdx - 1];
 			const laterTour = companyTours[tourIdx];
-			const earlierEvents = earlierTour.requests
-				.flatMap((r) => r.events)
-				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
-			const laterEvents = laterTour.requests
-				.flatMap((r) => r.events)
-				.sort((e1, e2) => e1.scheduledTimeStart - e2.scheduledTimeStart);
+			const earlierEvents = sortEventsByTime(earlierTour.requests.flatMap((r) => r.events));
+			const laterEvents = sortEventsByTime(laterTour.requests.flatMap((r) => r.events));
 			if (laterTour.vehicleId === earlierTour.vehicleId) {
 				if (earlierTour.requests.length === 0) {
 					console.log(`earlier tour has no requests`);
@@ -329,13 +339,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 	let fail = false;
 	console.log('Validating leg durations...');
 	for (const tour of tours) {
-		const events = [...tour.requests.flatMap((r) => r.events)].sort((a, b) => {
-			const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
-			if (startDiff !== 0) {
-				return startDiff;
-			}
-			return a.scheduledTimeEnd - b.scheduledTimeEnd;
-		});
+		const events = sortEventsByTime([...tour.requests.flatMap((r) => r.events)]);
 		const expected1: Promise<number | null>[] = [];
 		const expected2: Promise<number | null>[] = [];
 		for (let i = 0; i < events.length - 1; i++) {
@@ -379,26 +383,10 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 						endTimes: events.map((e) => `id: ${e.id} ${new Date(e.scheduledTimeEnd).toISOString()}`)
 					},
 					{
-						idsStart: events
-							.sort((e1, e2) => {
-								const startDiff = e1.scheduledTimeStart - e2.scheduledTimeStart;
-								if (startDiff !== 0) {
-									return startDiff;
-								}
-								return e1.scheduledTimeEnd - e2.scheduledTimeEnd;
-							})
-							.map((e) => e.id)
+						idsStart: sortEventsByTime(events)
 					},
 					{
-						idsEnd: events
-							.sort((e1, e2) => {
-								const endDiff = e1.scheduledTimeEnd - e2.scheduledTimeEnd;
-								if (endDiff !== 0) {
-									return endDiff;
-								}
-								return e1.scheduledTimeStart - e2.scheduledTimeStart;
-							})
-							.map((e) => e.id)
+						idsEnd: sortEventsByTime(events).map((e) => e.id)
 					}
 				);
 				fail = true;
@@ -430,9 +418,7 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 	for (const tour of tours) {
 		if (tour.requests.length === 0) continue;
 
-		const events = [...tour.requests.flatMap((r) => r.events)].sort(
-			(a, b) => a.scheduledTimeStart - b.scheduledTimeStart
-		);
+		const events = sortEventsByTime([...tour.requests.flatMap((r) => r.events)]);
 		const fromCompanyFwd = await oneToMany(
 			tour.companyLat!,
 			tour.companyLng!,

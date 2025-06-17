@@ -26,6 +26,80 @@ export const tests: TestParams[] = [
 				company: null
 			},
 			{
+				evalAfterStep: 1,
+				entity: 'startPosition',
+				tourCount: -1,
+				requestCount: -1,
+				expectedPosition: 2,
+				start: {
+					lat: 51.52124572625536,
+					lng: 14.708035511444422
+				},
+				destination: {
+					lat: 51.52034930151788,
+					lng: 14.714407676481528
+				},
+				company: null
+			}
+		],
+		process: {
+			starts: [
+				{
+					lat: 51.52378729783385,
+					lng: 14.69671972107028
+				},
+				{
+					lat: 51.52124572625536,
+					lng: 14.708035511444422
+				}
+			],
+			destinations: [
+				{
+					lat: 51.522787494139266,
+					lng: 14.703313526631206
+				},
+				{
+					lat: 51.52034930151788,
+					lng: 14.714407676481528
+				}
+			],
+			times: [1750400244564, 1750400544564],
+			isDepartures: [true, true],
+			companies: [
+				{
+					lat: 51.526125715149306,
+					lng: 14.689196668616432
+				}
+			]
+		},
+		uuid: 'fceb2a54-7024-4a9b-a214-b2655cb7d504'
+	},
+	// endoftest
+
+	// startoftest
+	{
+		conditions: [
+			{
+				evalAfterStep: 1,
+				entity: 'requestCount',
+				tourCount: -1,
+				requestCount: 2,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			},
+			{
+				evalAfterStep: 1,
+				entity: 'tourCount',
+				tourCount: 1,
+				requestCount: -1,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			},
+			{
 				evalAfterStep: 2,
 				entity: 'requestCount',
 				tourCount: -1,
