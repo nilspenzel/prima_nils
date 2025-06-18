@@ -1,7 +1,7 @@
 import { type Generated, CamelCasePlugin, PostgresDialect, Kysely } from 'kysely';
 import { env } from '$env/dynamic/private';
 import pg from 'pg';
-import type { Itinerary } from '$lib/openapi';
+import type { SignedItinerary } from '$lib/planAndSign';
 
 export interface Database {
 	user: {
@@ -96,7 +96,7 @@ export interface Database {
 	};
 	journey: {
 		id: Generated<number>;
-		json: Itinerary;
+		json: SignedItinerary;
 		user: number;
 		request1: number | null;
 		request2: number | null;
@@ -107,6 +107,34 @@ export interface Database {
 		deviceId: string;
 		company: number;
 		fcmToken: string;
+	};
+	bookingApiParameters: {
+		id: Generated<number>;
+		startLat1: number | null;
+		startLng1: number | null;
+		targetLat1: number | null;
+		targetLng1: number | null;
+		startTime1: number | null;
+		targetTime1: number | null;
+		startAddress1: string | null;
+		targetAddress1: string | null;
+		startFixed1: boolean | null;
+		startLat2: number | null;
+		startLng2: number | null;
+		targetLat2: number | null;
+		targetLng2: number | null;
+		startTime2: number | null;
+		targetTime2: number | null;
+		startAddress2: string | null;
+		targetAddress2: string | null;
+		startFixed2: boolean | null;
+		kidsZeroToTwo: number;
+		kidsThreeToFour: number;
+		kidsFiveToSix: number;
+		passengers: number;
+		wheelchairs: number;
+		bikes: number;
+		luggage: number;
 	};
 }
 
@@ -128,7 +156,6 @@ export const db = new Kysely<Database>({
 				params: event.query.parameters
 			});
 		} else {
-			// `'query'`
 			console.log('Query executed : ', {
 				durationMs: event.queryDurationMillis,
 				sql: event.query.sql,

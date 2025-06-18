@@ -1,12 +1,11 @@
-import { BUFFER_TIME, MAX_TRAVEL, PASSENGER_CHANGE_DURATION } from '$lib/constants';
 import { implication } from '$lib/server/util/implication';
+import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
-import type { DbEvent, VehicleWithInterval } from './getBookingAvailability';
+import { debugInfoMatches, type DebugInfo } from '../util/debugInfo';
+import type { Event, VehicleWithInterval } from './getBookingAvailability';
 import {
 	InsertDirection,
-	InsertHow,
-	InsertWhat,
 	printInsertionType,
 	type InsertionInfo,
 	type InsertionType
@@ -28,30 +27,25 @@ export const getPrevLegDuration = (
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
-			relevantRoutingResults = routingResults.userChosen;
+			relevantRoutingResults = routingResults.userChosen.toUserChosen;
 			break;
 
 		case InsertWhat.BOTH:
 			console.assert(busStopIdx != undefined);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-					? routingResults.busStops[busStopIdx!]
-					: routingResults.userChosen;
+					? routingResults.busStops.toBusStop[busStopIdx!]
+					: routingResults.userChosen.toUserChosen;
 			break;
 
 		case InsertWhat.BUS_STOP:
 			console.assert(busStopIdx != undefined);
-			relevantRoutingResults = routingResults.busStops[busStopIdx!];
+			relevantRoutingResults = routingResults.busStops.toBusStop[busStopIdx!];
 			break;
 	}
-
-	const drivingTime = comesFromCompany(insertionCase)
+	return comesFromCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
-		: relevantRoutingResults.event[insertionInfo.prevEventIdxInRoutingResults];
-	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
-		return undefined;
-	}
-	return drivingTime + BUFFER_TIME;
+		: relevantRoutingResults.event[insertionInfo.insertionIdx];
 };
 
 export const getNextLegDuration = (
@@ -63,40 +57,35 @@ export const getNextLegDuration = (
 	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
-			relevantRoutingResults = routingResults.userChosen;
+			relevantRoutingResults = routingResults.userChosen.fromUserChosen;
 			break;
 
 		case InsertWhat.BOTH:
 			console.assert(busStopIdx != undefined);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-					? routingResults.userChosen
-					: routingResults.busStops[busStopIdx!];
+					? routingResults.userChosen.fromUserChosen
+					: routingResults.busStops.fromBusStop[busStopIdx!];
 			break;
 
 		case InsertWhat.BUS_STOP:
 			console.assert(busStopIdx != undefined);
-			relevantRoutingResults = routingResults.busStops[busStopIdx!];
+			relevantRoutingResults = routingResults.busStops.fromBusStop[busStopIdx!];
 			break;
 	}
-
-	const drivingTime = returnsToCompany(insertionCase)
+	return returnsToCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
-		: relevantRoutingResults.event[insertionInfo.nextEventIdxInRoutingResults];
-	if (drivingTime == undefined || drivingTime > MAX_TRAVEL) {
-		console.log('driving time undefined', drivingTime);
-		return undefined;
-	}
-	return drivingTime + PASSENGER_CHANGE_DURATION + BUFFER_TIME;
+		: relevantRoutingResults.event[insertionInfo.insertionIdx];
 };
 
 export function getAllowedOperationTimes(
 	insertionCase: InsertionType,
-	prev: DbEvent | undefined,
-	next: DbEvent | undefined,
+	prev: Event | undefined,
+	next: Event | undefined,
 	expandedSearchInterval: Interval,
 	prepTime: UnixtimeMs,
-	vehicle: VehicleWithInterval
+	vehicle: VehicleWithInterval,
+	debugInfo?: DebugInfo
 ): Interval[] {
 	console.assert(
 		implication(!returnsToCompany(insertionCase), next !== undefined),
@@ -135,6 +124,19 @@ export function getAllowedOperationTimes(
 				: prev.scheduledTimeStart;
 	windowStartTime = Math.max(windowStartTime, prepTime);
 	const window = new Interval(windowStartTime, windowEndTime);
+
+	if (
+		debugInfo &&
+		debugInfoMatches(debugInfo, insertionCase.how, undefined, prev?.id, next?.id, vehicle.id)
+	) {
+		console.log(
+			'BOOK RIDE DEBUG INFO: initial allowed operations window: ',
+			window.toString(),
+			{ vehicle: vehicle.id },
+			'  ',
+			printInsertionType(insertionCase)
+		);
+	}
 	if (insertionCase.how == InsertHow.INSERT) {
 		return [window];
 	}
@@ -157,9 +159,22 @@ export function getAllowedOperationTimes(
 		!(insertionCase.how != InsertHow.NEW_TOUR && relevantAvailabilities.length > 1),
 		`Found ${relevantAvailabilities.length} intervals, which are supposed to be disjoint, containing the same timestamp.`
 	);
-	return relevantAvailabilities
+	const finalWindow = relevantAvailabilities
 		.map((availability) => new Interval(availability).intersect(window))
 		.filter((availability) => availability != undefined);
+	if (
+		debugInfo &&
+		debugInfoMatches(debugInfo, insertionCase.how, undefined, prev?.id, next?.id, vehicle.id)
+	) {
+		console.log(
+			'BOOK RIDE DEBUG INFO: final allowed operations window: ',
+			finalWindow.toString(),
+			{ vehicle: vehicle.id },
+			'  ',
+			printInsertionType(insertionCase)
+		);
+	}
+	return finalWindow;
 }
 
 export function getArrivalWindow(
@@ -169,14 +184,27 @@ export function getArrivalWindow(
 	busStopWindow: Interval | undefined,
 	prevLegDuration: number,
 	nextLegDuration: number,
-	allowedTimes: Interval[]
+	allowedTimes: Interval[],
+	debugInfo?: DebugInfo
 ): Interval | undefined {
 	const directWindows = Interval.intersect(
 		allowedTimes,
 		windows
-			.map((window) => window.shrink(prevLegDuration, nextLegDuration))
+			.map((window) => window.shrink(prevLegDuration + 1, 1 + nextLegDuration))
 			.filter((window) => window != undefined)
 	);
+	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
+		console.log(
+			'BOOK RIDE DEBUG INFO: arrival windows (prevleg and nextleg deducted): ',
+			{ directWindows: directWindows.map((w) => w.toString()) },
+			{ prevLegDuration: new Date(prevLegDuration).toISOString() },
+			{ nextLegDuration: new Date(nextLegDuration).toISOString() },
+			{ directDuration: new Date(directDuration).toISOString() },
+			'  ',
+			printInsertionType(insertionCase)
+		);
+	}
+
 	let arrivalWindows = directWindows
 		.map((window) =>
 			window.shrink(
@@ -185,16 +213,37 @@ export function getArrivalWindow(
 			)
 		)
 		.filter((window) => window != undefined);
+	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
+		console.log('BOOK RIDE DEBUG INFO: arrival windows (directduration deducted): ', {
+			arrivalWindows: arrivalWindows.map((w) => w.toString())
+		});
+	}
 	if (busStopWindow != undefined) {
 		arrivalWindows = arrivalWindows
 			.map((window) => busStopWindow.intersect(window))
 			.filter((window) => window != undefined);
+		if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
+			console.log(
+				'BOOK RIDE DEBUG INFO: arrival windows after busstop: ',
+				{ arrivalWindows: arrivalWindows.map((w) => w.toString()) },
+				{ busStopWindow: busStopWindow.toString() }
+			);
+		}
 	}
 	if (arrivalWindows.length == 0) {
 		return undefined;
 	}
-	// TODO why?
-	return insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-		? arrivalWindows.reduce((current, best) => (current.endTime < best.endTime ? current : best))
-		: arrivalWindows.reduce((current, best) => (current.endTime > best.endTime ? current : best));
+	const best =
+		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
+			? arrivalWindows.reduce((current, best) => (current.endTime < best.endTime ? current : best))
+			: arrivalWindows.reduce((current, best) => (current.endTime > best.endTime ? current : best));
+	if (debugInfo && debugInfoMatches(debugInfo, insertionCase.how, insertionCase.what)) {
+		console.log(
+			'BOOK RIDE DEBUG INFO: arrival windows: ',
+			{ best: best.toString() },
+			'  ',
+			printInsertionType(insertionCase)
+		);
+	}
+	return best;
 }
