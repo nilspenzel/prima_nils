@@ -586,20 +586,23 @@ export function evaluateSingleInsertions(
 				insertionInfo.vehicle,
 				debugInfo
 			);
+
+			// Ensure shifting the previous or next events' scheduledTime does not cause the whole tour to be prolonged too much
 			if (insertHow === InsertHow.INSERT && prev && next && windows.length != 0) {
-				const twoBefore = insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents - 2];
+				const twoBefore = insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents - 2] ?? insertionInfo.vehicle.lastEventBefore;
 				if (twoBefore && twoBefore?.tourId != prev.tourId) {
 					const tourDifference = prev.departure - twoBefore.arrival;
 					const scheduledTimeLength = prev.scheduledTimeEnd - prev.scheduledTimeStart;
 					windows[0].startTime += Math.max(0, scheduledTimeLength - tourDifference);
 				}
-				const twoAfter = insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents + 1];
+				const twoAfter = insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents + 1] ?? insertionInfo.vehicle.firstEventAfter;
 				if (twoAfter && twoAfter?.tourId != next.tourId && windows.length != 0) {
 					const tourDifference = twoAfter.departure - next.arrival;
 					const scheduledTimeLength = next.scheduledTimeEnd - next.scheduledTimeStart;
 					windows[0].endTime -= Math.max(0, scheduledTimeLength - tourDifference);
 				}
 			}
+
 			for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
 				for (let busTimeIdx = 0; busTimeIdx != busStopTimes[busStopIdx].length; ++busTimeIdx) {
 					insertionCase.what = InsertWhat.BOTH;

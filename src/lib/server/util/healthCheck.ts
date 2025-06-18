@@ -180,7 +180,7 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 			const i2 = new Interval(tour2.startTime, tour2.endTime);
 			if (i1.overlaps(i2) && tour.vehicleId === tour2.vehicleId) {
 				console.log(
-					`tour overlap detected between tourId ${tour.tourId} and tourId ${tour2.tourId}`
+					`tour overlap detected between tourId ${tour.tourId} and tourId ${tour2.tourId} tourInterval1: ${i1.toString()}, tourInterval2: ${i2.toString()}`
 				);
 				fail = true;
 			}
