@@ -302,7 +302,9 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 					expectedDuration =
 						expectedDuration === null ? null : expectedDuration + PASSENGER_CHANGE_DURATION / 1000;
 					expectedDuration2 =
-						expectedDuration2 === null ? null : expectedDuration2 + PASSENGER_CHANGE_DURATION / 1000;
+						expectedDuration2 === null
+							? null
+							: expectedDuration2 + PASSENGER_CHANGE_DURATION / 1000;
 					if (
 						expectedDuration === null &&
 						expectedDuration2 === null &&
