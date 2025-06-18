@@ -12,6 +12,7 @@ import {
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createSession } from './server/auth/session';
 import { oneToManyCarRouting } from './server/util/oneToManyCarRouting';
+import { PASSENGER_CHANGE_DURATION } from './constants';
 
 let sessionToken: string;
 async function waitAndSelectEvents() {
@@ -156,6 +157,6 @@ describe('tests for cancelling tours', () => {
 		const tour3 = tours.find((tour) => tour.id === t3?.id);
 		expect(tour3).not.toBe(undefined);
 		console.log({ directDuration });
-		expect(tour3!.directDuration).toBe(directDuration[0]);
+		expect(tour3!.directDuration).toBe(directDuration[0] ? directDuration[0] + PASSENGER_CHANGE_DURATION : null);
 	});
 });
