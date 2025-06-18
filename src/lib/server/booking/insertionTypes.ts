@@ -122,8 +122,8 @@ export const isCaseValid = (insertionCase: InsertionType): boolean => {
 
 export const isEarlierBetter = (insertionCase: InsertionType) => {
 	return (
-		(insertionCase.direction == InsertDirection.BUS_STOP_PICKUP) ==
-		(insertionCase.what == InsertWhat.BUS_STOP)
+		(insertionCase.direction === InsertDirection.BUS_STOP_PICKUP) !==
+		(insertionCase.what === InsertWhat.BUS_STOP)
 	);
 };
 

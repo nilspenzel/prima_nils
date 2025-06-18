@@ -749,7 +749,6 @@ export function evaluatePairInsertions(
 						continue;
 					}
 					if (
-						pickup &&
 						pickup.time + pickup.returnDuration + 2 >= dropoff.time - dropoff.approachDuration
 					) {
 						continue;
