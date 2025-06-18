@@ -8,6 +8,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import { signEntry } from '$lib/server/booking/signEntry';
 import { insertRequest } from './insertRequest';
 import { retry } from '../db/retryQuery';
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 
 export type BookingParameters = {
 	connection1: ExpectedConnection | null;
@@ -157,8 +158,8 @@ export async function bookingApi(
 							bookingApiParameters,
 							trx
 						)) ?? null;
-					communicatedPickup1 = firstConnection.best.pickupTime;
-					communicatedDropoff1 = firstConnection.best.dropoffTime;
+					communicatedPickup1 = firstConnection.best.pickupTime - PASSENGER_CHANGE_DURATION;
+					communicatedDropoff1 = firstConnection.best.dropoffTime + PASSENGER_CHANGE_DURATION;
 				}
 				if (secondConnection != null) {
 					request2Id =
