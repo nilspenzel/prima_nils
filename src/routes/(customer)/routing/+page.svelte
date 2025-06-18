@@ -235,7 +235,19 @@
 							<p class="my-2 text-sm">{t.booking.disclaimer}</p>
 
 							<Dialog.Footer>
-								<form method="post" action="?/bookItineraryWithOdm" use:enhance>
+								<form
+									method="post"
+									action="?/bookItineraryWithOdm"
+									use:enhance={() => {
+										loading = true;
+										return async ({ update }) => {
+											await update();
+											window.setTimeout(() => {
+												loading = false;
+											}, 5000);
+										};
+									}}
+								>
 									<input
 										type="hidden"
 										name="json"
@@ -252,7 +264,9 @@
 										name="startFixed"
 										value={timeType === 'departure' ? '1' : '0'}
 									/>
-									<Button type="submit" variant="outline">{t.booking.header}</Button>
+									<Button type="submit" variant="outline" disabled={loading}
+										>{t.booking.header}</Button
+									>
 								</form>
 							</Dialog.Footer>
 						</Dialog.Content>
