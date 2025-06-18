@@ -256,6 +256,7 @@ export type BookingLogs = {
 	cumulatedTaxiDrivingDelta?: number;
 	oldDrivingTime?: number;
 	passengerDuration?: number;
+	weightedPassengerDuration?: number;
 	eventOverlap?: number;
 	pickupTime?: number;
 	dropoffTime?: number;

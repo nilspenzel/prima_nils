@@ -117,6 +117,7 @@ export async function evaluateRequest(
 	);
 	const { busStopEvaluations, bothEvaluations, userChosenEvaluations } = evaluateSingleInsertions(
 		companies,
+		required,
 		startFixed,
 		expandedSearchInterval,
 		insertionRanges,

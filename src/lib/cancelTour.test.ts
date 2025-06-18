@@ -157,6 +157,8 @@ describe('tests for cancelling tours', () => {
 		const tour3 = tours.find((tour) => tour.id === t3?.id);
 		expect(tour3).not.toBe(undefined);
 		console.log({ directDuration });
-		expect(tour3!.directDuration).toBe(directDuration[0] ? directDuration[0] + PASSENGER_CHANGE_DURATION : null);
+		expect(tour3!.directDuration).toBe(
+			directDuration[0] ? directDuration[0] + PASSENGER_CHANGE_DURATION : null
+		);
 	});
 });

@@ -260,6 +260,8 @@ export function evaluateBothInsertion(
 	prev: Event | undefined,
 	next: Event | undefined,
 	allowedTimes: Interval[],
+	passengerCountBeforePrev: number,
+	passengerCountNewRequest: number,
 	promisedTimes?: PromisedTimes,
 	debugInfo?: DebugInfo
 ): InsertionEvaluation | undefined {
@@ -340,6 +342,26 @@ export function evaluateBothInsertion(
 		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
 			? arrivalWindow.startTime + passengerDuration
 			: arrivalWindow.endTime;
+
+	const passengerCountAfterPrev = prev
+		? passengerCountBeforePrev + (prev.isPickup ? prev.passengers : -prev.passengers)
+		: 0;
+	let weightedPassengerDuration =
+		(passengerCountAfterPrev + passengerCountNewRequest) * (dropoffTime - pickupTime);
+	if (next && prev) {
+		const passengerCountAfterNext =
+			passengerCountAfterPrev + (next.isPickup ? prev.passengers : -prev.passengers);
+		const existingPassengerTimeOld = getScheduledEventTime(next) - getScheduledEventTime(prev);
+		const newPrevTime = prev.isPickup ? pickupTime - prevLegDuration : getScheduledEventTime(prev);
+		const newNextTime = next.isPickup ? getScheduledEventTime(next) : dropoffTime + nextLegDuration;
+		const existingPassengerTimeNew = newNextTime - newPrevTime;
+		const additionalWeightedTimeExistingPasengers =
+			passengerCountAfterPrev * (existingPassengerTimeNew - existingPassengerTimeOld) -
+			passengerCountBeforePrev * (getScheduledEventTime(prev) - newPrevTime) -
+			passengerCountAfterNext * (newNextTime - getScheduledEventTime(next));
+		weightedPassengerDuration += additionalWeightedTimeExistingPasengers;
+	}
+
 	const departure = comesFromCompany(insertionCase) ? pickupTime - prevLegDuration : undefined;
 	const arrival = returnsToCompany(insertionCase) ? dropoffTime + nextLegDuration : undefined;
 	const taxiWaitingTime = getTaxiWaitingDelta(
@@ -370,6 +392,7 @@ export function evaluateBothInsertion(
 		taxiDuration,
 		oldDrivingTime: getOldDrivingTime(insertionCase, prev, next),
 		passengerDuration: passengerDuration + eventOverlap,
+		weightedPassengerDuration,
 		eventOverlap
 	});
 	console.log(
@@ -387,7 +410,7 @@ export function evaluateBothInsertion(
 		passengerDuration,
 		taxiDuration,
 		taxiWaitingTime,
-		cost: computeCost(passengerDuration + eventOverlap, taxiDuration, taxiWaitingTime),
+		cost: computeCost(weightedPassengerDuration + eventOverlap, taxiDuration, taxiWaitingTime),
 		departure,
 		arrival,
 		pickupPrevLegDuration: prevLegDuration,
@@ -465,6 +488,8 @@ export function evaluateNewTours(
 						undefined,
 						undefined,
 						allowedTimes,
+						0,
+						required.passengers,
 						promisedTimes,
 						debugInfo
 					);
@@ -497,6 +522,7 @@ export function evaluateNewTours(
 
 export function evaluateSingleInsertions(
 	companies: Company[],
+	required: Capacities,
 	startFixed: boolean,
 	expandedSearchInterval: Interval,
 	insertionRanges: Map<number, Range[]>,
@@ -524,6 +550,7 @@ export function evaluateSingleInsertions(
 	const prepTime = Date.now() + MIN_PREP;
 	const direction = startFixed ? InsertDirection.BUS_STOP_PICKUP : InsertDirection.BUS_STOP_DROPOFF;
 
+	let passengers = 0;
 	iterateAllInsertions(companies, insertionRanges, (insertionInfo: InsertionInfo) => {
 		const prev: Event | undefined =
 			insertionInfo.idxInVehicleEvents == 0
@@ -587,6 +614,8 @@ export function evaluateSingleInsertions(
 						prev,
 						next,
 						allowedTimes,
+						passengers,
+						required.passengers,
 						promisedTimes,
 						debugInfo
 					);
@@ -663,6 +692,7 @@ export function evaluateSingleInsertions(
 				userChosenEvaluations[insertionInfo.insertionIdx] = resultUserChosen;
 			}
 		});
+		passengers += prev?.passengers ?? 0;
 	});
 	return { busStopEvaluations, userChosenEvaluations, bothEvaluations };
 }
@@ -747,6 +777,28 @@ export function evaluatePairInsertions(
 						dropoff.taxiWaitingTime + pickup.taxiWaitingTime + cumulatedTaxiWaitingDelta;
 					const passengerDuration = dropoff.time! - pickup.time! + eventOverlap;
 					const cost = computeCost(passengerDuration, taxiDuration, taxiWaitingTime);
+
+
+/*
+					const passengerCountAfterPrev = prev
+						? passengerCountBeforePrev + (prev.isPickup ? prev.passengers : -prev.passengers)
+						: 0;
+					let weightedPassengerDuration =
+						(passengerCountAfterPrev + passengerCountNewRequest) * (dropoffTime - pickupTime);
+					if (next && prev) {
+						const passengerCountAfterNext =
+							passengerCountAfterPrev + (next.isPickup ? prev.passengers : -prev.passengers);
+						const existingPassengerTimeOld = getScheduledEventTime(next) - getScheduledEventTime(prev);
+						const newPrevTime = prev.isPickup ? pickupTime - prevLegDuration : getScheduledEventTime(prev);
+						const newNextTime = next.isPickup ? getScheduledEventTime(next) : dropoffTime + nextLegDuration;
+						const existingPassengerTimeNew = newNextTime - newPrevTime;
+						const additionalWeightedTimeExistingPasengers =
+							passengerCountAfterPrev * (existingPassengerTimeNew - existingPassengerTimeOld) -
+							passengerCountBeforePrev * (getScheduledEventTime(prev) - newPrevTime) -
+							passengerCountAfterNext * (newNextTime - getScheduledEventTime(next));
+						weightedPassengerDuration += additionalWeightedTimeExistingPasengers;
+					}
+*/
 					bookingLogs.push({
 						pickupType: printInsertionType(pickup.case),
 						dropoffType: printInsertionType(dropoff.case),
@@ -868,7 +920,7 @@ const getOldDrivingTime = (
 	if (insertionCase.how == InsertHow.NEW_TOUR) {
 		return 0;
 	}
-	if (insertionCase.how == InsertHow.CONNECT) {
+	if (insertionCase.how == InsertHow.CONNECT || insertionCase.how === InsertHow.INSERT) {
 		return next!.prevLegDuration + prev!.nextLegDuration;
 	}
 	console.assert(prev != undefined || next != undefined, 'getOldDrivingTime: no event found');
