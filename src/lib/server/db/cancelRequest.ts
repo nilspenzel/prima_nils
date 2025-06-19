@@ -75,6 +75,7 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 				.innerJoin('tour', 'tour.id', 'cancelled_request.tour')
 				.select((eb) => [
 					'cancelled_request.ticketChecked',
+					'cancelled_request.cancelled as wasRequestCancelled',
 					'tour.vehicle',
 					'tour.id',
 					'tour.departure',
@@ -124,6 +125,12 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 				);
 				return;
 			}
+			if (!tourInfo.wasRequestCancelled) {
+				console.log(
+					'The request could not be cancelled due to time constraints or missing authorization.'
+				);
+				return;
+			}
 			console.assert(queryResult.rows.length === 1);
 			if (queryResult.rows[0].wastourcancelled) {
 				await updateDirectDurations(tourInfo.vehicle, tourInfo.id, tourInfo.departure, trx);
@@ -152,7 +159,6 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 					);
 				}
 			}
-
 			const firstEvent = tour.requests
 				.flatMap((r) => r.events)
 				.sort((e) => e.scheduledTimeStart)[0];
