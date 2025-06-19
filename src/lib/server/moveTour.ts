@@ -164,37 +164,35 @@ export async function moveTour(
 					.where('tour.cancelled', '=', false)
 					.selectAll()
 					.execute();
-				if (collidingTours.length == 0) {
+				if (collidingTours.length !== 0) {
 					console.log(
 						'MOVE TOUR early exit - there is a collision with another tour of the target vehicle. tourId: ',
 						tourId
 					);
-					await trx
-						.updateTable('tour')
-						.set({ vehicle: vehicleId })
-						.where('id', '=', tourId)
-						.executeTakeFirst();
-
-					const firstEvent = movedTour.requests
-						.sort((r) => r.events[0].scheduledTimeStart)[0]
-						.events.filter((e) => e.isPickup)[0];
-					const wheelchairs = movedTour.requests.reduce((prev, curr) => prev + curr.wheelchairs, 0);
-					await sendNotifications(companyId, {
-						tourId,
-						pickupTime: getScheduledEventTime(firstEvent),
-						vehicleId,
-						wheelchairs,
-						change: TourChange.MOVED
-					});
-
-					await updateDirectDurations(
-						movedTour.vehicle,
-						movedTour.id,
-						movedTour.departure,
-						trx,
-						vehicleId
-					);
 				}
+				await trx
+					.updateTable('tour')
+					.set({ vehicle: vehicleId })
+					.where('id', '=', tourId)
+					.executeTakeFirst();
+				const firstEvent = movedTour.requests
+					.sort((r) => r.events[0].scheduledTimeStart)[0]
+					.events.filter((e) => e.isPickup)[0];
+				const wheelchairs = movedTour.requests.reduce((prev, curr) => prev + curr.wheelchairs, 0);
+				await sendNotifications(companyId, {
+					tourId,
+					pickupTime: getScheduledEventTime(firstEvent),
+					vehicleId,
+					wheelchairs,
+					change: TourChange.MOVED
+				});
+				await updateDirectDurations(
+					movedTour.vehicle,
+					movedTour.id,
+					movedTour.departure,
+					trx,
+					vehicleId
+				);
 			})
 	);
 	return result ?? { status: 200 };
