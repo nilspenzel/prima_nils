@@ -19,7 +19,7 @@ describe('Fuzzy booking tests', () => {
 		};
 		await simulation(params);
 		params.healthChecks = true;
-		params.finishTime = Date.now() + 30 * SECOND;
+		params.finishTime = Date.now() + 10 * SECOND;
 		expect(await simulation(params)).toBe(false);
 	});
 }, 120000);

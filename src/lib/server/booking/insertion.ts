@@ -721,6 +721,16 @@ export function evaluatePairInsertions(
 	iterateAllInsertions(companies, insertionRanges, (insertionInfo: InsertionInfo) => {
 		const events = insertionInfo.vehicle.events;
 		const pickupIdx = insertionInfo.idxInVehicleEvents;
+		if (
+			pickupIdx < events.length - 1 &&
+			events[pickupIdx]?.tourId !== events[pickupIdx + 1]?.tourId &&
+			events[pickupIdx + 1].scheduledTimeEnd -
+				events[pickupIdx].scheduledTimeStart -
+				events[pickupIdx + 1].directDuration! <
+				0
+		) {
+			return;
+		}
 		let cumulatedTaxiDrivingDelta = 0;
 		let cumulatedTaxiWaitingDelta = 0;
 		let pickupInvalid = false;
@@ -752,8 +762,20 @@ export function evaluatePairInsertions(
 					if (dropoff == undefined) {
 						continue;
 					}
-					if (pickup.time + pickup.returnDuration + 2 >= dropoff.time - dropoff.approachDuration) {
-						continue;
+					if (dropoffIdx < pickupIdx + 3) {
+						let availableDistance =
+							dropoff.time - pickup.time - dropoff.approachDuration - pickup.returnDuration;
+						const nextPickup = events[pickupIdx];
+						const prevDropoff = events[dropoffIdx - 1];
+						if (pickupIdx + 2 === dropoffIdx) {
+							availableDistance -=
+								nextPickup.tourId !== prevDropoff.tourId
+									? (prevDropoff.directDuration ?? Number.MAX_SAFE_INTEGER / 2)
+									: prevDropoff.prevLegDuration;
+						}
+						if (availableDistance - 2 < 0) {
+							continue;
+						}
 					}
 					const window = new Interval(pickup.time!, dropoff.time!);
 					let eventOverlap = 0;

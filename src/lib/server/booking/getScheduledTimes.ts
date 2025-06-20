@@ -37,10 +37,9 @@ export function getScheduledTimes(
 		const prevPickupLeeway =
 			pickupTime - prevPickupEvent.scheduledTimeStart - pickupPrevLegDuration;
 		if (prevPickupLeeway < 0) {
-			console.log('errortype1');
+			console.log('Error in getScheduledTimes 1');
 			throw new Error();
 		}
-		console.log('critical1', { prevPickupLeeway: new Date(prevPickupLeeway).toISOString() });
 		if (prevPickupLeeway < prevPickupEvent.time.size()) {
 			scheduledTimes.updates.push({
 				event_id: prevPickupEvent.id,
@@ -58,10 +57,9 @@ export function getScheduledTimes(
 	if (nextPickupEvent) {
 		const nextPickupLeeway = nextPickupEvent.scheduledTimeEnd - pickupTime - pickupNextLegDuration;
 		if (nextPickupLeeway < 0) {
-			console.log('errortype2');
+			console.log('Error in getScheduledTimes 2');
 			throw new Error();
 		}
-		console.log('critical2', { nextPickupLeeway: new Date(nextPickupLeeway).toISOString() });
 		if (nextPickupLeeway < nextPickupEvent.time.size()) {
 			scheduledTimes.updates.push({
 				event_id: nextPickupEvent.id,
@@ -74,10 +72,9 @@ export function getScheduledTimes(
 		const nextDropoffLeeway =
 			nextDropoffEvent.scheduledTimeEnd - dropoffTime - dropoffNextLegDuration;
 		if (nextDropoffLeeway < 0) {
-			console.log('errortype3');
+			console.log('Error in getScheduledTimes 3');
 			throw new Error();
 		}
-		console.log('critical3', { nextDropoffLeeway: new Date(nextDropoffLeeway).toISOString() });
 		if (nextDropoffLeeway < nextDropoffEvent.time.size()) {
 			scheduledTimes.updates.push({
 				event_id: nextDropoffEvent.id,
@@ -96,10 +93,9 @@ export function getScheduledTimes(
 		const prevDropoffLeeway =
 			dropoffTime - prevDropoffEvent.scheduledTimeStart - dropoffPrevLegDuration;
 		if (prevDropoffLeeway < 0) {
-			console.log('errortype4');
+			console.log('Error in getScheduledTimes 4');
 			throw new Error();
 		}
-		console.log('critical4', { prevDropoffLeeway: new Date(prevDropoffLeeway).toISOString() });
 		if (prevDropoffLeeway < prevDropoffEvent.time.size()) {
 			scheduledTimes.updates.push({
 				event_id: prevDropoffEvent.id,

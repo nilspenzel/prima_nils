@@ -257,9 +257,9 @@ function validateScheduledTimeStartBeforeEnd(tours: ToursWithRequests): boolean 
 	return fail;
 }
 
-function validateScheduledScheduledIntervalSize(tours: ToursWithRequests): boolean {
+function validateScheduledIntervalSize(tours: ToursWithRequests): boolean {
 	let fail = false;
-	console.log('Validating scheduled time intervals are growing...');
+	console.log('Validating scheduled time intervals are not growing...');
 	for (const event of tours.flatMap((t) => t.requests.flatMap((r) => r.events))) {
 		if (event.scheduledTimeEnd - event.scheduledTimeStart > SCHEDULED_TIME_BUFFER) {
 			console.log('Found an event where the scheduled time interval grew, eventId: ', event.id);
@@ -366,7 +366,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			const laterEvent = events[i + 1];
 			if (earlierEvent.nextLegDuration !== laterEvent.prevLegDuration) {
 				console.log(
-					`Leg duration mismatch between events ${earlierEvent.id} and ${laterEvent.id}, durations: ${earlierEvent.nextLegDuration} and ${laterEvent.prevLegDuration} routing results: ${expectedDurations1[i]} and ${expectedDurations2[i]}`
+					`Leg duration mismatch between events ${earlierEvent.id} and ${laterEvent.id}, durations: ${earlierEvent.nextLegDuration / 1000} and ${laterEvent.prevLegDuration / 1000} routing results: ${expectedDurations1[i]} and ${expectedDurations2[i]}`
 				);
 				fail = true;
 			}
@@ -392,7 +392,7 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 						endTimes: events.map((e) => `id: ${e.id} ${new Date(e.scheduledTimeEnd).toISOString()}`)
 					},
 					{
-						idsStart: sortEventsByTime(events)
+						idsStart: sortEventsByTime(events).map((e) => e.id)
 					},
 					{
 						idsEnd: sortEventsByTime(events).map((e) => e.id)
@@ -497,7 +497,7 @@ export async function healthCheck() {
 		fail = validateEventTimeNoOverlap(uncancelledTours) ? true : fail;
 		fail = validateEventsAreInsideTours(uncancelledTours) ? true : fail;
 		fail = validateScheduledTimeStartBeforeEnd(uncancelledTours) ? true : fail;
-		fail = validateScheduledScheduledIntervalSize(uncancelledTours) ? true : fail;
+		fail = validateScheduledIntervalSize(uncancelledTours) ? true : fail;
 		fail = (await validateDirectDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateLegDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateCompanyDurations(uncancelledTours)) ? true : fail;

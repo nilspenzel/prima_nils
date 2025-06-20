@@ -6,17 +6,17 @@ import { bookingApi } from '../src/lib/server/booking/bookingApi';
 const parameters = {
 	connection1: {
 		start: {
-			lng: 14.5364242,
-			lat: 51.5338373,
-			address: 'Schleifer Straße 5'
+			lng: 14.7548758,
+			lat: 51.5010823,
+			address: 'Brandstraße 9'
 		},
 		target: {
-			lng: 14.4794545,
-			lat: 51.3408297,
-			address: 'Körnerplatz'
+			lng: 14.5289849,
+			lat: 51.5353088,
+			address: 'Siedlung - Sydlišćo'
 		},
-		startTime: 1750494003957,
-		targetTime: 1750495769548,
+		startTime: 1751216212673,
+		targetTime: 1751219410160,
 		signature: '',
 		startFixed: true
 	},

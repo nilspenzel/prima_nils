@@ -61,8 +61,8 @@ export function getFirstAndLastEvents(mergeTourList: Event[], best: Insertion, e
 		}
 	}
 	return {
-		firstEvents,
-		lastEvents,
+		firstEvents: firstEvents.sort((e) => e.scheduledTimeStart),
+		lastEvents: lastEvents.sort((e) => e.scheduledTimeEnd),
 		departure,
 		arrival
 	};

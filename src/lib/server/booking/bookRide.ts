@@ -202,10 +202,18 @@ export async function bookRide(
 		nextPickupEvent,
 		nextDropoffEvent,
 		prevDropoffEvent,
-		best.pickupPrevLegDuration,
+		firstEvents.some((e) => e.id === nextPickupEvent?.id) &&
+			best.pickupIdx &&
+			lastEvents.some((e) => e.id === prevPickupEvent?.id)
+			? Math.max(best.pickupPrevLegDuration, directDurations.thisTour?.directDrivingDuration ?? 0)
+			: best.pickupPrevLegDuration,
 		best.pickupNextLegDuration,
 		best.dropoffPrevLegDuration,
-		best.dropoffNextLegDuration,
+		firstEvents.some((e) => e.id === nextDropoffEvent?.id) &&
+			best.dropoffIdx &&
+			lastEvents.some((e) => e.id === prevDropoffEvent?.id)
+			? Math.max(best.dropoffNextLegDuration, directDurations.nextTour?.directDrivingDuration ?? 0)
+			: best.dropoffNextLegDuration,
 		firstEvents,
 		lastEvents
 	);
