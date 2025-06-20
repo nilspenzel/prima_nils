@@ -465,7 +465,7 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 			Math.abs(toCompany + 60 - events[events.length - 1].nextLegDuration / 1000) > 1
 		) {
 			console.log(
-				`Duration to company from last event does not match in tour with id: ${tour.tourId}, duration in db: ${events[events.length - 1].nextLegDuration / 1000} duration: ${toCompany + 60}`
+				`Duration to company from last event does not match in tour with id: ${tour.tourId}, last event id: ${events[events.length - 1].id} duration in db: ${events[events.length - 1].nextLegDuration / 1000} duration: ${toCompany + 60}`
 			);
 			fail = true;
 		}
