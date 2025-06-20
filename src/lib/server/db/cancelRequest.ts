@@ -8,9 +8,8 @@ import { TourChange } from '$lib/server/firebase/firebase';
 import { updateDirectDurations } from '$lib/server/booking/updateDirectDuration';
 import { db, type Database } from '$lib/server/db';
 import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
-import { SECOND } from '$lib/util/time';
 import { retry } from './retryQuery';
-import { MAX_TRAVEL, PASSENGER_CHANGE_DURATION } from '$lib/constants';
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 
 export const cancelRequest = async (requestId: number, userId: number) => {
 	console.log(
@@ -211,12 +210,7 @@ async function updateLegDurations(
 		trx: Transaction<Database>
 	) => {
 		if (prevIdx === -1) {
-			const routingResultFirstEvent = await oneToManyCarRouting(
-				company,
-				[events[nextIdx]],
-				false,
-				MAX_TRAVEL / SECOND
-			);
+			const routingResultFirstEvent = await oneToManyCarRouting(company, [events[nextIdx]], false);
 			if (
 				routingResultFirstEvent === undefined ||
 				routingResultFirstEvent.length === 0 ||
@@ -235,12 +229,7 @@ async function updateLegDurations(
 			return;
 		}
 		if (nextIdx === events.length) {
-			const routingResultLastEvent = await oneToManyCarRouting(
-				events[prevIdx],
-				[company],
-				false,
-				MAX_TRAVEL / SECOND
-			);
+			const routingResultLastEvent = await oneToManyCarRouting(events[prevIdx], [company], false);
 			if (
 				routingResultLastEvent === undefined ||
 				routingResultLastEvent.length === 0 ||
@@ -258,12 +247,7 @@ async function updateLegDurations(
 				.executeTakeFirst();
 			return;
 		}
-		const routingResult = await oneToManyCarRouting(
-			events[prevIdx],
-			[events[nextIdx]],
-			false,
-			MAX_TRAVEL / SECOND
-		);
+		const routingResult = await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false);
 		if (
 			routingResult === undefined ||
 			routingResult.length === 0 ||
