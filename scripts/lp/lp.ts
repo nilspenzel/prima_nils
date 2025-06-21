@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
 
-const M = Math.log2(Math.floor(Number.MAX_SAFE_INTEGER / 1000));
+const M = Math.sqrt(Math.floor(Number.MAX_SAFE_INTEGER / 1000));
 
 interface JourneyEntry {
 	departure: number;
