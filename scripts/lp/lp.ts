@@ -41,8 +41,8 @@ function readCsvFile(filePath: string) {
 	});
 
 	const entries: JourneyEntry[] = records.map((record: any) => ({
-		departure: new Date(record.departure).getTime(),
-		arrival: new Date(record.arrival).getTime(),
+		departure: new Date(record.departure).getTime() / 60000,
+		arrival: new Date(record.arrival).getTime() / 60000,
 		transfers: parseInt(record.transfers),
 		isFirstMileTaxi: record.first_mile_mode === 'taxi',
 		first_mile_duration: parseInt(record.first_mile_duration),
@@ -68,6 +68,9 @@ function derive(entries: JourneyEntry[]) {
 }
 
 function getDistance(j1: JourneyEntry, j2: JourneyEntry) {
+	if((j1.arrival>=j2.arrival && j1.departure<=j2.departure) && (j1.arrival<=j2.arrival && j1.departure>=j2.departure)) {
+		return 0;
+	}
 	return Math.min(Math.abs(j1.arrival - j2.arrival), Math.abs(j1.departure - j2.departure));
 }
 
@@ -85,19 +88,17 @@ type Constants = {
 	b: number;
 	alpha: number;
 	beta: number;
-	maxDistance: number;
 	transfercostCostDominance: number;
 	transfercostProductivityDominance: number;
 };
 
 function getConstants(j1: JourneyDerivedEntry, j2: JourneyDerivedEntry): Constants {
 	function toTaxiMileCount(j: JourneyDerivedEntry) {
-		return (j.isFirstMileTaxi ? 1 : 0) + (j.isLastMileTaxi ? 1 : 0);
+		return (j.isFirstMileTaxi || j.isLastMileTaxi ? 1 : 0);
 	}
 	return {
 		penaltyDirect: j2.taxiDuration === j2.fullDuration ? 1 : 0,
 		alpha: getCostDominanceAlphaTerm(j1, j2),
-		maxDistance: getDistance(j1, j2),
 		transfercostCostDominance: j1.transfers - j2.transfers,
 		transfercostProductivityDominance:
 			j1.transfers * j1.taxiDuration - j2.transfers * j2.taxiDuration,
@@ -111,18 +112,32 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 	let mip = 'Minimize\n';
 	mip += '1\n';
 	mip += 'Subject To\n';
-	const binaries: string[] = [];
+
+	const p_penaltyDirect: string = 'p_penaltyDirect';
+	const p_m: string = 'p_m';
+	const p_b: string = 'p_b';
+	const p_alpha: string = 'p_alpha';
+	const p_beta: string = 'p_beta';
+	const p_maxDistance: string = 'p_maxDistance';
+	const p_transfercostCostDominance: string = 'p_transfercostCostDominance';
+	const p_transfercostProductivityDominance: string = 'p_transfercostProductivityDominance';
+
 	// create inequalities for non-dominance
 	for (let i = 0; i != inEntries.length; ++i) {
 		for (let j = 0; j != out.length; ++j) {
 			if (equals(inEntries[i], out[j])) {
 				continue;
 			}
-			mip += `${i} is not cost dominated by ${j}: \n`;
-			mip += `${i} is not productivity dominated by ${j}: \n`;
+			const j1 = inEntries[i];
+			const j2 = out[j];
+			const constants = getConstants(j1,j2);
+			mip += `${i} is not cost dominated by ${j}        : ${constants.alpha}${p_alpha} + ${constants.penaltyDirect}${p_penaltyDirect} + ${constants.transfercostCostDominance}${p_transfercostCostDominance} + ${constants.m}${p_m} + ${constants.b}${p_b} >= ${j1.ptDuration -j2.ptDuration}\n`;
+			mip += `${i} is not productivity dominated by ${j}: ${constants.beta}${p_beta} + ${constants.transfercostProductivityDominance}${p_transfercostProductivityDominance} >= ${j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration}\n`;
+			mip += `${i} and ${j} are at least maxDist        : ${p_maxDistance} <= ${getDistance(j1,j2)}\n`
 		}
 	}
 
+	const binaries: string[] = [];
 	// create inequalities for dominance
 	for (let i = 0; i != inEntries.length; ++i) {
 		const activityVars: string[] = [];
@@ -130,14 +145,18 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 			if (i === j || out.some((e) => equals(e, inEntries[i]))) {
 				continue;
 			}
+			const j1 = inEntries[j];
+			const j2 = inEntries[i];
+			const constants = getConstants(j1,j2);
 			const costDomBin = `z${i}_${j}cost`;
 			const prodDomBin = `z${i}_${j}prod`;
 			binaries.push(costDomBin);
 			activityVars.push(costDomBin);
 			binaries.push(prodDomBin);
 			activityVars.push(prodDomBin);
-			mip += `${i} is cost dom by ${j}: \n`;
-			mip += `${i} is prod dom by ${j}: \n`;
+			mip += `${i} is cost dom by ${j}           : ${constants.alpha}${p_alpha} + ${constants.penaltyDirect}${p_penaltyDirect} + ${constants.transfercostCostDominance}${p_transfercostCostDominance} + ${constants.m}${p_m} + ${constants.b}${p_b} - ${M}${costDomBin} < ${j1.ptDuration -j2.ptDuration}\n`;
+			mip += `${i} is prod dom by ${j}           : ${constants.beta}${p_beta} + ${constants.transfercostProductivityDominance}${p_transfercostProductivityDominance} -${M}${prodDomBin} < ${j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration}\n`;
+			mip += `${i} and ${j} are less than maxDist: ${p_maxDistance} > ${getDistance(j1,j2)} - ${M}(${costDomBin} + ${prodDomBin})\n`
 		}
 		mip += `at least one dominator: ${activityVars.join(' + ')}>= 1\n`;
 	}
