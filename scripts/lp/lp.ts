@@ -117,7 +117,7 @@ function createCondition(name: string, factors: number[], parameters: string[], 
 	return condition;
 }
 
-function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) {
+function writeMIP(inEntries: JourneyDerivedEntry[][], out: JourneyDerivedEntry[][]) {
 	const p_penaltyDirect: string = 'p_penaltyDirect';
 	const p_m: string = 'p_m';
 	const p_b: string = 'p_b';
@@ -125,44 +125,47 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 	const p_beta: string = 'p_beta';
 	const p_maxDistance: string = 'p_maxDistance';
 	const p_transfercostCostDominance: string = 'p_transfercostCostDominance';
-	const p_transfercostProductivityDominance: string = 'p_transfercostProductivityDominance';
+	//const p_transfercostProductivityDominance: string = 'p_transfercostProductivityDominance';
 
 	let mip = 'Minimize\n';
-	mip += `obj: ${p_alpha}\n`;
+	mip += `obj: 0 ${p_alpha}\n`;
 	mip += 'Subject To\n';
 
 	const epsilon = 0.000000001;
-	const vars = [p_penaltyDirect, p_m, p_b, p_alpha, p_beta, p_maxDistance, p_transfercostCostDominance, p_transfercostProductivityDominance];
-
+	const vars = [p_penaltyDirect, p_m, p_b, p_alpha, p_beta, p_maxDistance, p_transfercostCostDominance];//, p_transfercostProductivityDominance];
+	const binaries: string[] = [];
+	for(let k=0;k!=inEntries.length;++k) {
 	// create inequalities for non-dominance
-	for (let i = 0; i != inEntries.length; ++i) {
-		for (let j = 0; j != out.length; ++j) {
-			if (equals(inEntries[i], out[j])) {
+	const ins = inEntries[k];
+	const outs = out[k];
+	for (let i = 0; i != ins.length; ++i) {
+		for (let j = 0; j != outs.length; ++j) {
+			if (equals(ins[i], outs[j])) {
 				continue;
 			}
 			const activityVar = `ndz${j}_${i}`;
-			const j1 = inEntries[i];
-			const j2 = out[j];
+			binaries.push(activityVar);
+			const j1 = ins[i];
+			const j2 = outs[j];
 			const constants = getConstants(j1,j2);
-			
-			mip += createCondition(`nb_${j}_is_not_cost_dominated_by_${i}________`, [constants.alpha,constants.penaltyDirect,constants.transfercostCostDominance, constants.m,constants.b, M], [p_alpha, p_penaltyDirect,p_transfercostCostDominance,p_m,p_b, activityVar], j1.ptDuration -j2.ptDuration, '>=');
-			mip += createCondition(`nb_${j}_is_not_productivity_dominated_by_${i}`, [constants.beta, constants.transfercostProductivityDominance, M], [p_beta, p_transfercostProductivityDominance, activityVar], j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration ,'>=');
-			mip += createCondition(`nb_${j}_and_${i}_are_at_least_maxDist________`, [1, -M], [p_maxDistance, activityVar], M + getDistance(j1,j2), '<=');
+
+			mip += createCondition(`nb_${k}_${j}_is_not_cost_dominated_by_${i}________`, [constants.alpha,constants.penaltyDirect,constants.transfercostCostDominance, constants.m,constants.b, M], [p_alpha, p_penaltyDirect,p_transfercostCostDominance,p_m,p_b, activityVar], j1.ptDuration -j2.ptDuration, '>=');
+			mip += createCondition(`nb_${k}_${j}_is_not_productivity_dominated_by_${i}`, [constants.beta, constants.transfercostProductivityDominance, M], [p_beta, p_transfercostCostDominance, activityVar], j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration ,'>=');
+			mip += createCondition(`nb_${k}_${j}_and_${i}_are_at_least_maxDist________`, [1, -M], [p_maxDistance, activityVar], M + getDistance(j1,j2), '<=');
 		}
 	}
 
-	const binaries: string[] = [];
 	// create inequalities for dominance
-	for (let i = 0; i != inEntries.length; ++i) {
+	for (let i = 0; i != ins.length; ++i) {
 		const activityVars: string[] = [];
 		let skip = false;
-		for (let j = 0; j != inEntries.length; ++j) {
-			if (i === j || out.some((e) => equals(e, inEntries[i]))) {
+		for (let j = 0; j != ins.length; ++j) {
+			if (i === j || outs.some((e) => equals(e, ins[i]))) {
 				skip = true;
 				continue;
 			}
-			const j1 = inEntries[j];
-			const j2 = inEntries[i];
+			const j1 = ins[j];
+			const j2 = ins[i];
 			const constants = getConstants(j1,j2);
 			const costDomBin = `z${i}_${j}cost`;
 			const prodDomBin = `z${i}_${j}prod`;
@@ -170,13 +173,14 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 			activityVars.push(costDomBin);
 			binaries.push(prodDomBin);
 			activityVars.push(prodDomBin);
-			mip += createCondition(`nb_${i}_is_cost_dom_by_${j}___________`, [constants.alpha, constants.penaltyDirect, constants.transfercostCostDominance, constants.m, constants.b, -M], [p_alpha, p_penaltyDirect, p_transfercostCostDominance, p_m, p_b, costDomBin], j1.ptDuration -j2.ptDuration - epsilon, '<=');
-			mip += createCondition(`nb_${i}_is_prod_dom_by_${j}___________`, [constants.beta, constants.transfercostProductivityDominance, -M], [p_beta, p_transfercostProductivityDominance, prodDomBin], j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration - epsilon, '<=');
-			mip += createCondition(`nb_${i}_and_${j}_are_less_than_maxDist`, [1, M, M], [p_maxDistance, costDomBin, prodDomBin], getDistance(j1,j2) + epsilon, '>=');
+			mip += createCondition(`nb_${k}_${i}_is_cost_dom_by_${j}___________`, [constants.alpha, constants.penaltyDirect, constants.transfercostCostDominance, constants.m, constants.b, -M], [p_alpha, p_penaltyDirect, p_transfercostCostDominance, p_m, p_b, costDomBin], j1.ptDuration -j2.ptDuration - epsilon, '<=');
+			mip += createCondition(`nb_${k}_${i}_is_prod_dom_by_${j}___________`, [constants.beta, constants.transfercostProductivityDominance, -M], [p_beta, p_transfercostCostDominance, prodDomBin], j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration - epsilon, '<=');
+			mip += createCondition(`nb_${k}_${i}_and_${j}_are_less_than_maxDist`, [1, M, M], [p_maxDistance, costDomBin, prodDomBin], getDistance(j1,j2) + epsilon, '>=');
 		}
 		if(!skip) {
-			mip += `nb_at_least_one_dominator: ${activityVars.join(' + ')} >= 1\n`;
+			mip += `nb_${k}_at_least_one_dominator: ${activityVars.join(' + ')} >= 1\n`;
 		}
+	}
 	}
 	mip += 'BOUNDS\n';
 	mip += '0 <= ' + vars.join('\n0 <= ') + '\n';
@@ -207,14 +211,15 @@ function getCsvPairs(folderPath: string): [string, string][] {
 
 function processFolder(folderPath: string) {
 	const pairs = getCsvPairs(folderPath);
-
+	const ins: JourneyEntry[][] = [];
+	const outs: JourneyEntry[][] = [];
 	for (const [inFile, outFile] of pairs) {
 
-		const inData = readCsvFile(inFile);
-		const outData = readCsvFile(outFile);
+		ins.push(readCsvFile(inFile));
+		outs.push(readCsvFile(outFile));
 
-		writeMIP(derive(inData), derive(outData));
 	}
+		writeMIP(ins.map((d) => derive(d)), outs.map((d) => derive(d)));
 }
 
 const folder = 'scripts/lp';
