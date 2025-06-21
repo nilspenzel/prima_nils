@@ -1,0 +1,349 @@
+Problem:    
+Rows:       126
+Columns:    69 (60 integer, 60 binary)
+Non-zeros:  287
+Status:     INTEGER EMPTY
+Objective:  obj = 0 (MINimum)
+
+   No.   Row name        Activity     Lower bound   Upper bound
+------ ------------    ------------- ------------- -------------
+     1 nb_0_is_not_cost_dominated_by_0________
+                                   0           -43               
+     2 nb_0_is_not_productivity_dominated_by_0
+                                   0           100               
+     3 nb_0_and_0_are_at_least_maxDist________
+                                   0                           7 
+     4 nb_0_is_not_cost_dominated_by_1________
+                                   0           -13               
+     5 nb_0_is_not_productivity_dominated_by_1
+                                   0            32               
+     6 nb_0_and_1_are_at_least_maxDist________
+                                   0                          33 
+     7 nb_1_is_not_cost_dominated_by_0________
+                                   0           -43               
+     8 nb_1_is_not_productivity_dominated_by_0
+                                   0           100               
+     9 nb_1_and_0_are_at_least_maxDist________
+                                   0                           0 
+    10 nb_1_is_not_cost_dominated_by_1________
+                                   0           -13               
+    11 nb_1_is_not_productivity_dominated_by_1
+                                   0            32               
+    12 nb_1_and_1_are_at_least_maxDist________
+                                   0                          26 
+    13 nb_2_is_not_cost_dominated_by_1________
+                                   0            30               
+    14 nb_2_is_not_productivity_dominated_by_1
+                                   0           -68               
+    15 nb_2_and_1_are_at_least_maxDist________
+                                   0                           0 
+    16 nb_3_is_not_cost_dominated_by_0________
+                                   0           -43               
+    17 nb_3_is_not_productivity_dominated_by_0
+                                   0           100               
+    18 nb_3_and_0_are_at_least_maxDist________
+                                   0                           7 
+    19 nb_3_is_not_cost_dominated_by_1________
+                                   0           -13               
+    20 nb_3_is_not_productivity_dominated_by_1
+                                   0            32               
+    21 nb_3_and_1_are_at_least_maxDist________
+                                   0                           0 
+    22 nb_4_is_not_cost_dominated_by_0________
+                                   0           -30               
+    23 nb_4_is_not_productivity_dominated_by_0
+                                   0            68               
+    24 nb_4_and_0_are_at_least_maxDist________
+                                   0                           0 
+    25 nb_5_is_not_cost_dominated_by_0________
+                                   0           -43               
+    26 nb_5_is_not_productivity_dominated_by_0
+                                   0           100               
+    27 nb_5_and_0_are_at_least_maxDist________
+                                   0                           0 
+    28 nb_5_is_not_cost_dominated_by_1________
+                                   0           -13               
+    29 nb_5_is_not_productivity_dominated_by_1
+                                   0            32               
+    30 nb_5_and_1_are_at_least_maxDist________
+                                   0                           0 
+    31 nb_6_is_not_cost_dominated_by_0________
+                                   0           -43               
+    32 nb_6_is_not_productivity_dominated_by_0
+                                   0           100               
+    33 nb_6_and_0_are_at_least_maxDist________
+                                   0                          10 
+    34 nb_6_is_not_cost_dominated_by_1________
+                                   0           -13               
+    35 nb_6_is_not_productivity_dominated_by_1
+                                   0            32               
+    36 nb_6_and_1_are_at_least_maxDist________
+                                   0                          10 
+    37 nb_0_is_cost_dom_by_1___________
+                                   0                      -1e-09 
+    38 nb_0_is_prod_dom_by_1___________
+                                   0                      -1e-09 
+    39 nb_0_and_1_are_less_than_maxDist
+                                   0             7               
+    40 nb_0_is_cost_dom_by_2___________
+                                   0                          43 
+    41 nb_0_is_prod_dom_by_2___________
+                                   0                        -100 
+    42 nb_0_and_2_are_less_than_maxDist
+                                   0             7               
+    43 nb_0_is_cost_dom_by_3___________
+                                   0                      -1e-09 
+    44 nb_0_is_prod_dom_by_3___________
+                                   0                      -1e-09 
+    45 nb_0_and_3_are_less_than_maxDist
+                                   0            33               
+    46 nb_0_is_cost_dom_by_4___________
+                                   0                          13 
+    47 nb_0_is_prod_dom_by_4___________
+                                   0                         -32 
+    48 nb_0_and_4_are_less_than_maxDist
+                                   0            33               
+    49 nb_0_is_cost_dom_by_5___________
+                                   0                      -1e-09 
+    50 nb_0_is_prod_dom_by_5___________
+                                   0                      -1e-09 
+    51 nb_0_and_5_are_less_than_maxDist
+                                   0            40               
+    52 nb_0_is_cost_dom_by_6___________
+                                   0                      -1e-09 
+    53 nb_0_is_prod_dom_by_6___________
+                                   0                      -1e-09 
+    54 nb_0_and_6_are_less_than_maxDist
+                                   0            50               
+    55 nb_1_is_cost_dom_by_0___________
+                                   0                      -1e-09 
+    56 nb_1_is_prod_dom_by_0___________
+                                   0                      -1e-09 
+    57 nb_1_and_0_are_less_than_maxDist
+                                   0             7               
+    58 nb_1_is_cost_dom_by_2___________
+                                   0                          43 
+    59 nb_1_is_prod_dom_by_2___________
+                                   0                        -100 
+    60 nb_1_and_2_are_less_than_maxDist
+                                   0         1e-09               
+    61 nb_1_is_cost_dom_by_3___________
+                                   0                      -1e-09 
+    62 nb_1_is_prod_dom_by_3___________
+                                   0                      -1e-09 
+    63 nb_1_and_3_are_less_than_maxDist
+                                   0            26               
+    64 nb_1_is_cost_dom_by_4___________
+                                   0                          13 
+    65 nb_1_is_prod_dom_by_4___________
+                                   0                         -32 
+    66 nb_1_and_4_are_less_than_maxDist
+                                   0            26               
+    67 nb_1_is_cost_dom_by_5___________
+                                   0                      -1e-09 
+    68 nb_1_is_prod_dom_by_5___________
+                                   0                      -1e-09 
+    69 nb_1_and_5_are_less_than_maxDist
+                                   0            33               
+    70 nb_1_is_cost_dom_by_6___________
+                                   0                      -1e-09 
+    71 nb_1_is_prod_dom_by_6___________
+                                   0                      -1e-09 
+    72 nb_1_and_6_are_less_than_maxDist
+                                   0            43               
+    73 nb_3_is_cost_dom_by_0___________
+                                   0                      -1e-09 
+    74 nb_3_is_prod_dom_by_0___________
+                                   0                      -1e-09 
+    75 nb_3_and_0_are_less_than_maxDist
+                                   0            33               
+    76 nb_3_is_cost_dom_by_1___________
+                                   0                      -1e-09 
+    77 nb_3_is_prod_dom_by_1___________
+                                   0                      -1e-09 
+    78 nb_3_and_1_are_less_than_maxDist
+                                   0            26               
+    79 nb_3_is_cost_dom_by_2___________
+                                   0                          43 
+    80 nb_3_is_prod_dom_by_2___________
+                                   0                        -100 
+    81 nb_3_and_2_are_less_than_maxDist
+                                   0             7               
+    82 nb_3_is_cost_dom_by_4___________
+                                   0                          13 
+    83 nb_3_is_prod_dom_by_4___________
+                                   0                         -32 
+    84 nb_3_and_4_are_less_than_maxDist
+                                   0         1e-09               
+    85 nb_3_is_cost_dom_by_5___________
+                                   0                      -1e-09 
+    86 nb_3_is_prod_dom_by_5___________
+                                   0                      -1e-09 
+    87 nb_3_and_5_are_less_than_maxDist
+                                   0             7               
+    88 nb_3_is_cost_dom_by_6___________
+                                   0                      -1e-09 
+    89 nb_3_is_prod_dom_by_6___________
+                                   0                      -1e-09 
+    90 nb_3_and_6_are_less_than_maxDist
+                                   0            17               
+    91 nb_5_is_cost_dom_by_0___________
+                                   0                      -1e-09 
+    92 nb_5_is_prod_dom_by_0___________
+                                   0                      -1e-09 
+    93 nb_5_and_0_are_less_than_maxDist
+                                   0            40               
+    94 nb_5_is_cost_dom_by_1___________
+                                   0                      -1e-09 
+    95 nb_5_is_prod_dom_by_1___________
+                                   0                      -1e-09 
+    96 nb_5_and_1_are_less_than_maxDist
+                                   0            33               
+    97 nb_5_is_cost_dom_by_2___________
+                                   0                          43 
+    98 nb_5_is_prod_dom_by_2___________
+                                   0                        -100 
+    99 nb_5_and_2_are_less_than_maxDist
+                                   0         1e-09               
+   100 nb_5_is_cost_dom_by_3___________
+                                   0                      -1e-09 
+   101 nb_5_is_prod_dom_by_3___________
+                                   0                      -1e-09 
+   102 nb_5_and_3_are_less_than_maxDist
+                                   0             7               
+   103 nb_5_is_cost_dom_by_4___________
+                                   0                          13 
+   104 nb_5_is_prod_dom_by_4___________
+                                   0                         -32 
+   105 nb_5_and_4_are_less_than_maxDist
+                                   0         1e-09               
+   106 nb_5_is_cost_dom_by_6___________
+                                   0                      -1e-09 
+   107 nb_5_is_prod_dom_by_6___________
+                                   0                      -1e-09 
+   108 nb_5_and_6_are_less_than_maxDist
+                                   0            10               
+   109 nb_6_is_cost_dom_by_0___________
+                                   0                      -1e-09 
+   110 nb_6_is_prod_dom_by_0___________
+                                   0                      -1e-09 
+   111 nb_6_and_0_are_less_than_maxDist
+                                   0            50               
+   112 nb_6_is_cost_dom_by_1___________
+                                   0                      -1e-09 
+   113 nb_6_is_prod_dom_by_1___________
+                                   0                      -1e-09 
+   114 nb_6_and_1_are_less_than_maxDist
+                                   0            43               
+   115 nb_6_is_cost_dom_by_2___________
+                                   0                          43 
+   116 nb_6_is_prod_dom_by_2___________
+                                   0                        -100 
+   117 nb_6_and_2_are_less_than_maxDist
+                                   0            10               
+   118 nb_6_is_cost_dom_by_3___________
+                                   0                      -1e-09 
+   119 nb_6_is_prod_dom_by_3___________
+                                   0                      -1e-09 
+   120 nb_6_and_3_are_less_than_maxDist
+                                   0            17               
+   121 nb_6_is_cost_dom_by_4___________
+                                   0                          13 
+   122 nb_6_is_prod_dom_by_4___________
+                                   0                         -32 
+   123 nb_6_and_4_are_less_than_maxDist
+                                   0            10               
+   124 nb_6_is_cost_dom_by_5___________
+                                   0                      -1e-09 
+   125 nb_6_is_prod_dom_by_5___________
+                                   0                      -1e-09 
+   126 nb_6_and_5_are_less_than_maxDist
+                                   0            10               
+
+   No. Column name       Activity     Lower bound   Upper bound
+------ ------------    ------------- ------------- -------------
+     1 {p_alpha}                   0             0               
+     2 p_alpha                     0             0               
+     3 p_penaltyDirect
+                                   0             0               
+     4 p_transfercostCostDominance
+                                   0             0               
+     5 p_m                         0             0               
+     6 p_b                         0             0               
+     7 p_beta                      0             0               
+     8 p_transfercostProductivityDominance
+                                   0             0               
+     9 p_maxDistance
+                                   0             0               
+    10 z0_1cost     *              0             0             1 
+    11 z0_1prod     *              0             0             1 
+    12 z0_2cost     *              0             0             1 
+    13 z0_2prod     *              0             0             1 
+    14 z0_3cost     *              0             0             1 
+    15 z0_3prod     *              0             0             1 
+    16 z0_4cost     *              0             0             1 
+    17 z0_4prod     *              0             0             1 
+    18 z0_5cost     *              0             0             1 
+    19 z0_5prod     *              0             0             1 
+    20 z0_6cost     *              0             0             1 
+    21 z0_6prod     *              0             0             1 
+    22 z1_0cost     *              0             0             1 
+    23 z1_0prod     *              0             0             1 
+    24 z1_2cost     *              0             0             1 
+    25 z1_2prod     *              0             0             1 
+    26 z1_3cost     *              0             0             1 
+    27 z1_3prod     *              0             0             1 
+    28 z1_4cost     *              0             0             1 
+    29 z1_4prod     *              0             0             1 
+    30 z1_5cost     *              0             0             1 
+    31 z1_5prod     *              0             0             1 
+    32 z1_6cost     *              0             0             1 
+    33 z1_6prod     *              0             0             1 
+    34 z3_0cost     *              0             0             1 
+    35 z3_0prod     *              0             0             1 
+    36 z3_1cost     *              0             0             1 
+    37 z3_1prod     *              0             0             1 
+    38 z3_2cost     *              0             0             1 
+    39 z3_2prod     *              0             0             1 
+    40 z3_4cost     *              0             0             1 
+    41 z3_4prod     *              0             0             1 
+    42 z3_5cost     *              0             0             1 
+    43 z3_5prod     *              0             0             1 
+    44 z3_6cost     *              0             0             1 
+    45 z3_6prod     *              0             0             1 
+    46 z5_0cost     *              0             0             1 
+    47 z5_0prod     *              0             0             1 
+    48 z5_1cost     *              0             0             1 
+    49 z5_1prod     *              0             0             1 
+    50 z5_2cost     *              0             0             1 
+    51 z5_2prod     *              0             0             1 
+    52 z5_3cost     *              0             0             1 
+    53 z5_3prod     *              0             0             1 
+    54 z5_4cost     *              0             0             1 
+    55 z5_4prod     *              0             0             1 
+    56 z5_6cost     *              0             0             1 
+    57 z5_6prod     *              0             0             1 
+    58 z6_0cost     *              0             0             1 
+    59 z6_0prod     *              0             0             1 
+    60 z6_1cost     *              0             0             1 
+    61 z6_1prod     *              0             0             1 
+    62 z6_2cost     *              0             0             1 
+    63 z6_2prod     *              0             0             1 
+    64 z6_3cost     *              0             0             1 
+    65 z6_3prod     *              0             0             1 
+    66 z6_4cost     *              0             0             1 
+    67 z6_4prod     *              0             0             1 
+    68 z6_5cost     *              0             0             1 
+    69 z6_5prod     *              0             0             1 
+
+Integer feasibility conditions:
+
+KKT.PE: max.abs.err = 0.00e+00 on row 0
+        max.rel.err = 0.00e+00 on row 0
+        High quality
+
+KKT.PB: max.abs.err = 1.00e+02 on row 41
+        max.rel.err = 9.90e-01 on row 41
+        SOLUTION IS INFEASIBLE
+
+End of output

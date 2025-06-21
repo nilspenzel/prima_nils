@@ -1,139 +1,267 @@
 Minimize
-1
+0 {p_alpha}
 Subject To
-0 is not cost dominated by 0        : 1.627906976744186p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
-0 is not productivity dominated by 0: 70p_beta + 0p_transfercostProductivityDominance >= 100
-0 and 0 are at least maxDist        : p_maxDistance <= 7
-0 is not cost dominated by 1        : 19.41176470588235p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
-0 is not productivity dominated by 1: 330p_beta + 0p_transfercostProductivityDominance >= 32
-0 and 1 are at least maxDist        : p_maxDistance <= 33
-1 is not cost dominated by 0        : 0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
-1 is not productivity dominated by 0: 0p_beta + 0p_transfercostProductivityDominance >= 100
-1 and 0 are at least maxDist        : p_maxDistance <= 0
-1 is not cost dominated by 1        : 15.294117647058824p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
-1 is not productivity dominated by 1: 260p_beta + 0p_transfercostProductivityDominance >= 32
-1 and 1 are at least maxDist        : p_maxDistance <= 26
-2 is not cost dominated by 1        : 0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + -4p_m + -1p_b >= 30
-2 is not productivity dominated by 1: 0p_beta + 0p_transfercostProductivityDominance >= -68
-2 and 1 are at least maxDist        : p_maxDistance <= 0
-3 is not cost dominated by 0        : 1.627906976744186p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
-3 is not productivity dominated by 0: 70p_beta + 0p_transfercostProductivityDominance >= 100
-3 and 0 are at least maxDist        : p_maxDistance <= 7
-3 is not cost dominated by 1        : 0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
-3 is not productivity dominated by 1: 0p_beta + 0p_transfercostProductivityDominance >= 32
-3 and 1 are at least maxDist        : p_maxDistance <= 0
-4 is not cost dominated by 0        : 0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 4p_m + 1p_b >= -30
-4 is not productivity dominated by 0: 0p_beta + 0p_transfercostProductivityDominance >= 68
-4 and 0 are at least maxDist        : p_maxDistance <= 0
-5 is not cost dominated by 0        : 0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
-5 is not productivity dominated by 0: 0p_beta + 0p_transfercostProductivityDominance >= 100
-5 and 0 are at least maxDist        : p_maxDistance <= 0
-5 is not cost dominated by 1        : 0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
-5 is not productivity dominated by 1: 0p_beta + 0p_transfercostProductivityDominance >= 32
-5 and 1 are at least maxDist        : p_maxDistance <= 0
-6 is not cost dominated by 0        : 2.3255813953488373p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
-6 is not productivity dominated by 0: 100p_beta + 0p_transfercostProductivityDominance >= 100
-6 and 0 are at least maxDist        : p_maxDistance <= 10
-6 is not cost dominated by 1        : 5.882352941176471p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
-6 is not productivity dominated by 1: 100p_beta + 0p_transfercostProductivityDominance >= 32
-6 and 1 are at least maxDist        : p_maxDistance <= 10
-0 is cost dom by 1           : 7p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z0_1cost < 0
-0 is prod dom by 1           : 70p_beta + 0p_transfercostProductivityDominance -9007199254740.99z0_1prod < 0
-0 and 1 are less than maxDist: p_maxDistance > 7 - 9007199254740.99(z0_1cost + z0_1prod)
-0 is cost dom by 2           : 30.1p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -10p_m + -1p_b - 9007199254740.99z0_2cost < 43
-0 is prod dom by 2           : 0p_beta + 0p_transfercostProductivityDominance -9007199254740.99z0_2prod < -100
-0 and 2 are less than maxDist: p_maxDistance > 7 - 9007199254740.99(z0_2cost + z0_2prod)
-0 is cost dom by 3           : 33p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z0_3cost < 0
-0 is prod dom by 3           : 330p_beta + 0p_transfercostProductivityDominance -9007199254740.99z0_3prod < 0
-0 and 3 are less than maxDist: p_maxDistance > 33 - 9007199254740.99(z0_3cost + z0_3prod)
-0 is cost dom by 4           : 56.1p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -6p_m + 0p_b - 9007199254740.99z0_4cost < 13
-0 is prod dom by 4           : 132p_beta + 0p_transfercostProductivityDominance -9007199254740.99z0_4prod < -32
-0 and 4 are less than maxDist: p_maxDistance > 33 - 9007199254740.99(z0_4cost + z0_4prod)
-0 is cost dom by 5           : 40p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z0_5cost < 0
-0 is prod dom by 5           : 400p_beta + 0p_transfercostProductivityDominance -9007199254740.99z0_5prod < 0
-0 and 5 are less than maxDist: p_maxDistance > 40 - 9007199254740.99(z0_5cost + z0_5prod)
-0 is cost dom by 6           : 50p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z0_6cost < 0
-0 is prod dom by 6           : 500p_beta + 0p_transfercostProductivityDominance -9007199254740.99z0_6prod < 0
-0 and 6 are less than maxDist: p_maxDistance > 50 - 9007199254740.99(z0_6cost + z0_6prod)
-at least one dominator: z0_1cost + z0_1prod + z0_2cost + z0_2prod + z0_3cost + z0_3prod + z0_4cost + z0_4prod + z0_5cost + z0_5prod + z0_6cost + z0_6prod>= 1
-1 is cost dom by 0           : 7p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z1_0cost < 0
-1 is prod dom by 0           : 70p_beta + 0p_transfercostProductivityDominance -9007199254740.99z1_0prod < 0
-1 and 0 are less than maxDist: p_maxDistance > 7 - 9007199254740.99(z1_0cost + z1_0prod)
-1 is cost dom by 2           : 0p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -10p_m + -1p_b - 9007199254740.99z1_2cost < 43
-1 is prod dom by 2           : 0p_beta + 0p_transfercostProductivityDominance -9007199254740.99z1_2prod < -100
-1 and 2 are less than maxDist: p_maxDistance > 0 - 9007199254740.99(z1_2cost + z1_2prod)
-1 is cost dom by 3           : 26p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z1_3cost < 0
-1 is prod dom by 3           : 260p_beta + 0p_transfercostProductivityDominance -9007199254740.99z1_3prod < 0
-1 and 3 are less than maxDist: p_maxDistance > 26 - 9007199254740.99(z1_3cost + z1_3prod)
-1 is cost dom by 4           : 44.2p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -6p_m + 0p_b - 9007199254740.99z1_4cost < 13
-1 is prod dom by 4           : 104p_beta + 0p_transfercostProductivityDominance -9007199254740.99z1_4prod < -32
-1 and 4 are less than maxDist: p_maxDistance > 26 - 9007199254740.99(z1_4cost + z1_4prod)
-1 is cost dom by 5           : 33p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z1_5cost < 0
-1 is prod dom by 5           : 330p_beta + 0p_transfercostProductivityDominance -9007199254740.99z1_5prod < 0
-1 and 5 are less than maxDist: p_maxDistance > 33 - 9007199254740.99(z1_5cost + z1_5prod)
-1 is cost dom by 6           : 43p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z1_6cost < 0
-1 is prod dom by 6           : 430p_beta + 0p_transfercostProductivityDominance -9007199254740.99z1_6prod < 0
-1 and 6 are less than maxDist: p_maxDistance > 43 - 9007199254740.99(z1_6cost + z1_6prod)
-at least one dominator: z1_0cost + z1_0prod + z1_2cost + z1_2prod + z1_3cost + z1_3prod + z1_4cost + z1_4prod + z1_5cost + z1_5prod + z1_6cost + z1_6prod>= 1
-at least one dominator: >= 1
-3 is cost dom by 0           : 33p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z3_0cost < 0
-3 is prod dom by 0           : 330p_beta + 0p_transfercostProductivityDominance -9007199254740.99z3_0prod < 0
-3 and 0 are less than maxDist: p_maxDistance > 33 - 9007199254740.99(z3_0cost + z3_0prod)
-3 is cost dom by 1           : 26p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z3_1cost < 0
-3 is prod dom by 1           : 260p_beta + 0p_transfercostProductivityDominance -9007199254740.99z3_1prod < 0
-3 and 1 are less than maxDist: p_maxDistance > 26 - 9007199254740.99(z3_1cost + z3_1prod)
-3 is cost dom by 2           : 30.1p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -10p_m + -1p_b - 9007199254740.99z3_2cost < 43
-3 is prod dom by 2           : 0p_beta + 0p_transfercostProductivityDominance -9007199254740.99z3_2prod < -100
-3 and 2 are less than maxDist: p_maxDistance > 7 - 9007199254740.99(z3_2cost + z3_2prod)
-3 is cost dom by 4           : 0p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -6p_m + 0p_b - 9007199254740.99z3_4cost < 13
-3 is prod dom by 4           : 0p_beta + 0p_transfercostProductivityDominance -9007199254740.99z3_4prod < -32
-3 and 4 are less than maxDist: p_maxDistance > 0 - 9007199254740.99(z3_4cost + z3_4prod)
-3 is cost dom by 5           : 7p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z3_5cost < 0
-3 is prod dom by 5           : 70p_beta + 0p_transfercostProductivityDominance -9007199254740.99z3_5prod < 0
-3 and 5 are less than maxDist: p_maxDistance > 7 - 9007199254740.99(z3_5cost + z3_5prod)
-3 is cost dom by 6           : 17p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z3_6cost < 0
-3 is prod dom by 6           : 170p_beta + 0p_transfercostProductivityDominance -9007199254740.99z3_6prod < 0
-3 and 6 are less than maxDist: p_maxDistance > 17 - 9007199254740.99(z3_6cost + z3_6prod)
-at least one dominator: z3_0cost + z3_0prod + z3_1cost + z3_1prod + z3_2cost + z3_2prod + z3_4cost + z3_4prod + z3_5cost + z3_5prod + z3_6cost + z3_6prod>= 1
-at least one dominator: >= 1
-5 is cost dom by 0           : 40p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z5_0cost < 0
-5 is prod dom by 0           : 400p_beta + 0p_transfercostProductivityDominance -9007199254740.99z5_0prod < 0
-5 and 0 are less than maxDist: p_maxDistance > 40 - 9007199254740.99(z5_0cost + z5_0prod)
-5 is cost dom by 1           : 33p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z5_1cost < 0
-5 is prod dom by 1           : 330p_beta + 0p_transfercostProductivityDominance -9007199254740.99z5_1prod < 0
-5 and 1 are less than maxDist: p_maxDistance > 33 - 9007199254740.99(z5_1cost + z5_1prod)
-5 is cost dom by 2           : 0p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -10p_m + -1p_b - 9007199254740.99z5_2cost < 43
-5 is prod dom by 2           : 0p_beta + 0p_transfercostProductivityDominance -9007199254740.99z5_2prod < -100
-5 and 2 are less than maxDist: p_maxDistance > 0 - 9007199254740.99(z5_2cost + z5_2prod)
-5 is cost dom by 3           : 7p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z5_3cost < 0
-5 is prod dom by 3           : 70p_beta + 0p_transfercostProductivityDominance -9007199254740.99z5_3prod < 0
-5 and 3 are less than maxDist: p_maxDistance > 7 - 9007199254740.99(z5_3cost + z5_3prod)
-5 is cost dom by 4           : 0p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -6p_m + 0p_b - 9007199254740.99z5_4cost < 13
-5 is prod dom by 4           : 0p_beta + 0p_transfercostProductivityDominance -9007199254740.99z5_4prod < -32
-5 and 4 are less than maxDist: p_maxDistance > 0 - 9007199254740.99(z5_4cost + z5_4prod)
-5 is cost dom by 6           : 10p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z5_6cost < 0
-5 is prod dom by 6           : 100p_beta + 0p_transfercostProductivityDominance -9007199254740.99z5_6prod < 0
-5 and 6 are less than maxDist: p_maxDistance > 10 - 9007199254740.99(z5_6cost + z5_6prod)
-at least one dominator: z5_0cost + z5_0prod + z5_1cost + z5_1prod + z5_2cost + z5_2prod + z5_3cost + z5_3prod + z5_4cost + z5_4prod + z5_6cost + z5_6prod>= 1
-6 is cost dom by 0           : 50p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z6_0cost < 0
-6 is prod dom by 0           : 500p_beta + 0p_transfercostProductivityDominance -9007199254740.99z6_0prod < 0
-6 and 0 are less than maxDist: p_maxDistance > 50 - 9007199254740.99(z6_0cost + z6_0prod)
-6 is cost dom by 1           : 43p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z6_1cost < 0
-6 is prod dom by 1           : 430p_beta + 0p_transfercostProductivityDominance -9007199254740.99z6_1prod < 0
-6 and 1 are less than maxDist: p_maxDistance > 43 - 9007199254740.99(z6_1cost + z6_1prod)
-6 is cost dom by 2           : 43p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -10p_m + -1p_b - 9007199254740.99z6_2cost < 43
-6 is prod dom by 2           : 0p_beta + 0p_transfercostProductivityDominance -9007199254740.99z6_2prod < -100
-6 and 2 are less than maxDist: p_maxDistance > 10 - 9007199254740.99(z6_2cost + z6_2prod)
-6 is cost dom by 3           : 17p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z6_3cost < 0
-6 is prod dom by 3           : 170p_beta + 0p_transfercostProductivityDominance -9007199254740.99z6_3prod < 0
-6 and 3 are less than maxDist: p_maxDistance > 17 - 9007199254740.99(z6_3cost + z6_3prod)
-6 is cost dom by 4           : 17p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + -6p_m + 0p_b - 9007199254740.99z6_4cost < 13
-6 is prod dom by 4           : 40p_beta + 0p_transfercostProductivityDominance -9007199254740.99z6_4prod < -32
-6 and 4 are less than maxDist: p_maxDistance > 10 - 9007199254740.99(z6_4cost + z6_4prod)
-6 is cost dom by 5           : 10p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 9007199254740.99z6_5cost < 0
-6 is prod dom by 5           : 100p_beta + 0p_transfercostProductivityDominance -9007199254740.99z6_5prod < 0
-6 and 5 are less than maxDist: p_maxDistance > 10 - 9007199254740.99(z6_5cost + z6_5prod)
-at least one dominator: z6_0cost + z6_0prod + z6_1cost + z6_1prod + z6_2cost + z6_2prod + z6_3cost + z6_3prod + z6_4cost + z6_4prod + z6_5cost + z6_5prod>= 1
+nb_0_is_not_cost_dominated_by_0________:
+1.627906976744186p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
+nb_0_is_not_productivity_dominated_by_0:
+70p_beta + 0p_transfercostProductivityDominance >= 100
+nb_0_and_0_are_at_least_maxDist________:
+1p_maxDistance <= 7
+nb_0_is_not_cost_dominated_by_1________:
+19.41176470588235p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
+nb_0_is_not_productivity_dominated_by_1:
+330p_beta + 0p_transfercostProductivityDominance >= 32
+nb_0_and_1_are_at_least_maxDist________:
+1p_maxDistance <= 33
+nb_1_is_not_cost_dominated_by_0________:
+0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
+nb_1_is_not_productivity_dominated_by_0:
+0p_beta + 0p_transfercostProductivityDominance >= 100
+nb_1_and_0_are_at_least_maxDist________:
+1p_maxDistance <= 0
+nb_1_is_not_cost_dominated_by_1________:
+15.294117647058824p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
+nb_1_is_not_productivity_dominated_by_1:
+260p_beta + 0p_transfercostProductivityDominance >= 32
+nb_1_and_1_are_at_least_maxDist________:
+1p_maxDistance <= 26
+nb_2_is_not_cost_dominated_by_1________:
+0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance - 4p_m - 1p_b >= 30
+nb_2_is_not_productivity_dominated_by_1:
+0p_beta + 0p_transfercostProductivityDominance >= -68
+nb_2_and_1_are_at_least_maxDist________:
+1p_maxDistance <= 0
+nb_3_is_not_cost_dominated_by_0________:
+1.627906976744186p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
+nb_3_is_not_productivity_dominated_by_0:
+70p_beta + 0p_transfercostProductivityDominance >= 100
+nb_3_and_0_are_at_least_maxDist________:
+1p_maxDistance <= 7
+nb_3_is_not_cost_dominated_by_1________:
+0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
+nb_3_is_not_productivity_dominated_by_1:
+0p_beta + 0p_transfercostProductivityDominance >= 32
+nb_3_and_1_are_at_least_maxDist________:
+1p_maxDistance <= 0
+nb_4_is_not_cost_dominated_by_0________:
+0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 4p_m + 1p_b >= -30
+nb_4_is_not_productivity_dominated_by_0:
+0p_beta + 0p_transfercostProductivityDominance >= 68
+nb_4_and_0_are_at_least_maxDist________:
+1p_maxDistance <= 0
+nb_5_is_not_cost_dominated_by_0________:
+0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
+nb_5_is_not_productivity_dominated_by_0:
+0p_beta + 0p_transfercostProductivityDominance >= 100
+nb_5_and_0_are_at_least_maxDist________:
+1p_maxDistance <= 0
+nb_5_is_not_cost_dominated_by_1________:
+0p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
+nb_5_is_not_productivity_dominated_by_1:
+0p_beta + 0p_transfercostProductivityDominance >= 32
+nb_5_and_1_are_at_least_maxDist________:
+1p_maxDistance <= 0
+nb_6_is_not_cost_dominated_by_0________:
+2.3255813953488373p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 10p_m + 1p_b >= -43
+nb_6_is_not_productivity_dominated_by_0:
+100p_beta + 0p_transfercostProductivityDominance >= 100
+nb_6_and_0_are_at_least_maxDist________:
+1p_maxDistance <= 10
+nb_6_is_not_cost_dominated_by_1________:
+5.882352941176471p_alpha + 0p_penaltyDirect + 0p_transfercostCostDominance + 6p_m + 0p_b >= -13
+nb_6_is_not_productivity_dominated_by_1:
+100p_beta + 0p_transfercostProductivityDominance >= 32
+nb_6_and_1_are_at_least_maxDist________:
+1p_maxDistance <= 10
+nb_0_is_cost_dom_by_1___________:
+7p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z0_1cost <= -1e-9
+nb_0_is_prod_dom_by_1___________:
+70p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z0_1prod <= -1e-9
+nb_0_and_1_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z0_1cost + 43.03421571533775z0_1prod >= 7.000000001
+nb_0_is_cost_dom_by_2___________:
+30.1p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 10p_m - 1p_b - 43.03421571533775z0_2cost <= 42.999999999
+nb_0_is_prod_dom_by_2___________:
+0p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z0_2prod <= -100.000000001
+nb_0_and_2_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z0_2cost + 43.03421571533775z0_2prod >= 7.000000001
+nb_0_is_cost_dom_by_3___________:
+33p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z0_3cost <= -1e-9
+nb_0_is_prod_dom_by_3___________:
+330p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z0_3prod <= -1e-9
+nb_0_and_3_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z0_3cost + 43.03421571533775z0_3prod >= 33.000000001
+nb_0_is_cost_dom_by_4___________:
+56.1p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 6p_m + 0p_b - 43.03421571533775z0_4cost <= 12.999999999
+nb_0_is_prod_dom_by_4___________:
+132p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z0_4prod <= -32.000000001
+nb_0_and_4_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z0_4cost + 43.03421571533775z0_4prod >= 33.000000001
+nb_0_is_cost_dom_by_5___________:
+40p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z0_5cost <= -1e-9
+nb_0_is_prod_dom_by_5___________:
+400p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z0_5prod <= -1e-9
+nb_0_and_5_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z0_5cost + 43.03421571533775z0_5prod >= 40.000000001
+nb_0_is_cost_dom_by_6___________:
+50p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z0_6cost <= -1e-9
+nb_0_is_prod_dom_by_6___________:
+500p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z0_6prod <= -1e-9
+nb_0_and_6_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z0_6cost + 43.03421571533775z0_6prod >= 50.000000001
+nb_1_is_cost_dom_by_0___________:
+7p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z1_0cost <= -1e-9
+nb_1_is_prod_dom_by_0___________:
+70p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z1_0prod <= -1e-9
+nb_1_and_0_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z1_0cost + 43.03421571533775z1_0prod >= 7.000000001
+nb_1_is_cost_dom_by_2___________:
+0p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 10p_m - 1p_b - 43.03421571533775z1_2cost <= 42.999999999
+nb_1_is_prod_dom_by_2___________:
+0p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z1_2prod <= -100.000000001
+nb_1_and_2_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z1_2cost + 43.03421571533775z1_2prod >= 1e-9
+nb_1_is_cost_dom_by_3___________:
+26p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z1_3cost <= -1e-9
+nb_1_is_prod_dom_by_3___________:
+260p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z1_3prod <= -1e-9
+nb_1_and_3_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z1_3cost + 43.03421571533775z1_3prod >= 26.000000001
+nb_1_is_cost_dom_by_4___________:
+44.2p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 6p_m + 0p_b - 43.03421571533775z1_4cost <= 12.999999999
+nb_1_is_prod_dom_by_4___________:
+104p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z1_4prod <= -32.000000001
+nb_1_and_4_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z1_4cost + 43.03421571533775z1_4prod >= 26.000000001
+nb_1_is_cost_dom_by_5___________:
+33p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z1_5cost <= -1e-9
+nb_1_is_prod_dom_by_5___________:
+330p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z1_5prod <= -1e-9
+nb_1_and_5_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z1_5cost + 43.03421571533775z1_5prod >= 33.000000001
+nb_1_is_cost_dom_by_6___________:
+43p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z1_6cost <= -1e-9
+nb_1_is_prod_dom_by_6___________:
+430p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z1_6prod <= -1e-9
+nb_1_and_6_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z1_6cost + 43.03421571533775z1_6prod >= 43.000000001
+nb_3_is_cost_dom_by_0___________:
+33p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z3_0cost <= -1e-9
+nb_3_is_prod_dom_by_0___________:
+330p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z3_0prod <= -1e-9
+nb_3_and_0_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z3_0cost + 43.03421571533775z3_0prod >= 33.000000001
+nb_3_is_cost_dom_by_1___________:
+26p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z3_1cost <= -1e-9
+nb_3_is_prod_dom_by_1___________:
+260p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z3_1prod <= -1e-9
+nb_3_and_1_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z3_1cost + 43.03421571533775z3_1prod >= 26.000000001
+nb_3_is_cost_dom_by_2___________:
+30.1p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 10p_m - 1p_b - 43.03421571533775z3_2cost <= 42.999999999
+nb_3_is_prod_dom_by_2___________:
+0p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z3_2prod <= -100.000000001
+nb_3_and_2_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z3_2cost + 43.03421571533775z3_2prod >= 7.000000001
+nb_3_is_cost_dom_by_4___________:
+0p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 6p_m + 0p_b - 43.03421571533775z3_4cost <= 12.999999999
+nb_3_is_prod_dom_by_4___________:
+0p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z3_4prod <= -32.000000001
+nb_3_and_4_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z3_4cost + 43.03421571533775z3_4prod >= 1e-9
+nb_3_is_cost_dom_by_5___________:
+7p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z3_5cost <= -1e-9
+nb_3_is_prod_dom_by_5___________:
+70p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z3_5prod <= -1e-9
+nb_3_and_5_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z3_5cost + 43.03421571533775z3_5prod >= 7.000000001
+nb_3_is_cost_dom_by_6___________:
+17p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z3_6cost <= -1e-9
+nb_3_is_prod_dom_by_6___________:
+170p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z3_6prod <= -1e-9
+nb_3_and_6_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z3_6cost + 43.03421571533775z3_6prod >= 17.000000001
+nb_5_is_cost_dom_by_0___________:
+40p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z5_0cost <= -1e-9
+nb_5_is_prod_dom_by_0___________:
+400p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z5_0prod <= -1e-9
+nb_5_and_0_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z5_0cost + 43.03421571533775z5_0prod >= 40.000000001
+nb_5_is_cost_dom_by_1___________:
+33p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z5_1cost <= -1e-9
+nb_5_is_prod_dom_by_1___________:
+330p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z5_1prod <= -1e-9
+nb_5_and_1_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z5_1cost + 43.03421571533775z5_1prod >= 33.000000001
+nb_5_is_cost_dom_by_2___________:
+0p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 10p_m - 1p_b - 43.03421571533775z5_2cost <= 42.999999999
+nb_5_is_prod_dom_by_2___________:
+0p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z5_2prod <= -100.000000001
+nb_5_and_2_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z5_2cost + 43.03421571533775z5_2prod >= 1e-9
+nb_5_is_cost_dom_by_3___________:
+7p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z5_3cost <= -1e-9
+nb_5_is_prod_dom_by_3___________:
+70p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z5_3prod <= -1e-9
+nb_5_and_3_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z5_3cost + 43.03421571533775z5_3prod >= 7.000000001
+nb_5_is_cost_dom_by_4___________:
+0p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 6p_m + 0p_b - 43.03421571533775z5_4cost <= 12.999999999
+nb_5_is_prod_dom_by_4___________:
+0p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z5_4prod <= -32.000000001
+nb_5_and_4_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z5_4cost + 43.03421571533775z5_4prod >= 1e-9
+nb_5_is_cost_dom_by_6___________:
+10p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z5_6cost <= -1e-9
+nb_5_is_prod_dom_by_6___________:
+100p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z5_6prod <= -1e-9
+nb_5_and_6_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z5_6cost + 43.03421571533775z5_6prod >= 10.000000001
+nb_6_is_cost_dom_by_0___________:
+50p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z6_0cost <= -1e-9
+nb_6_is_prod_dom_by_0___________:
+500p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z6_0prod <= -1e-9
+nb_6_and_0_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z6_0cost + 43.03421571533775z6_0prod >= 50.000000001
+nb_6_is_cost_dom_by_1___________:
+43p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z6_1cost <= -1e-9
+nb_6_is_prod_dom_by_1___________:
+430p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z6_1prod <= -1e-9
+nb_6_and_1_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z6_1cost + 43.03421571533775z6_1prod >= 43.000000001
+nb_6_is_cost_dom_by_2___________:
+43p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 10p_m - 1p_b - 43.03421571533775z6_2cost <= 42.999999999
+nb_6_is_prod_dom_by_2___________:
+0p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z6_2prod <= -100.000000001
+nb_6_and_2_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z6_2cost + 43.03421571533775z6_2prod >= 10.000000001
+nb_6_is_cost_dom_by_3___________:
+17p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z6_3cost <= -1e-9
+nb_6_is_prod_dom_by_3___________:
+170p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z6_3prod <= -1e-9
+nb_6_and_3_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z6_3cost + 43.03421571533775z6_3prod >= 17.000000001
+nb_6_is_cost_dom_by_4___________:
+17p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance - 6p_m + 0p_b - 43.03421571533775z6_4cost <= 12.999999999
+nb_6_is_prod_dom_by_4___________:
+40p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z6_4prod <= -32.000000001
+nb_6_and_4_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z6_4cost + 43.03421571533775z6_4prod >= 10.000000001
+nb_6_is_cost_dom_by_5___________:
+10p_alpha + 1p_penaltyDirect + 0p_transfercostCostDominance + 0p_m + 0p_b - 43.03421571533775z6_5cost <= -1e-9
+nb_6_is_prod_dom_by_5___________:
+100p_beta + 0p_transfercostProductivityDominance - 43.03421571533775z6_5prod <= -1e-9
+nb_6_and_5_are_less_than_maxDist:
+1p_maxDistance + 43.03421571533775z6_5cost + 43.03421571533775z6_5prod >= 10.000000001
+BOUNDS
+0 <= p_penaltyDirect
+0 <= p_m
+0 <= p_b
+0 <= p_alpha
+0 <= p_beta
+0 <= p_maxDistance
+0 <= p_transfercostCostDominance
+0 <= p_transfercostProductivityDominance
 Binary
  z0_1cost
  z0_1prod

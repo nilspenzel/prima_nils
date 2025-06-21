@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
 
-const M = Number.MAX_SAFE_INTEGER / 1000;
+const M = Math.log2(Math.floor(Number.MAX_SAFE_INTEGER / 1000));
 
 interface JourneyEntry {
 	departure: number;
@@ -108,11 +108,21 @@ function getConstants(j1: JourneyDerivedEntry, j2: JourneyDerivedEntry): Constan
 	};
 }
 
+function createCondition(name: string, factors: number[], parameters: string[], rhs: number, sense: string) {
+	let condition = name + ':\n';
+	for(let i=0;i!=factors.length;++i) {
+		condition += (i===0 ? factors[i].toString() : Math.abs(factors[i]).toString())+parameters[i] + (factors[i+1] !== undefined ? (factors[i+1] < 0 ? ' - ' : ' + ') : '');
+	}
+	condition += ' '+sense+' '+rhs+'\n';
+	return condition;
+}
+
 function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) {
 	let mip = 'Minimize\n';
-	mip += '1\n';
+	mip += '0 {p_alpha}\n';
 	mip += 'Subject To\n';
 
+	const epsilon = 0.000000001;
 	const p_penaltyDirect: string = 'p_penaltyDirect';
 	const p_m: string = 'p_m';
 	const p_b: string = 'p_b';
@@ -121,6 +131,7 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 	const p_maxDistance: string = 'p_maxDistance';
 	const p_transfercostCostDominance: string = 'p_transfercostCostDominance';
 	const p_transfercostProductivityDominance: string = 'p_transfercostProductivityDominance';
+	const vars = [p_penaltyDirect, p_m, p_b, p_alpha, p_beta, p_maxDistance, p_transfercostCostDominance, p_transfercostProductivityDominance];
 
 	// create inequalities for non-dominance
 	for (let i = 0; i != inEntries.length; ++i) {
@@ -131,9 +142,9 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 			const j1 = inEntries[i];
 			const j2 = out[j];
 			const constants = getConstants(j1,j2);
-			mip += `${i} is not cost dominated by ${j}        : ${constants.alpha}${p_alpha} + ${constants.penaltyDirect}${p_penaltyDirect} + ${constants.transfercostCostDominance}${p_transfercostCostDominance} + ${constants.m}${p_m} + ${constants.b}${p_b} >= ${j1.ptDuration -j2.ptDuration}\n`;
-			mip += `${i} is not productivity dominated by ${j}: ${constants.beta}${p_beta} + ${constants.transfercostProductivityDominance}${p_transfercostProductivityDominance} >= ${j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration}\n`;
-			mip += `${i} and ${j} are at least maxDist        : ${p_maxDistance} <= ${getDistance(j1,j2)}\n`
+			mip += createCondition(`nb_${j}_is_not_cost_dominated_by_${i}________`, [constants.alpha,constants.penaltyDirect,constants.transfercostCostDominance, constants.m,constants.b], [p_alpha, p_penaltyDirect,p_transfercostCostDominance,p_m,p_b], j1.ptDuration -j2.ptDuration, '>=');
+			mip += createCondition(`nb_${j}_is_not_productivity_dominated_by_${i}`, [constants.beta, constants.transfercostProductivityDominance], [p_beta, p_transfercostProductivityDominance], j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration ,'>=');
+			mip += createCondition(`nb_${j}_and_${i}_are_at_least_maxDist________`, [1], [p_maxDistance], getDistance(j1,j2), '<=');
 		}
 	}
 
@@ -141,8 +152,10 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 	// create inequalities for dominance
 	for (let i = 0; i != inEntries.length; ++i) {
 		const activityVars: string[] = [];
+		let skip = false;
 		for (let j = 0; j != inEntries.length; ++j) {
 			if (i === j || out.some((e) => equals(e, inEntries[i]))) {
+				skip = true;
 				continue;
 			}
 			const j1 = inEntries[j];
@@ -154,19 +167,21 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 			activityVars.push(costDomBin);
 			binaries.push(prodDomBin);
 			activityVars.push(prodDomBin);
-			mip += `${i} is cost dom by ${j}           : ${constants.alpha}${p_alpha} + ${constants.penaltyDirect}${p_penaltyDirect} + ${constants.transfercostCostDominance}${p_transfercostCostDominance} + ${constants.m}${p_m} + ${constants.b}${p_b} - ${M}${costDomBin} < ${j1.ptDuration -j2.ptDuration}\n`;
-			mip += `${i} is prod dom by ${j}           : ${constants.beta}${p_beta} + ${constants.transfercostProductivityDominance}${p_transfercostProductivityDominance} -${M}${prodDomBin} < ${j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration}\n`;
-			mip += `${i} and ${j} are less than maxDist: ${p_maxDistance} > ${getDistance(j1,j2)} - ${M}(${costDomBin} + ${prodDomBin})\n`
+			mip += createCondition(`nb_${i}_is_cost_dom_by_${j}___________`, [constants.alpha, constants.penaltyDirect, constants.transfercostCostDominance, constants.m, constants.b, -M], [p_alpha, p_penaltyDirect, p_transfercostCostDominance, p_m, p_b, costDomBin], j1.ptDuration -j2.ptDuration - epsilon, '<=');
+			mip += createCondition(`nb_${i}_is_prod_dom_by_${j}___________`, [constants.beta, constants.transfercostProductivityDominance, -M], [p_beta, p_transfercostProductivityDominance, prodDomBin], j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration - epsilon, '<=');
+			mip += createCondition(`nb_${i}_and_${j}_are_less_than_maxDist`, [1, M, M], [p_maxDistance, costDomBin, prodDomBin], getDistance(j1,j2) + epsilon, '>=');
 		}
-		mip += `at least one dominator: ${activityVars.join(' + ')}>= 1\n`;
+		if(!skip) {
+			mip += `nb_at_least_one_dominator: ${activityVars.join(' + ')} >= 1\n`;
+		}
 	}
-
+	mip += 'BOUNDS\n';
+	mip += '0 <= ' + vars.join('\n0 <= ') + '\n';
 	if (binaries.length > 0) {
 		mip += 'Binary\n';
 		mip += binaries.map((b) => ` ${b}`).join('\n') + '\n';
 	}
 	mip += 'End\n';
-	console.log({ mip });
 	const outputPath = path.join(__dirname, 'model.lp');
 	fs.writeFileSync(outputPath, mip, 'utf-8');
 }
@@ -191,7 +206,6 @@ function processFolder(folderPath: string) {
 	const pairs = getCsvPairs(folderPath);
 
 	for (const [inFile, outFile] of pairs) {
-		console.log(`\nProcessing Pair:\nIN: ${inFile}\nOUT: ${outFile}`);
 
 		const inData = readCsvFile(inFile);
 		const outData = readCsvFile(outFile);
