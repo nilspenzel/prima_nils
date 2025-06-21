@@ -118,11 +118,6 @@ function createCondition(name: string, factors: number[], parameters: string[], 
 }
 
 function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) {
-	let mip = 'Minimize\n';
-	mip += '0 {p_alpha}\n';
-	mip += 'Subject To\n';
-
-	const epsilon = 0.000000001;
 	const p_penaltyDirect: string = 'p_penaltyDirect';
 	const p_m: string = 'p_m';
 	const p_b: string = 'p_b';
@@ -131,6 +126,12 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 	const p_maxDistance: string = 'p_maxDistance';
 	const p_transfercostCostDominance: string = 'p_transfercostCostDominance';
 	const p_transfercostProductivityDominance: string = 'p_transfercostProductivityDominance';
+
+	let mip = 'Minimize\n';
+	mip += `obj: ${p_alpha}\n`;
+	mip += 'Subject To\n';
+
+	const epsilon = 0.000000001;
 	const vars = [p_penaltyDirect, p_m, p_b, p_alpha, p_beta, p_maxDistance, p_transfercostCostDominance, p_transfercostProductivityDominance];
 
 	// create inequalities for non-dominance
@@ -139,12 +140,14 @@ function writeMIP(inEntries: JourneyDerivedEntry[], out: JourneyDerivedEntry[]) 
 			if (equals(inEntries[i], out[j])) {
 				continue;
 			}
+			const activityVar = `ndz${j}_${i}`;
 			const j1 = inEntries[i];
 			const j2 = out[j];
 			const constants = getConstants(j1,j2);
-			mip += createCondition(`nb_${j}_is_not_cost_dominated_by_${i}________`, [constants.alpha,constants.penaltyDirect,constants.transfercostCostDominance, constants.m,constants.b], [p_alpha, p_penaltyDirect,p_transfercostCostDominance,p_m,p_b], j1.ptDuration -j2.ptDuration, '>=');
-			mip += createCondition(`nb_${j}_is_not_productivity_dominated_by_${i}`, [constants.beta, constants.transfercostProductivityDominance], [p_beta, p_transfercostProductivityDominance], j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration ,'>=');
-			mip += createCondition(`nb_${j}_and_${i}_are_at_least_maxDist________`, [1], [p_maxDistance], getDistance(j1,j2), '<=');
+			
+			mip += createCondition(`nb_${j}_is_not_cost_dominated_by_${i}________`, [constants.alpha,constants.penaltyDirect,constants.transfercostCostDominance, constants.m,constants.b, M], [p_alpha, p_penaltyDirect,p_transfercostCostDominance,p_m,p_b, activityVar], j1.ptDuration -j2.ptDuration, '>=');
+			mip += createCondition(`nb_${j}_is_not_productivity_dominated_by_${i}`, [constants.beta, constants.transfercostProductivityDominance, M], [p_beta, p_transfercostProductivityDominance, activityVar], j1.fullDuration*j1.taxiDuration - j2.fullDuration*j2.taxiDuration ,'>=');
+			mip += createCondition(`nb_${j}_and_${i}_are_at_least_maxDist________`, [1, -M], [p_maxDistance, activityVar], M + getDistance(j1,j2), '<=');
 		}
 	}
 
@@ -209,6 +212,7 @@ function processFolder(folderPath: string) {
 
 		const inData = readCsvFile(inFile);
 		const outData = readCsvFile(outFile);
+
 		writeMIP(derive(inData), derive(outData));
 	}
 }
