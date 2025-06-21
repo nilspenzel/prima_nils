@@ -7,6 +7,202 @@ export const tests: TestParams[] = [
 		conditions: [
 			{
 				evalAfterStep: 1,
+				entity: 'tourCount',
+				tourCount: 2,
+				requestCount: -1,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			}
+		],
+		process: {
+			starts: [
+				{
+					lat: 51.49978764854629,
+					lng: 14.695370741483487
+				},
+				{
+					lat: 51.49551147136415,
+					lng: 14.67944750945557
+				}
+			],
+			destinations: [
+				{
+					lat: 51.49117009326031,
+					lng: 14.66185910283707
+				},
+				{
+					lat: 51.49408598981654,
+					lng: 14.65009880728681
+				}
+			],
+			times: [1750753744965, 1750760944965],
+			isDepartures: [true, true],
+			companies: [
+				{
+					lat: 51.50226454583827,
+					lng: 14.712478531647974
+				}
+			]
+		},
+		uuid: '9d1780af-6cb7-401a-bffa-957982eeae72'
+	},
+	// endoftest
+
+	// startoftest
+	{
+		conditions: [
+			{
+				evalAfterStep: 1,
+				entity: 'tourCount',
+				tourCount: 2,
+				requestCount: -1,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			}
+		],
+		process: {
+			starts: [
+				{
+					lat: 51.50008466056579,
+					lng: 14.69715636845126
+				},
+				{
+					lat: 51.4806710325108,
+					lng: 14.878148283090582
+				}
+			],
+			destinations: [
+				{
+					lat: 51.49151865157296,
+					lng: 14.666689864965917
+				},
+				{
+					lat: 51.460602595780585,
+					lng: 14.94294827018291
+				}
+			],
+			times: [1750753658858, 1750754858858],
+			isDepartures: [true, true],
+			companies: [
+				{
+					lat: 51.50214943978406,
+					lng: 14.712266771389835
+				}
+			]
+		},
+		uuid: 'be33261f-c03d-4563-ac26-3d97165472b0'
+	},
+	// endoftest
+
+	// startoftest
+	{
+		conditions: [
+			{
+				evalAfterStep: 0,
+				entity: 'requestCompanyMatch',
+				start: {
+					lat: 51.41148238219216,
+					lng: 14.57652319398457
+				},
+				destination: {
+					lat: 51.40942983996766,
+					lng: 14.561989191105482
+				},
+				company: {
+					lat: 51.41233758092554,
+					lng: 14.582391640428142
+				},
+				expectedPosition: null,
+				tourCount: null,
+				requestCount: null
+			},
+			{
+				evalAfterStep: 1,
+				entity: 'requestCount',
+				tourCount: -1,
+				requestCount: 2,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			},
+			{
+				evalAfterStep: 1,
+				entity: 'tourCount',
+				tourCount: 1,
+				requestCount: -1,
+				expectedPosition: null,
+				start: null,
+				destination: null,
+				company: null
+			},
+			{
+				evalAfterStep: 1,
+				entity: 'requestCompanyMatch',
+				start: {
+					lat: 51.40756837023437,
+					lng: 14.548894002299306
+				},
+				destination: {
+					lat: 51.40062296970717,
+					lng: 14.525036299462272
+				},
+				company: {
+					lat: 51.41233758092554,
+					lng: 14.582391640428142
+				},
+				expectedPosition: null,
+				tourCount: null,
+				requestCount: null
+			}
+		],
+		process: {
+			starts: [
+				{
+					lat: 51.41148238219216,
+					lng: 14.57652319398457
+				},
+				{
+					lat: 51.40756837023437,
+					lng: 14.548894002299306
+				}
+			],
+			destinations: [
+				{
+					lat: 51.40942983996766,
+					lng: 14.561989191105482
+				},
+				{
+					lat: 51.40062296970717,
+					lng: 14.525036299462272
+				}
+			],
+			times: [1750752195540, 1750752795540],
+			isDepartures: [true, true],
+			companies: [
+				{
+					lat: 51.52683993138652,
+					lng: 14.693912761275868
+				},
+				{
+					lat: 51.41233758092554,
+					lng: 14.582391640428142
+				}
+			]
+		},
+		uuid: 'b9fba75f-4a9f-4517-851b-e37f5a2f3c8c'
+	},
+	// endoftest
+
+	// startoftest
+	{
+		conditions: [
+			{
+				evalAfterStep: 1,
 				entity: 'requestCount',
 				tourCount: -1,
 				requestCount: 2,

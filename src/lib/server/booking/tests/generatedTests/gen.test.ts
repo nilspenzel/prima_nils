@@ -38,8 +38,10 @@ function filterByContainedEvent(
 describe('Concatenation tests', () => {
 	it('generated tests', async () => {
 		console.log({ testparams: JSON.stringify(tests, null, '\t') });
+		let skipped = 0;
 		for (const test of tests) {
 			if (filterByUuid !== undefined && filterByUuid !== test.uuid) {
+				skipped++;
 				continue;
 			}
 			console.log('Running test with', { link: `http://localhost:5173/tests?test=${test.uuid}` });
@@ -158,9 +160,7 @@ describe('Concatenation tests', () => {
 				}
 			}
 		}
-		console.log(
-			`Successfully ran ${tests.length} tests with a total of ${tests.flatMap((t) => t.conditions).length} conditions.`
-		);
+		console.log(`Successfully ran ${tests.length - skipped} tests. Skipped ${skipped} tests.`);
 	}, 50000);
 });
 
