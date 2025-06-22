@@ -139,7 +139,6 @@ function writeMIP(inEntries: JourneyDerivedEntry[][], out: JourneyDerivedEntry[]
 	const p_beta: string = 'p_beta';
 	const p_maxDistance: string = 'p_maxDistance';
 	const p_transfercostCostDominance: string = 'p_transfercostCostDominance';
-	//const p_transfercostProductivityDominance: string = 'p_transfercostProductivityDominance';
 
 	let mip = 'Minimize\n';
 	mip += `obj: 0 ${p_alpha}\n`;
@@ -154,7 +153,7 @@ function writeMIP(inEntries: JourneyDerivedEntry[][], out: JourneyDerivedEntry[]
 		p_beta,
 		p_maxDistance,
 		p_transfercostCostDominance
-	]; //, p_transfercostProductivityDominance];
+	];
 	const objectiveBinaries: string[] = [];
 	for (let k = 0; k != inEntries.length; ++k) {
 		// create inequalities for non-dominance
