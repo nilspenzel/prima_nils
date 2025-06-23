@@ -141,7 +141,7 @@ function writeMIP(inEntries: JourneyDerivedEntry[][], out: JourneyDerivedEntry[]
 	const p_transfercostCostDominance: string = 'p_transfercostCostDominance';
 
 	let mip = 'Minimize\n';
-	mip += `obj: 0 ${p_alpha}\n`;
+	mip += `obj: 0 ${p_alpha} + 1\n`;
 	mip += 'Subject To\n';
 
 	const epsilon = 0.000000001;
@@ -204,12 +204,12 @@ function writeMIP(inEntries: JourneyDerivedEntry[][], out: JourneyDerivedEntry[]
 		// create inequalities for dominance
 		for (let i = 0; i != ins.length; ++i) {
 			const activityVars: string[] = [];
-			let skip = false;
+			let skip = true;
 			for (let j = 0; j != ins.length; ++j) {
 				if (i === j || outs.some((e) => equals(e, ins[i]))) {
-					skip = true;
 					continue;
 				}
+				skip = false;
 				const j1 = ins[j];
 				const j2 = ins[i];
 				const constants = getConstants(j1, j2);
@@ -249,12 +249,15 @@ function writeMIP(inEntries: JourneyDerivedEntry[][], out: JourneyDerivedEntry[]
 				);
 			}
 			if (!skip) {
-				mip += `nb_${k}_at_least_one_dominator: ${activityVars.join(' + ')} >= 1\n`;
+				mip += `nb_${k}_at_least_one_dominator: ${activityVars.join(' + ')} <= ${activityVars.length-1}\n`;
 			}
 		}
 	}
 	mip += 'BOUNDS\n';
 	mip += '0 <= ' + objectiveParameters.join('\n0 <= ') + '\n';
+	//mip += p_maxDistance.toString() + ' <= 240\n';
+	//mip += p_m.toString() + ' <= 200\n';
+	//mip += p_b.toString() + ' <= 100\n';
 	if (objectiveBinaries.length > 0) {
 		mip += 'Binary\n';
 		mip += objectiveBinaries.map((b) => ` ${b}`).join('\n') + '\n';
