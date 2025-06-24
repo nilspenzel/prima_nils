@@ -210,55 +210,49 @@ async function updateLegDurations(
 		trx: Transaction<Database>
 	) => {
 		if (prevIdx === -1) {
-			const routingResultFirstEvent = await oneToManyCarRouting(company, [events[nextIdx]], false);
-			if (
-				routingResultFirstEvent === undefined ||
-				routingResultFirstEvent.length === 0 ||
-				routingResultFirstEvent[0] === undefined
-			) {
+			const routingResultFirstEvent =
+				(await oneToManyCarRouting(company, [events[nextIdx]], false))[0] ??
+				(await oneToManyCarRouting(events[nextIdx], [company], true))[0];
+			if (routingResultFirstEvent === undefined) {
 				console.log(
 					`unable to update prevLegDuration for event ${events[nextIdx].eventid}, routing result was undefined.`
 				);
-				return;
+				throw new Error();
 			}
 			await trx
 				.updateTable('event')
-				.set({ prevLegDuration: routingResultFirstEvent[0] })
+				.set({ prevLegDuration: routingResultFirstEvent })
 				.where('event.id', '=', events[nextIdx].eventid)
 				.executeTakeFirst();
 			return;
 		}
 		if (nextIdx === events.length) {
-			const routingResultLastEvent = await oneToManyCarRouting(events[prevIdx], [company], false);
-			if (
-				routingResultLastEvent === undefined ||
-				routingResultLastEvent.length === 0 ||
-				routingResultLastEvent[0] === undefined
-			) {
+			const routingResultLastEvent =
+				(await oneToManyCarRouting(events[prevIdx], [company], false))[0] ??
+				(await oneToManyCarRouting(company, [events[prevIdx]], true))[0];
+			if (routingResultLastEvent === undefined) {
 				console.log(
 					`unable to update prevLegDuration for event ${events[prevIdx].eventid}, routing result was undefined.`
 				);
-				return;
+				throw new Error();
 			}
 			await trx
 				.updateTable('event')
-				.set({ nextLegDuration: routingResultLastEvent[0] + PASSENGER_CHANGE_DURATION })
+				.set({ nextLegDuration: routingResultLastEvent + PASSENGER_CHANGE_DURATION })
 				.where('event.id', '=', events[prevIdx].eventid)
 				.executeTakeFirst();
 			return;
 		}
-		const routingResult = await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false);
-		if (
-			routingResult === undefined ||
-			routingResult.length === 0 ||
-			routingResult[0] === undefined
-		) {
+		const routingResult =
+			(await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false))[0] ??
+			(await oneToManyCarRouting(events[nextIdx], [events[prevIdx]], true))[0];
+		if (routingResult === undefined) {
 			console.log(
 				`unable to update prevLegDuration for event ${events[prevIdx].eventid} and nextLegDuration for event ${events[nextIdx].eventid}, routing result was undefined.`
 			);
-			return;
+			throw new Error();
 		}
-		const r = routingResult[0] + PASSENGER_CHANGE_DURATION;
+		const r = routingResult + PASSENGER_CHANGE_DURATION;
 		await trx
 			.updateTable('event')
 			.set({ nextLegDuration: r })
@@ -305,9 +299,9 @@ async function updateLegDurations(
 			.executeTakeFirst();
 		const firstUncancelledEvent = uncancelledEvents[cancelledIdx2 === 1 ? 2 : 1];
 		if (lastEventPrevTour) {
-			const routing = (
-				await oneToManyCarRouting(lastEventPrevTour, [firstUncancelledEvent], false)
-			)[0];
+			const routing =
+				(await oneToManyCarRouting(lastEventPrevTour, [firstUncancelledEvent], false))[0] ??
+				(await oneToManyCarRouting(firstUncancelledEvent, [lastEventPrevTour], true))[0];
 			await trx
 				.updateTable('tour')
 				.set({
@@ -334,9 +328,9 @@ async function updateLegDurations(
 				uncancelledEvents.length - (cancelledIdx1 === uncancelledEvents.length - 2 ? 3 : 2)
 			];
 		if (firstEventNextTour) {
-			const routing = (
-				await oneToManyCarRouting(lastUncancelledEvent, [firstEventNextTour], false)
-			)[0];
+			const routing =
+				(await oneToManyCarRouting(lastUncancelledEvent, [firstEventNextTour], false))[0] ??
+				(await oneToManyCarRouting(firstEventNextTour, [lastUncancelledEvent], true))[0];
 			await trx
 				.updateTable('tour')
 				.set({
