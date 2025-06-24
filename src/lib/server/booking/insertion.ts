@@ -699,7 +699,7 @@ export function evaluateSingleInsertions(
 				userChosenEvaluations[insertionInfo.insertionIdx] = resultUserChosen;
 			}
 		});
-		passengers += prev?.passengers ?? 0;
+		passengers += prev ? (prev.isPickup ? prev.passengers : -prev.passengers) : 0;
 	});
 	return { busStopEvaluations, userChosenEvaluations, bothEvaluations };
 }
@@ -710,7 +710,8 @@ export function evaluatePairInsertions(
 	insertionRanges: Map<number, Range[]>,
 	busStopTimes: Interval[][],
 	busStopEvaluations: (SingleInsertionEvaluation | undefined)[][][],
-	userChosenEvaluations: (SingleInsertionEvaluation | undefined)[]
+	userChosenEvaluations: (SingleInsertionEvaluation | undefined)[],
+	required: Capacities
 ): (Insertion | undefined)[][] {
 	const bestEvaluations: (Insertion | undefined)[][] = new Array<(Insertion | undefined)[]>(
 		busStopTimes.length
@@ -718,15 +719,25 @@ export function evaluatePairInsertions(
 	for (let i = 0; i != busStopTimes.length; ++i) {
 		bestEvaluations[i] = new Array<Insertion | undefined>(busStopTimes[i].length);
 	}
+	let passengersBeforePickup = 0;
 	iterateAllInsertions(companies, insertionRanges, (insertionInfo: InsertionInfo) => {
 		const events = insertionInfo.vehicle.events;
 		const pickupIdx = insertionInfo.idxInVehicleEvents;
+		const prevPickup = events[pickupIdx - 1];
+		const nextPickup = events[pickupIdx];
+		const twoAfterPickup = events[pickupIdx + 1];
+		passengersBeforePickup +=
+			prevPickup !== undefined
+				? prevPickup.isPickup
+					? prevPickup.passengers
+					: -prevPickup.passengers
+				: 0;
 		if (
 			pickupIdx < events.length - 1 &&
-			events[pickupIdx]?.tourId !== events[pickupIdx + 1]?.tourId &&
-			events[pickupIdx + 1].scheduledTimeEnd -
-				events[pickupIdx].scheduledTimeStart -
-				events[pickupIdx + 1].directDuration! <
+			nextPickup?.tourId !== twoAfterPickup?.tourId &&
+			twoAfterPickup.scheduledTimeEnd -
+				nextPickup.scheduledTimeStart -
+				twoAfterPickup.directDuration! <
 				0
 		) {
 			return;
@@ -762,11 +773,11 @@ export function evaluatePairInsertions(
 					if (dropoff == undefined) {
 						continue;
 					}
+					const prevDropoff = events[dropoffIdx - 1];
+					const twoAfterDropoff = events[dropoffIdx + 1];
 					if (dropoffIdx < pickupIdx + 3) {
 						let availableDistance =
 							dropoff.time - pickup.time - dropoff.approachDuration - pickup.returnDuration;
-						const nextPickup = events[pickupIdx];
-						const prevDropoff = events[dropoffIdx - 1];
 						if (pickupIdx + 2 === dropoffIdx) {
 							availableDistance -=
 								nextPickup.tourId !== prevDropoff.tourId
@@ -779,51 +790,30 @@ export function evaluatePairInsertions(
 					}
 					const window = new Interval(pickup.time!, dropoff.time!);
 					let eventOverlap = 0;
-					if (pickupIdx !== 0 && window.covers(events[pickupIdx - 1].scheduledTimeEnd)) {
-						eventOverlap += window.intersect(events[pickupIdx - 1].time)?.size() ?? 0;
+					if (pickupIdx !== 0 && window.covers(prevPickup.scheduledTimeEnd)) {
+						eventOverlap += window.intersect(prevPickup.time)?.size() ?? 0;
 					}
-					if (
-						pickupIdx < events.length - 1 &&
-						window.covers(events[pickupIdx + 1].scheduledTimeStart)
-					) {
-						eventOverlap += window.intersect(events[pickupIdx + 1].time)?.size() ?? 0;
+					if (pickupIdx < events.length - 1 && window.covers(twoAfterPickup.scheduledTimeStart)) {
+						eventOverlap += window.intersect(twoAfterPickup.time)?.size() ?? 0;
 					}
-					if (dropoffIdx !== 0 && window.covers(events[dropoffIdx - 1].scheduledTimeEnd)) {
-						eventOverlap += window.intersect(events[dropoffIdx - 1].time)?.size() ?? 0;
+					if (dropoffIdx !== 0 && window.covers(prevDropoff.scheduledTimeEnd)) {
+						eventOverlap += window.intersect(prevDropoff.time)?.size() ?? 0;
 					}
-					if (
-						dropoffIdx < events.length - 1 &&
-						window.covers(events[dropoffIdx + 1].scheduledTimeStart)
-					) {
-						eventOverlap += window.intersect(events[dropoffIdx + 1].time)?.size() ?? 0;
+					if (dropoffIdx < events.length - 1 && window.covers(twoAfterDropoff.scheduledTimeStart)) {
+						eventOverlap += window.intersect(twoAfterDropoff.time)?.size() ?? 0;
 					}
 					const taxiDuration =
 						pickup.taxiDuration + dropoff.taxiDuration + cumulatedTaxiDrivingDelta;
 					const taxiWaitingTime =
 						dropoff.taxiWaitingTime + pickup.taxiWaitingTime + cumulatedTaxiWaitingDelta;
 					const passengerDuration = dropoff.time! - pickup.time! + eventOverlap;
-					const cost = computeCost(passengerDuration, taxiDuration, taxiWaitingTime);
 
-					/*
-					const passengerCountAfterPrev = prev
-						? passengerCountBeforePrev + (prev.isPickup ? prev.passengers : -prev.passengers)
-						: 0;
-					let weightedPassengerDuration =
-						(passengerCountAfterPrev + passengerCountNewRequest) * (dropoffTime - pickupTime);
-					if (next && prev) {
-						const passengerCountAfterNext =
-							passengerCountAfterPrev + (next.isPickup ? prev.passengers : -prev.passengers);
-						const existingPassengerTimeOld = getScheduledEventTime(next) - getScheduledEventTime(prev);
-						const newPrevTime = prev.isPickup ? pickupTime - prevLegDuration : getScheduledEventTime(prev);
-						const newNextTime = next.isPickup ? getScheduledEventTime(next) : dropoffTime + nextLegDuration;
-						const existingPassengerTimeNew = newNextTime - newPrevTime;
-						const additionalWeightedTimeExistingPasengers =
-							passengerCountAfterPrev * (existingPassengerTimeNew - existingPassengerTimeOld) -
-							passengerCountBeforePrev * (getScheduledEventTime(prev) - newPrevTime) -
-							passengerCountAfterNext * (newNextTime - getScheduledEventTime(next));
-						weightedPassengerDuration += additionalWeightedTimeExistingPasengers;
-					}
-*/
+					const newPassengersTime = (dropoff.time - pickup.time) * required.passengers;
+					const existingPassengersTimeDelta =
+						passengersBeforePickup * (pickup.passengerDuration + dropoff.passengerDuration);
+					const weightedPassengerDuration = newPassengersTime + existingPassengersTimeDelta;
+
+					const cost = computeCost(weightedPassengerDuration, taxiDuration, taxiWaitingTime);
 					bookingLogs.push({
 						pickupType: printInsertionType(pickup.case),
 						dropoffType: printInsertionType(dropoff.case),
@@ -844,7 +834,8 @@ export function evaluatePairInsertions(
 						pickupTime: pickup.time,
 						dropoffTime: dropoff.time,
 						pickupNextId: pickup.nextId,
-						dropoffPrevId: dropoff.prevId
+						dropoffPrevId: dropoff.prevId,
+						weightedPassengerDuration
 					});
 					if (
 						bestEvaluations[busStopIdx][timeIdx] == undefined ||
