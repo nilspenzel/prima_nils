@@ -68,7 +68,7 @@ export async function bookRide(
 	);
 	if (companies.length == 0 || filteredBusStops[0] == undefined) {
 		console.log(
-			'BOOK RIDE DEBUG INFO: there were no vehicles with corrcet zone, capacity and availability or tour for concatenation.',
+			'there were no vehicles with corrcet zone, capacity and availability or tour for concatenation.',
 			{ filteredBusStops }
 		);
 		return undefined;
@@ -142,6 +142,7 @@ export async function bookRide(
 		best.pickupIdx,
 		best.dropoffIdx
 	);
+	// If it is necessary to merge tours, find the first/last events of each such tour..
 	const { firstEvents, lastEvents, departure, arrival } = getFirstAndLastEvents(
 		mergeTourList,
 		best,
@@ -202,6 +203,8 @@ export async function bookRide(
 		firstEvents,
 		lastEvents
 	);
+
+	// Update arrival and departure depending on new scheduled times
 	if (best.pickupCase.how === InsertHow.INSERT && prevPickupEvent) {
 		const update = scheduledTimes.updates.find(
 			(upd) => upd.event_id === prevPickupEvent.id && !upd.start && prevPickupEvent.isPickup
@@ -228,6 +231,7 @@ export async function bookRide(
 				(update.time - nextDropoffEvent.scheduledTimeStart);
 		}
 	}
+
 	return {
 		best,
 		tour: (() => {
