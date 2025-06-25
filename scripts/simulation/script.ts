@@ -178,25 +178,29 @@ export async function simulation(params: {
 		const actionIdx = getAction(r);
 		if (actionIdx === undefined || actionIdx < 0 || actionIdx >= actionProbabilities.length) {
 			console.log('chose: nothing', { actionIdx }, { r });
-			errors++;
+			errorCount++;
 			return true;
 		}
 		const action = actionProbabilities[actionIdx];
 		chosen[actionIdx] += 1;
 		console.log('Chose:', action.text);
-		switch (action.action) {
-			case Action.BOOKING:
-				await booking(coordinates, restrictedCoordinates);
-				break;
-			case Action.CANCEL_REQUEST:
-				await cancelRequestLocal();
-				break;
-			case Action.CANCEL_TOUR:
-				await cancelTourLocal();
-				break;
-			case Action.MOVE_TOUR:
-				await moveTourLocal();
-				break;
+		try {
+			switch (action.action) {
+				case Action.BOOKING:
+					await booking(coordinates, restrictedCoordinates);
+					break;
+				case Action.CANCEL_REQUEST:
+					await cancelRequestLocal();
+					break;
+				case Action.CANCEL_TOUR:
+					await cancelTourLocal();
+					break;
+				case Action.MOVE_TOUR:
+					await moveTourLocal();
+					break;
+			}
+		} catch (e) {
+			errors.push(e);
 		}
 		if (params.backups) {
 			counter++;
@@ -244,7 +248,8 @@ export async function simulation(params: {
 	await addInitialAvailabilities(1, 1);
 	await addInitialAvailabilities(1, 2);
 	const chosen = Array.from({ length: actionProbabilities.length }, (_) => 0);
-	let errors = 0;
+	let errorCount = 0;
+	const errors: any[] = [];
 	if (params.ongoing) {
 		let idx = 0;
 		while (true) {
@@ -273,7 +278,8 @@ export async function simulation(params: {
 	for (const [i, a] of actionProbabilities.entries()) {
 		console.log('action ', a.text, ' was chosen ', chosen[i], ' times.');
 	}
-	console.log('There were ', errors, ' errors.');
+	console.log('There were ', errorCount, ' errors.');
+	console.log('Errors: ', JSON.stringify(errors, null, 2));
 	const tours = await getToursWithRequests(false);
 	console.log(
 		`There are currently ${tours.reduce((acc, curr) => (acc = acc + curr.requests.length), 0)} uncancelled requests across ${tours.length} tours.`

@@ -96,7 +96,11 @@ export async function whitelist(
 		if (filteredBusStops[i] === undefined) {
 			ret[i] = new Array<undefined>(busStops[i].times.length);
 		} else {
-			ret[i] = bestEvals[filteredBusStops[i]! + (startFixed ? PASSENGER_CHANGE_DURATION : -PASSENGER_CHANGE_DURATION)];
+			ret[i] =
+				bestEvals[
+					filteredBusStops[i]! +
+						(startFixed ? PASSENGER_CHANGE_DURATION : -PASSENGER_CHANGE_DURATION)
+				];
 		}
 	}
 	console.log(
