@@ -38,7 +38,7 @@ export const getPrevLegDuration = (
 			break;
 
 		case InsertWhat.BUS_STOP:
-			console.assert(busStopIdx != undefined);
+			console.assert(busStopIdx != undefined, 'Found unexpected undefined busstop in getLegDuration function.');
 			relevantRoutingResults = routingResults.busStops.toBusStop[busStopIdx!];
 			break;
 	}
@@ -60,7 +60,7 @@ export const getNextLegDuration = (
 			break;
 
 		case InsertWhat.BOTH:
-			console.assert(busStopIdx != undefined);
+			console.assert(busStopIdx != undefined, 'Found unexpected undefined busstop in getLegDuration function.');
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
 					? routingResults.userChosen.fromUserChosen
@@ -161,7 +161,7 @@ export function getArrivalWindow(
 ): Interval | undefined {
 	const directWindows = Interval.intersect(
 		allowedTimes,
-		windows
+		windows // restrict interval by and additional millisecond on each side to avoid exactly equal timestamps for consecutive events
 			.map((window) => window.shrink(prevLegDuration + 1, 1 + nextLegDuration))
 			.filter((window) => window != undefined)
 	);
