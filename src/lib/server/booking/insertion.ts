@@ -342,16 +342,17 @@ export function evaluateBothInsertion(
 		pickupTime = dropoffTime - passengerDuration;
 		communicatedPickupTime = pickupTime - SCHEDULED_TIME_BUFFER;
 	}
-const apickupTime =
+	if(promisedTimes === undefined) {
+
+pickupTime =
 		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
 			? arrivalWindow.startTime
 			: arrivalWindow.endTime - passengerDuration;
-	const adropoffTime =
+	dropoffTime =
 		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
 			? arrivalWindow.startTime + passengerDuration
 			: arrivalWindow.endTime;
-			if(insertionCase.how===InsertHow.CONNECT){
-			console.log({apickupTime},{adropoffTime})}
+	}
 	const passengerCountAfterPrev = prev
 		? passengerCountBeforePrev + (prev.isPickup ? prev.passengers : -prev.passengers)
 		: 0;
