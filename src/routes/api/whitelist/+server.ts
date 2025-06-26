@@ -10,6 +10,7 @@ import {
 } from './WhitelistRequest';
 import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
 import { assertArraySizes } from '$lib/testHelpers';
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 
 export type WhitelistResponse = {
 	start: (Insertion | undefined)[][];
@@ -65,11 +66,38 @@ export async function POST(event: RequestEvent) {
 		direct.length === p.directTimes.length,
 		'Array size mismatch in Whitelist - direct.'
 	);
-
 	const response: WhitelistResponse = {
-		start,
-		target,
-		direct
+		start: start.map((s1) =>
+			s1.map((s2) => {
+				return s2 === undefined
+					? undefined
+					: {
+							...s2,
+							pickupTime: s2.communicatedPickupTime,
+							dropoffTime: s2.communicatedDropoffTime
+						};
+			})
+		),
+		target: target.map((t1) =>
+			t1.map((t2) => {
+				return t2 === undefined
+					? undefined
+					: {
+							...t2,
+							pickupTime: t2.communicatedPickupTime,
+							dropoffTime: t2.communicatedDropoffTime
+						};
+			})
+		),
+		direct: direct.map((d) => {
+			return d === undefined
+				? undefined
+				: {
+						...d,
+						pickupTime: d.communicatedPickupTime,
+						dropoffTime: d.communicatedDropoffTime
+					};
+		})
 	};
 	console.log(
 		'WHITELIST RESPONSE: ',

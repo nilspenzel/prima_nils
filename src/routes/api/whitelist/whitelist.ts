@@ -93,7 +93,7 @@ export async function whitelist(
 	);
 	const ret = new Array<(Insertion | undefined)[]>(filteredBusStops.length);
 	for (let i = 0; i != filteredBusStops.length; ++i) {
-		if (filteredBusStops[i] == undefined) {
+		if (filteredBusStops[i] === undefined) {
 			ret[i] = new Array<undefined>(busStops[i].times.length);
 		} else {
 			ret[i] = bestEvals[filteredBusStops[i]!];

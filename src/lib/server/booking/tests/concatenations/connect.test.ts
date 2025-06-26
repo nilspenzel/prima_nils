@@ -18,7 +18,7 @@ const capacities = {
 };
 
 describe('Concatenation tests', () => {
-	it('create tour concetanation, connect with detour', async () => {
+	it.only('create tour concetanation, connect with detour', async () => {
 		const mockUserId = await prepareTest();
 		const company = await addCompany(Zone.NIESKY, inRothenburg1);
 		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });

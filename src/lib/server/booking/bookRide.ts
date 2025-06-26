@@ -184,6 +184,8 @@ export async function bookRide(
 	const scheduledTimes = getScheduledTimes(
 		best.pickupTime,
 		best.dropoffTime,
+		best.communicatedPickupTime,
+		best.communicatedDropoffTime,
 		prevPickupEvent,
 		nextPickupEvent,
 		nextDropoffEvent,

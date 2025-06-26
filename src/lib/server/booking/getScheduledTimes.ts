@@ -15,6 +15,8 @@ export type ScheduledTimes = {
 export function getScheduledTimes(
 	pickupTime: number,
 	dropoffTime: number,
+	communicatedPickupTime: number,
+	communicatedDropoffTime: number,
 	prevPickupEvent: undefined | (Event & { time: Interval }),
 	nextPickupEvent: undefined | (Event & { time: Interval }),
 	nextDropoffEvent: undefined | (Event & { time: Interval }),
@@ -26,11 +28,9 @@ export function getScheduledTimes(
 	firstEvents: Event[],
 	lastEvents: Event[]
 ) {
-	const communicatedPickup = pickupTime - SCHEDULED_TIME_BUFFER;
-	const communicatedDropoff = dropoffTime + SCHEDULED_TIME_BUFFER;
 	const scheduledTimes: ScheduledTimes = {
-		newPickupStartTime: communicatedPickup,
-		newDropoffEndTime: communicatedDropoff,
+		newPickupStartTime: communicatedPickupTime,
+		newDropoffEndTime: communicatedDropoffTime,
 		updates: []
 	};
 	if (prevPickupEvent) {
@@ -49,7 +49,7 @@ export function getScheduledTimes(
 			scheduledTimes.newPickupStartTime = pickupTime;
 		} else {
 			scheduledTimes.newPickupStartTime = Math.max(
-				communicatedPickup,
+				communicatedPickupTime,
 				pickupTime - prevPickupLeeway + prevPickupEvent.time.size()
 			);
 		}
@@ -84,7 +84,7 @@ export function getScheduledTimes(
 			scheduledTimes.newDropoffEndTime = dropoffTime;
 		} else {
 			scheduledTimes.newDropoffEndTime = Math.min(
-				communicatedDropoff,
+				communicatedDropoffTime,
 				dropoffTime + nextDropoffLeeway - nextDropoffEvent.time.size()
 			);
 		}

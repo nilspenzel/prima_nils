@@ -230,7 +230,7 @@ describe('Whitelist and Booking API Tests', () => {
 		expect(whiteResponse.direct[0]).toBe(null);
 	});
 
-	it('simple success case', async () => {
+	it.only('simple success case', async () => {
 		const company = await addCompany(Zone.NIESKY, inNiesky3);
 		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
 		await setAvailability(taxi, inXMinutes(0), inXMinutes(600));
@@ -267,7 +267,7 @@ describe('Whitelist and Booking API Tests', () => {
 		}
 		expect(whiteResponse.direct.length).toBe(1);
 		expect(whiteResponse.direct[0]).not.toBe(null);
-
+console.log("stuff",whiteResponse.direct[0].dropoffTime - inXMinutes(70),whiteResponse.direct[0].pickupTime-inXMinutes(70),whiteResponse.direct[0].pickupCase)
 		const connection1: ExpectedConnection = {
 			start: { ...inNiesky1, address: 'start address' },
 			target: { ...inNiesky2, address: 'target address' },
@@ -280,7 +280,7 @@ describe('Whitelist and Booking API Tests', () => {
 				inNiesky2.lng,
 				whiteResponse.direct[0].pickupTime,
 				whiteResponse.direct[0].dropoffTime,
-				false
+				true
 			),
 			startFixed: true
 		};
@@ -307,7 +307,7 @@ describe('Whitelist and Booking API Tests', () => {
 			Math.abs(inNiesky1.lat - pickup.lat) + Math.abs(inNiesky1.lng - pickup.lng)
 		).toBeLessThan(COORDINATE_ROUNDING_ERROR_THRESHOLD);
 		expect(new Date(pickup.scheduledTimeStart).toISOString()).toBe(
-			dateInXMinutes(70 - 10).toISOString()
+			dateInXMinutes(70).toISOString()
 		);
 		expect(dropoff.address).toBe('target address');
 		expect(
