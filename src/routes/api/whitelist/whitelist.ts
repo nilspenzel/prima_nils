@@ -1,6 +1,6 @@
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
-import { MAX_TRAVEL, PASSENGER_CHANGE_DURATION } from '$lib/constants';
+import { MAX_TRAVEL } from '$lib/constants';
 import { Interval } from '$lib/util/interval';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
@@ -96,8 +96,7 @@ export async function whitelist(
 		if (filteredBusStops[i] === undefined) {
 			ret[i] = new Array<undefined>(busStops[i].times.length);
 		} else {
-			ret[i] =
-				bestEvals[filteredBusStops[i]!];
+			ret[i] = bestEvals[filteredBusStops[i]!];
 		}
 	}
 	console.log(

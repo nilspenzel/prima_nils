@@ -277,19 +277,6 @@
 			toTableEntry: (r: Condition) => conditionToString(r)
 		}
 	];
-
-	let currentStep = $state(-1);
-	async function nextStep() {
-		const formData = new FormData();
-		formData.append('currentStep', currentStep.toString());
-		formData.append('companies', JSON.stringify(companies));
-		formData.append('conditions', JSON.stringify(conditions));
-		await fetch('?/nextStep', {
-			method: 'POST',
-			body: formData
-		});
-		++currentStep;
-	}
 </script>
 
 <div class="flex h-full w-screen">
@@ -443,9 +430,5 @@
 		</div>
 
 		<SortableTable rows={conditions} cols={conditionCols}></SortableTable>
-
-		<Button onclick={nextStep}
-			>{currentStep === -1 ? 'set up companies' : `run step #${currentStep}`}</Button
-		>
 	</div>
 </div>

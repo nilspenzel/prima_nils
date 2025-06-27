@@ -200,7 +200,7 @@ export async function simulation(params: {
 					break;
 			}
 		} catch (e) {
-			errors.push(e);
+			errors.push(JSON.stringify(e, null, 2));
 		}
 		if (params.backups) {
 			counter++;
@@ -249,7 +249,7 @@ export async function simulation(params: {
 	await addInitialAvailabilities(1, 2);
 	const chosen = Array.from({ length: actionProbabilities.length }, (_) => 0);
 	let errorCount = 0;
-	const errors: any[] = [];
+	const errors: string[] = [];
 	if (params.ongoing) {
 		let idx = 0;
 		while (true) {

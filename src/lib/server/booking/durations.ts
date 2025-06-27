@@ -38,7 +38,10 @@ export const getPrevLegDuration = (
 			break;
 
 		case InsertWhat.BUS_STOP:
-			console.assert(busStopIdx != undefined, 'Found unexpected undefined busstop in getLegDuration function.');
+			console.assert(
+				busStopIdx != undefined,
+				'Found unexpected undefined busstop in getLegDuration function.'
+			);
 			relevantRoutingResults = routingResults.busStops.toBusStop[busStopIdx!];
 			break;
 	}
@@ -60,7 +63,10 @@ export const getNextLegDuration = (
 			break;
 
 		case InsertWhat.BOTH:
-			console.assert(busStopIdx != undefined, 'Found unexpected undefined busstop in getLegDuration function.');
+			console.assert(
+				busStopIdx != undefined,
+				'Found unexpected undefined busstop in getLegDuration function.'
+			);
 			relevantRoutingResults =
 				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
 					? routingResults.userChosen.fromUserChosen
