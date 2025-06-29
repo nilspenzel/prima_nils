@@ -12,9 +12,9 @@ import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/i
 import { assertArraySizes } from '$lib/testHelpers';
 
 export type WhitelistResponse = {
-	start: (Insertion | undefined)[][];
-	target: (Insertion | undefined)[][];
-	direct: (Insertion | undefined)[];
+	start: ((Insertion & {sendTime: number}) | undefined)[][];
+	target: ((Insertion & {sendTime: number}) | undefined)[][];
+	direct: ((Insertion & {sendTime: number}) | undefined)[];
 };
 
 export async function POST(event: RequestEvent) {
@@ -67,9 +67,9 @@ export async function POST(event: RequestEvent) {
 	);
 
 	const response: WhitelistResponse = {
-		start,
-		target,
-		direct
+		start: start.map((s1, busIdx) => s1.map((s2, timeIdx) => {return{...s2, sendTime: p.startBusStops[busIdx].times[timeIdx]}})),
+		target: target.map((t1, busIdx) => t1.map((t2, timeIdx) => {return{...t2, sendTime: p.targetBusStops[busIdx].times[timeIdx]}})),
+		direct: direct.map((d1, timeIdx) => {return{...d1, sendTime: p.directTimes[timeIdx]}})
 	};
 	console.log(
 		'WHITELIST RESPONSE: ',
