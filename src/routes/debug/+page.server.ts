@@ -71,6 +71,7 @@ export const actions = {
 			target,
 			startTime: result.pickupTime,
 			targetTime: result.dropoffTime,
+			sendTime: time.getTime(),
 			signature: '',
 			startFixed: false
 		};

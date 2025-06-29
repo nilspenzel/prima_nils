@@ -282,6 +282,7 @@ describe('Whitelist and Booking API Tests', () => {
 				whiteResponse.direct[0].dropoffTime,
 				false
 			),
+			sendTime: inXMinutes(70),
 			startFixed: true
 		};
 		const bookingBody = {
@@ -354,6 +355,7 @@ describe('Whitelist and Booking API Tests', () => {
 				roundToUnit(whiteResponse.direct[0].dropoffTime, MINUTE, Math.floor),
 				false
 			),
+			sendTime: inXMinutes(70),
 			startFixed: true
 		};
 		const bookingBody = {
@@ -403,6 +405,7 @@ describe('Whitelist and Booking API Tests', () => {
 				whiteResponse.direct[0].dropoffTime,
 				false
 			),
+			sendTime: inXMinutes(70),
 			startFixed: true
 		};
 		const bookingBody = {

@@ -24,6 +24,7 @@ export type ExpectedConnection = {
 	startTime: UnixtimeMs;
 	targetTime: UnixtimeMs;
 	signature: string;
+	sendTime: UnixtimeMs;
 	startFixed: boolean;
 };
 
@@ -83,13 +84,12 @@ export async function bookRide(
 			].vehicles.filter((v) => v.id != blockedVehicleId);
 		}
 	}
-	const busTime = c.startFixed ? c.startTime : c.targetTime;
 	const best = (
 		await evaluateRequest(
 			companies,
 			expandedSearchInterval,
 			userChosen,
-			[{ ...busStop, times: [busTime] }],
+			[{ ...busStop, times: [c.sendTime] }],
 			required,
 			c.startFixed,
 			skipPromiseCheck
@@ -101,7 +101,13 @@ export async function bookRide(
 		)
 	)[0][0];
 	if (best == undefined) {
-		console.log('surprisingly no possible connection found: ', userChosen, busStop, busTime, best);
+		console.log(
+			'surprisingly no possible connection found: ',
+			userChosen,
+			busStop,
+			c.sendTime,
+			best
+		);
 		return undefined;
 	}
 	console.log({ best }, printInsertionType(best.pickupCase), printInsertionType(best.dropoffCase));
@@ -184,6 +190,8 @@ export async function bookRide(
 	const scheduledTimes = getScheduledTimes(
 		best.pickupTime,
 		best.dropoffTime,
+		best.communicatedPickupTime,
+		best.communicatedDropoffTime,
 		prevPickupEvent,
 		nextPickupEvent,
 		nextDropoffEvent,

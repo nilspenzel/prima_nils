@@ -43,6 +43,7 @@ function expectedConnectionFromLeg(
 				target: { lat: leg.to.lat, lng: leg.to.lon, address: leg.to.name },
 				startTime: new Date(leg.startTime).getTime(),
 				targetTime: new Date(leg.endTime).getTime(),
+				sendTime: new Date(leg.sendTime).getTime(),
 				signature,
 				startFixed
 			}

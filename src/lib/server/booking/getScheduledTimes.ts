@@ -1,4 +1,4 @@
-import { PASSENGER_CHANGE_DURATION, SCHEDULED_TIME_BUFFER } from '$lib/constants';
+import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 import { Interval } from '$lib/util/interval';
 import type { Event } from '$lib/server/booking/getBookingAvailability';
 
@@ -15,6 +15,8 @@ export type ScheduledTimes = {
 export function getScheduledTimes(
 	pickupTime: number,
 	dropoffTime: number,
+	communicatedPickup: number,
+	communicatedDropoff: number,
 	prevPickupEvent: undefined | (Event & { time: Interval }),
 	nextPickupEvent: undefined | (Event & { time: Interval }),
 	nextDropoffEvent: undefined | (Event & { time: Interval }),
@@ -26,8 +28,6 @@ export function getScheduledTimes(
 	firstEvents: Event[],
 	lastEvents: Event[]
 ) {
-	const communicatedPickup = pickupTime - SCHEDULED_TIME_BUFFER;
-	const communicatedDropoff = dropoffTime + SCHEDULED_TIME_BUFFER;
 	const scheduledTimes: ScheduledTimes = {
 		newPickupStartTime: communicatedPickup,
 		newDropoffEndTime: communicatedDropoff,
