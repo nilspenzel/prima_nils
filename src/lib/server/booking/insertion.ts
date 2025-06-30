@@ -1,6 +1,7 @@
 import {
 	MIN_PREP,
 	PASSENGER_TIME_COST_FACTOR,
+	SCHEDULED_TIME_BUFFER,
 	TAXI_DRIVING_TIME_COST_FACTOR,
 	TAXI_WAITING_TIME_COST_FACTOR
 } from '$lib/constants';
@@ -39,6 +40,8 @@ import { bookingLogs, iteration } from '$lib/testHelpers';
 export type InsertionEvaluation = {
 	pickupTime: number;
 	dropoffTime: number;
+	communicatedPickupTime: number;
+	communicatedDropoffTime: number;
 	pickupCase: InsertionType;
 	dropoffCase: InsertionType;
 	taxiWaitingTime: number;
@@ -323,15 +326,22 @@ export function evaluateBothInsertion(
 		passengerDuration -
 		getOldDrivingTime(insertionCase, prev, next);
 
-	const pickupTime =
-		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-			? arrivalWindow.startTime
-			: arrivalWindow.endTime - passengerDuration;
-	const dropoffTime =
-		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-			? arrivalWindow.startTime + passengerDuration
-			: arrivalWindow.endTime;
-
+	let communicatedPickupTime = -1;
+	let communicatedDropoffTime = -1;
+	const leeway = Math.min(arrivalWindow.size(), SCHEDULED_TIME_BUFFER);
+	let pickupTime = -1;
+	let dropoffTime = -1;
+	if (insertionCase.direction == InsertDirection.BUS_STOP_PICKUP) {
+		communicatedPickupTime = arrivalWindow.startTime;
+		pickupTime = communicatedPickupTime + leeway;
+		dropoffTime = pickupTime + passengerDuration;
+		communicatedDropoffTime = dropoffTime + SCHEDULED_TIME_BUFFER;
+	} else {
+		communicatedDropoffTime = arrivalWindow.endTime;
+		dropoffTime = communicatedDropoffTime - leeway;
+		pickupTime = dropoffTime - passengerDuration;
+		communicatedPickupTime = pickupTime - SCHEDULED_TIME_BUFFER;
+	}
 	const passengerCountAfterPrev = prev
 		? passengerCountBeforePrev + (prev.isPickup ? prev.passengers : -prev.passengers)
 		: 0;
@@ -394,6 +404,8 @@ export function evaluateBothInsertion(
 	return {
 		pickupTime,
 		dropoffTime,
+		communicatedPickupTime,
+		communicatedDropoffTime,
 		pickupCase: structuredClone(insertionCase),
 		dropoffCase: structuredClone(insertionCase),
 		passengerDuration,
@@ -827,6 +839,8 @@ export function evaluatePairInsertions(
 						bestEvaluations[busStopIdx][timeIdx] = {
 							pickupTime: pickup.time,
 							dropoffTime: dropoff.time,
+							communicatedPickupTime: 0,
+							communicatedDropoffTime: 0,
 							pickupCase: structuredClone(pickup.case),
 							dropoffCase: structuredClone(dropoff.case),
 							pickupIdx,

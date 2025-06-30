@@ -101,7 +101,13 @@ export async function bookRide(
 		)
 	)[0][0];
 	if (best == undefined) {
-		console.log('surprisingly no possible connection found: ', userChosen, busStop, busTime, best);
+		console.log(
+			'surprisingly no possible connection found: ',
+			userChosen,
+			busStop,
+			busTime,
+			best
+		);
 		return undefined;
 	}
 	console.log({ best }, printInsertionType(best.pickupCase), printInsertionType(best.dropoffCase));
@@ -184,6 +190,8 @@ export async function bookRide(
 	const scheduledTimes = getScheduledTimes(
 		best.pickupTime,
 		best.dropoffTime,
+		best.communicatedPickupTime,
+		best.communicatedDropoffTime,
 		prevPickupEvent,
 		nextPickupEvent,
 		nextDropoffEvent,
