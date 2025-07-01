@@ -165,14 +165,15 @@ export function getArrivalWindow(
 	nextLegDuration: number,
 	allowedTimes: Interval[]
 ): Interval | undefined {
-	const directWindows = Interval.intersect(
+	const promisedWindow = new Interval(1,1);
+	let arrivalWindows = Interval.intersect(
 		allowedTimes,
-		windows // restrict interval by and additional millisecond on each side to avoid exactly equal timestamps for consecutive events
+		windows // restrict interval by an additional millisecond on each side to avoid exactly equal timestamps for consecutive events
 			.map((window) => window.shrink(prevLegDuration + 1, 1 + nextLegDuration))
 			.filter((window) => window != undefined)
 	);
-
-	let arrivalWindows = directWindows
+	if(insertionCase.what === InsertWhat.BOTH) {
+		arrivalWindows = arrivalWindows.filter((w) => w.contains(promisedWindow))
 		.map((window) =>
 			window.shrink(
 				insertionCase.direction == InsertDirection.BUS_STOP_DROPOFF ? directDuration : 0,
@@ -180,6 +181,11 @@ export function getArrivalWindow(
 			)
 		)
 		.filter((window) => window != undefined);
+	} else {
+		const isPickup = (InsertWhat.BUS_STOP === insertionCase.what) === (InsertDirection.BUS_STOP_PICKUP === insertionCase.direction);
+		arrivalWindows = arrivalWindows.filter((w) => w.covers(isPickup ? promisedWindow.startTime : promisedWindow.endTime));
+	}
+	
 	if (busStopWindow != undefined) {
 		arrivalWindows = arrivalWindows
 			.map((window) => busStopWindow.intersect(window))
