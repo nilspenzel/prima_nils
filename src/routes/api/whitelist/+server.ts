@@ -67,23 +67,9 @@ export async function POST(event: RequestEvent) {
 	);
 
 	const response: WhitelistResponse = {
-		start: start.map((s1) =>
-			s1.map((s2) => {
-				return s2 === undefined
-					? undefined
-					: { ...s2, pickupTime: s2.communicatedPickupTime, dropoffTime: s2.communicatedDropoffTime };
-			})
-		),
-		target: target.map((t1) =>
-			t1.map((t2) => {
-				return t2 === undefined
-					? undefined
-					: { ...t2, pickupTime: t2.communicatedPickupTime, dropoffTime: t2.communicatedDropoffTime };
-			})
-		),
-		direct: direct.map((d) => {
-			return d === undefined ? undefined : { ...d, pickupTime: d.communicatedPickupTime, dropoffTime: d.communicatedDropoffTime };
-		})
+		start,
+		target,
+		direct
 	};
 	console.log(
 		'WHITELIST RESPONSE: ',

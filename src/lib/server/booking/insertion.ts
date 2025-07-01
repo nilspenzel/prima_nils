@@ -40,8 +40,8 @@ import { bookingLogs, iteration } from '$lib/testHelpers';
 export type InsertionEvaluation = {
 	pickupTime: number;
 	dropoffTime: number;
-	communicatedPickupTime: number;
-	communicatedDropoffTime: number;
+	scheduledPickupTime: number;
+	scheduledDropoffTime: number;
 	pickupCase: InsertionType;
 	dropoffCase: InsertionType;
 	taxiWaitingTime: number;
@@ -105,6 +105,8 @@ export function toInsertionWithISOStrings(i: Insertion | undefined) {
 				...i,
 				pickupTime: new Date(i.pickupTime).toISOString(),
 				dropoffTime: new Date(i.dropoffTime).toISOString(),
+				scheduledPickupTime: new Date(i.scheduledPickupTime).toISOString(),
+				scheduledDropoffTime: new Date(i.scheduledDropoffTime).toISOString(),
 				departure: i.departure == undefined ? undefined : new Date(i.departure).toISOString(),
 				arrival: i.arrival == undefined ? undefined : new Date(i.arrival).toISOString()
 			};
@@ -402,10 +404,10 @@ export function evaluateBothInsertion(
 		{ dropoffTime: dropoffTime.toString() }
 	);
 	return {
-		pickupTime,
-		dropoffTime,
-		communicatedPickupTime,
-		communicatedDropoffTime,
+		pickupTime: communicatedPickupTime,
+		dropoffTime: communicatedDropoffTime,
+		scheduledPickupTime: pickupTime,
+		scheduledDropoffTime: dropoffTime,
 		pickupCase: structuredClone(insertionCase),
 		dropoffCase: structuredClone(insertionCase),
 		passengerDuration,
@@ -839,8 +841,8 @@ export function evaluatePairInsertions(
 						bestEvaluations[busStopIdx][timeIdx] = {
 							pickupTime: pickup.time,
 							dropoffTime: dropoff.time,
-							communicatedPickupTime: 0,
-							communicatedDropoffTime: 0,
+							scheduledPickupTime: 0,
+							scheduledDropoffTime: 0,
 							pickupCase: structuredClone(pickup.case),
 							dropoffCase: structuredClone(dropoff.case),
 							pickupIdx,

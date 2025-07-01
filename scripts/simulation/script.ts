@@ -18,6 +18,7 @@ import { healthCheck } from '../../src/lib/server/util/healthCheck';
 import { logHelp } from './logHelp';
 import { exec } from 'child_process';
 import path from 'path';
+import { white } from '../../src/lib/server/booking/tests/util'
 
 const BACKUP_DIR = './scripts/simulation/backups/';
 
@@ -114,12 +115,30 @@ const getAction = (r: number) => {
 	return undefined;
 };
 
-async function booking(coordinates: Coordinates[], restricted: Coordinates[] | undefined) {
+async function booking(coordinates: Coordinates[], restricted: Coordinates[] | undefined, doWhitelist?: boolean) {
 	const parameters = await generateBookingParameters(coordinates, restricted);
 	const potentialKids = parameters.capacities.passengers - 1;
 	const kidsZeroToTwo = randomInt(0, potentialKids);
 	const kidsThreeToFour = randomInt(0, potentialKids - kidsZeroToTwo);
 	const kidsFiveToSix = randomInt(0, potentialKids - kidsThreeToFour);
+		const body = JSON.stringify({
+			start: parameters.connection1.start,
+			target: parameters.connection1.target,
+			startBusStops: [],
+			targetBusStops: [],
+			directTimes: [parameters.connection1.startFixed ? parameters.connection1.startTime : parameters.connection1.targetTime],
+			startFixed: parameters.connection1.startFixed,
+			capacities: parameters.capacities
+		});
+	const whiteResponse = await white(body).then((r) => r.json());
+	if(doWhitelist) {
+		if(whiteResponse.direct[0] === null) {
+			console.log('whitelist was not succesful.')
+			return false;
+		}
+		parameters.connection1.startTime = whiteResponse.direct[0]!.pickupTime;
+		parameters.connection1.targetTime = whiteResponse.direct[0]!.dropoffTime;
+	}
 	const response = await bookingApi(
 		parameters,
 		1,
@@ -127,9 +146,12 @@ async function booking(coordinates: Coordinates[], restricted: Coordinates[] | u
 		kidsThreeToFour,
 		kidsThreeToFour,
 		kidsFiveToSix,
-		true
+		!(doWhitelist ?? false)
 	);
 	console.log(response.status === 200 ? 'succesful booking' : 'failed to book');
+	if(doWhitelist && response.status !== 200) {
+		return true;
+	}
 }
 
 async function cancelRequestLocal() {
@@ -171,6 +193,7 @@ export async function simulation(params: {
 	ongoing?: boolean;
 	runs?: number;
 	finishTime?: number;
+	whitelist?: boolean;
 }): Promise<boolean> {
 	async function mainLoop(i: number) {
 		const r = Math.random();
@@ -187,7 +210,9 @@ export async function simulation(params: {
 		try {
 			switch (action.action) {
 				case Action.BOOKING:
-					await booking(coordinates, restrictedCoordinates);
+					if(await booking(coordinates, restrictedCoordinates, params.whitelist)) {
+						return true;
+					}
 					break;
 				case Action.CANCEL_REQUEST:
 					await cancelRequestLocal();
@@ -296,10 +321,14 @@ async function main() {
 	let help = false;
 	let restrict = false;
 	let backups = false;
+	let whitelist = false;
 
 	for (const arg of process.argv) {
 		if (arg === '--health') {
 			healthChecks = true;
+		}
+		if (arg === '--wl') {
+			whitelist = true;
 		}
 		if (arg === '--bu') {
 			backups = true;
@@ -332,7 +361,7 @@ async function main() {
 		logHelp();
 		process.exit(0);
 	}
-	simulation({ backups, healthChecks, restrict, ongoing, runs, finishTime });
+	simulation({ backups, healthChecks, restrict, ongoing, runs, finishTime, whitelist });
 }
 main().catch((err) => {
 	console.error(err);

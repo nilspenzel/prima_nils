@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
 import {
 	bookRide,
+	toExpectedConnectionWithISOStrings,
 	type BookRideResponse,
 	type ExpectedConnection
 } from '$lib/server/booking/bookRide';
@@ -15,6 +16,14 @@ export type BookingParameters = {
 	connection2: ExpectedConnection | null;
 	capacities: Capacities;
 };
+
+function toBookingParametersWithISOStrings(p: BookingParameters) {
+	return {
+		connection1: toExpectedConnectionWithISOStrings(p.connection1),
+		connection2: toExpectedConnectionWithISOStrings(p.connection2),
+		capacities: p.capacities
+	}
+}
 
 const getCommonTour = (l1: number[], l2: number[]) => {
 	for (const e of l1) {
@@ -60,7 +69,7 @@ export async function bookingApi(
 }> {
 	console.log(
 		'BOOKING API PARAMS: ',
-		JSON.stringify(p, null, 2),
+		JSON.stringify(toBookingParametersWithISOStrings(p), null, 2),
 		JSON.stringify(customer, null, 2),
 		JSON.stringify(isLocalhost, null, 2),
 		JSON.stringify(kidsZeroToTwo, null, 2),
