@@ -6,17 +6,17 @@ import { bookingApi } from '../../src/lib/server/booking/bookingApi';
 const parameters = {
   "connection1": {
     "start": {
-      "lng": 14.4915569,
-      "lat": 51.4575301,
-      "address": "Körnerplatz"
+      "lng": 14.520827,
+      "lat": 51.5405733,
+      "address": "Thälmann-Siedlung 25"
     },
     "target": {
-      "lng": 14.5295784,
-      "lat": 51.5344271,
-      "address": "Mühlroser Straße 3"
+      "lng": 14.5298561,
+      "lat": 51.5290227,
+      "address": "Rohner Weg 13b"
     },
-    "startTime": 1752836548153,
-    "targetTime": 1752838406153,
+    "startTime": 1751977585523,
+    "targetTime": 1751979107523,
     "signature": "",
     "startFixed": true
   },

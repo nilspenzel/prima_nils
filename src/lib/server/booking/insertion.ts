@@ -369,8 +369,8 @@ export function evaluateBothInsertion(
 		pickupTime = dropoffTime - passengerDuration;
 		communicatedPickupTime = pickupTime - leeway;
 	}
-	const passengerCountAfterPrev = prev
-		? passengerCountBeforePrev + (prev.isPickup ? prev.passengers : -prev.passengers)
+	const passengerCountAfterPrev = !comesFromCompany(insertionCase)
+		? passengerCountBeforePrev + (prev!.isPickup ? prev!.passengers : -prev!.passengers)
 		: 0;
 	let weightedPassengerDuration =
 		(passengerCountAfterPrev + passengerCountNewRequest) * (dropoffTime - pickupTime);
@@ -576,23 +576,25 @@ export function evaluateSingleInsertions(
 	const prepTime = Date.now() + MIN_PREP;
 	const direction = startFixed ? InsertDirection.BUS_STOP_PICKUP : InsertDirection.BUS_STOP_DROPOFF;
 
-	let passengers = 0;
 	iterateAllInsertions(companies, insertionRanges, (insertionInfo: InsertionInfo) => {
+		const events = insertionInfo.vehicle.events;
 		const prev: Event | undefined =
 			insertionInfo.idxInVehicleEvents == 0
 				? insertionInfo.vehicle.lastEventBefore
-				: insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents - 1];
+				: events[insertionInfo.idxInVehicleEvents - 1];
 		const next: Event | undefined =
-			insertionInfo.idxInVehicleEvents == insertionInfo.vehicle.events.length
+			insertionInfo.idxInVehicleEvents == events.length
 				? insertionInfo.vehicle.firstEventAfter
-				: insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents];
+				: events[insertionInfo.idxInVehicleEvents];
+		const sameTourEvents = prev === undefined ? [] : events.slice(events.findIndex((e) => e.tourId === prev?.tourId), events.findIndex((e) => e.id === prev.id));
+		const passengers = sameTourEvents.reduce((acc,curr) => acc+=curr.isPickup?curr.passengers:-curr.passengers,0);
 		INSERT_HOW_OPTIONS.forEach((insertHow) => {
 			const insertionCase = {
 				how: insertHow,
 				where:
 					insertionInfo.idxInVehicleEvents == 0
 						? InsertWhere.BEFORE_FIRST_EVENT
-						: insertionInfo.idxInVehicleEvents == insertionInfo.vehicle.events.length
+						: insertionInfo.idxInVehicleEvents == events.length
 							? InsertWhere.AFTER_LAST_EVENT
 							: prev!.tourId != next!.tourId
 								? InsertWhere.BETWEEN_TOURS
@@ -615,7 +617,7 @@ export function evaluateSingleInsertions(
 			// Ensure shifting the previous or next events' scheduledTime does not cause the whole tour to be prolonged too much
 			if (insertHow === InsertHow.INSERT && prev && next && windows.length != 0) {
 				const twoBefore =
-					insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents - 2] ??
+					events[insertionInfo.idxInVehicleEvents - 2] ??
 					insertionInfo.vehicle.lastEventBefore;
 				if (twoBefore && twoBefore?.tourId != prev.tourId) {
 					const tourDifference = prev.departure - twoBefore.arrival;
@@ -623,7 +625,7 @@ export function evaluateSingleInsertions(
 					windows[0].startTime += Math.max(0, scheduledTimeLength - tourDifference);
 				}
 				const twoAfter =
-					insertionInfo.vehicle.events[insertionInfo.idxInVehicleEvents + 1] ??
+					events[insertionInfo.idxInVehicleEvents + 1] ??
 					insertionInfo.vehicle.firstEventAfter;
 				if (twoAfter && twoAfter?.tourId != next.tourId && windows.length != 0) {
 					const tourDifference = twoAfter.departure - next.arrival;
@@ -721,7 +723,6 @@ export function evaluateSingleInsertions(
 				userChosenEvaluations[insertionInfo.insertionIdx] = resultUserChosen;
 			}
 		});
-		passengers += prev ? (prev.isPickup ? prev.passengers : -prev.passengers) : 0;
 	});
 	return { busStopEvaluations, userChosenEvaluations, bothEvaluations };
 }
@@ -990,18 +991,18 @@ const getOldDrivingTime = (
 	if (insertionCase.how == InsertHow.NEW_TOUR) {
 		return 0;
 	}
-	if (insertionCase.how == InsertHow.CONNECT || insertionCase.how === InsertHow.INSERT) {
+	if (insertionCase.how == InsertHow.CONNECT) {
 		return next!.prevLegDuration + prev!.nextLegDuration;
 	}
 	console.assert(prev != undefined || next != undefined, 'getOldDrivingTime: no event found');
-	if (prev == undefined) {
+	if (comesFromCompany(insertionCase)) {
 		console.assert(
 			insertionCase.how == InsertHow.PREPEND,
 			'getOldDrivingTime: no previous but also no prepend'
 		);
 		return next!.prevLegDuration;
 	}
-	return prev.nextLegDuration;
+	return prev!.nextLegDuration;
 };
 
 const keepsPromises = (
