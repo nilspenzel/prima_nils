@@ -230,7 +230,7 @@ export function evaluateSingleInsertion(
 	const taxiDuration =
 		prevLegDuration + nextLegDuration - getOldDrivingTime(insertionCase, prev, next);
 	console.assert(insertionCase.what != InsertWhat.BOTH);
-	const time =
+	const communicatedTime =
 		promisedTimes === undefined
 			? arrivalWindow.startTime
 			: isPickup(insertionCase)
@@ -240,11 +240,16 @@ export function evaluateSingleInsertion(
 				: arrivalWindow.covers(promisedTimes.dropoff)
 					? promisedTimes.dropoff
 					: arrivalWindow.endTime;
+	const scheduledShift = Math.min(
+		arrivalWindow.size(),
+		SCHEDULED_TIME_BUFFER
+	);
+	const scheduledPickupTimeCandidate = communicatedTime + (isPickup(insertionCase) ? scheduledShift : -scheduledShift);
 	const taxiWaitingTime = getTaxiWaitingDelta(
 		prevLegDuration + nextLegDuration,
 		insertionCase,
-		new Date(time - prevLegDuration).getTime(),
-		new Date(time + nextLegDuration).getTime(),
+		new Date(scheduledPickupTimeCandidate - prevLegDuration).getTime(),
+		new Date(scheduledPickupTimeCandidate + nextLegDuration).getTime(),
 		prev,
 		next,
 		undefined,
