@@ -268,7 +268,7 @@ export type BookingLogs = {
 };
 
 export function getCost(tour: TourWithRequests) {
-	const events = tour.requests.flatMap((r) => r.events).sort((e1, e2) => e1.scheduledTimeEnd - e2.scheduledTimeEnd);
+	const events = tour.requests.flatMap((r) => r.events).filter((e) => !e.cancelled).sort((e1, e2) => e1.scheduledTimeEnd - e2.scheduledTimeEnd);
 	if (events.length === 0) {
 		return {
 			weightedPassengerDuration: 0,
