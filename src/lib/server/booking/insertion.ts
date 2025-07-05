@@ -246,7 +246,9 @@ export function evaluateSingleInsertion(
 		new Date(time - prevLegDuration).getTime(),
 		new Date(time + nextLegDuration).getTime(),
 		prev,
-		next
+		next,
+		undefined,
+		undefined
 	);
 	const sie: SingleInsertionEvaluation = {
 		window: arrivalWindow,
@@ -390,13 +392,26 @@ export function evaluateBothInsertion(
 
 	const departure = comesFromCompany(insertionCase) ? pickupTime - prevLegDuration : undefined;
 	const arrival = returnsToCompany(insertionCase) ? dropoffTime + nextLegDuration : undefined;
+
+	let newPickupTime = undefined
+	if(prev && communicatedPickupTime - prev.scheduledTimeEnd - prevLegDuration<0){
+		newPickupTime =
+			communicatedPickupTime - prevLegDuration;
+	}
+	let newDropoffTime = undefined
+	if(next && communicatedDropoffTime - next.scheduledTimeEnd - nextLegDuration<0){
+		newDropoffTime =
+			communicatedDropoffTime + nextLegDuration;
+	}
 	const taxiWaitingTime = getTaxiWaitingDelta(
 		prevLegDuration + nextLegDuration + passengerDuration,
 		insertionCase,
 		departure,
 		arrival,
 		prev,
-		next
+		next,
+		newPickupTime,
+		newDropoffTime
 	);
 	let eventOverlap = 0;
 	const window = new Interval(pickupTime, dropoffTime);
@@ -966,7 +981,9 @@ function getTaxiWaitingDelta(
 	departure: number | undefined,
 	arrival: number | undefined,
 	prev: Event | undefined,
-	next: Event | undefined
+	next: Event | undefined,
+	newPickupTime?: number,
+	newDropoffTime?: number
 ): number {
 	if (insertionCase.how == InsertHow.NEW_TOUR) {
 		return 0;
@@ -976,9 +993,9 @@ function getTaxiWaitingDelta(
 			? getScheduledEventTime(next!) - getScheduledEventTime(prev!) - prev!.nextLegDuration
 			: 0;
 	const prevTaskTime =
-		insertionCase.how == InsertHow.PREPEND ? departure! : getScheduledEventTime(prev!);
+		insertionCase.how == InsertHow.PREPEND ? departure! : Math.min(newPickupTime ?? Number.MAX_SAFE_INTEGER, getScheduledEventTime(prev!));
 	const nextTaskTime =
-		insertionCase.how == InsertHow.APPEND ? arrival! : getScheduledEventTime(next!);
+		insertionCase.how == InsertHow.APPEND ? arrival! : Math.max(newDropoffTime ?? -1, getScheduledEventTime(next!));
 	const newWaitingTime = Math.max(nextTaskTime - prevTaskTime - drivingDuration, 0);
 	return newWaitingTime - oldWaitingTime;
 }
