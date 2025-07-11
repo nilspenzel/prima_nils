@@ -28,7 +28,9 @@ type TimesTable = {
 	endTime: number;
 };
 
-type TmpDatabase = Database & { busstopzone: CoordinatesTable } & { times: TimesTable };
+type TmpDatabase = Database & { busstopzone: CoordinatesTable } & { times: TimesTable } & {
+	busstops: CoordinatesTable;
+};
 
 const withBusStops = (busStops: BusStop[], busStopIntervals: Interval[][]) => {
 	return db
@@ -126,6 +128,20 @@ const doesCompanyExist = (
 	);
 };
 
+function doesRideShareTourExist(
+	eb: ExpressionBuilder<TmpDatabase, 'busstops' | 'times'>,
+	capacities: Capacities
+) {
+	return eb.exists(
+		eb
+			.selectFrom('ride_share_tour')
+			.where('ride_share_tour.passengers', '<=', capacities.passengers)
+			.where('ride_share_tour.luggage', '<=', capacities.luggage)
+			.whereRef('ride_share_tour.communicatedStartTime', '<=', 'times.endTime')
+			.whereRef('ride_share_tour.communicatedEndTime', '>=', 'times.startTime')
+	);
+}
+
 export const getViableBusStops = async (
 	userChosen: Coordinates,
 	busStops: BusStop[],
@@ -136,7 +152,7 @@ export const getViableBusStops = async (
 		return [];
 	}
 
-	const createBatchQuery = (
+	const createBatchQueryTaxi = (
 		userChosen: Coordinates,
 		busStops: BusStop[],
 		busStopIntervals: Interval[][],
@@ -165,10 +181,26 @@ export const getViableBusStops = async (
 			.execute();
 	};
 
+	const createBatchQueryRideShare = (
+		busStops: BusStop[],
+		busStopIntervals: Interval[][],
+		capacities: Capacities
+	): Promise<BlacklistingResult[]> => {
+		if (!busStopIntervals.some((x) => x.length !== 0)) {
+			return Promise.resolve(new Array<BlacklistingResult>());
+		}
+		return withBusStops(busStops, busStopIntervals)
+			.selectFrom('busstops')
+			.innerJoin('times', 'times.busStopIndex', 'busstops.busStopIndex')
+			.where((eb) => doesRideShareTourExist(eb, capacities))
+			.select(['times.timeIndex as timeIndex', 'times.busStopIndex as busStopIndex'])
+			.execute();
+	};
+
 	// Find the smallest Interval containing all availabilities and tours of the companies received as a parameter.
 	let earliest = Number.MAX_VALUE;
 	let latest = 0;
-	let busStopIntervals = busStops.map((b) =>
+	const busStopIntervals = busStops.map((b) =>
 		b.times.map(
 			(t) =>
 				new Interval(
@@ -191,7 +223,7 @@ export const getViableBusStops = async (
 		return [];
 	}
 	const allowedTimes = getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END);
-	busStopIntervals = busStopIntervals.map((b) =>
+	const allowedBusStopIntervals = busStopIntervals.map((b) =>
 		b.map((t) => {
 			const allowed = Interval.intersect(allowedTimes, [t]);
 			console.assert(
@@ -201,14 +233,24 @@ export const getViableBusStops = async (
 			return allowed.length === 0 ? new Interval(0, 0) : allowed[0];
 		})
 	);
-
-	const batches = [];
+	const batchesTaxi = [];
+	const batchesRideShare = [];
 	const batchSize = 50;
 	let currentPos = 0;
 	while (currentPos < busStops.length) {
-		batches.push(
-			createBatchQuery(
+		batchesTaxi.push(
+			createBatchQueryTaxi(
 				userChosen,
+				busStops.slice(currentPos, Math.min(currentPos + batchSize, busStops.length)),
+				allowedBusStopIntervals.slice(
+					currentPos,
+					Math.min(currentPos + batchSize, busStops.length)
+				),
+				capacities
+			)
+		);
+		batchesRideShare.push(
+			await createBatchQueryRideShare(
 				busStops.slice(currentPos, Math.min(currentPos + batchSize, busStops.length)),
 				busStopIntervals.slice(currentPos, Math.min(currentPos + batchSize, busStops.length)),
 				capacities
@@ -216,11 +258,29 @@ export const getViableBusStops = async (
 		);
 		currentPos += batchSize;
 	}
-	const batchResponses = await Promise.all(batches);
-	const response = batchResponses.flatMap((batchResponse, idx) =>
-		batchResponse.map((r) => {
-			return { timeIndex: r.timeIndex, busStopIndex: r.busStopIndex + idx * batchSize };
-		})
+	const batchResponsesTaxi = await Promise.all(batchesTaxi);
+	const batchResponsesRideShare = await Promise.all(batchesRideShare);
+	const response = batchResponsesTaxi
+		.flatMap((batchResponseTaxi, idx) =>
+			batchResponseTaxi.map((r) => {
+				return { timeIndex: r.timeIndex, busStopIndex: r.busStopIndex + idx * batchSize };
+			})
+		)
+		.concat(
+			batchResponsesRideShare.flatMap((batchResponseRideShare, idx) =>
+				batchResponseRideShare.map((r) => {
+					return { timeIndex: r.timeIndex, busStopIndex: r.busStopIndex + idx * batchSize };
+				})
+			)
+		);
+	console.log(
+		'thingy',
+		batchResponsesRideShare,
+		batchResponsesRideShare.flatMap((batchResponseRideShare, idx) =>
+			batchResponseRideShare.map((r) => {
+				return { timeIndex: r.timeIndex, busStopIndex: r.busStopIndex + idx * batchSize };
+			})
+		)
 	);
 	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
 	return response;
@@ -229,4 +289,19 @@ export const getViableBusStops = async (
 export type BlacklistingResult = {
 	timeIndex: number;
 	busStopIndex: number;
+};
+
+export type BatchResult = {
+	potentialTaxiOptions: Promise<
+		{
+			timeIndex: number;
+			busStopIndex: number;
+		}[]
+	>;
+	potentialRideShareOptions: Promise<
+		{
+			timeIndex: number;
+			busStopIndex: number;
+		}[]
+	>;
 };
