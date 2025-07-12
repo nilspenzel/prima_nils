@@ -13,8 +13,8 @@ export const addRideShareTour = async (
 	target: Coordinates
 ): Promise<number> => {
 	const duration = (await oneToManyCarRouting(start, [target], false))[0]!;
-	const startTime = startFixed ? time : time + duration;
-	const endTime = startFixed ? time - duration : time;
+	const startTime = startFixed ? time : time - duration;
+	const endTime = startFixed ? time + duration : time;
 
 	const tourId = (
 		await db

@@ -14,8 +14,8 @@ const capacities = {
 	luggage: 0
 };
 
-const inNiesky1 = { lat: 51.29468377345111, lng: 14.833542206420248 };
-const inNiesky2 = { lat: 51.29544187321241, lng: 14.820560314788537 };
+const inNiesky = { lat: 51.29468377345111, lng: 14.833542206420248 };
+const inBautzen = { lng: 14.434463472307556, lat: 51.18137889958882 };
 
 let mockUserId = -1;
 
@@ -33,11 +33,11 @@ beforeEach(async () => {
 
 describe('Whitelist and Booking API Tests for RideSharing', () => {
 	it('simple rideShareInsert', async () => {
-		await addRideShareTour(inXMinutes(65), true, 1, 0, mockUserId, inNiesky1, inNiesky2);
+		await addRideShareTour(inXMinutes(65), true, 1, 0, mockUserId, inNiesky, inBautzen);
 		const busStops = new Array<BusStop>();
 		const body = JSON.stringify({
-			start: inNiesky1,
-			target: inNiesky2,
+			start: inNiesky,
+			target: inBautzen,
 			startBusStops: [],
 			targetBusStops: busStops,
 			directTimes: [inXMinutes(70)],

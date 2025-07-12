@@ -64,7 +64,7 @@ export async function whitelistRideShare(
 		busStops
 	);
 	console.log(
-		'Whitelist Request: getBookingAvailability results\n',
+		'Whitelist Request Ride Share: getBookingAvailability results\n',
 		JSON.stringify(
 			{
 				searchInterval: searchInterval.toString(),

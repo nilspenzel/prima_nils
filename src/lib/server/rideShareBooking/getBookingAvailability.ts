@@ -104,13 +104,11 @@ export const getBookingAvailability = async (
 	busStops: Coordinates[],
 	trx?: Transaction<Database>
 ) => {
-	const twiceExpandedSearchInterval = searchInterval.expand(DAY, DAY);
 	console.log(
-		'getBookingAvailability params: ',
+		'getBookingAvailability Ride Share params: ',
 		JSON.stringify(
 			{
 				searchInterval: searchInterval.toString(),
-				twiceExpandedSearchInterval: twiceExpandedSearchInterval.toString(),
 				userChosen,
 				requestCapacities,
 				busStops
