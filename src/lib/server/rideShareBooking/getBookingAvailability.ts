@@ -9,7 +9,7 @@ import { DAY } from '$lib/util/time';
 
 const dbQuery = async (
 	requestCapacities: Capacities,
-	expandedSearchInterval: Interval,
+	searchInterval: Interval,
 	trx: Transaction<Database> | undefined
 ) => {
 	return (
@@ -30,20 +30,11 @@ const dbQuery = async (
 						.selectFrom('request')
 						.innerJoin('event', 'event.request', 'request.id')
 						.select('event.scheduledTimeStart')
-						.whereRef('request.rideShareTour', '=', 'ride_share_tour.id'),
-					'=',
-					1
-				)
-			)
-			.where((eb) =>
-				eb(
-					eb
-						.selectFrom('request')
-						.innerJoin('event', 'event.request', 'request.id')
-						.select('event.scheduledTimeStart')
-						.whereRef('request.rideShareTour', '=', 'ride_share_tour.id'),
+						.whereRef('request.rideShareTour', '=', 'ride_share_tour.id')
+						.orderBy('scheduledStartTime asc')
+						.limit(1),
 					'<=',
-					expandedSearchInterval.endTime
+					searchInterval.endTime
 				)
 			)
 			.where((eb) =>
@@ -52,9 +43,11 @@ const dbQuery = async (
 						.selectFrom('request')
 						.innerJoin('event', 'event.request', 'request.id')
 						.select('event.scheduledTimeEnd')
-						.whereRef('request.rideShareTour', '=', 'ride_share_tour.id'),
+						.whereRef('request.rideShareTour', '=', 'ride_share_tour.id')
+						.orderBy('scheduledStartTime desc')
+						.limit(1),
 					'>=',
-					expandedSearchInterval.startTime
+					searchInterval.startTime
 				)
 			)
 			.select((eb) => [
@@ -111,14 +104,12 @@ export const getBookingAvailability = async (
 	busStops: Coordinates[],
 	trx?: Transaction<Database>
 ) => {
-	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 3, MAX_TRAVEL * 3);
 	const twiceExpandedSearchInterval = searchInterval.expand(DAY, DAY);
 	console.log(
 		'getBookingAvailability params: ',
 		JSON.stringify(
 			{
 				searchInterval: searchInterval.toString(),
-				expandedSearchInterval: expandedSearchInterval.toString(),
 				twiceExpandedSearchInterval: twiceExpandedSearchInterval.toString(),
 				userChosen,
 				requestCapacities,
@@ -129,7 +120,7 @@ export const getBookingAvailability = async (
 		)
 	);
 
-	const dbResult = await dbQuery(requestCapacities, expandedSearchInterval, trx);
+	const dbResult = await dbQuery(requestCapacities, searchInterval, trx);
 
 	console.log('getBookingAvailabilty: dbResult=', JSON.stringify(dbResult, null, '\t'));
 	return dbResult;
