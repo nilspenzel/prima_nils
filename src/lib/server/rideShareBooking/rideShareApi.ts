@@ -6,7 +6,7 @@ import {
 } from '$lib/server/rideShareBooking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { signEntry } from '$lib/server/rideShareBooking/signEntry';
-import { insertRequest } from './insertRequest';
+import { insertRideShareRequest } from './insertRideShareRequest';
 import { retry } from '../db/retryQuery';
 
 export type BookingParameters = {
@@ -121,7 +121,7 @@ export async function rideShareApi(
 				}
 				if (firstConnection != null) {
 					request1Id =
-						(await insertRequest(
+						(await insertRideShareRequest(
 							firstConnection.best,
 							p.capacities,
 							p.connection1!,
@@ -132,7 +132,7 @@ export async function rideShareApi(
 				}
 				if (secondConnection != null) {
 					request2Id =
-						(await insertRequest(
+						(await insertRideShareRequest(
 							secondConnection.best,
 							p.capacities,
 							p.connection2!,

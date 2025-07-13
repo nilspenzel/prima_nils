@@ -1,5 +1,5 @@
 import { Interval } from '$lib/util/interval';
-import type { RideShareEvent } from './getBookingAvailability';
+import type { RideShareEvent } from './getRideShareTours';
 
 export type ScheduledTimes = {
 	updates: {

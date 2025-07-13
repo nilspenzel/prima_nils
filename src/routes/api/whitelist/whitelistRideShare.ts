@@ -1,5 +1,5 @@
 import type { Capacities } from '$lib/util/booking/Capacities';
-import { getBookingAvailability } from '$lib/server/rideShareBooking/getBookingAvailability';
+import { getRideShareTours } from '$lib/server/rideShareBooking/getRideShareTours';
 import { MAX_TRAVEL } from '$lib/constants';
 import { Interval } from '$lib/util/interval';
 import type { Coordinates } from '$lib/util/Coordinates';
@@ -14,7 +14,7 @@ export async function whitelistRideShare(
 	startFixed: boolean
 ): Promise<Array<(Insertion | undefined)[]>> {
 	console.log(
-		'Whitelist Request: ',
+		'Whitelist Request Ride Share: ',
 		JSON.stringify(
 			{
 				required,
@@ -45,7 +45,7 @@ export async function whitelistRideShare(
 		}
 	}
 
-	console.log('BUS STOPS', JSON.stringify(busStops));
+	console.log('BUS STOPS Ride Share', JSON.stringify(busStops));
 	console.log(
 		'INTERVAL',
 		JSON.stringify({
@@ -55,20 +55,13 @@ export async function whitelistRideShare(
 	);
 
 	const searchInterval = new Interval(firstTime, lastTime);
-	const expandedSearchInterval = searchInterval.expand(MAX_TRAVEL * 6, MAX_TRAVEL * 6);
 
-	const rideShareTours = await getBookingAvailability(
-		userChosen,
-		required,
-		searchInterval,
-		busStops
-	);
+	const rideShareTours = await getRideShareTours(userChosen, required, searchInterval, busStops);
 	console.log(
-		'Whitelist Request Ride Share: getBookingAvailability results\n',
+		'Whitelist Request Ride Share: getRideShareTours results\n',
 		JSON.stringify(
 			{
 				searchInterval: searchInterval.toString(),
-				expandedSearchInterval: expandedSearchInterval.toString(),
 				rideShareTours
 			},
 			null,
@@ -77,14 +70,13 @@ export async function whitelistRideShare(
 	);
 	const bestEvals = await evaluateRequest(
 		rideShareTours,
-		expandedSearchInterval,
 		userChosen,
 		busStops,
 		required,
 		startFixed
 	);
 	console.log(
-		'WHITELIST RESULT: ',
+		'WHITELIST RESULT Ride Share: ',
 		JSON.stringify(
 			bestEvals.map((arr) => arr.map((i) => toInsertionWithISOStrings(i))),
 			null,

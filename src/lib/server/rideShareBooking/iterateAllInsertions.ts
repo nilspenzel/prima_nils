@@ -1,6 +1,6 @@
 import type { InsertionInfo } from './insertionTypes';
 import type { Range } from '$lib/util/booking/getPossibleInsertions';
-import type { RideShareTour } from './getBookingAvailability';
+import type { RideShareTour } from './getRideShareTours';
 
 export async function iterateAllInsertions(
 	rideShareTours: RideShareTour[],

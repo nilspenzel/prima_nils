@@ -1,5 +1,5 @@
 import type { Range } from '$lib/util/booking/getPossibleInsertions';
-import type { RideShareEvent } from './getBookingAvailability';
+import type { RideShareEvent } from './getRideShareTours';
 
 export type InsertionInfo = {
 	rideShareTourIdx: number;

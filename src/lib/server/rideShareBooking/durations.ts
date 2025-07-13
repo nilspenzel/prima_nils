@@ -3,9 +3,9 @@ import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { InsertDirection, printInsertionType, type InsertionType } from '../booking/insertionTypes';
-import type { RideShareEvent } from './getBookingAvailability';
+import type { RideShareEvent } from './getRideShareTours';
 import type { InsertionInfo } from './insertionTypes';
-import type { InsertionRoutingResult, RoutingResults } from './routing';
+import type { RoutingResults } from './routing';
 
 export const returnsToCompany = (insertionCase: InsertionType): boolean =>
 	insertionCase.how == InsertHow.APPEND || insertionCase.how == InsertHow.NEW_TOUR;
@@ -19,7 +19,7 @@ export const getPrevLegDuration = (
 	insertionInfo: InsertionInfo,
 	busStopIdx: number | undefined
 ): number | undefined => {
-	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
+	let relevantRoutingResults: (number | undefined)[] | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
 			relevantRoutingResults = routingResults.userChosen.toUserChosen;
@@ -41,7 +41,8 @@ export const getPrevLegDuration = (
 			relevantRoutingResults = routingResults.busStops.toBusStop[busStopIdx!];
 			break;
 	}
-	return relevantRoutingResults.event[insertionInfo.insertionIdx];
+	console.log({ relevantRoutingResults }, { insertionInfo });
+	return relevantRoutingResults[insertionInfo.insertionIdx];
 };
 
 export const getNextLegDuration = (
@@ -50,7 +51,7 @@ export const getNextLegDuration = (
 	insertionInfo: InsertionInfo,
 	busStopIdx: number | undefined
 ): number | undefined => {
-	let relevantRoutingResults: InsertionRoutingResult | undefined = undefined;
+	let relevantRoutingResults: (number | undefined)[] | undefined = undefined;
 	switch (insertionCase.what) {
 		case InsertWhat.USER_CHOSEN:
 			relevantRoutingResults = routingResults.userChosen.fromUserChosen;
@@ -72,7 +73,7 @@ export const getNextLegDuration = (
 			relevantRoutingResults = routingResults.busStops.fromBusStop[busStopIdx!];
 			break;
 	}
-	return relevantRoutingResults.event[insertionInfo.insertionIdx];
+	return relevantRoutingResults[insertionInfo.insertionIdx];
 };
 
 export function getAllowedOperationTimes(

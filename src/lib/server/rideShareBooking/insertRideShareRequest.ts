@@ -6,7 +6,7 @@ import { sql, Transaction } from 'kysely';
 import { env } from '$env/dynamic/public';
 import type { ScheduledTimes } from './getScheduledTimes';
 
-export async function insertRequest(
+export async function insertRideShareRequest(
 	connection: Insertion,
 	capacities: Capacities,
 	c: ExpectedConnection,
@@ -14,6 +14,25 @@ export async function insertRequest(
 	scheduledTimes: ScheduledTimes,
 	trx: Transaction<Database>
 ): Promise<number> {
+	const nextLegUpdates = [
+		{ event: connection.prevPickupId, duration: connection.pickupPrevLegDuration }
+	];
+	if (connection.prevDropoffId !== connection.prevPickupId) {
+		nextLegUpdates.push({
+			event: connection.prevDropoffId,
+			duration: connection.dropoffPrevLegDuration
+		});
+	}
+	const prevLegUpdates = [
+		{ event: connection.nextDropoffId, duration: connection.dropoffNextLegDuration }
+	];
+	if (connection.nextDropoffId !== connection.nextPickupId) {
+		prevLegUpdates.push({
+			event: connection.nextPickupId,
+			duration: connection.pickupNextLegDuration
+		});
+	}
+	console.log({ prevLegUpdates: nextLegUpdates }, { nextLegUpdates: prevLegUpdates });
 	const ticketPrice = capacities.passengers * parseInt(env.PUBLIC_FIXED_PRICE);
 	const requestId = (
 		await sql<{ request: number }>`
@@ -21,15 +40,9 @@ export async function insertRequest(
             ROW(${capacities.passengers}, ${0}, ${0}, ${0}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}, ${customer}, ${ticketPrice}),
             ROW(${true}, ${c.start.lat}, ${c.start.lng}, ${connection.pickupTime}, ${connection.scheduledPickupTime}, ${connection.pickupTime}, ${connection.pickupPrevLegDuration}, ${connection.pickupNextLegDuration}, ${c.start.address}, ${''}),
             ROW(${false}, ${c.target.lat}, ${c.target.lng}, ${connection.scheduledDropoffTime}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${connection.dropoffPrevLegDuration}, ${connection.dropoffNextLegDuration}, ${c.target.address}, ${''}),
-            ROW(${connection.rideShareTour}),
-			${JSON.stringify([
-				{ event: connection.prevDropoffId, duration: connection.dropoffPrevLegDuration },
-				{ event: connection.prevPickupId, duration: connection.pickupPrevLegDuration }
-			])}::jsonb,
-			${JSON.stringify([
-				{ event: connection.nextDropoffId, duration: connection.dropoffNextLegDuration },
-				{ event: connection.nextPickupId, duration: connection.pickupNextLegDuration }
-			])}::jsonb,
+            ${connection.rideShareTour},
+			${JSON.stringify(prevLegUpdates)}::jsonb,
+			${JSON.stringify(nextLegUpdates)}::jsonb,
 			${JSON.stringify(scheduledTimes.updates)}::jsonb
        ) AS request`.execute(trx)
 	).rows[0].request;

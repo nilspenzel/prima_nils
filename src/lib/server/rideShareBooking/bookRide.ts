@@ -4,9 +4,9 @@ import type { Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import {
-	getBookingAvailability,
+	getRideShareTours,
 	type RideShareTour
-} from '$lib/server/rideShareBooking/getBookingAvailability';
+} from '$lib/server/rideShareBooking/getRideShareTours';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/rideShareBooking/evaluateRequest';
 import { getMergeTourList } from './getMergeTourList';
@@ -56,10 +56,9 @@ export async function bookSharedRide(
 	bookingLogs.push({ iter: -1 });
 	console.log('BS');
 	const searchInterval = new Interval(c.startTime, c.targetTime);
-	const expandedSearchInterval = searchInterval.expand(DAY, DAY);
 	const userChosen = !c.startFixed ? c.start : c.target;
 	const busStop = c.startFixed ? c.start : c.target;
-	const rideShareTours = await getBookingAvailability(
+	const rideShareTours = await getRideShareTours(
 		userChosen,
 		required,
 		searchInterval,
@@ -70,15 +69,11 @@ export async function bookSharedRide(
 		console.log('there were no ride shares tours which could be concatenated with this request.');
 		return undefined;
 	}
-	let allowedRideShareTours: RideShareTour[] = [];
-	if (blockedProviderId != undefined && blockedProviderId != null) {
-		allowedRideShareTours = rideShareTours.filter((t) => t.provider !== blockedProviderId);
-	}
+	const allowedRideShareTours = rideShareTours.filter((t) => t.provider !== blockedProviderId);
 	const busTime = c.startFixed ? c.startTime : c.targetTime;
 	const best = (
 		await evaluateRequest(
 			allowedRideShareTours,
-			expandedSearchInterval,
 			userChosen,
 			[{ ...busStop, times: [busTime] }],
 			required,
@@ -95,8 +90,13 @@ export async function bookSharedRide(
 		console.log('surprisingly no possible connection found: ', userChosen, busStop, busTime, best);
 		return undefined;
 	}
-	console.log({ best }, printInsertionType(best.pickupCase), printInsertionType(best.dropoffCase));
-	const rideShareTour = allowedRideShareTours[best.rideShareTour];
+	console.log(
+		'Ride SHARE ',
+		{ best },
+		printInsertionType(best.pickupCase),
+		printInsertionType(best.dropoffCase)
+	);
+	const rideShareTour = allowedRideShareTours.find((t) => best.rideShareTour === t.rideShareTour)!;
 	const events = rideShareTour.events;
 	console.log('BE');
 	const prevPickupEvent = comesFromCompany(best.pickupCase)

@@ -21,12 +21,11 @@ import {
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 import { DAY, HOUR } from '$lib/util/time';
 import { routing } from './routing';
-import type { RideShareTour } from './getBookingAvailability';
+import type { RideShareTour } from './getRideShareTours';
 import type { BusStop } from '../booking/BusStop';
 
 export async function evaluateRequest(
 	rideShareTours: RideShareTour[],
-	expandedSearchInterval: Interval,
 	userChosen: Coordinates,
 	busStops: BusStop[],
 	required: Capacities,
@@ -34,9 +33,8 @@ export async function evaluateRequest(
 	promisedTimes?: PromisedTimes
 ): Promise<(Insertion | undefined)[][]> {
 	console.log(
-		'EVALUATE REQUEST PARAMS: ',
-		{ companies: JSON.stringify(rideShareTours, null, 2) },
-		{ expandedSearchInterval: expandedSearchInterval.toString() },
+		'EVALUATE REQUEST RIDE SHARE PARAMS: ',
+		{ rideShareTours: JSON.stringify(rideShareTours, null, 2) },
 		{ userChosen },
 		{ busStops: JSON.stringify(busStops, null, 2) },
 		{ required },

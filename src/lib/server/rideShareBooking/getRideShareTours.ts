@@ -1,11 +1,9 @@
-import { MAX_TRAVEL } from '$lib/constants';
 import { Interval } from '$lib/util/interval';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { sql, type Transaction } from 'kysely';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { db, type Database } from '$lib/server/db';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
-import { DAY } from '$lib/util/time';
 
 const dbQuery = async (
 	requestCapacities: Capacities,
@@ -29,9 +27,9 @@ const dbQuery = async (
 					eb
 						.selectFrom('request')
 						.innerJoin('event', 'event.request', 'request.id')
-						.select('event.scheduledTimeStart')
+						.select('event.scheduledTimeEnd')
 						.whereRef('request.rideShareTour', '=', 'ride_share_tour.id')
-						.orderBy('scheduledStartTime asc')
+						.orderBy('event.scheduledTimeEnd asc')
 						.limit(1),
 					'<=',
 					searchInterval.endTime
@@ -42,9 +40,9 @@ const dbQuery = async (
 					eb
 						.selectFrom('request')
 						.innerJoin('event', 'event.request', 'request.id')
-						.select('event.scheduledTimeEnd')
+						.select('event.scheduledTimeStart')
 						.whereRef('request.rideShareTour', '=', 'ride_share_tour.id')
-						.orderBy('scheduledStartTime desc')
+						.orderBy('event.scheduledTimeStart desc')
 						.limit(1),
 					'>=',
 					searchInterval.startTime
@@ -97,7 +95,7 @@ const dbQuery = async (
 
 export type DbResult = NonNullable<Awaited<ReturnType<typeof dbQuery>>>;
 
-export const getBookingAvailability = async (
+export const getRideShareTours = async (
 	userChosen: Coordinates,
 	requestCapacities: Capacities,
 	searchInterval: Interval,
@@ -105,7 +103,7 @@ export const getBookingAvailability = async (
 	trx?: Transaction<Database>
 ) => {
 	console.log(
-		'getBookingAvailability Ride Share params: ',
+		'getRideShareTours params: ',
 		JSON.stringify(
 			{
 				searchInterval: searchInterval.toString(),
@@ -120,9 +118,9 @@ export const getBookingAvailability = async (
 
 	const dbResult = await dbQuery(requestCapacities, searchInterval, trx);
 
-	console.log('getBookingAvailabilty: dbResult=', JSON.stringify(dbResult, null, '\t'));
+	console.log('getRideShareTours: dbResult=', JSON.stringify(dbResult, null, '\t'));
 	return dbResult;
 };
 
-export type RideShareTour = Awaited<ReturnType<typeof getBookingAvailability>>[0];
+export type RideShareTour = Awaited<ReturnType<typeof getRideShareTours>>[0];
 export type RideShareEvent = RideShareTour['events'][0];

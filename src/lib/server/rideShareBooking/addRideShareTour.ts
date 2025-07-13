@@ -12,7 +12,10 @@ export const addRideShareTour = async (
 	start: Coordinates,
 	target: Coordinates
 ): Promise<number> => {
-	const duration = (await oneToManyCarRouting(start, [target], false))[0]!;
+	const duration = (await oneToManyCarRouting(start, [target], false))[0];
+	if (duration === null || duration === undefined) {
+		return -1;
+	}
 	const startTime = startFixed ? time : time - duration;
 	const endTime = startFixed ? time + duration : time;
 
@@ -61,7 +64,7 @@ export const addRideShareTour = async (
 		.values({
 			isPickup: true,
 			lat: start.lat,
-			lng: start.lat,
+			lng: start.lng,
 			scheduledTimeStart: startTime - SCHEDULED_TIME_BUFFER,
 			scheduledTimeEnd: startTime,
 			communicatedTime: startTime - SCHEDULED_TIME_BUFFER,
@@ -78,7 +81,7 @@ export const addRideShareTour = async (
 		.values({
 			isPickup: false,
 			lat: target.lat,
-			lng: target.lat,
+			lng: target.lng,
 			scheduledTimeStart: endTime,
 			scheduledTimeEnd: endTime + SCHEDULED_TIME_BUFFER,
 			communicatedTime: endTime + SCHEDULED_TIME_BUFFER,

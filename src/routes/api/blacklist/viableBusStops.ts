@@ -273,15 +273,6 @@ export const getViableBusStops = async (
 				})
 			)
 		);
-	console.log(
-		'thingy',
-		batchResponsesRideShare,
-		batchResponsesRideShare.flatMap((batchResponseRideShare, idx) =>
-			batchResponseRideShare.map((r) => {
-				return { timeIndex: r.timeIndex, busStopIndex: r.busStopIndex + idx * batchSize };
-			})
-		)
-	);
 	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
 	return response;
 };

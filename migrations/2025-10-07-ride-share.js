@@ -52,8 +52,8 @@ export async function up(db) {
         CALL insert_request_rs(p_request, p_tour_id, v_request_id);
         CALL insert_event(p_event1, v_request_id);
         CALL insert_event(p_event2, v_request_id);
-        CALL update_prev_leg_duration(p_prev_leg_updates);
-        CALL update_next_leg_duration(p_next_leg_updates);
+        CALL update_prev_leg_durations(p_update_prev_leg_durations);
+        CALL update_next_leg_durations(p_update_next_leg_durations);
         CALL update_scheduled_times(p_update_scheduled_times);
     
         RETURN v_request_id;

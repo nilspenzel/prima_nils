@@ -1,5 +1,5 @@
 import { InsertHow } from '$lib/util/booking/insertionTypes';
-import type { RideShareEvent } from './getBookingAvailability';
+import type { RideShareEvent } from './getRideShareTours';
 
 export const getMergeTourList = (
 	events: RideShareEvent[],

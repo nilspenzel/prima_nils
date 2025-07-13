@@ -23,7 +23,7 @@ import { roundToUnit, MINUTE } from '$lib/util/time';
 import { iterateAllInsertions } from './iterateAllInsertions';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { bookingLogs, iteration } from '$lib/testHelpers';
-import type { RideShareEvent, RideShareTour } from './getBookingAvailability';
+import type { RideShareEvent, RideShareTour } from './getRideShareTours';
 import {
 	canCaseBeValid,
 	INSERT_HOW_OPTIONS,
