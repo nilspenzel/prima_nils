@@ -186,6 +186,26 @@ export const getTours = async () => {
 		.execute();
 };
 
+export const getRideShareTours = async () => {
+	return await db
+		.selectFrom('ride_share_tour')
+		.selectAll()
+		.select((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom('request')
+					.whereRef('request.rideShareTour', '=', 'ride_share_tour.id')
+					.selectAll()
+					.select((eb) => [
+						jsonArrayFrom(
+							eb.selectFrom('event').whereRef('event.request', '=', 'request.id').selectAll()
+						).as('events')
+					])
+			).as('requests')
+		])
+		.execute();
+};
+
 export const selectEvents = async () => {
 	console.log('did selectEvents');
 	return await db

@@ -3,10 +3,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import type { Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
-import {
-	getRideShareTours,
-	type RideShareTour
-} from '$lib/server/rideShareBooking/getRideShareTours';
+import { getRideShareTours } from '$lib/server/rideShareBooking/getRideShareTours';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/rideShareBooking/evaluateRequest';
 import { getMergeTourList } from './getMergeTourList';
@@ -15,7 +12,6 @@ import { bookingLogs, increment } from '$lib/testHelpers';
 import type { Insertion } from './insertion';
 import { comesFromCompany, returnsToCompany } from './durations';
 import { getScheduledTimes, type ScheduledTimes } from './getScheduledTimes';
-import { DAY } from '$lib/util/time';
 import { printInsertionType } from '../booking/insertionTypes';
 
 export type ExpectedConnection = {

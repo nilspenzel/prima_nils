@@ -9,10 +9,7 @@ import {
 	type WhitelistRequest
 } from './WhitelistRequest';
 import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
-import {
-	toInsertionWithISOStrings as toRideShareInsertionWithISOStrings,
-	type Insertion as RideShareInsertion
-} from '$lib/server/rideShareBooking/insertion';
+import { type Insertion as RideShareInsertion } from '$lib/server/rideShareBooking/insertion';
 import { assertArraySizes } from '$lib/testHelpers';
 import { whitelistRideShare } from './whitelistRideShare';
 

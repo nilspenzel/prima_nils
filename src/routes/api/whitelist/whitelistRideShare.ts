@@ -1,6 +1,5 @@
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { getRideShareTours } from '$lib/server/rideShareBooking/getRideShareTours';
-import { MAX_TRAVEL } from '$lib/constants';
 import { Interval } from '$lib/util/interval';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/rideShareBooking/evaluateRequest';

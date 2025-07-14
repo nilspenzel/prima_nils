@@ -1,4 +1,4 @@
-import { addTestUser, clearDatabase } from '$lib/testHelpers';
+import { addTestUser, clearDatabase, getRideShareTours } from '$lib/testHelpers';
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { createSession } from '$lib/server/auth/session';
 import { black, inXMinutes, white } from '../util';
@@ -86,6 +86,11 @@ describe('Whitelist and Booking API Tests for RideSharing', () => {
 			connection2: null,
 			capacities
 		};
-		const bookingResponse = await rideShareApi(bookingBody, mockUserId, false, 0, 0, 0);
+
+		await rideShareApi(bookingBody, mockUserId, false, 0, 0, 0);
+		const tours = await getRideShareTours();
+		expect(tours.length).toBe(1);
+		expect(tours[0].requests.length).toBe(2);
+		expect(tours[0].requests[0].customer).toBe(mockUserId);
 	});
 });
