@@ -153,6 +153,7 @@ export const clearDatabase = async () => {
 	await db.deleteFrom('request').execute();
 	await db.deleteFrom('journey').execute();
 	await db.deleteFrom('tour').execute();
+	await db.deleteFrom('ride_share_tour').execute();
 	await db.deleteFrom('vehicle').execute();
 	await db.deleteFrom('session').execute();
 	await db.deleteFrom('user').execute();
@@ -174,6 +175,26 @@ export const getTours = async () => {
 				eb
 					.selectFrom('request')
 					.whereRef('request.tour', '=', 'tour.id')
+					.selectAll()
+					.select((eb) => [
+						jsonArrayFrom(
+							eb.selectFrom('event').whereRef('event.request', '=', 'request.id').selectAll()
+						).as('events')
+					])
+			).as('requests')
+		])
+		.execute();
+};
+
+export const getRideShareTours = async () => {
+	return await db
+		.selectFrom('ride_share_tour')
+		.selectAll()
+		.select((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom('request')
+					.whereRef('request.rideShareTour', '=', 'ride_share_tour.id')
 					.selectAll()
 					.select((eb) => [
 						jsonArrayFrom(

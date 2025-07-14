@@ -87,7 +87,8 @@ export interface Database {
 		wheelchairs: number;
 		bikes: number;
 		luggage: number;
-		tour: number;
+		tour: number | null;
+		rideShareTour: number | null;
 		customer: number;
 		ticketCode: string;
 		ticketChecked: boolean;
@@ -107,6 +108,18 @@ export interface Database {
 		deviceId: string;
 		company: number;
 		fcmToken: string;
+	};
+	ride_share_tour: {
+		id: Generated<number>;
+		passengers: number;
+		luggage: number;
+		cancelled: boolean;
+		message: string | null;
+		provider: number;
+		scheduledStartTime: number;
+		scheduledEndTime: number;
+		communicatedStartTime: number;
+		communicatedEndTime: number;
 	};
 }
 
