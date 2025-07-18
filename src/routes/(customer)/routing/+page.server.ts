@@ -1,7 +1,4 @@
-import {
-	toExpectedConnectionWithISOStrings,
-	type ExpectedConnection
-} from '$lib/server/booking/bookRide';
+import { toExpectedConnectionWithISOStrings } from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { db } from '$lib/server/db';
 import { readInt } from '$lib/server/util/readForm';
@@ -15,6 +12,7 @@ import type { SignedItinerary } from '$lib/planAndSign';
 import { sql } from 'kysely';
 import type { PageServerLoad } from './$types';
 import Prom from 'prom-client';
+import { expectedConnectionFromLeg } from '$lib/expectedConnectionFromLeg';
 
 let booking_errors: Prom.Counter | undefined;
 let booking_attempts: Prom.Counter | undefined;
@@ -30,23 +28,6 @@ try {
 	});
 } catch {
 	/* ignored */
-}
-
-function expectedConnectionFromLeg(
-	leg: Leg,
-	signature: string | undefined,
-	startFixed: boolean
-): ExpectedConnection | null {
-	return signature
-		? {
-				start: { lat: leg.from.lat, lng: leg.from.lon, address: leg.from.name },
-				target: { lat: leg.to.lat, lng: leg.to.lon, address: leg.to.name },
-				startTime: new Date(leg.startTime).getTime(),
-				targetTime: new Date(leg.endTime).getTime(),
-				signature,
-				startFixed
-			}
-		: null;
 }
 
 export const actions = {

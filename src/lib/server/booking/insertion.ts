@@ -225,7 +225,12 @@ export function evaluateSingleInsertion(
 		promisedTimes != undefined &&
 		!keepsPromises(insertionCase, arrivalWindow, passengerDuration, promisedTimes)
 	) {
-		console.log('Promise not kept', printInsertionType(insertionCase));
+		console.log(
+			'Promise not kept',
+			printInsertionType(insertionCase),
+			{ prev: prev?.id },
+			{ next: next?.id }
+		);
 		return undefined;
 	}
 	const taxiDurationDelta =
@@ -364,7 +369,9 @@ export function evaluateBothInsertion(
 			{ busStopWindow: busStopWindow?.toString() },
 			{ prevLegDuration: prevLegDuration.toString() },
 			{ nextLegDuration: nextLegDuration.toString() },
-			{ allowedTimes: allowedTimes.toString() }
+			{ allowedTimes: allowedTimes.toString() },
+			{ prev: prev?.id },
+			{ next: next?.id }
 		);
 		return undefined;
 	}
@@ -372,7 +379,13 @@ export function evaluateBothInsertion(
 		promisedTimes != undefined &&
 		!keepsPromises(insertionCase, arrivalWindow, passengerDuration, promisedTimes)
 	) {
-		console.log('promise not kept', promisedTimes);
+		console.log(
+			'promise not kept',
+			promisedTimes,
+			printInsertionType(insertionCase),
+			{ prev: prev?.id },
+			{ next: next?.id }
+		);
 		return undefined;
 	}
 	const taxiDurationDelta =

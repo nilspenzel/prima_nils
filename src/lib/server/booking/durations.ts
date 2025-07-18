@@ -167,8 +167,8 @@ export function getArrivalWindow(
 ): Interval | undefined {
 	const directWindows = Interval.intersect(
 		allowedTimes,
-		windows // restrict interval by and additional millisecond on each side to avoid exactly equal timestamps for consecutive events
-			.map((window) => window.shrink(prevLegDuration + 1, 1 + nextLegDuration))
+		windows
+			.map((window) => window.shrink(prevLegDuration, nextLegDuration))
 			.filter((window) => window != undefined)
 	);
 

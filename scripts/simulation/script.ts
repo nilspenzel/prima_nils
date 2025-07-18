@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import 'dotenv/config';
-import { bookingApi } from '../../src/lib/server/booking/bookingApi';
+import { bookingApi, BookingParameters } from '../../src/lib/server/booking/bookingApi';
 import { cancelRequest } from '../../src/lib/server/db/cancelRequest';
 import { moveTour } from '../../src/lib/server/moveTour';
 import { addAvailability } from '../../src/lib/server/addAvailability';
@@ -21,6 +21,11 @@ import path from 'path';
 import { white } from '../../src/lib/server/booking/tests/util';
 import type { ToursWithRequests } from '../../src/lib/util/getToursTypes';
 import { getCost } from '../../src/lib/testHelpers';
+import { MAX_MATCHING_DISTANCE } from '../../src/lib/constants';
+import { PlanData } from '../../src/lib/openapi';
+import { planAndSign } from '../../src/lib/planAndSign';
+import { lngLatToStr } from '../../src/lib/util/lngLatToStr';
+import { expectedConnectionFromLeg } from '../../src/lib/expectedConnectionFromLeg';
 
 const BACKUP_DIR = './scripts/simulation/backups/';
 
@@ -117,6 +122,80 @@ const getAction = (r: number) => {
 	return undefined;
 };
 
+async function bookingFull(
+	coordinates: Coordinates[],
+	restricted: Coordinates[] | undefined,
+	compareCosts?: boolean
+) {
+	const parameters = await generateBookingParameters(coordinates, restricted);
+	const potentialKids = parameters.capacities.passengers - 1;
+	const kidsZeroToTwo = randomInt(0, potentialKids);
+	const kidsThreeToFour = randomInt(0, potentialKids - kidsZeroToTwo);
+	const kidsFiveToSix = randomInt(0, potentialKids - kidsThreeToFour);
+
+	const q = {
+		query: {
+			time: new Date(
+				parameters.connection1.startFixed
+					? parameters.connection1.startTime
+					: parameters.connection1.targetTime
+			).toISOString(),
+			arriveBy: !parameters.connection1.startFixed,
+			fromPlace: lngLatToStr(parameters.connection1.start),
+			toPlace: lngLatToStr(parameters.connection1.target),
+			preTransitModes: ['WALK', 'ODM'],
+			postTransitModes: ['WALK', 'ODM'],
+			directModes: ['WALK', 'ODM'],
+			luggage: parameters.capacities.luggage,
+			fastestDirectFactor: 1.6,
+			maxMatchingDistance: MAX_MATCHING_DISTANCE,
+			maxTravelTime: 1440,
+			passengers: parameters.capacities.passengers
+		}
+	} as PlanData;
+	const planResponse = await planAndSign(q, 'http://localhost:5173');
+	if (planResponse === undefined) {
+		console.log('PlanResponse was undefined.');
+		return true;
+	}
+	const odmItineraries = planResponse.itineraries.filter((i) =>
+		i.legs.some((l) => l.mode === 'ODM')
+	);
+	if (odmItineraries.length === 0) {
+		console.log('There were no ODM-itineraries.');
+		return false;
+	}
+	const choice = randomInt(0, odmItineraries.length);
+	const chosenItinerary = odmItineraries[choice];
+	console.log('chose itinerary #', choice, JSON.stringify(chosenItinerary, null, 2));
+	const firstOdmIndex = chosenItinerary.legs.findIndex((l) => l.mode === 'ODM');
+	const lastOdmIndex = findLastIndex(chosenItinerary.legs, (l) => l.mode === 'ODM');
+	if (firstOdmIndex === -1) {
+		console.log('OdmLeg was undefined.');
+		return true;
+	}
+	const firstOdm = chosenItinerary.legs[firstOdmIndex];
+	const lastOdm = chosenItinerary.legs[lastOdmIndex];
+	const isDirect = chosenItinerary.legs.length === 1;
+	const connection1 = expectedConnectionFromLeg(
+		firstOdm,
+		chosenItinerary.signature1,
+		isDirect ? parameters.connection1.startFixed : firstOdmIndex !== 0
+	);
+	const connection2 =
+		firstOdmIndex === lastOdmIndex
+			? null
+			: expectedConnectionFromLeg(lastOdm, chosenItinerary.signature2, true);
+	return await bookingApiCall(
+		{ capacities: parameters.capacities, connection1, connection2 },
+		kidsZeroToTwo,
+		kidsThreeToFour,
+		kidsFiveToSix,
+		true,
+		compareCosts
+	);
+}
+
 async function booking(
 	coordinates: Coordinates[],
 	restricted: Coordinates[] | undefined,
@@ -150,6 +229,24 @@ async function booking(
 		parameters.connection1.startTime = whiteResponse.direct[0]!.pickupTime;
 		parameters.connection1.targetTime = whiteResponse.direct[0]!.dropoffTime;
 	}
+	return await bookingApiCall(
+		parameters,
+		kidsZeroToTwo,
+		kidsThreeToFour,
+		kidsFiveToSix,
+		doWhitelist,
+		compareCosts
+	);
+}
+
+async function bookingApiCall(
+	parameters: BookingParameters,
+	kidsZeroToTwo: number,
+	kidsThreeToFour: number,
+	kidsFiveToSix: number,
+	doWhitelist?: boolean,
+	compareCosts?: boolean
+) {
 	let toursBefore: ToursWithRequests = [];
 	if (compareCosts) {
 		toursBefore = await getToursWithRequests(false);
@@ -158,7 +255,7 @@ async function booking(
 		parameters,
 		1,
 		true,
-		kidsThreeToFour,
+		kidsZeroToTwo,
 		kidsThreeToFour,
 		kidsFiveToSix,
 		!(doWhitelist ?? false)
@@ -170,7 +267,9 @@ async function booking(
 		const t = toursAfter.filter((t) => t.requests.some((r) => r.requestId === requestId));
 		if (t.length !== 1) {
 			console.log(`Found ${t.length} tours containing the new request.`);
-			fail = true;
+			if (doWhitelist) {
+				return true;
+			}
 		}
 		const newTour = t[0];
 		const oldTours: ToursWithRequests = toursBefore.filter((t) =>
@@ -272,6 +371,7 @@ export async function simulation(params: {
 	finishTime?: number;
 	whitelist?: boolean;
 	cost?: boolean;
+	full?: boolean;
 }): Promise<boolean> {
 	async function mainLoop(i: number) {
 		const r = Math.random();
@@ -288,8 +388,14 @@ export async function simulation(params: {
 		try {
 			switch (action.action) {
 				case Action.BOOKING:
-					if (await booking(coordinates, restrictedCoordinates, params.whitelist, params.cost)) {
-						return true;
+					if (params.full) {
+						if (await bookingFull(coordinates, restrictedCoordinates, params.cost)) {
+							return true;
+						}
+					} else {
+						if (await booking(coordinates, restrictedCoordinates, params.whitelist, params.cost)) {
+							return true;
+						}
 					}
 					break;
 				case Action.CANCEL_REQUEST:
@@ -401,13 +507,16 @@ async function main() {
 	let backups = false;
 	let whitelist = false;
 	let cost = false;
-
+	let full = false;
 	for (const arg of process.argv) {
 		if (arg === '--health') {
 			healthChecks = true;
 		}
 		if (arg === '--wl') {
 			whitelist = true;
+		}
+		if (arg === '--full') {
+			full = true;
 		}
 		if (arg === '--cost') {
 			cost = true;
@@ -443,9 +552,19 @@ async function main() {
 		logHelp();
 		process.exit(0);
 	}
-	simulation({ backups, healthChecks, restrict, ongoing, runs, finishTime, whitelist, cost });
+	simulation({ backups, healthChecks, restrict, ongoing, runs, finishTime, whitelist, cost, full });
 }
 main().catch((err) => {
 	console.error(err);
 	process.exit(1);
 });
+
+function findLastIndex<T>(
+	arr: T[],
+	predicate: (value: T, index: number, array: T[]) => boolean
+): number {
+	for (let i = arr.length - 1; i >= 0; i--) {
+		if (predicate(arr[i], i, arr)) return i;
+	}
+	return -1;
+}

@@ -74,6 +74,16 @@ export async function bookingApi(
 		};
 	}
 	if (!isLocalhost && (isSignatureInvalid(p.connection1) || isSignatureInvalid(p.connection2))) {
+		console.log(
+			'Attempt to book with invalid signature.',
+			JSON.stringify(p, null, 2),
+			JSON.stringify(customer, null, 2),
+			JSON.stringify(isLocalhost, null, 2),
+			JSON.stringify(kidsZeroToTwo, null, 2),
+			JSON.stringify(kidsThreeToFour, null, 2),
+			JSON.stringify(kidsFiveToSix, null, 2),
+			JSON.stringify(skipPromiseCheck, null, 2)
+		);
 		return { status: 403 };
 	}
 	let request1Id: number | undefined = undefined;
@@ -138,7 +148,7 @@ export async function bookingApi(
 						secondConnection!.tour = newTour;
 					}
 				}
-				if (firstConnection != null) {
+				if (firstConnection !== null && firstConnection !== undefined) {
 					request1Id =
 						(await insertRequest(
 							firstConnection.best,
@@ -157,7 +167,7 @@ export async function bookingApi(
 							trx
 						)) ?? null;
 				}
-				if (secondConnection != null) {
+				if (secondConnection != null && secondConnection !== undefined) {
 					request2Id =
 						(await insertRequest(
 							secondConnection.best,
