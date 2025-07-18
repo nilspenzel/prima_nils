@@ -62,7 +62,7 @@ export async function bookRide(
 	const { companies, filteredBusStops } = await getBookingAvailability(
 		userChosen,
 		required,
-		searchInterval,
+		expandedSearchInterval,
 		[busStop],
 		trx
 	);
