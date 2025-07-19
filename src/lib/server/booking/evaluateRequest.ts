@@ -43,7 +43,7 @@ export async function evaluateRequest(
 		{ required },
 		{ startFixed },
 		{ promisedTimes }
-	);
+	); // userChosen: { lat: 51.496103, lng: 14.7953534, addre
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}

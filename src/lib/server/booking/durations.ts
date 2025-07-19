@@ -78,11 +78,19 @@ export const getNextLegDuration = (
 			relevantRoutingResults = routingResults.busStops.fromBusStop[busStopIdx!];
 			break;
 	}
+	if (
+		insertionCase.how === InsertHow.APPEND &&
+		busStopIdx === 0 &&
+		insertionInfo.insertionIdx === 5 &&
+		insertionCase.what === InsertWhat.BOTH
+	) {
+		console.log('stuff7', { relevantRoutingResults });
+	} //ation: 1843000 } { nextLegDuration: 1007000
 	return returnsToCompany(insertionCase)
 		? relevantRoutingResults.company[insertionInfo.companyIdx]
 		: relevantRoutingResults.event[insertionInfo.insertionIdx];
 };
-
+//1116000
 export function getAllowedOperationTimes(
 	insertionCase: InsertionType,
 	prev: Event | undefined,
@@ -180,6 +188,9 @@ export function getArrivalWindow(
 			)
 		)
 		.filter((window) => window != undefined);
+	if (insertionCase.how === InsertHow.APPEND && prevLegDuration === 157000) {
+		console.log('stuff5', { nextLegDuration });
+	}
 	if (busStopWindow != undefined) {
 		arrivalWindows = arrivalWindows
 			.map((window) => busStopWindow.intersect(window))

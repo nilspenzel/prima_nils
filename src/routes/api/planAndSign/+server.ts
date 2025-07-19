@@ -7,6 +7,17 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 
 export const POST = async (event: RequestEvent) => {
 	const q: PlanData = await event.request.json();
+	console.log(
+		'thingstuff',
+		(
+			await plan({
+				baseUrl: env.PUBLIC_MOTIS_URL,
+				querySerializer: { array: { explode: false } } as QuerySerializerOptions,
+				query: q.query
+			})
+		).request.url,
+		{ q: JSON.stringify(q, null, 2) }
+	);
 	const response = (
 		await plan({
 			baseUrl: env.PUBLIC_MOTIS_URL,

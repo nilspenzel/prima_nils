@@ -132,7 +132,11 @@ async function bookingFull(
 	const kidsZeroToTwo = randomInt(0, potentialKids);
 	const kidsThreeToFour = randomInt(0, potentialKids - kidsZeroToTwo);
 	const kidsFiveToSix = randomInt(0, potentialKids - kidsThreeToFour);
-
+	console.log(
+		'SimLOGS',
+		{ fromPlace: lngLatToStr(parameters.connection1.start) },
+		{ toPlace: lngLatToStr(parameters.connection1.target) }
+	);
 	const q = {
 		query: {
 			time: new Date(
@@ -181,6 +185,11 @@ async function bookingFull(
 		firstOdm,
 		chosenItinerary.signature1,
 		isDirect ? parameters.connection1.startFixed : firstOdmIndex !== 0
+	);
+	console.log(
+		'SimLOGS',
+		{ firstOdmStart: connection1?.start },
+		{ firstOdmTarget: connection1?.target }
 	);
 	const connection2 =
 		firstOdmIndex === lastOdmIndex

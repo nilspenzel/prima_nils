@@ -28,6 +28,7 @@
 		"restore": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/restore.ts",
 		"reset": "scripts/reproduce/reset-db.sh",
 		"book": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callBookingApi.ts",
+		"white": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callWhitelist.ts",
 		"move": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callMoveTour.ts",
 		"cancelr": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callCancelRequest.ts",
 		"cancelt": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callCancelTour.ts",

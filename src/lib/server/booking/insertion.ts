@@ -342,6 +342,9 @@ export function evaluateBothInsertion(
 		insertionInfo,
 		busStopIdx
 	);
+	if (insertionCase.how === InsertHow.APPEND && prev?.id === 28 && next?.id === 55) {
+		console.log('stuff6', { busStopIdx }, insertionInfo.insertionIdx);
+	} //ation: 1843000 } { nextLegDuration: 1007000
 	if (
 		prevLegDuration == undefined ||
 		nextLegDuration == undefined ||
@@ -728,6 +731,7 @@ export function evaluateSingleInsertions(
 			for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
 				for (let busTimeIdx = 0; busTimeIdx != busStopTimes[busStopIdx].length; ++busTimeIdx) {
 					insertionCase.what = InsertWhat.BOTH;
+
 					const resultBoth = evaluateBothInsertion(
 						insertionCase,
 						windows,
