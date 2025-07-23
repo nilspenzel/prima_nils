@@ -7,6 +7,7 @@ import { db, type Database } from '$lib/server/db';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { covers } from '$lib/server/db/covers';
 import { DAY } from '$lib/util/time';
+import { sortEventsByTime } from '$lib/testHelpers';
 
 const selectEvents = (eb: ExpressionBuilder<Database, 'tour'>) => {
 	return jsonArrayFrom(
@@ -153,7 +154,7 @@ const createVehicle = (v: DbVehicle, expandedSearchInterval: Interval) => {
 				departure: tour.departure
 			};
 		}),
-		events: tours.flatMap((t) => t.events.map((e) => createEvent(e))),
+		events: tours.flatMap((t) => sortEventsByTime(t.events.map((e) => createEvent(e)))),
 		lastEventBefore:
 			toursBefore.length == 0
 				? undefined

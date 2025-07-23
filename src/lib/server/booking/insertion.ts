@@ -30,7 +30,7 @@ import type { Company, Event } from './getBookingAvailability';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { isValid } from '$lib/util/booking/getPossibleInsertions';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
-import { roundToUnit, MINUTE } from '$lib/util/time';
+import { roundToUnit, MINUTE, HOUR } from '$lib/util/time';
 import { iterateAllInsertions } from './iterateAllInsertions';
 import { type Range } from '$lib/util/booking/getPossibleInsertions';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
@@ -1190,8 +1190,8 @@ const keepsPromises = (
 ): boolean => {
 	const expandToFullMinutes = (interval: Interval) => {
 		return new Interval(
-			roundToUnit(interval.startTime, MINUTE, Math.floor),
-			roundToUnit(interval.endTime, MINUTE, Math.ceil)
+			roundToUnit(interval.startTime, MINUTE, Math.floor) - MINUTE,
+			roundToUnit(interval.endTime, MINUTE, Math.ceil) + MINUTE
 		);
 	};
 	const shift = insertionCase.what === InsertWhat.BOTH ? directDuration : 0;

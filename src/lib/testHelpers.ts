@@ -300,13 +300,26 @@ export function getCost(tour: TourWithRequests) {
 }
 
 export function sortEventsByTime<
-	T extends { scheduledTimeStart: number; scheduledTimeEnd: number }[]
+	T extends {
+		scheduledTimeStart: number;
+		scheduledTimeEnd: number;
+		prevLegDuration: number;
+		nextLegDuration: number;
+	}[]
 >(events: T): T {
 	return events.sort((a, b) => {
 		const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
 		if (startDiff !== 0) {
 			return startDiff;
 		}
-		return a.scheduledTimeEnd - b.scheduledTimeEnd;
+		const endDiff = a.scheduledTimeEnd - b.scheduledTimeEnd;
+		if (endDiff !== 0) {
+			return endDiff;
+		}
+		const nextLegDiff = b.nextLegDuration - a.nextLegDuration;
+		if (nextLegDiff !== 0) {
+			return nextLegDiff;
+		}
+		return b.prevLegDuration - a.prevLegDuration;
 	});
 }

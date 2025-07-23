@@ -10,6 +10,7 @@ import {
 } from './WhitelistRequest';
 import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
 import { assertArraySizes } from '$lib/testHelpers';
+import { printInsertionType } from '$lib/server/booking/insertionTypes';
 
 export type WhitelistResponse = {
 	start: (Insertion | undefined)[][];
@@ -74,6 +75,36 @@ export async function POST(event: RequestEvent) {
 	console.log(
 		'WHITELIST RESPONSE: ',
 		JSON.stringify(toWhitelistResponseWithISOStrings(response), null, '\t')
+	);
+	console.log(
+		'thingstuff',
+		JSON.stringify(
+			response.direct.map(
+				(val, idx) =>
+					new Date(p.directTimes[idx]).toISOString() +p.startFixed+
+					' ' +
+					(val === undefined
+						? undefined
+						: val.cost +
+					' pickuptime: ' + new Date(val.pickupTime).toISOString()+
+					' dropofftime: ' + new Date(val.dropoffTime).toISOString()+
+					' pickuptimeScheduled: ' + new Date(val.scheduledPickupTime).toISOString()+
+					' dropofftimeScheduled: ' + new Date(val.scheduledDropoffTime).toISOString()+
+							' pickupcase: ' +
+							printInsertionType(val.pickupCase) +
+							' dropoffcase:' +
+							printInsertionType(val.dropoffCase) +
+							' ' +
+							' wait ' +
+							val.taxiWaitingTime +
+							' drive ' +
+							val.taxiDuration +
+							' passenger ' +
+							val.passengerDuration + ' prev: ' + val.prevPickupId + 'next: ' + val.nextPickupId)
+			),
+			null,
+			2
+		)
 	);
 	return json(response);
 }
