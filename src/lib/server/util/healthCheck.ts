@@ -166,9 +166,6 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 					);
 					fail = true;
 				}
-				if(event1.scheduledTimeStart === event2.scheduledTimeEnd || event1.scheduledTimeEnd === event2.scheduledTimeStart) {
-					console.log("events do TOUCH, ", event1.id, event2.id)
-				}
 			}
 		}
 		for (let tourId2 = tourId1 + 1; tourId2 != tours.length; ++tourId2) {
