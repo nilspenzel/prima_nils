@@ -1,11 +1,12 @@
 import { getToursWithRequests } from '../db/getTours';
-import type { ToursWithRequests, TourWithRequestsEvent } from '$lib/util/getToursTypes';
+import type { Tours, ToursWithRequests, TourWithRequestsEvent } from '$lib/util/getToursTypes';
 import { groupBy } from '../../util/groupBy';
 import { Interval } from '../../util/interval';
 import { HOUR } from '../../util/time';
 import { isSamePlace } from '../booking/isSamePlace';
 import { PASSENGER_CHANGE_DURATION, SCHEDULED_TIME_BUFFER } from '$lib/constants';
 import { sortEventsByTime } from '$lib/testHelpers';
+import { reverseGeo } from '$lib/server/util/reverseGeocode';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -50,7 +51,7 @@ function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	return fail;
 }
 
-function validateRequestsWithNoEvents(tours: ToursWithRequests): boolean {
+function validateToursWithNoEvents(tours: ToursWithRequests): boolean {
 	let fail = false;
 	console.log('Validating tours with no events...');
 	for (const request of tours.flatMap((t) => t.requests)) {
@@ -164,6 +165,9 @@ function validateEventTimeNoOverlap(tours: ToursWithRequests): boolean {
 						`Overlap detected between eventId ${event1.id} and eventId ${event2.id}, ${new Interval(event1.scheduledTimeStart, event1.scheduledTimeEnd).toString()} and ${new Interval(event2.scheduledTimeStart, event2.scheduledTimeEnd).toString()}`
 					);
 					fail = true;
+				}
+				if(event1.scheduledTimeStart === event2.scheduledTimeEnd || event1.scheduledTimeEnd === event2.scheduledTimeStart) {
+					console.log("events do TOUCH, ", event1.id, event2.id)
 				}
 			}
 		}
@@ -479,6 +483,18 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 	return fail;
 }
 
+async function validateAddressCoordinatesMatch(tours: ToursWithRequests) {
+	let fail = false;
+	console.log('Validating that addresses match coordinates...');
+	for(const event of tours.flatMap((t) => t.requests.flatMap((r) => r.events))) {
+		if(event.address !== await reverseGeo(event)) {
+			console.log('Address does not match for event with id: ', event.id);
+			fail = true;
+		}
+	}
+	return fail;
+}
+
 export async function healthCheck() {
 	const allTours = await getToursWithRequests(true);
 	const uncancelledTours = await getToursWithRequests(false);
@@ -486,7 +502,7 @@ export async function healthCheck() {
 	if (allTours) {
 		console.log('Validating tours...');
 		fail = validateRequestHas2Events(uncancelledTours) ? true : fail;
-		fail = validateRequestsWithNoEvents(uncancelledTours) ? true : fail;
+		fail = validateToursWithNoEvents(uncancelledTours) ? true : fail;
 		fail = validateTourAndRequestCancelled(allTours) ? true : fail;
 		fail = validateEventParameters(uncancelledTours) ? true : fail;
 		fail = validateEventTimeNoOverlap(uncancelledTours) ? true : fail;
@@ -496,6 +512,7 @@ export async function healthCheck() {
 		fail = (await validateDirectDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateLegDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateCompanyDurations(uncancelledTours)) ? true : fail;
+		fail = (await validateAddressCoordinatesMatch(allTours)) ? true : fail;
 	} else {
 		console.log('No tours found or there was an error fetching the data.');
 	}
