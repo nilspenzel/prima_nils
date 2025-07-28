@@ -26,6 +26,7 @@ export type ExpectedConnection = {
 	targetTime: UnixtimeMs;
 	signature: string;
 	startFixed: boolean;
+	requestedTime: UnixtimeMs;
 };
 
 export type ExpectedConnectionWithISoStrings = {
@@ -33,6 +34,7 @@ export type ExpectedConnectionWithISoStrings = {
 	target: Coordinates;
 	startTime: string;
 	targetTime: string;
+	requestedTime: string;
 };
 
 export function toExpectedConnectionWithISOStrings(
@@ -43,7 +45,8 @@ export function toExpectedConnectionWithISOStrings(
 		: {
 				...c,
 				startTime: new Date(c.startTime).toISOString(),
-				targetTime: new Date(c.targetTime).toISOString()
+				targetTime: new Date(c.targetTime).toISOString(),
+				requestedTime: new Date(c.requestedTime).toISOString()
 			};
 }
 
@@ -84,13 +87,12 @@ export async function bookRide(
 			].vehicles.filter((v) => v.id != blockedVehicleId);
 		}
 	}
-	const busTime = c.startFixed ? c.startTime : c.targetTime;
 	const best = (
 		await evaluateRequest(
 			companies,
 			expandedSearchInterval,
 			userChosen,
-			[{ ...busStop, times: [busTime] }],
+			[{ ...busStop, times: [c.requestedTime] }],
 			required,
 			c.startFixed,
 			skipPromiseCheck
@@ -102,7 +104,7 @@ export async function bookRide(
 		)
 	)[0][0];
 	if (best == undefined) {
-		console.log('surprisingly no possible connection found: ', userChosen, busStop, busTime, best);
+		console.log('surprisingly no possible connection found: ', userChosen, busStop, c.requestedTime, best);
 		return undefined;
 	}
 	console.log({ best }, printInsertionType(best.pickupCase), printInsertionType(best.dropoffCase));

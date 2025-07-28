@@ -137,16 +137,35 @@ export const actions = {
 			return { msg: msg('unknownError') };
 		}
 		const isDirect = legs.length === 1;
+
+		// find whitelisting requested time
+		let requestedTime1 = -1;
+		let requestedTime2 = -1;
+		if(isDirect) {
+			if(startFixed) {
+				
+			}
+		} else {
+			const legAdjacentToOdm = firstOdmIndex === 0 ? legs.slice(firstOdmIndex + 1).find((l) => l.mode !== 'WALK') : legs.slice(0, firstOdmIndex).findLast((l) => l.mode !== 'WALK');
+			requestedTime1 = firstOdmIndex === 0 ? new Date(legAdjacentToOdm!.scheduledStartTime).getTime() : new Date(legAdjacentToOdm!.scheduledEndTime).getTime();
+			if(firstOdmIndex !== lastOdmIndex) {
+				const legBeforeOdm = legs.slice(0, firstOdmIndex).findLast((l) => l.mode !== 'WALK');
+				requestedTime2 = new Date(legBeforeOdm!.scheduledStartTime).getTime();
+			}
+		}
+
+
 		console.log({ isDirect }, { startFixed });
 		const connection1 = expectedConnectionFromLeg(
 			firstOdm,
 			parsedJson.signature1,
-			isDirect ? startFixed : firstOdmIndex !== 0
+			isDirect ? startFixed : firstOdmIndex !== 0,
+			requestedTime1
 		);
 		const connection2 =
 			firstOdmIndex === lastOdmIndex
 				? null
-				: expectedConnectionFromLeg(lastOdm, parsedJson.signature2, true);
+				: expectedConnectionFromLeg(lastOdm, parsedJson.signature2, true, requestedTime2);
 
 		console.log(
 			'BOOKING: C1=',

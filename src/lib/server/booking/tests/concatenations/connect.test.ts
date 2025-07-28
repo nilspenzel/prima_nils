@@ -48,7 +48,8 @@ describe('Concatenation tests', () => {
 				roundToUnit(whiteResponse.direct[0].dropoffTime, MINUTE, Math.floor),
 				false
 			),
-			startFixed: false
+			startFixed: false,
+			requestedTime: inXMinutes(45)
 		};
 		const bookingBody = {
 			connection1,
@@ -85,7 +86,8 @@ describe('Concatenation tests', () => {
 				roundToUnit(whiteResponse.direct[0].dropoffTime, MINUTE, Math.floor),
 				true
 			),
-			startFixed: true
+			startFixed: true,
+			requestedTime: inXMinutes(65)
 		};
 		const bookingBody2 = {
 			connection1: connection2,
@@ -122,7 +124,8 @@ describe('Concatenation tests', () => {
 				roundToUnit(whiteResponse.direct[0].dropoffTime, MINUTE, Math.floor),
 				false
 			),
-			startFixed: false
+			startFixed: false,
+			requestedTime: inXMinutes(60)
 		};
 		const bookingBodyConnect = {
 			connection1: connection3,

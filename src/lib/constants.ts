@@ -33,3 +33,4 @@ export const MONTHS = [
 ];
 export const QUARTERS = ['Quartal 1', 'Quartal 2', 'Quartal 3', 'Quartal 4'];
 export const SCHEDULED_TIME_BUFFER = 10 * MINUTE;
+export const DIRECT_FREQUENCY = HOUR;

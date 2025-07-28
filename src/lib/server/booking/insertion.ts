@@ -1154,10 +1154,14 @@ const keepsPromises = (
 		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP ? shift : -shift
 	);
 	const pickupWindow = expandToFullMinutes(
-		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP ? arrivalWindow.shift(-MAX_PASSENGER_WAITING_TIME_PICKUP) : w.shift(-MAX_PASSENGER_WAITING_TIME_PICKUP)
+		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
+			? arrivalWindow.shift(-MAX_PASSENGER_WAITING_TIME_PICKUP)
+			: w.shift(-MAX_PASSENGER_WAITING_TIME_PICKUP)
 	);
 	const dropoffWindow = expandToFullMinutes(
-		insertionCase.direction == InsertDirection.BUS_STOP_DROPOFF ? arrivalWindow.shift(MAX_PASSENGER_WAITING_TIME_PICKUP) : w.shift(MAX_PASSENGER_WAITING_TIME_PICKUP)
+		insertionCase.direction == InsertDirection.BUS_STOP_DROPOFF
+			? arrivalWindow.shift(MAX_PASSENGER_WAITING_TIME_PICKUP)
+			: w.shift(MAX_PASSENGER_WAITING_TIME_PICKUP)
 	);
 
 	let checkPickup = false;

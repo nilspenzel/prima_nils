@@ -4,7 +4,8 @@ import type { ExpectedConnection } from './server/booking/bookRide';
 export function expectedConnectionFromLeg(
 	leg: Leg,
 	signature: string | undefined,
-	startFixed: boolean
+	startFixed: boolean,
+	requestedTime: number
 ): ExpectedConnection | null {
 	return signature
 		? {
@@ -13,7 +14,8 @@ export function expectedConnectionFromLeg(
 				startTime: new Date(leg.startTime).getTime(),
 				targetTime: new Date(leg.endTime).getTime(),
 				signature,
-				startFixed
+				startFixed,
+				requestedTime
 			}
 		: null;
 }

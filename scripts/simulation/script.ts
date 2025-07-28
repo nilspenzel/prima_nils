@@ -21,7 +21,7 @@ import path from 'path';
 import { white } from '../../src/lib/server/booking/tests/util';
 import type { ToursWithRequests } from '../../src/lib/util/getToursTypes';
 import { getCost } from '../../src/lib/testHelpers';
-import { MAX_MATCHING_DISTANCE } from '../../src/lib/constants';
+import { DIRECT_FREQUENCY, MAX_MATCHING_DISTANCE } from '../../src/lib/constants';
 import { PlanData } from '../../src/lib/openapi';
 import { planAndSign } from '../../src/lib/planAndSign';
 import { lngLatToStr } from '../../src/lib/util/lngLatToStr';
@@ -188,10 +188,31 @@ async function bookingFull(
 	const firstOdm = chosenItinerary.legs[firstOdmIndex];
 	const lastOdm = chosenItinerary.legs[lastOdmIndex];
 	const isDirect = chosenItinerary.legs.length === 1;
+
+	let requestedTime1 = -1;
+	let requestedTime2 = -1;
+	if(isDirect) {
+  		const date = new Date(parameters.connection1.startTime);
+  		const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+		if(parameters.connection1.startFixed) {
+			requestedTime1 = midnight + Math.floor((new Date(firstOdm.scheduledStartTime).getTime() - midnight) / DIRECT_FREQUENCY) * DIRECT_FREQUENCY;
+		} else {
+			requestedTime1 = midnight + Math.floor((new Date(firstOdm.scheduledEndTime).getTime() - midnight) / DIRECT_FREQUENCY) * (DIRECT_FREQUENCY + 1);
+		}
+	} else {
+		const legAdjacentToOdm = firstOdmIndex === 0 ? chosenItinerary.legs.slice(firstOdmIndex + 1).find((l) => l.mode !== 'WALK') : chosenItinerary.legs.slice(0, firstOdmIndex).reverse().find((l) => l.mode !== 'WALK');
+		requestedTime1 = firstOdmIndex === 0 ? new Date(legAdjacentToOdm!.scheduledStartTime).getTime() : new Date(legAdjacentToOdm!.scheduledEndTime).getTime();
+		if(firstOdmIndex !== lastOdmIndex) {
+			const legBeforeOdm = chosenItinerary.legs.slice(0, firstOdmIndex).reverse().find((l) => l.mode !== 'WALK');
+			requestedTime2 = new Date(legBeforeOdm!.scheduledStartTime).getTime();
+		}
+	}
+	console.log({isDirect}, {requestedTime1: new Date(requestedTime1).toISOString()}, {startFixed: parameters.connection1.startFixed}, {time: new Date(parameters.connection1.startFixed ? parameters.connection1.startTime : parameters.connection1.endTime).toISOString()});
 	const connection1 = expectedConnectionFromLeg(
 		firstOdm,
 		chosenItinerary.signature1,
-		isDirect ? parameters.connection1.startFixed : firstOdmIndex !== 0
+		isDirect ? parameters.connection1.startFixed : firstOdmIndex !== 0,
+		requestedTime1
 	);
 	console.log(
 		'SimLOGS',
@@ -201,7 +222,7 @@ async function bookingFull(
 	const connection2 =
 		firstOdmIndex === lastOdmIndex
 			? null
-			: expectedConnectionFromLeg(lastOdm, chosenItinerary.signature2, true);
+			: expectedConnectionFromLeg(lastOdm, chosenItinerary.signature2, true, requestedTime2);
 	return await bookingApiCall(
 		{ capacities: parameters.capacities, connection1, connection2 },
 		kidsZeroToTwo,

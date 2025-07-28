@@ -61,14 +61,30 @@ export async function insertRequest(
 			duration: connection.dropoffPrevLegDuration
 		});
 	}
-	console.log({neighbourIds}, {pickupEventGroup}, {dropoffEventGroup},"thingstuff",neighbourIds.prevPickup && neighbourIds.prevPickupGroup === pickupEventGroup && neighbourIds.prevDropoff === undefined)
-	if(neighbourIds.prevPickup && neighbourIds.prevPickupGroup === pickupEventGroup && neighbourIds.prevDropoff === undefined) {
+	console.log(
+		{ neighbourIds },
+		{ pickupEventGroup },
+		{ dropoffEventGroup },
+		'thingstuff',
+		neighbourIds.prevPickup &&
+			neighbourIds.prevPickupGroup === pickupEventGroup &&
+			neighbourIds.prevDropoff === undefined
+	);
+	if (
+		neighbourIds.prevPickup &&
+		neighbourIds.prevPickupGroup === pickupEventGroup &&
+		neighbourIds.prevDropoff === undefined
+	) {
 		nextLegDurations.push({
 			event: neighbourIds.prevPickup,
 			duration: connection.dropoffPrevLegDuration
 		});
 	}
-	if(neighbourIds.nextDropoff && neighbourIds.nextDropoffGroup === dropoffEventGroup && undefined === neighbourIds.nextPickup) {
+	if (
+		neighbourIds.nextDropoff &&
+		neighbourIds.nextDropoffGroup === dropoffEventGroup &&
+		undefined === neighbourIds.nextPickup
+	) {
 		prevLegDurations.push({
 			event: neighbourIds.nextDropoff,
 			duration: connection.pickupNextLegDuration
