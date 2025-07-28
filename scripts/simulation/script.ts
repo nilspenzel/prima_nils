@@ -191,23 +191,54 @@ async function bookingFull(
 
 	let requestedTime1 = -1;
 	let requestedTime2 = -1;
-	if(isDirect) {
-  		const date = new Date(parameters.connection1.startTime);
-  		const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-		if(parameters.connection1.startFixed) {
-			requestedTime1 = midnight + Math.floor((new Date(firstOdm.scheduledStartTime).getTime() - midnight) / DIRECT_FREQUENCY) * DIRECT_FREQUENCY;
+	if (isDirect) {
+		const date = new Date(parameters.connection1.startTime);
+		const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+		if (parameters.connection1.startFixed) {
+			requestedTime1 =
+				midnight +
+				Math.floor(
+					(new Date(firstOdm.scheduledStartTime).getTime() - midnight) / DIRECT_FREQUENCY
+				) *
+					DIRECT_FREQUENCY;
 		} else {
-			requestedTime1 = midnight + Math.floor((new Date(firstOdm.scheduledEndTime).getTime() - midnight) / DIRECT_FREQUENCY) * (DIRECT_FREQUENCY + 1);
+			requestedTime1 =
+				midnight +
+				Math.floor((new Date(firstOdm.scheduledEndTime).getTime() - midnight) / DIRECT_FREQUENCY) *
+					(DIRECT_FREQUENCY + 1);
 		}
 	} else {
-		const legAdjacentToOdm = firstOdmIndex === 0 ? chosenItinerary.legs.slice(firstOdmIndex + 1).find((l) => l.mode !== 'WALK') : chosenItinerary.legs.slice(0, firstOdmIndex).reverse().find((l) => l.mode !== 'WALK');
-		requestedTime1 = firstOdmIndex === 0 ? new Date(legAdjacentToOdm!.scheduledStartTime).getTime() : new Date(legAdjacentToOdm!.scheduledEndTime).getTime();
-		if(firstOdmIndex !== lastOdmIndex) {
-			const legBeforeOdm = chosenItinerary.legs.slice(0, firstOdmIndex).reverse().find((l) => l.mode !== 'WALK');
+		const legAdjacentToOdm =
+			firstOdmIndex === 0
+				? chosenItinerary.legs.slice(firstOdmIndex + 1).find((l) => l.mode !== 'WALK')
+				: chosenItinerary.legs
+						.slice(0, firstOdmIndex)
+						.reverse()
+						.find((l) => l.mode !== 'WALK');
+		requestedTime1 =
+			firstOdmIndex === 0
+				? new Date(legAdjacentToOdm!.scheduledStartTime).getTime()
+				: new Date(legAdjacentToOdm!.scheduledEndTime).getTime();
+		if (firstOdmIndex !== lastOdmIndex) {
+			const legBeforeOdm = chosenItinerary.legs
+				.slice(0, firstOdmIndex)
+				.reverse()
+				.find((l) => l.mode !== 'WALK');
 			requestedTime2 = new Date(legBeforeOdm!.scheduledStartTime).getTime();
 		}
 	}
-	console.log({isDirect}, {requestedTime1: new Date(requestedTime1).toISOString()}, {startFixed: parameters.connection1.startFixed}, {time: new Date(parameters.connection1.startFixed ? parameters.connection1.startTime : parameters.connection1.endTime).toISOString()});
+	console.log(
+		{ isDirect },
+		{ requestedTime1: new Date(requestedTime1).toISOString() },
+		{ startFixed: parameters.connection1.startFixed },
+		{
+			time: new Date(
+				parameters.connection1.startFixed
+					? parameters.connection1.startTime
+					: parameters.connection1.endTime
+			).toISOString()
+		}
+	);
 	const connection1 = expectedConnectionFromLeg(
 		firstOdm,
 		chosenItinerary.signature1,
@@ -245,16 +276,14 @@ async function booking(
 	const kidsThreeToFour = randomInt(0, potentialKids - kidsZeroToTwo);
 	const kidsFiveToSix = randomInt(0, potentialKids - kidsThreeToFour);
 	const requestedTime = parameters.connection1.startFixed
-				? parameters.connection1.startTime
-				: parameters.connection1.targetTime;
+		? parameters.connection1.startTime
+		: parameters.connection1.targetTime;
 	const body = JSON.stringify({
 		start: parameters.connection1.start,
 		target: parameters.connection1.target,
 		startBusStops: [],
 		targetBusStops: [],
-		directTimes: [
-			requestedTime
-		],
+		directTimes: [requestedTime],
 		startFixed: parameters.connection1.startFixed,
 		capacities: parameters.capacities
 	});

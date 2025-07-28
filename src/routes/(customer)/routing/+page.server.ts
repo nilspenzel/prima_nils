@@ -13,6 +13,7 @@ import { sql } from 'kysely';
 import type { PageServerLoad } from './$types';
 import Prom from 'prom-client';
 import { expectedConnectionFromLeg } from '$lib/expectedConnectionFromLeg';
+import { DIRECT_FREQUENCY } from '$lib/constants';
 
 let booking_errors: Prom.Counter | undefined;
 let booking_attempts: Prom.Counter | undefined;
@@ -141,19 +142,44 @@ export const actions = {
 		// find whitelisting requested time
 		let requestedTime1 = -1;
 		let requestedTime2 = -1;
-		if(isDirect) {
-			if(startFixed) {
-				
+		if (isDirect) {
+			const date = new Date(firstOdm.startTime);
+			const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+			if (startFixed) {
+				requestedTime1 =
+					midnight +
+					Math.floor(
+						(new Date(firstOdm.scheduledStartTime).getTime() - midnight) / DIRECT_FREQUENCY
+					) *
+						DIRECT_FREQUENCY;
+			} else {
+				requestedTime1 =
+					midnight +
+					Math.floor(
+						(new Date(firstOdm.scheduledEndTime).getTime() - midnight) / DIRECT_FREQUENCY
+					) *
+						(DIRECT_FREQUENCY + 1);
 			}
 		} else {
-			const legAdjacentToOdm = firstOdmIndex === 0 ? legs.slice(firstOdmIndex + 1).find((l) => l.mode !== 'WALK') : legs.slice(0, firstOdmIndex).findLast((l) => l.mode !== 'WALK');
-			requestedTime1 = firstOdmIndex === 0 ? new Date(legAdjacentToOdm!.scheduledStartTime).getTime() : new Date(legAdjacentToOdm!.scheduledEndTime).getTime();
-			if(firstOdmIndex !== lastOdmIndex) {
-				const legBeforeOdm = legs.slice(0, firstOdmIndex).findLast((l) => l.mode !== 'WALK');
+			const legAdjacentToOdm =
+				firstOdmIndex === 0
+					? legs.slice(firstOdmIndex + 1).find((l) => l.mode !== 'WALK')
+					: legs
+							.slice(0, firstOdmIndex)
+							.reverse()
+							.find((l) => l.mode !== 'WALK');
+			requestedTime1 =
+				firstOdmIndex === 0
+					? new Date(legAdjacentToOdm!.scheduledStartTime).getTime()
+					: new Date(legAdjacentToOdm!.scheduledEndTime).getTime();
+			if (firstOdmIndex !== lastOdmIndex) {
+				const legBeforeOdm = legs
+					.slice(0, firstOdmIndex)
+					.reverse()
+					.find((l) => l.mode !== 'WALK');
 				requestedTime2 = new Date(legBeforeOdm!.scheduledStartTime).getTime();
 			}
 		}
-
 
 		console.log({ isDirect }, { startFixed });
 		const connection1 = expectedConnectionFromLeg(

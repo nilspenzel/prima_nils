@@ -104,7 +104,13 @@ export async function bookRide(
 		)
 	)[0][0];
 	if (best == undefined) {
-		console.log('surprisingly no possible connection found: ', userChosen, busStop, c.requestedTime, best);
+		console.log(
+			'surprisingly no possible connection found: ',
+			userChosen,
+			busStop,
+			c.requestedTime,
+			best
+		);
 		return undefined;
 	}
 	console.log({ best }, printInsertionType(best.pickupCase), printInsertionType(best.dropoffCase));
