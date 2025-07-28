@@ -61,15 +61,6 @@ export async function insertRequest(
 			duration: connection.dropoffPrevLegDuration
 		});
 	}
-	console.log(
-		{ neighbourIds },
-		{ pickupEventGroup },
-		{ dropoffEventGroup },
-		'thingstuff',
-		neighbourIds.prevPickup &&
-			neighbourIds.prevPickupGroup === pickupEventGroup &&
-			neighbourIds.prevDropoff === undefined
-	);
 	if (
 		neighbourIds.prevPickup &&
 		neighbourIds.prevPickupGroup === pickupEventGroup &&

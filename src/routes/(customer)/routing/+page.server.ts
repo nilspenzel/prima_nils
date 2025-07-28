@@ -13,7 +13,7 @@ import { sql } from 'kysely';
 import type { PageServerLoad } from './$types';
 import Prom from 'prom-client';
 import { expectedConnectionFromLeg } from '$lib/expectedConnectionFromLeg';
-import { DIRECT_FREQUENCY } from '$lib/constants';
+import { DIRECT_FREQUENCY, SCHEDULED_TIME_BUFFER } from '$lib/constants';
 
 let booking_errors: Prom.Counter | undefined;
 let booking_attempts: Prom.Counter | undefined;
@@ -149,14 +149,14 @@ export const actions = {
 				requestedTime1 =
 					midnight +
 					Math.floor(
-						(new Date(firstOdm.scheduledStartTime).getTime() - midnight) / DIRECT_FREQUENCY
+						(new Date(firstOdm.scheduledStartTime).getTime() + SCHEDULED_TIME_BUFFER - midnight) / DIRECT_FREQUENCY
 					) *
 						DIRECT_FREQUENCY;
 			} else {
 				requestedTime1 =
 					midnight +
 					Math.floor(
-						(new Date(firstOdm.scheduledEndTime).getTime() - midnight) / DIRECT_FREQUENCY
+						(new Date(firstOdm.scheduledEndTime).getTime() - SCHEDULED_TIME_BUFFER - midnight) / DIRECT_FREQUENCY
 					) *
 						(DIRECT_FREQUENCY + 1);
 			}
