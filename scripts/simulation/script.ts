@@ -244,15 +244,16 @@ async function booking(
 	const kidsZeroToTwo = randomInt(0, potentialKids);
 	const kidsThreeToFour = randomInt(0, potentialKids - kidsZeroToTwo);
 	const kidsFiveToSix = randomInt(0, potentialKids - kidsThreeToFour);
+	const requestedTime = parameters.connection1.startFixed
+				? parameters.connection1.startTime
+				: parameters.connection1.targetTime;
 	const body = JSON.stringify({
 		start: parameters.connection1.start,
 		target: parameters.connection1.target,
 		startBusStops: [],
 		targetBusStops: [],
 		directTimes: [
-			parameters.connection1.startFixed
-				? parameters.connection1.startTime
-				: parameters.connection1.targetTime
+			requestedTime
 		],
 		startFixed: parameters.connection1.startFixed,
 		capacities: parameters.capacities
@@ -265,6 +266,7 @@ async function booking(
 		}
 		parameters.connection1.startTime = whiteResponse.direct[0]!.pickupTime;
 		parameters.connection1.targetTime = whiteResponse.direct[0]!.dropoffTime;
+		parameters.connection1.requestedTime = requestedTime;
 	}
 	return await bookingApiCall(
 		parameters,
