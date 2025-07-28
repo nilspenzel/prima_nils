@@ -3,7 +3,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import type { Database } from '$lib/server/db';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
-import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
+import { getBookingAvailability, type Event } from '$lib/server/booking/getBookingAvailability';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
 import { getDirectDurations, type DirectDrivingDurations } from './getDirectDrivingDurations';
@@ -11,12 +11,13 @@ import { getMergeTourList } from './getMergeTourList';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { printInsertionType } from './insertionTypes';
 import { bookingLogs, increment } from '$lib/testHelpers';
-import type { Insertion } from './insertion';
+import type { Insertion, NeighbourIds } from './insertion';
 import { comesFromCompany, returnsToCompany } from './durations';
 import { getScheduledTimes, type ScheduledTimes } from './getScheduledTimes';
 import { getLegDurationUpdates } from './getLegDurationUpdates';
 import { DAY } from '$lib/util/time';
 import { getFirstAndLastEvents } from './getFirstAndLastEvents';
+import { isSamePlace } from './isSamePlace';
 
 export type ExpectedConnection = {
 	start: Coordinates;
@@ -62,7 +63,7 @@ export async function bookRide(
 	const { companies, filteredBusStops } = await getBookingAvailability(
 		userChosen,
 		required,
-		searchInterval,
+		expandedSearchInterval,
 		[busStop],
 		trx
 	);
@@ -158,14 +159,14 @@ export async function bookRide(
 
 	let prevEventInOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR
-			? events.findLast((e) => e.scheduledTimeStart <= best.pickupTime)
+			? events.findLast((e) => e.scheduledTimeStart <= best.scheduledPickupTimeStart)
 			: events.find((e) => e.id === best.prevPickupId);
 	if (prevEventInOtherTour === undefined) {
 		prevEventInOtherTour = vehicle.lastEventBefore;
 	}
 	let nextEventInOtherTour =
 		best.pickupCase.how == InsertHow.NEW_TOUR
-			? events.find((e) => e.scheduledTimeEnd >= best.dropoffTime)
+			? events.find((e) => e.scheduledTimeEnd >= best.scheduledDropoffTimeEnd)
 			: events.find((e) => best.nextDropoffId === e.id);
 	if (nextEventInOtherTour === undefined) {
 		nextEventInOtherTour = vehicle.firstEventAfter;
@@ -182,10 +183,10 @@ export async function bookRide(
 		vehicle
 	);
 	const scheduledTimes = getScheduledTimes(
-		best.pickupTime,
-		best.scheduledPickupTime,
-		best.scheduledDropoffTime,
-		best.dropoffTime,
+		best.scheduledPickupTimeStart,
+		best.scheduledPickupTimeEnd,
+		best.scheduledDropoffTimeStart,
+		best.scheduledDropoffTimeEnd,
 		prevPickupEvent,
 		nextPickupEvent,
 		nextDropoffEvent,
@@ -234,6 +235,38 @@ export async function bookRide(
 		}
 	}
 
+	const additionalScheduledTimes = new Array<{ event_id: number; time: number; start: boolean }>();
+	scheduledTimes.updates.forEach((update) => {
+		const firstIdx = events.findIndex((e) => e.id === update.event_id);
+		const lastIdx = events.findLastIndex((e) => e.id === update.event_id);
+		const sameEventGroup = events.slice(firstIdx, lastIdx + 1);
+		sameEventGroup.forEach((event) => {
+			if (event.id === update.event_id) {
+				return;
+			}
+			additionalScheduledTimes.push({ ...update, event_id: event.id });
+		});
+	});
+	scheduledTimes.updates = scheduledTimes.updates.concat(additionalScheduledTimes);
+	let pickupEventGroup = undefined;
+	let dropoffEventGroup = undefined;
+	const pickupInterval = new Interval(best.scheduledPickupTimeStart, best.scheduledPickupTimeEnd);
+	const dropoffInterval = new Interval(
+		best.scheduledDropoffTimeStart,
+		best.scheduledDropoffTimeEnd
+	);
+	if (belongToSameEventGroup(prevPickupEvent, c.start, pickupInterval)) {
+		pickupEventGroup = prevPickupEvent!.eventGroupId;
+	}
+	if (belongToSameEventGroup(nextPickupEvent, c.start, pickupInterval)) {
+		pickupEventGroup = nextPickupEvent!.eventGroupId;
+	}
+	if (belongToSameEventGroup(prevDropoffEvent, c.target, dropoffInterval)) {
+		dropoffEventGroup = prevDropoffEvent!.eventGroupId;
+	}
+	if (belongToSameEventGroup(nextDropoffEvent, c.target, dropoffInterval)) {
+		dropoffEventGroup = nextDropoffEvent!.eventGroupId;
+	}
 	return {
 		best,
 		tour: (() => {
@@ -251,14 +284,24 @@ export async function bookRide(
 		mergeTourList: Array.from(mergeTourList).map((t) => t.tourId),
 		neighbourIds: {
 			prevPickup: best.pickupCase.how == InsertHow.PREPEND ? undefined : prevPickupEvent?.id,
+			prevPickupGroup:
+				best.pickupCase.how == InsertHow.PREPEND ? undefined : prevPickupEvent?.eventGroupId,
 			nextPickup: best.pickupCase.how == InsertHow.APPEND ? undefined : nextPickupEvent?.id,
+			nextPickupGroup:
+				best.pickupCase.how == InsertHow.APPEND ? undefined : nextPickupEvent?.eventGroupId,
 			prevDropoff: best.dropoffCase.how == InsertHow.PREPEND ? undefined : prevDropoffEvent?.id,
-			nextDropoff: best.dropoffCase.how == InsertHow.APPEND ? undefined : nextDropoffEvent?.id
+			prevDropoffGroup:
+				best.dropoffCase.how == InsertHow.PREPEND ? undefined : prevDropoffEvent?.eventGroupId,
+			nextDropoff: best.dropoffCase.how == InsertHow.APPEND ? undefined : nextDropoffEvent?.id,
+			nextDropoffGroup:
+				best.dropoffCase.how == InsertHow.APPEND ? undefined : nextDropoffEvent?.eventGroupId
 		},
 		directDurations,
 		prevLegDurations,
 		nextLegDurations,
-		scheduledTimes
+		scheduledTimes,
+		pickupEventGroup,
+		dropoffEventGroup
 	};
 }
 
@@ -266,14 +309,34 @@ export type BookRideResponse = {
 	best: Insertion;
 	tour: undefined | number;
 	mergeTourList: number[];
-	neighbourIds: {
-		prevPickup: undefined | number;
-		nextPickup: undefined | number;
-		prevDropoff: undefined | number;
-		nextDropoff: undefined | number;
-	};
+	neighbourIds: NeighbourIds;
 	directDurations: DirectDrivingDurations;
 	prevLegDurations: { event: number; duration: number | null }[];
 	nextLegDurations: { event: number; duration: number | null }[];
 	scheduledTimes: ScheduledTimes;
+	pickupEventGroup: number | undefined;
+	dropoffEventGroup: number | undefined;
 };
+
+function belongToSameEventGroup(
+	event: Event | undefined,
+	otherEventCoordinates: Coordinates,
+	otherEventInterval: Interval
+) {
+	console.log('BELONGING', event !== undefined);
+	if (event != undefined) {
+		console.log(
+			isSamePlace(event, otherEventCoordinates),
+			otherEventInterval.overlaps(event.time) ||
+				otherEventInterval.touches(event.time) ||
+				otherEventInterval.equals(event.time)
+		);
+	}
+	return (
+		event !== undefined &&
+		isSamePlace(event, otherEventCoordinates) &&
+		(otherEventInterval.overlaps(event.time) ||
+			otherEventInterval.touches(event.time) ||
+			otherEventInterval.equals(event.time))
+	);
+}

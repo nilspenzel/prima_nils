@@ -108,21 +108,29 @@ export const setEvent = async (
 	lat: number,
 	lng: number
 ) => {
-	return (
+	const eventGroupId = (
 		await db
-			.insertInto('event')
+			.insertInto('eventGroup')
 			.values({
-				request: requestId,
 				communicatedTime: t,
 				scheduledTimeStart: t,
 				scheduledTimeEnd: t,
 				prevLegDuration: 0,
 				nextLegDuration: 0,
-				eventGroup: '',
 				lat,
 				lng,
+				address: ''
+			})
+			.returning('eventGroup.id')
+			.executeTakeFirstOrThrow()
+	).id;
+	return (
+		await db
+			.insertInto('event')
+			.values({
+				request: requestId,
+				eventGroupId,
 				isPickup,
-				address: '',
 				cancelled: false
 			})
 			.returning('event.id')
@@ -151,6 +159,7 @@ export const clearDatabase = async () => {
 	await db.deleteFrom('availability').execute();
 	await db.deleteFrom('event').execute();
 	await db.deleteFrom('request').execute();
+	await db.deleteFrom('eventGroup').execute();
 	await db.deleteFrom('journey').execute();
 	await db.deleteFrom('tour').execute();
 	await db.deleteFrom('vehicle').execute();
@@ -177,7 +186,11 @@ export const getTours = async () => {
 					.selectAll()
 					.select((eb) => [
 						jsonArrayFrom(
-							eb.selectFrom('event').whereRef('event.request', '=', 'request.id').selectAll()
+							eb
+								.selectFrom('event')
+								.innerJoin('eventGroup', 'eventGroup.id', 'event.eventGroupId')
+								.whereRef('event.request', '=', 'request.id')
+								.selectAll()
 						).as('events')
 					])
 			).as('requests')
@@ -191,13 +204,14 @@ export const selectEvents = async () => {
 		.selectFrom('tour')
 		.innerJoin('request', 'tour.id', 'request.tour')
 		.innerJoin('event', 'event.request', 'request.id')
+		.innerJoin('eventGroup', 'eventGroup.id', 'event.eventGroupId')
 		.select([
 			'event.id as eventid',
 			'request.id as requestid',
 			'tour.id as tourid',
 			'event.cancelled as eventCancelled',
-			'event.nextLegDuration',
-			'event.prevLegDuration',
+			'eventGroup.nextLegDuration',
+			'eventGroup.prevLegDuration',
 			'request.cancelled as requestCancelled',
 			'tour.cancelled as tourCancelled',
 			'tour.message'
@@ -300,13 +314,27 @@ export function getCost(tour: TourWithRequests) {
 }
 
 export function sortEventsByTime<
-	T extends { scheduledTimeStart: number; scheduledTimeEnd: number }[]
+	T extends {
+		scheduledTimeStart: number;
+		scheduledTimeEnd: number;
+		prevLegDuration: number;
+		nextLegDuration: number;
+		eventGroupId: number;
+	}[]
 >(events: T): T {
 	return events.sort((a, b) => {
 		const startDiff = a.scheduledTimeStart - b.scheduledTimeStart;
 		if (startDiff !== 0) {
 			return startDiff;
 		}
-		return a.scheduledTimeEnd - b.scheduledTimeEnd;
+		const endDiff = a.scheduledTimeEnd - b.scheduledTimeEnd;
+		if (endDiff !== 0) {
+			return endDiff;
+		}
+		const nextLegDiff = b.nextLegDuration - a.nextLegDuration;
+		if (nextLegDiff !== 0) {
+			return nextLegDiff;
+		}
+		return b.prevLegDuration - a.prevLegDuration;
 	});
 }

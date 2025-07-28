@@ -43,7 +43,6 @@ describe('Concatenation tests', () => {
 			connection2: null,
 			capacities
 		};
-
 		await bookingApi(bookingBody, mockUserId, true, 0, 0, 0, true);
 		const tours = await getTours();
 		expect(tours.length).toBe(1);
@@ -52,22 +51,22 @@ describe('Concatenation tests', () => {
 		// Add an other request, which should be appended to the existing tour.
 		// The new requests start will be the last requests destination and as such some of the events will share the same eventgroup
 		const body2 = JSON.stringify({
-			start: inNiesky2,
-			target: inNiesky1,
+			start: inNiesky1,
+			target: inNiesky2,
 			startBusStops: [],
 			targetBusStops: [],
-			directTimes: [inXMinutes(60)],
+			directTimes: [inXMinutes(70)],
 			startFixed: true,
 			capacities
 		});
 		const whiteResponse2 = await white(body2).then((r) => r.json());
 		const appendConnection: ExpectedConnection = {
-			start: { ...inNiesky2, address: 'inNiesky2' },
-			target: { ...inNiesky1, address: 'inNiesky1' },
+			start: { ...inNiesky1, address: 'inNiesky1' },
+			target: { ...inNiesky2, address: 'inNiesky2' },
 			startTime: whiteResponse2.direct[0].pickupTime,
 			targetTime: whiteResponse2.direct[0].dropoffTime,
 			signature: '',
-			startFixed: true
+			startFixed: false
 		};
 		const bookingBodyAppend = {
 			connection1: appendConnection,
@@ -86,7 +85,7 @@ describe('Concatenation tests', () => {
 			target: inNiesky2,
 			startBusStops: [],
 			targetBusStops: [],
-			directTimes: [inXMinutes(90)],
+			directTimes: [inXMinutes(70)],
 			startFixed: false,
 			capacities
 		});

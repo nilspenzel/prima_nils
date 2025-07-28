@@ -56,11 +56,12 @@ export async function moveTour(
 									jsonArrayFrom(
 										eb
 											.selectFrom('event')
+											.innerJoin('eventGroup', 'eventGroup.id', 'event.eventGroupId')
 											.whereRef('event.request', '=', 'request.id')
 											.select([
-												'event.scheduledTimeStart',
-												'event.scheduledTimeEnd',
-												'event.communicatedTime',
+												'eventGroup.scheduledTimeStart',
+												'eventGroup.scheduledTimeEnd',
+												'eventGroup.communicatedTime',
 												'event.isPickup'
 											])
 									).as('events')

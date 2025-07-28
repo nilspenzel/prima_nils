@@ -59,8 +59,14 @@ export async function evaluateRequest(
 
 	const routingResults = await routing(companies, userChosen, busStops, insertionRanges);
 
-	const t1 = promisedTimes === undefined ? MAX_PASSENGER_WAITING_TIME_PICKUP + HOUR : HOUR;
-	const t2 = promisedTimes === undefined ? MAX_PASSENGER_WAITING_TIME_DROPOFF + HOUR : HOUR;
+	const t1 =
+		promisedTimes === undefined
+			? MAX_PASSENGER_WAITING_TIME_PICKUP
+			: 5 * HOUR + MAX_PASSENGER_WAITING_TIME_PICKUP;
+	const t2 =
+		promisedTimes === undefined
+			? MAX_PASSENGER_WAITING_TIME_DROPOFF
+			: 5 * HOUR + MAX_PASSENGER_WAITING_TIME_DROPOFF;
 	const busStopTimes = busStops.map((bs) =>
 		bs.times.map((t) => new Interval(startFixed ? t : t - t1, startFixed ? t + t2 : t))
 	);

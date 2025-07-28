@@ -23,48 +23,77 @@ export async function insertRequest(
 	kidsThreeToFour: number,
 	kidsFiveToSix: number,
 	scheduledTimes: ScheduledTimes,
+	pickupEventGroup: number | undefined,
+	dropoffEventGroup: number | undefined,
 	trx: Transaction<Database>
 ): Promise<number> {
 	mergeTourList = mergeTourList.filter((id) => id != connection.tour);
-	if (neighbourIds.nextDropoff != neighbourIds.nextPickup && neighbourIds.nextPickup) {
+	if (
+		neighbourIds.nextDropoff != neighbourIds.nextPickup &&
+		neighbourIds.nextPickup &&
+		pickupEventGroup !== neighbourIds.nextPickupGroup
+	) {
 		prevLegDurations.push({
 			event: neighbourIds.nextPickup,
 			duration: connection.pickupNextLegDuration
 		});
 	}
-	if (neighbourIds.nextDropoff) {
+	if (neighbourIds.nextDropoff && dropoffEventGroup !== neighbourIds.nextDropoffGroup) {
 		prevLegDurations.push({
 			event: neighbourIds.nextDropoff,
 			duration: connection.dropoffNextLegDuration
 		});
 	}
 
-	if (neighbourIds.prevPickup) {
+	if (neighbourIds.prevPickup && pickupEventGroup !== neighbourIds.prevPickupGroup) {
 		nextLegDurations.push({
 			event: neighbourIds.prevPickup,
 			duration: connection.pickupPrevLegDuration
 		});
 	}
-	if (neighbourIds.prevDropoff != neighbourIds.prevPickup && neighbourIds.prevDropoff) {
+	if (
+		neighbourIds.prevDropoff != neighbourIds.prevPickup &&
+		neighbourIds.prevDropoff &&
+		pickupEventGroup !== neighbourIds.nextPickupGroup
+	) {
 		nextLegDurations.push({
 			event: neighbourIds.prevDropoff,
 			duration: connection.dropoffPrevLegDuration
 		});
 	}
-
+	console.log({neighbourIds}, {pickupEventGroup}, {dropoffEventGroup},"thingstuff",neighbourIds.prevPickup && neighbourIds.prevPickupGroup === pickupEventGroup && neighbourIds.prevDropoff === undefined)
+	if(neighbourIds.prevPickup && neighbourIds.prevPickupGroup === pickupEventGroup && neighbourIds.prevDropoff === undefined) {
+		nextLegDurations.push({
+			event: neighbourIds.prevPickup,
+			duration: connection.dropoffPrevLegDuration
+		});
+	}
+	if(neighbourIds.nextDropoff && neighbourIds.nextDropoffGroup === dropoffEventGroup && undefined === neighbourIds.nextPickup) {
+		prevLegDurations.push({
+			event: neighbourIds.nextDropoff,
+			duration: connection.pickupNextLegDuration
+		});
+	}
+	const mergeTourListSql =
+		mergeTourList.length > 0
+			? sql`ARRAY[${sql.join(
+					mergeTourList.map((id) => sql`${id}`),
+					sql`,`
+				)}]::INTEGER[]`
+			: sql`ARRAY[]::INTEGER[]`;
 	const ticketPrice =
 		(capacities.passengers - kidsZeroToTwo - kidsThreeToFour - kidsFiveToSix) *
 		parseInt(env.PUBLIC_FIXED_PRICE);
 	const requestId = (
 		await sql<{ request: number }>`
         SELECT create_and_merge_tours(
-            ROW(${capacities.passengers}, ${kidsZeroToTwo}, ${kidsThreeToFour}, ${kidsFiveToSix}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}, ${customer}, ${ticketPrice}),
-            ROW(${true}, ${c.start.lat}, ${c.start.lng}, ${connection.pickupTime}, ${connection.scheduledPickupTime}, ${connection.pickupTime}, ${connection.pickupPrevLegDuration}, ${connection.pickupNextLegDuration}, ${c.start.address}, ${''}),
-            ROW(${false}, ${c.target.lat}, ${c.target.lng}, ${connection.scheduledDropoffTime}, ${connection.dropoffTime}, ${connection.dropoffTime}, ${connection.dropoffPrevLegDuration}, ${connection.dropoffNextLegDuration}, ${c.target.address}, ${''}),
-            ${mergeTourList},
-            ROW(${connection.departure ?? null}, ${connection.arrival ?? null}, ${connection.vehicle}, ${direct.thisTour?.directDrivingDuration ?? null}, ${connection.tour ?? null}),
-            ROW(${direct.nextTour?.tourId ?? null}, ${direct.nextTour?.directDrivingDuration ?? null}),
-            ROW(${direct.thisTour?.tourId ?? null}, ${direct.thisTour?.directDrivingDuration ?? null}),
+            ROW(${capacities.passengers}, ${kidsZeroToTwo}, ${kidsThreeToFour}, ${kidsFiveToSix}, ${capacities.wheelchairs}, ${capacities.bikes}, ${capacities.luggage}, ${customer}, ${ticketPrice})::request_type,
+            ROW(${true}, ${c.start.lat}, ${c.start.lng}, ${connection.scheduledPickupTimeStart}, ${connection.scheduledPickupTimeEnd}, ${connection.pickupTime}, ${connection.pickupPrevLegDuration}, ${connection.pickupNextLegDuration}, ${c.start.address}, ${pickupEventGroup ?? null})::event_type,
+            ROW(${false}, ${c.target.lat}, ${c.target.lng}, ${connection.scheduledDropoffTimeStart}, ${connection.scheduledDropoffTimeEnd}, ${connection.dropoffTime}, ${connection.dropoffPrevLegDuration}, ${connection.dropoffNextLegDuration}, ${c.target.address}, ${dropoffEventGroup ?? null})::event_type,
+            ${mergeTourListSql},
+            ROW(${connection.departure ?? null}, ${connection.arrival ?? null}, ${connection.vehicle}, ${direct.thisTour?.directDrivingDuration ?? null}, ${connection.tour ?? null})::tour_type,
+            ROW(${direct.nextTour?.tourId ?? null}, ${direct.nextTour?.directDrivingDuration ?? null})::direct_duration_type,
+            ROW(${direct.thisTour?.tourId ?? null}, ${direct.thisTour?.directDrivingDuration ?? null})::direct_duration_type,
 			${JSON.stringify(scheduledTimes.updates)}::jsonb,
 			${JSON.stringify(prevLegDurations)}::jsonb,
 			${JSON.stringify(nextLegDurations)}::jsonb

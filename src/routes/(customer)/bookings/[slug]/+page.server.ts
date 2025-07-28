@@ -12,7 +12,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.leftJoin('event', 'event.request', 'request.id')
 		.leftJoin('tour', 'tour.id', 'request.tour')
 		.leftJoin('vehicle', 'vehicle.id', 'tour.vehicle')
-		.orderBy('event.communicatedTime', 'asc')
+		.leftJoin('eventGroup', 'eventGroup.id', 'event.eventGroupId')
+		.orderBy('eventGroup.communicatedTime', 'asc')
 		.select([
 			'json',
 			'request.passengers',
@@ -27,7 +28,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			'request.kidsZeroToTwo',
 			'request.kidsThreeToFour',
 			'request.kidsFiveToSix',
-			'event.communicatedTime',
+			'eventGroup.communicatedTime',
 			'vehicle.licensePlate',
 			'journey.id as journeyId'
 		])
