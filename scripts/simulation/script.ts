@@ -21,9 +21,7 @@ import path from 'path';
 import { white } from '../../src/lib/server/booking/tests/util';
 import type { ToursWithRequests } from '../../src/lib/util/getToursTypes';
 import { getCost } from '../../src/lib/testHelpers';
-import {
-	MAX_MATCHING_DISTANCE
-} from '../../src/lib/constants';
+import { MAX_MATCHING_DISTANCE } from '../../src/lib/constants';
 import { PlanData } from '../../src/lib/openapi';
 import { planAndSign } from '../../src/lib/planAndSign';
 import { lngLatToStr } from '../../src/lib/util/lngLatToStr';
@@ -206,7 +204,13 @@ async function bookingFull(
 	const lastOdm = chosenItinerary.legs[lastOdmIndex];
 	const isDirect = chosenItinerary.legs.length === 1;
 
-	const {requestedTime1, requestedTime2} = rediscoverWhitelistRequestTimes(parameters.connection1.startFixed, isDirect, firstOdmIndex, lastOdmIndex, chosenItinerary.legs);
+	const { requestedTime1, requestedTime2 } = rediscoverWhitelistRequestTimes(
+		parameters.connection1.startFixed,
+		isDirect,
+		firstOdmIndex,
+		lastOdmIndex,
+		chosenItinerary.legs
+	);
 	console.log(
 		{ isDirect },
 		{ requestedTime1: new Date(requestedTime1).toISOString() },

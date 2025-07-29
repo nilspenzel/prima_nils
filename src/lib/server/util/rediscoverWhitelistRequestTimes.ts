@@ -1,11 +1,17 @@
-import { DIRECT_FREQUENCY, MOTIS_SHIFT, SCHEDULED_TIME_BUFFER } from "$lib/constants";
-import type { Leg } from "$lib/openapi";
+import { DIRECT_FREQUENCY, MOTIS_SHIFT, SCHEDULED_TIME_BUFFER } from '$lib/constants';
+import type { Leg } from '$lib/openapi';
 
-export function rediscoverWhitelistRequestTimes(startFixed: boolean, isDirect: boolean, firstOdmIndex: number, lastOdmIndex: number, legs: Leg[]) {
+export function rediscoverWhitelistRequestTimes(
+	startFixed: boolean,
+	isDirect: boolean,
+	firstOdmIndex: number,
+	lastOdmIndex: number,
+	legs: Leg[]
+) {
 	let requestedTime1 = -1;
 	let requestedTime2 = -1;
 	if (isDirect) {
-        const firstOdm = legs[firstOdmIndex];
+		const firstOdm = legs[firstOdmIndex];
 		const date = new Date(firstOdm.scheduledStartTime);
 		const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 		if (startFixed) {
@@ -31,8 +37,7 @@ export function rediscoverWhitelistRequestTimes(startFixed: boolean, isDirect: b
 				? legs.slice(firstOdmIndex + 1).find((l) => l.mode !== 'WALK')
 				: legs
 						.slice(0, firstOdmIndex)
-						.reverse()
-						.find((l) => l.mode !== 'WALK');
+						.findLast((l) => l.mode !== 'WALK');
 		requestedTime1 =
 			firstOdmIndex === 0
 				? new Date(legAdjacentToOdm!.scheduledStartTime).getTime() - MOTIS_SHIFT
@@ -40,10 +45,9 @@ export function rediscoverWhitelistRequestTimes(startFixed: boolean, isDirect: b
 		if (firstOdmIndex !== lastOdmIndex) {
 			const legBeforeOdm = legs
 				.slice(0, firstOdmIndex)
-				.reverse()
-				.find((l) => l.mode !== 'WALK');
+				.findLast((l) => l.mode !== 'WALK');
 			requestedTime2 = new Date(legBeforeOdm!.scheduledStartTime).getTime();
 		}
 	}
-	return {requestedTime1,requestedTime2};
+	return { requestedTime1, requestedTime2 };
 }

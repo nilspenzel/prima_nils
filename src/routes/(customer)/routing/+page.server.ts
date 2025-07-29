@@ -1,4 +1,4 @@
-import { toExpectedConnectionWithISOStrings, type ExpectedConnection } from '$lib/server/booking/bookRide';
+import { toExpectedConnectionWithISOStrings } from '$lib/server/booking/bookRide';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { db } from '$lib/server/db';
 import { readInt } from '$lib/server/util/readForm';
@@ -13,7 +13,6 @@ import { sql } from 'kysely';
 import type { PageServerLoad } from './$types';
 import Prom from 'prom-client';
 import { expectedConnectionFromLeg } from '$lib/expectedConnectionFromLeg';
-import { DIRECT_FREQUENCY, MOTIS_SHIFT, SCHEDULED_TIME_BUFFER } from '$lib/constants';
 import { rediscoverWhitelistRequestTimes } from '$lib/server/util/rediscoverWhitelistRequestTimes';
 
 let booking_errors: Prom.Counter | undefined;
@@ -140,7 +139,13 @@ export const actions = {
 		}
 		const isDirect = legs.length === 1;
 
-		const {requestedTime1, requestedTime2} = rediscoverWhitelistRequestTimes(startFixed, isDirect, firstOdmIndex, lastOdmIndex, legs);
+		const { requestedTime1, requestedTime2 } = rediscoverWhitelistRequestTimes(
+			startFixed,
+			isDirect,
+			firstOdmIndex,
+			lastOdmIndex,
+			legs
+		);
 
 		console.log({ isDirect }, { startFixed });
 		const connection1 = expectedConnectionFromLeg(
