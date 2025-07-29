@@ -292,11 +292,7 @@ export function getCost(tour: TourWithRequests) {
 			waitingTime: 0
 		};
 	}
-	const drivingTime = events.reduce(
-		(acc, curr) => (acc += curr.nextLegDuration),
-		events[0].prevLegDuration
-	);
-	const waitingTime = tour.endTime - tour.startTime - drivingTime;
+	let drivingTime = events[0].prevLegDuration ?? 0;
 	let weightedPassengerDuration = 0;
 	let passengers = 0;
 	for (let i = 0; i != events.length - 1; ++i) {
@@ -305,7 +301,12 @@ export function getCost(tour: TourWithRequests) {
 		passengers += event.isPickup ? event.passengers : -event.passengers;
 		weightedPassengerDuration +=
 			(getScheduledEventTime(nextEvent) - getScheduledEventTime(event)) * passengers;
+		if(nextEvent.eventGroupId === event.eventGroupId) {
+			continue;
+		}
+		drivingTime += event.nextLegDuration;
 	}
+	const waitingTime = tour.endTime - tour.startTime - drivingTime;
 	return {
 		weightedPassengerDuration,
 		drivingTime,
