@@ -13,7 +13,7 @@ import { sql } from 'kysely';
 import type { PageServerLoad } from './$types';
 import Prom from 'prom-client';
 import { expectedConnectionFromLeg } from '$lib/expectedConnectionFromLeg';
-import { DIRECT_FREQUENCY, SCHEDULED_TIME_BUFFER } from '$lib/constants';
+import { DIRECT_FREQUENCY, MOTIS_SHIFT, SCHEDULED_TIME_BUFFER } from '$lib/constants';
 
 let booking_errors: Prom.Counter | undefined;
 let booking_attempts: Prom.Counter | undefined;
@@ -148,14 +148,16 @@ export const actions = {
 				requestedTime1 =
 					midnight +
 					Math.floor(
-						(new Date(firstOdm.scheduledStartTime).getTime() + SCHEDULED_TIME_BUFFER - midnight) / DIRECT_FREQUENCY
+						(new Date(firstOdm.scheduledStartTime).getTime() + SCHEDULED_TIME_BUFFER - midnight) /
+							DIRECT_FREQUENCY
 					) *
 						DIRECT_FREQUENCY;
 			} else {
 				requestedTime1 =
 					midnight +
 					Math.floor(
-						(new Date(firstOdm.scheduledEndTime).getTime() - SCHEDULED_TIME_BUFFER - midnight) / DIRECT_FREQUENCY
+						(new Date(firstOdm.scheduledEndTime).getTime() - SCHEDULED_TIME_BUFFER - midnight) /
+							DIRECT_FREQUENCY
 					) *
 						(DIRECT_FREQUENCY + 1);
 			}
@@ -169,8 +171,8 @@ export const actions = {
 							.find((l) => l.mode !== 'WALK');
 			requestedTime1 =
 				firstOdmIndex === 0
-					? new Date(legAdjacentToOdm!.scheduledStartTime).getTime()
-					: new Date(legAdjacentToOdm!.scheduledEndTime).getTime();
+					? new Date(legAdjacentToOdm!.scheduledStartTime).getTime() - MOTIS_SHIFT
+					: new Date(legAdjacentToOdm!.scheduledEndTime).getTime() + MOTIS_SHIFT;
 			if (firstOdmIndex !== lastOdmIndex) {
 				const legBeforeOdm = legs
 					.slice(0, firstOdmIndex)

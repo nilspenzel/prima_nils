@@ -12,20 +12,20 @@ const parameters = {
 	},
 	connection1: {
 		start: {
-			lat: 51.5279047,
-			lng: 14.5229428,
-			address: 'Trebendorfer Weg 81'
+			lat: 51.50595500000001,
+			lng: 14.479306000000001,
+			address: 'Mulkwitz Außenkippe'
 		},
 		target: {
-			lat: 51.4486748,
-			lng: 14.7390955,
+			lat: 51.3280041,
+			lng: 14.5841901,
 			address: 'WSG 4km'
 		},
-		startTime: 1753754100000,
-		targetTime: 1753757100000,
-		signature: '7b710a95edb9ae791d82aca8971c5471f9c7ee23f3b29ff288a51752918cc578',
+		startTime: 1753929900000,
+		targetTime: 1753932600000,
+		signature: '8b81d5a6d4bed7e618f9260d296d65ce75cdeb4bec2ac8ae253aa37b42b92aee',
 		startFixed: true,
-		requestedTime: 0
+		requestedTime: new Date('2025-07-31T02:49:00Z').getTime()
 	},
 	connection2: null
 };
