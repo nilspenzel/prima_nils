@@ -139,7 +139,6 @@ export const actions = {
 		}
 		const isDirect = legs.length === 1;
 
-		// find whitelisting requested time
 		let requestedTime1 = -1;
 		let requestedTime2 = -1;
 		if (isDirect) {

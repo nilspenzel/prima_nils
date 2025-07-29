@@ -21,7 +21,7 @@ import path from 'path';
 import { white } from '../../src/lib/server/booking/tests/util';
 import type { ToursWithRequests } from '../../src/lib/util/getToursTypes';
 import { getCost } from '../../src/lib/testHelpers';
-import { DIRECT_FREQUENCY, MAX_MATCHING_DISTANCE } from '../../src/lib/constants';
+import { DIRECT_FREQUENCY, MAX_MATCHING_DISTANCE, SCHEDULED_TIME_BUFFER } from '../../src/lib/constants';
 import { PlanData } from '../../src/lib/openapi';
 import { planAndSign } from '../../src/lib/planAndSign';
 import { lngLatToStr } from '../../src/lib/util/lngLatToStr';
@@ -178,7 +178,10 @@ async function bookingFull(
 		chosenItinerary.legs[chosenItinerary.legs.length - 1].to.name =
 			parameters.connection1.target.address;
 	}
-	console.log('chose itinerary #', choice, JSON.stringify(chosenItinerary, null, 2));
+	console.log('chose itinerary #', choice, JSON.stringify({...chosenItinerary, legs: chosenItinerary.legs.map((l) => {
+		const {legGeometry, steps, ...rest} = l;
+		return rest;
+	})}, null, 2));
 	const firstOdmIndex = chosenItinerary.legs.findIndex((l) => l.mode === 'ODM');
 	const lastOdmIndex = findLastIndex(chosenItinerary.legs, (l) => l.mode === 'ODM');
 	if (firstOdmIndex === -1) {
@@ -198,13 +201,13 @@ async function bookingFull(
 			requestedTime1 =
 				midnight +
 				Math.floor(
-					(new Date(firstOdm.scheduledStartTime).getTime() - midnight) / DIRECT_FREQUENCY
+					(new Date(firstOdm.scheduledStartTime).getTime() + SCHEDULED_TIME_BUFFER - midnight) / DIRECT_FREQUENCY
 				) *
 					DIRECT_FREQUENCY;
 		} else {
 			requestedTime1 =
 				midnight +
-				Math.floor((new Date(firstOdm.scheduledEndTime).getTime() - midnight) / DIRECT_FREQUENCY) *
+				Math.floor((new Date(firstOdm.scheduledEndTime).getTime() - SCHEDULED_TIME_BUFFER - midnight) / DIRECT_FREQUENCY) *
 					(DIRECT_FREQUENCY + 1);
 		}
 	} else {
