@@ -306,6 +306,7 @@ export function getCost(tour: TourWithRequests) {
 		}
 		drivingTime += event.nextLegDuration;
 	}
+	drivingTime += events[events.length - 1].nextLegDuration;
 	const waitingTime = tour.endTime - tour.startTime - drivingTime;
 	return {
 		weightedPassengerDuration,
