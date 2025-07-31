@@ -113,10 +113,8 @@ function vaguelyOncePerHour(
 	}));
 
 	const finalOptions: ConsideredOption[] = [];
-
 	while (consideredOptions.length > 0) {
 		const nextOptions: ConsideredOption[] = [];
-
 		for (const option of consideredOptions) {
 			if (option.toLookAt.length === 0) {
 				finalOptions.push(option);
@@ -124,14 +122,12 @@ function vaguelyOncePerHour(
 			for (const insertion of option.toLookAt) {
 				const newInsertions = [...option.insertions, insertion];
 				const newCost = option.cost + insertion.cost;
-
 				const futureOptions = options.filter(
 					(i) =>
-						i.time > insertion.time + minGap &&
-						i.time <= insertion.time + maxGap &&
+						i.time >= insertion.time + minGap &&
+						i.time < insertion.time + maxGap &&
 						!newInsertions.includes(i)
 				);
-
 				const newOption: ConsideredOption = {
 					insertions: newInsertions,
 					cost: newCost,
@@ -141,12 +137,9 @@ function vaguelyOncePerHour(
 				nextOptions.push(newOption);
 			}
 		}
-
 		consideredOptions = nextOptions
 			.sort((a, b) => a.cost / a.insertions.length - b.cost / b.insertions.length)
 			.slice(0, beamWidth);
-
-		//finalOptions.push(...consideredOptions.filter(o => o.toLookAt.length === 0));
 	}
 
 	const allCandidates = [...finalOptions];
