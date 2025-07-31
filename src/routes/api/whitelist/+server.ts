@@ -10,6 +10,7 @@ import {
 } from './WhitelistRequest';
 import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
 import { assertArraySizes } from '$lib/testHelpers';
+import { HOUR, MINUTE } from '$lib/util/time';
 
 export type WhitelistResponse = {
 	start: (Insertion | undefined)[][];
@@ -69,7 +70,7 @@ export async function POST(event: RequestEvent) {
 	const response: WhitelistResponse = {
 		start,
 		target,
-		direct
+		direct: vaguelyOncePerHour(direct, p.directTimes)
 	};
 	console.log(
 		'WHITELIST RESPONSE: ',
@@ -84,4 +85,88 @@ function toWhitelistResponseWithISOStrings(r: WhitelistResponse) {
 		target: r.target.map((i) => i.map((j) => toInsertionWithISOStrings(j))),
 		direct: r.direct.map((j) => toInsertionWithISOStrings(j))
 	};
+}
+
+interface ConsideredOption {
+	insertions: { cost: number; idx: number; time: number }[];
+	cost: number;
+	toLookAt: { cost: number; idx: number; time: number }[];
+}
+
+function vaguelyOncePerHour(
+	response: (Insertion | undefined)[],
+	requestedTimes: number[]
+): (Insertion | undefined)[] {
+	const minGap = 40 * MINUTE;
+	const maxGap = 80 * MINUTE;
+	const beamWidth = 20;
+	const maxValue = Number.MAX_SAFE_INTEGER / 2;
+	const endOfFirstHour = (response[0]?.pickupTime ?? requestedTimes[0]) + HOUR;
+	const options = response.map((r, idx) => {
+		return { cost: r?.cost ?? maxValue, idx, time: r?.pickupTime ?? requestedTimes[idx] };
+	});
+	const firstHourInsertions = options.filter((r) => r.time < endOfFirstHour);
+	let consideredOptions: ConsideredOption[] = firstHourInsertions.map((insertion) => ({
+		insertions: [],
+		cost: 0,
+		toLookAt: [insertion]
+	}));
+
+	const finalOptions: ConsideredOption[] = [];
+
+	while (consideredOptions.length > 0) {
+		const nextOptions: ConsideredOption[] = [];
+
+		for (const option of consideredOptions) {
+			if (option.toLookAt.length === 0) {
+				finalOptions.push(option);
+			}
+			for (const insertion of option.toLookAt) {
+				const newInsertions = [...option.insertions, insertion];
+				const newCost = option.cost + insertion.cost;
+
+				const futureOptions = options.filter(
+					(i) =>
+						i.time > insertion.time + minGap &&
+						i.time <= insertion.time + maxGap &&
+						!newInsertions.includes(i)
+				);
+
+				const newOption: ConsideredOption = {
+					insertions: newInsertions,
+					cost: newCost,
+					toLookAt: futureOptions
+				};
+
+				nextOptions.push(newOption);
+			}
+		}
+
+		consideredOptions = nextOptions
+			.sort((a, b) => a.cost / a.insertions.length - b.cost / b.insertions.length)
+			.slice(0, beamWidth);
+
+		//finalOptions.push(...consideredOptions.filter(o => o.toLookAt.length === 0));
+	}
+
+	const allCandidates = [...finalOptions];
+	console.log({
+		allCandidates: JSON.stringify(
+			allCandidates.map((c) => {
+				return { cost: c.cost, insertions: c.insertions.map((i) => i.idx) };
+			})
+		)
+	});
+	const best = allCandidates.reduce(
+		(best, curr) => {
+			if (!best) return curr;
+			return curr.cost / curr.insertions.length < best.cost / best.insertions.length ? curr : best;
+		},
+		null as ConsideredOption | null
+	);
+	if (best === null) {
+		console.log('unexpected null in vaguelyOncePerHour');
+		throw new Error();
+	}
+	return response.map((r, idx) => (best.insertions.some((i) => i.idx === idx) ? r : undefined));
 }

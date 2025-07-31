@@ -301,7 +301,7 @@ export function getCost(tour: TourWithRequests) {
 		passengers += event.isPickup ? event.passengers : -event.passengers;
 		weightedPassengerDuration +=
 			(getScheduledEventTime(nextEvent) - getScheduledEventTime(event)) * passengers;
-		if(nextEvent.eventGroupId === event.eventGroupId) {
+		if (nextEvent.eventGroupId === event.eventGroupId) {
 			continue;
 		}
 		drivingTime += event.nextLegDuration;
