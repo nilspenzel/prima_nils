@@ -52,10 +52,10 @@ type ActionType = {
 };
 
 const actionProbabilities: ActionType[] = [
-	{ action: Action.BOOKING, probability: 0.7, text: 'booking' },
-	{ action: Action.CANCEL_REQUEST, probability: 0.1, text: 'cancel request' },
-	{ action: Action.CANCEL_TOUR, probability: 0.1, text: 'cancel tour' },
-	{ action: Action.MOVE_TOUR, probability: 0.1, text: 'move tour' }
+	{ action: Action.BOOKING, probability: 0.9, text: 'booking' },
+	{ action: Action.CANCEL_REQUEST, probability: 0.025, text: 'cancel request' },
+	{ action: Action.CANCEL_TOUR, probability: 0.025, text: 'cancel tour' },
+	{ action: Action.MOVE_TOUR, probability: 0.05, text: 'move tour' }
 ];
 
 async function readCoordinates(): Promise<Coordinates[]> {
