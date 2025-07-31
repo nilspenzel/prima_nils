@@ -98,7 +98,6 @@ function vaguelyOncePerHour(
 	requestedTimes: number[]
 ): (Insertion | undefined)[] {
 	function getSpacingPenalty(insertions: { time: number }[]): number {
-	    const HOUR = 60 * MINUTE;
 	    let penalty = 0;
 	    for (let i = 1; i < insertions.length; i++) {
 	        const gap = insertions[i].time - insertions[i - 1].time;
@@ -157,13 +156,13 @@ function vaguelyOncePerHour(
 	const best = allCandidates.reduce(
 		(best, curr) => {
         	const avgCost = curr.cost / curr.insertions.length;
-        	const penalty = getSpacingPenalty(curr.insertions);
-        	const score = avgCost + penalty / HOUR;
-			console.log({avgCost}, {insertionCount: curr.insertions.length}, {penalty}, {score});
+        	const avgPenalty = getSpacingPenalty(curr.insertions) / curr.insertions.length;
+        	const score = avgCost + avgPenalty;
+			console.log({avgCost:avgCost===7437000}, {insertionCount: curr.insertions.length}, {penalty: avgPenalty}, {score});
 			if (!best) {
 				return {...curr, score};
 			}
-			return score < best.score / best.insertions.length ? {...curr, score} : best;
+			return score < best.score ? {...curr, score} : best;
 		},
 		null as (ConsideredOption & {score: number}) | null
 	);
