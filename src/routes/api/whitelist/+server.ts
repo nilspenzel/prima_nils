@@ -97,6 +97,17 @@ function vaguelyOncePerHour(
 	response: (Insertion | undefined)[],
 	requestedTimes: number[]
 ): (Insertion | undefined)[] {
+	function getSpacingPenalty(insertions: { time: number }[]): number {
+	    const HOUR = 60 * MINUTE;
+	    let penalty = 0;
+	    for (let i = 1; i < insertions.length; i++) {
+	        const gap = insertions[i].time - insertions[i - 1].time;
+	        const diff = Math.abs(gap - HOUR);
+	        penalty += diff * diff;
+	    }
+	    return penalty/HOUR;
+	}
+
 	const minGap = 40 * MINUTE;
 	const maxGap = 80 * MINUTE;
 	const beamWidth = 20;
@@ -143,19 +154,18 @@ function vaguelyOncePerHour(
 	}
 
 	const allCandidates = [...finalOptions];
-	console.log({
-		allCandidates: JSON.stringify(
-			allCandidates.map((c) => {
-				return { cost: c.cost, insertions: c.insertions.map((i) => i.idx) };
-			})
-		)
-	});
 	const best = allCandidates.reduce(
 		(best, curr) => {
-			if (!best) return curr;
-			return curr.cost / curr.insertions.length < best.cost / best.insertions.length ? curr : best;
+        	const avgCost = curr.cost / curr.insertions.length;
+        	const penalty = getSpacingPenalty(curr.insertions);
+        	const score = avgCost + penalty / HOUR;
+			console.log({avgCost}, {insertionCount: curr.insertions.length}, {penalty}, {score});
+			if (!best) {
+				return {...curr, score};
+			}
+			return score < best.score / best.insertions.length ? {...curr, score} : best;
 		},
-		null as ConsideredOption | null
+		null as (ConsideredOption & {score: number}) | null
 	);
 	if (best === null) {
 		console.log('unexpected null in vaguelyOncePerHour');
