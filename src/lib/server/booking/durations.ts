@@ -1,15 +1,13 @@
+import { tracer } from '$lib/constants';
 import { implication } from '$lib/server/util/implication';
-import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
+import { InsertDirection, InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { Interval } from '$lib/util/interval';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
+import { context } from '@opentelemetry/api';
 import type { Event, VehicleWithInterval } from './getBookingAvailability';
-import {
-	InsertDirection,
-	printInsertionType,
-	type InsertionInfo,
-	type InsertionType
-} from './insertionTypes';
+import { printInsertionType, type InsertionInfo, type InsertionType } from './insertionTypes';
 import type { InsertionRoutingResult, RoutingResults } from './routing';
+import { getArrivalWindowString } from '$lib/util/tracingNames';
 
 export const returnsToCompany = (insertionCase: InsertionType): boolean =>
 	insertionCase.how == InsertHow.APPEND || insertionCase.how == InsertHow.NEW_TOUR;
@@ -164,32 +162,52 @@ export function getArrivalWindow(
 	nextLegDuration: number,
 	allowedTimes: Interval[]
 ): Interval | undefined {
-	const directWindows = Interval.intersect(
-		allowedTimes,
-		windows
-			.map((window) => window.shrink(prevLegDuration, nextLegDuration))
-			.filter((window) => window != undefined)
-	);
-
-	let arrivalWindows = directWindows
-		.map((window) =>
-			window.shrink(
-				insertionCase.direction == InsertDirection.BUS_STOP_DROPOFF ? directDuration : 0,
-				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP ? directDuration : 0
-			)
-		)
-		.filter((window) => window != undefined);
-	if (busStopWindow != undefined) {
-		arrivalWindows = arrivalWindows
-			.map((window) => busStopWindow.intersect(window))
-			.filter((window) => window != undefined);
-	}
-	if (arrivalWindows.length == 0) {
-		return undefined;
-	}
-	const best =
-		insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
-			? arrivalWindows.reduce((current, best) => (current.endTime < best.endTime ? current : best))
-			: arrivalWindows.reduce((current, best) => (current.endTime > best.endTime ? current : best));
-	return best;
+	return tracer.startActiveSpan(getArrivalWindowString, (span) => {
+		try {
+			const directWindows = Interval.intersect(
+				allowedTimes,
+				windows
+					.map((window) => window.shrink(prevLegDuration, nextLegDuration))
+					.filter((window) => window != undefined)
+			);
+			let arrivalWindows = directWindows
+				.map((window) =>
+					window.shrink(
+						insertionCase.direction == InsertDirection.BUS_STOP_DROPOFF ? directDuration : 0,
+						insertionCase.direction == InsertDirection.BUS_STOP_PICKUP ? directDuration : 0
+					)
+				)
+				.filter((window) => window != undefined);
+			span?.addEvent('getArrivalWindow', {
+				directWindows: JSON.stringify(directWindows.map((w) => w.toString())),
+				arrivalWindows: JSON.stringify(arrivalWindows.map((w) => w.toString())),
+				busStopWindow: JSON.stringify(busStopWindow?.toString())
+			});
+			if (busStopWindow != undefined) {
+				arrivalWindows = arrivalWindows
+					.map((window) => busStopWindow.intersect(window))
+					.filter((window) => window != undefined);
+			}
+			span?.addEvent('getArrivalWindow', {
+				arrivalWindows: JSON.stringify(arrivalWindows.map((w) => w.toString()))
+			});
+			if (arrivalWindows.length == 0) {
+				return undefined;
+			}
+			const best =
+				insertionCase.direction == InsertDirection.BUS_STOP_PICKUP
+					? arrivalWindows.reduce((current, best) =>
+							current.endTime < best.endTime ? current : best
+						)
+					: arrivalWindows.reduce((current, best) =>
+							current.endTime > best.endTime ? current : best
+						);
+			span?.addEvent('getArrivalWindow', {
+				best: best.toString()
+			});
+			return best;
+		} finally {
+			span?.end();
+		}
+	});
 }

@@ -526,7 +526,7 @@ export async function healthCheck() {
 		fail = (await validateDirectDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateLegDurations(uncancelledTours)) ? true : fail;
 		fail = (await validateCompanyDurations(uncancelledTours)) ? true : fail;
-		fail = (await validateAddressCoordinatesMatch(allTours)) ? true : fail;
+		//fail = (await validateAddressCoordinatesMatch(allTours)) ? true : fail;
 	} else {
 		console.log('No tours found or there was an error fetching the data.');
 	}

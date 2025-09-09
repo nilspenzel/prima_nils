@@ -1,4 +1,5 @@
 import { HOUR, MINUTE } from '$lib/util/time';
+import { trace } from '@opentelemetry/api';
 
 export const TZ = 'Europe/Berlin';
 export const LOCALE = 'de-DE';
@@ -40,3 +41,5 @@ export const DIRECT_FREQUENCY = 5 * MINUTE;
 export const MOTIS_SHIFT = 5 * MINUTE;
 export const DIRECT_RIDE_TIME_DIFFERENCE = HOUR;
 export const MAX_WAITING_TIME = 47 * MINUTE;
+export const serviceName = 'prima';
+export const tracer = trace.getTracer(serviceName);

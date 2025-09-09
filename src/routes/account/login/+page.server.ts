@@ -11,11 +11,11 @@ import {
 import { msg } from '$lib/msg';
 import { getIp } from '$lib/server/getIp';
 import type { Actions, PageServerLoadEvent, RequestEvent } from './$types';
-import { trace, type Span } from '@opentelemetry/api';
+import { type Span } from '@opentelemetry/api';
+import { tracer } from '$lib/constants';
 
 const throttler = new Throttler<number>([0, 1, 2, 4, 8, 16, 30, 60, 180, 300]);
 const ipBucket = new RefillingTokenBucket<string>(20, 1);
-const tracer = trace.getTracer('dice-lib');
 
 export function load(event: PageServerLoadEvent) {
 	return {

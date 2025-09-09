@@ -1,11 +1,13 @@
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { getBookingAvailability } from '$lib/server/booking/getBookingAvailability';
-import { MAX_TRAVEL } from '$lib/constants';
+import { MAX_TRAVEL, tracer } from '$lib/constants';
 import { Interval } from '$lib/util/interval';
 import type { Coordinates } from '$lib/util/Coordinates';
 import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
 import { toBusStopWithISOStrings, type BusStop } from '$lib/server/booking/BusStop';
 import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/insertion';
+import { context } from '@opentelemetry/api';
+import { whitelistString } from '$lib/util/tracingNames';
 
 export async function whitelist(
 	userChosen: Coordinates,
@@ -63,50 +65,62 @@ export async function whitelist(
 		searchInterval,
 		busStops
 	);
-	console.log(
-		'Whitelist Request: getBookingAvailability results\n',
-		JSON.stringify(
-			{
+	return tracer.startActiveSpan(whitelistString, async (span) => {
+		try {
+			span?.addEvent('Whitelist Request: getBookingAvailability results', {
 				searchInterval: searchInterval.toString(),
 				expandedSearchInterval: expandedSearchInterval.toString(),
-				companies,
-				filteredBusStops
-			},
-			null,
-			'\t'
-		)
-	);
+				companies: JSON.stringify(companies),
+				filteredBusStops: JSON.stringify(filteredBusStops)
+			});
+			console.log(
+				'Whitelist Request: getBookingAvailability results\n',
+				JSON.stringify(
+					{
+						searchInterval: searchInterval.toString(),
+						expandedSearchInterval: expandedSearchInterval.toString(),
+						companies,
+						filteredBusStops
+					},
+					null,
+					'\t'
+				)
+			);
 
-	const validBusStops = new Array<BusStop>();
-	for (let i = 0; i != filteredBusStops.length; ++i) {
-		if (filteredBusStops[i] != undefined) {
-			validBusStops.push(busStops[i]);
+			const validBusStops = new Array<BusStop>();
+			for (let i = 0; i != filteredBusStops.length; ++i) {
+				if (filteredBusStops[i] != undefined) {
+					validBusStops.push(busStops[i]);
+				}
+			}
+			const bestEvals = await evaluateRequest(
+				companies,
+				expandedSearchInterval,
+				userChosen,
+				validBusStops,
+				required,
+				startFixed
+			);
+			const ret = new Array<(Insertion | undefined)[]>(filteredBusStops.length);
+			for (let i = 0; i != filteredBusStops.length; ++i) {
+				if (filteredBusStops[i] === undefined) {
+					ret[i] = new Array<undefined>(busStops[i].times.length);
+				} else {
+					ret[i] = bestEvals[filteredBusStops[i]!];
+				}
+			}
+			console.log(
+				'WHITELIST RESULT: ',
+				JSON.stringify(
+					ret.map((arr) => arr.map((i) => toInsertionWithISOStrings(i))),
+					null,
+					2
+				)
+			);
+			console.log('WLE');
+			return ret;
+		} finally {
+			span?.end();
 		}
-	}
-	const bestEvals = await evaluateRequest(
-		companies,
-		expandedSearchInterval,
-		userChosen,
-		validBusStops,
-		required,
-		startFixed
-	);
-	const ret = new Array<(Insertion | undefined)[]>(filteredBusStops.length);
-	for (let i = 0; i != filteredBusStops.length; ++i) {
-		if (filteredBusStops[i] === undefined) {
-			ret[i] = new Array<undefined>(busStops[i].times.length);
-		} else {
-			ret[i] = bestEvals[filteredBusStops[i]!];
-		}
-	}
-	console.log(
-		'WHITELIST RESULT: ',
-		JSON.stringify(
-			ret.map((arr) => arr.map((i) => toInsertionWithISOStrings(i))),
-			null,
-			2
-		)
-	);
-	console.log('WLE');
-	return ret;
+	});
 }

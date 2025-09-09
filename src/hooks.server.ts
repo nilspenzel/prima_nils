@@ -108,6 +108,10 @@ import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
 // const traceExporter = new ConsoleSpanExporter();
 const sdk = new opentelemetry.NodeSDK({
+	spanLimits: {
+		eventCountLimit: 100000,
+		attributeCountLimit: 1000
+	},
 	resource: resourceFromAttributes({
 		[ATTR_SERVICE_NAME]: 'prima'
 	}),

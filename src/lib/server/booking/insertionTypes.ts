@@ -1,18 +1,15 @@
 import type { VehicleWithInterval } from './getBookingAvailability';
 import type { Range } from '$lib/util/booking/getPossibleInsertions';
-import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
-
-export enum InsertWhere {
-	BEFORE_FIRST_EVENT,
-	AFTER_LAST_EVENT,
-	BETWEEN_EVENTS,
-	BETWEEN_TOURS
-}
-
-export enum InsertDirection {
-	BUS_STOP_DROPOFF,
-	BUS_STOP_PICKUP
-}
+import {
+	InsertDirection,
+	insertDirectionToString,
+	InsertHow,
+	insertHowToString,
+	InsertWhat,
+	insertWhatToString,
+	InsertWhere,
+	insertWhereToString
+} from '$lib/util/booking/insertionTypes';
 
 export const INSERT_HOW_OPTIONS = [
 	InsertHow.CONNECT,
@@ -30,23 +27,7 @@ export type InsertionType = {
 
 export function printInsertionType(t: InsertionType) {
 	let ret = 'how: ';
-	switch (t.how) {
-		case InsertHow.APPEND:
-			ret += 'APPEND';
-			break;
-		case InsertHow.PREPEND:
-			ret += 'PREPEND';
-			break;
-		case InsertHow.CONNECT:
-			ret += 'CONNECT';
-			break;
-		case InsertHow.NEW_TOUR:
-			ret += 'NEW_TOUR';
-			break;
-		case InsertHow.INSERT:
-			ret += 'INSERT';
-			break;
-	}
+	ret += insertHowToString(t.how);
 	ret += ', where: ';
 	switch (t.where) {
 		case InsertWhere.AFTER_LAST_EVENT:
@@ -84,6 +65,15 @@ export function printInsertionType(t: InsertionType) {
 			break;
 	}
 	return ret;
+}
+
+export function traceInsertionType(t: InsertionType) {
+	return {
+		how: insertHowToString(t.how),
+		what: insertWhatToString(t.what),
+		direction: insertDirectionToString(t.direction),
+		where: insertWhereToString(t.where)
+	};
 }
 
 export const canCaseBeValid = (insertionCase: InsertionType): boolean => {

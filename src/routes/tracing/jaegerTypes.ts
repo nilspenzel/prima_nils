@@ -1,0 +1,78 @@
+export type JaegerTag = {
+	key: string;
+	type: string;
+	value: string | number | boolean;
+};
+
+export type JaegerLog = {
+	timestamp: number;
+	fields: JaegerTag[];
+};
+
+export type JaegerSpan = {
+	spanID: string;
+	traceID: string;
+	operationName: string;
+	process: { serviceName: string };
+	tags: JaegerTag[];
+	logs: JaegerLog[];
+	references: Reference[];
+};
+
+export type JaegerTrace = {
+	traceID: string;
+	spans: JaegerSpan[];
+};
+
+export type JaegerResponse = {
+	data: JaegerTrace[];
+	total?: number;
+	limit?: number;
+	errors?: string[];
+};
+
+export type Reference = {
+	refType: string;
+	spanID: string;
+};
+
+export type JaegerNode = JaegerSpan & { children: JaegerNode[] };
+
+export function filterTree(
+	tree: JaegerNode,
+	filters: { key: string; value: string | undefined }[]
+): JaegerNode {
+	const relevantFilters = filters.filter(
+		(f) => f.value !== String(undefined) && f.value !== undefined
+	);
+	return {
+		...tree,
+		children: tree.children
+			.filter(
+				(cc) =>
+					!cc.logs.some((l) =>
+						l.fields.some((field) =>
+							relevantFilters.some(
+								(filter) => filter.key === field.key && filter.value !== String(field.value)
+							)
+						)
+					)
+			)
+			.map((child) => filterTree(child, filters))
+	};
+}
+
+export function expandTree(tree: JaegerNode): JaegerNode[] {
+	const spans: JaegerNode[] = [];
+	const stack: JaegerNode[] = [tree];
+
+	while (stack.length > 0) {
+		const node = stack.pop()!;
+		spans.push(node);
+		for (let i = node.children.length - 1; i >= 0; i--) {
+			stack.push(node.children[i]);
+		}
+	}
+
+	return spans;
+}

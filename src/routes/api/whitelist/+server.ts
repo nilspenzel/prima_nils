@@ -12,6 +12,8 @@ import { toInsertionWithISOStrings, type Insertion } from '$lib/server/booking/i
 import { assertArraySizes } from '$lib/testHelpers';
 import { MINUTE } from '$lib/util/time';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
+import { tracer } from '$lib/constants';
+import { WhitelistServerFileString } from '$lib/util/tracingNames';
 
 export type WhitelistResponse = {
 	start: (Insertion | undefined)[][];
@@ -28,56 +30,82 @@ export async function POST(event: RequestEvent) {
 		return json({ message: result.errors }, { status: 400 });
 	}
 
-	console.log(
-		'WHITELIST REQUEST PARAMS',
-		JSON.stringify(toWhitelistRequestWithISOStrings(p), null, '\t')
-	);
-	let direct: (Insertion | undefined)[] = [];
-	if (p.directTimes.length != 0) {
-		if (p.startFixed) {
-			p.targetBusStops.push({
-				...p.start,
-				times: p.directTimes
-			});
-		} else {
-			p.startBusStops.push({
-				...p.target,
-				times: p.directTimes
-			});
-		}
-	}
-	let [start, target] = await Promise.all([
-		whitelist(p.start, p.startBusStops, p.capacities, false),
-		whitelist(p.target, p.targetBusStops, p.capacities, true)
-	]);
+	return new Promise((resolve, reject) => {
+		tracer.startActiveSpan(WhitelistServerFileString, async (span) => {
+			try {
+				const logs = toWhitelistRequestWithISOStrings(p);
+				span?.addEvent('WHITELIST REQUEST PARAMS', {
+					capacities: JSON.stringify(logs.capacities),
+					directTimes: JSON.stringify(logs.directTimes),
+					start: JSON.stringify(logs.start),
+					startBusStops: JSON.stringify(logs.startBusStops),
+					startFixedDirect: JSON.stringify(logs.startFixed),
+					target: JSON.stringify(logs.target),
+					targetBusStops: JSON.stringify(logs.targetBusStops)
+				});
 
-	assertArraySizes(start, p.startBusStops, 'Whitelist', false);
-	assertArraySizes(target, p.targetBusStops, 'Whitelist', false);
+				console.log(
+					'WHITELIST REQUEST PARAMS',
+					JSON.stringify(toWhitelistRequestWithISOStrings(p), null, '\t')
+				);
+				let direct: (Insertion | undefined)[] = [];
+				if (p.directTimes.length != 0) {
+					if (p.startFixed) {
+						p.targetBusStops.push({
+							...p.start,
+							times: p.directTimes
+						});
+					} else {
+						p.startBusStops.push({
+							...p.target,
+							times: p.directTimes
+						});
+					}
+				}
+				let [start, target] = await Promise.all([
+					whitelist(p.start, p.startBusStops, p.capacities, false),
+					whitelist(p.target, p.targetBusStops, p.capacities, true)
+				]);
 
-	if (p.directTimes.length != 0) {
-		direct = p.startFixed ? target[target.length - 1] : start[start.length - 1];
-		if (p.startFixed) {
-			target = target.slice(0, target.length - 1);
-		} else {
-			start = start.slice(0, start.length - 1);
-		}
-	}
+				assertArraySizes(start, p.startBusStops, 'Whitelist', false);
+				assertArraySizes(target, p.targetBusStops, 'Whitelist', false);
 
-	console.assert(
-		direct.length === p.directTimes.length,
-		'Array size mismatch in Whitelist - direct.'
-	);
+				if (p.directTimes.length != 0) {
+					direct = p.startFixed ? target[target.length - 1] : start[start.length - 1];
+					if (p.startFixed) {
+						target = target.slice(0, target.length - 1);
+					} else {
+						start = start.slice(0, start.length - 1);
+					}
+				}
 
-	const response: WhitelistResponse = {
-		start,
-		target,
-		direct: filterDirectResponses(direct, p.startFixed)
-	};
-	console.log(
-		'WHITELIST RESPONSE: ',
-		JSON.stringify(toWhitelistResponseWithISOStrings(response), null, '\t')
-	);
-	return json(response);
+				console.assert(
+					direct.length === p.directTimes.length,
+					'Array size mismatch in Whitelist - direct.'
+				);
+
+				const response: WhitelistResponse = {
+					start,
+					target,
+					direct: filterDirectResponses(direct, p.startFixed)
+				};
+				console.log(
+					'WHITELIST RESPONSE: ',
+					JSON.stringify(toWhitelistResponseWithISOStrings(response), null, '\t')
+				);
+				resolve(json(response));
+			} catch (err) {
+				if (err instanceof Error) {
+					span.recordException(err);
+				} else {
+					span.recordException(new Error(String(err)));
+				}
+				reject(err);
+			} finally {
+				span.end();
+			}
+		});
+	});
 }
 
 function toWhitelistResponseWithISOStrings(r: WhitelistResponse) {
