@@ -11,8 +11,9 @@
 	import { expandTree, filterTree, type JaegerNode } from './jaegerTypes.js';
 	import { cols, cols2 } from './tableData.js';
 	import Select from '$lib/ui/Select.svelte';
-	import * as Card from '$lib/shadcn/card';
 	import { tracingOperationNames } from '$lib/util/tracingNames.js';
+	import CoordinatePicker from '$lib/ui/CoordinatePicker.svelte';
+	import { Button, buttonVariants } from '$lib/shadcn/button';
 
 	function getPossibleValues(key: string) {
 		return [
@@ -33,7 +34,16 @@
 			.sort((i1, i2) => i1 - i2);
 	}
 
+	const states = [
+		'CHOOSE_TRACE',
+		'FILTER_START',
+		'FILTER_TARGET',
+		'VIEW_LOGS',
+		'FILTER_START_BUSSTOPS',
+		'FILTER_TARGET_BUSSTOPS'
+	];
 	const { data } = $props();
+	let currentState = $state(states[0]);
 
 	let selectedHowIdx = $state(-1);
 	const howOptions = [
@@ -112,6 +122,35 @@
 				.flatMap((t) => expandTree(t))
 				.filter((s) => tracingOperationNames.some((n) => n === s.operationName)) ?? [];
 	});
+	$effect(() => {
+		if (selectedRow !== undefined) {
+			currentState = states[3];
+		}
+	});
+	let coordinates: maplibregl.LngLatLike[] | undefined = $state(undefined);
+
+	$effect(() => {
+		switch (currentState) {
+			case 'CHOOSE_TRACE':
+				coordinates = undefined;
+				break;
+			case 'FILTER_START':
+				coordinates = traces.filter((t) => t.startCoordinates).map((t) => t.startCoordinates!);
+				break;
+			case 'FILTER_TARGET':
+				coordinates = traces.filter((t) => t.targetCoordinates).map((t) => t.targetCoordinates!);
+				break;
+			case 'VIEW_LOGS':
+				coordinates = undefined;
+				break;
+			case 'FILTER_START_BUSSTOPS':
+				coordinates = selectedRow![0].startBusStops!;
+				break;
+			case 'FILTER_TARGET_BUSSTOPS':
+				coordinates = selectedRow![0].targetBusStops!;
+				break;
+		}
+	});
 </script>
 
 {#snippet filterOptions()}
@@ -170,28 +209,58 @@
 			initial={'vehicle'}
 			disabled={null}
 		/>
+		<Button
+			type="submit"
+			onclick={() => {
+				currentState = states[4];
+			}}>Starthaltestellen filtern</Button
+		>
+		<Button
+			type="submit"
+			onclick={() => {
+				currentState = states[5];
+			}}>Zielhaltestellen filtern</Button
+		>
 	</div>
 {/snippet}
 
-<div class="flex flex-col gap-4">
-	<div class="flex flex-row justify-start">
-		{@render filterOptions()}
-	</div>
+{#if coordinates !== undefined}
 	<div>
-		<Card.Header>
-			<Card.Title>Abrechnung</Card.Title>
-		</Card.Header>
-		<Card.Content>
-			<div class="flex flex-row justify-start">
-				<SortableTable
-					bind:rows
-					{cols}
-					getRowStyle={(_) => 'cursor-pointer '}
-					bind:selectedRow
-					bindSelectedRow={true}
-				/>
-			</div>
-			<SortableTable rows={rows2} cols={cols2} />
-		</Card.Content>
+		<CoordinatePicker data={{ coordinates }} />
 	</div>
-</div>
+{:else if currentState === 'CHOOSE_TRACE'}
+	<div class="flex flex-col">
+		<div class="flex flex-row">
+			<Button
+				type="submit"
+				onclick={() => {
+					currentState = states[1];
+				}}>Start filtern</Button
+			>
+			<Button
+				type="submit"
+				onclick={() => {
+					currentState = states[2];
+				}}>Ziel filtern</Button
+			>
+		</div>
+		<div class="flex flex-row justify-start">
+			<SortableTable
+				bind:rows
+				{cols}
+				getRowStyle={(_) => 'cursor-pointer '}
+				bind:selectedRow
+				bindSelectedRow={true}
+			/>
+		</div>
+	</div>
+{:else}
+	<div class="flex h-full w-screen flex-col">
+		<div class="flex flex-row justify-start">
+			{@render filterOptions()}
+		</div>
+		<div>
+			<SortableTable rows={rows2} cols={cols2} />
+		</div>
+	</div>
+{/if}
