@@ -13,7 +13,8 @@
 	import Select from '$lib/ui/Select.svelte';
 	import { tracingOperationNames } from '$lib/util/tracingNames.js';
 	import CoordinatePicker from '$lib/ui/CoordinatePicker.svelte';
-	import { Button, buttonVariants } from '$lib/shadcn/button';
+	import { Button } from '$lib/shadcn/button';
+	import type { LngLat } from 'maplibre-gl';
 
 	function getPossibleValues(key: string) {
 		return [
@@ -44,6 +45,7 @@
 	];
 	const { data } = $props();
 	let currentState = $state(states[0]);
+	let prevState = $state(states[0]);
 
 	let selectedHowIdx = $state(-1);
 	const howOptions = [
@@ -75,10 +77,6 @@
 	const nextOptions = $derived(getPossibleValues('next'));
 	let next: undefined | string = $derived(String(nextOptions[selectedNextIdx]));
 
-	let selectedBusStopIdxIdx = $state(-1);
-	const busStopIdxOptions = $derived(getPossibleValues('busStopIdx'));
-	let busStopIdx: undefined | string = $derived(String(busStopIdxOptions[selectedBusStopIdxIdx]));
-
 	let selectedStartFixedIdx = $state(-1);
 	const startFixedOptions = [true, false];
 	let startFixed: undefined | string = $derived(String(startFixedOptions[selectedStartFixedIdx]));
@@ -97,37 +95,87 @@
 		{ key: 'direction', value: direction },
 		{ key: 'prev', value: prev },
 		{ key: 'next', value: next },
-		{ key: 'busStopIdx', value: busStopIdx },
 		{ key: 'startFixed', value: startFixed },
 		{ key: 'company', value: company },
 		{ key: 'vehicle', value: vehicle }
 	]);
 
-	const traces = data.whitelist!;
-	let rows = $state(traces);
-	let selectedRow: JaegerNode[] | undefined = $state(undefined);
+	let startCoordinates = $state(new Array<maplibregl.LngLatLike>());
+	let targetCoordinates = $state(new Array<maplibregl.LngLatLike>());
+	let startBusstopCoordinates = $state(new Array<maplibregl.LngLatLike>());
+	let targetBusstopCoordinates = $state(new Array<maplibregl.LngLatLike>());
+	let selectedRow: JaegerNode[] = $state([]);
 
-	let rows2: JaegerNode[] = $state(
-		traces
-			?.filter((t) => selectedRow === undefined || selectedRow[0].traceID === t.traceID)
-			.map((t) => filterTree(t, filters))
-			.flatMap((t) => expandTree(t))
-			.filter((s) => tracingOperationNames.some((n) => n === s.operationName)) ?? []
+	let startBusIdxs: number[] = $derived(
+		selectedRow.length === 0
+			? []
+			: startBusstopCoordinates
+					.map(
+						(b) =>
+							selectedRow[0].startBusStops?.findIndex(
+								(b2) =>
+									(b as maplibregl.LngLat).lat === (b2 as maplibregl.LngLat).lat &&
+									(b as maplibregl.LngLat).lng === (b2 as maplibregl.LngLat).lng
+							) ?? -1
+					)
+					.filter((b) => b !== -1)
 	);
+	let targetBusIdxs: number[] = $derived(
+		selectedRow.length === 0
+			? []
+			: targetBusstopCoordinates
+					.map(
+						(b) =>
+							selectedRow[0].targetBusStops?.findIndex(
+								(b2) =>
+									(b as maplibregl.LngLat).lat === (b2 as maplibregl.LngLat).lat &&
+									(b as maplibregl.LngLat).lng === (b2 as maplibregl.LngLat).lng
+							) ?? -1
+					)
+					.filter((b) => b !== -1)
+	);
+
+	let traceRows = $derived(
+		data.whitelist.filter(
+			(t) =>
+				(startCoordinates.length === 0 ||
+					startCoordinates.some(
+						(c) =>
+							(c as LngLat).lat === t.startCoordinates?.lat &&
+							(c as LngLat).lng === t.startCoordinates?.lng
+					)) &&
+				(targetCoordinates.length === 0 ||
+					targetCoordinates.some(
+						(c) =>
+							(c as LngLat).lat === t.targetCoordinates?.lat &&
+							(c as LngLat).lng === t.targetCoordinates?.lng
+					))
+		)
+	);
+
+	let spanRows: JaegerNode[] = $derived(
+		selectedRow.length === 0
+			? []
+			: (traceRows
+					?.filter((t) => selectedRow[0].traceID === t.traceID)
+					.map((t) => filterTree(t, filters, startBusIdxs, targetBusIdxs, []))
+					.flatMap((trees) => trees.flatMap((t) => expandTree(t)))
+					.filter((s) => tracingOperationNames.some((n) => n === s.operationName)) ?? [])
+	);
+
+	function setState(idx: number) {
+		prevState = currentState;
+		currentState = states[idx];
+		console.log({ currentState });
+	}
+
 	$effect(() => {
-		rows2 =
-			traces
-				?.filter((t) => selectedRow === undefined || selectedRow[0].traceID === t.traceID)
-				.map((t) => filterTree(t, filters))
-				.flatMap((t) => expandTree(t))
-				.filter((s) => tracingOperationNames.some((n) => n === s.operationName)) ?? [];
-	});
-	$effect(() => {
-		if (selectedRow !== undefined) {
-			currentState = states[3];
+		if (selectedRow.length !== 0 && states.findIndex((s) => s === currentState) < 3) {
+			setState(3);
 		}
 	});
 	let coordinates: maplibregl.LngLatLike[] | undefined = $state(undefined);
+	let isMapOpen = $state(true);
 
 	$effect(() => {
 		switch (currentState) {
@@ -135,20 +183,35 @@
 				coordinates = undefined;
 				break;
 			case 'FILTER_START':
-				coordinates = traces.filter((t) => t.startCoordinates).map((t) => t.startCoordinates!);
+				isMapOpen = true;
+				coordinates = data.whitelist
+					.filter((t) => t.startCoordinates)
+					.map((t) => t.startCoordinates!);
 				break;
 			case 'FILTER_TARGET':
-				coordinates = traces.filter((t) => t.targetCoordinates).map((t) => t.targetCoordinates!);
+				isMapOpen = true;
+				coordinates = data.whitelist
+					.filter((t) => t.targetCoordinates)
+					.map((t) => t.targetCoordinates!);
 				break;
 			case 'VIEW_LOGS':
 				coordinates = undefined;
 				break;
 			case 'FILTER_START_BUSSTOPS':
-				coordinates = selectedRow![0].startBusStops!;
+				isMapOpen = true;
+				coordinates = selectedRow.length === 0 ? [] : (selectedRow[0]?.startBusStops! ?? []);
 				break;
 			case 'FILTER_TARGET_BUSSTOPS':
-				coordinates = selectedRow![0].targetBusStops!;
+				isMapOpen = true;
+				coordinates = selectedRow.length === 0 ? [] : (selectedRow[0]?.targetBusStops! ?? []);
 				break;
+		}
+		console.log({ currentState }, { prevState });
+	});
+
+	$effect(() => {
+		if (!isMapOpen) {
+			currentState = prevState;
 		}
 	});
 </script>
@@ -186,12 +249,6 @@
 			disabled={null}
 		/>
 		<Select
-			bind:selectedIdx={selectedBusStopIdxIdx}
-			entries={busStopIdxOptions}
-			initial={'busStopIdx'}
-			disabled={null}
-		/>
-		<Select
 			bind:selectedIdx={selectedStartFixedIdx}
 			entries={startFixedOptions}
 			initial={'startFixed'}
@@ -212,41 +269,73 @@
 		<Button
 			type="submit"
 			onclick={() => {
-				currentState = states[4];
+				console.log('test1');
+				setState(4);
 			}}>Starthaltestellen filtern</Button
 		>
 		<Button
 			type="submit"
 			onclick={() => {
-				currentState = states[5];
+				console.log('test2');
+				setState(5);
 			}}>Zielhaltestellen filtern</Button
 		>
 	</div>
 {/snippet}
 
-{#if coordinates !== undefined}
-	<div>
-		<CoordinatePicker data={{ coordinates }} />
-	</div>
+{#if isMapOpen && coordinates !== undefined}
+	{#if currentState === states[1]}
+		<div>
+			<CoordinatePicker
+				{coordinates}
+				bind:pickedCoordinates={startCoordinates}
+				bind:open={isMapOpen}
+			/>
+		</div>
+	{:else if currentState === states[2]}
+		<div>
+			<CoordinatePicker
+				{coordinates}
+				bind:pickedCoordinates={targetCoordinates}
+				bind:open={isMapOpen}
+			/>
+		</div>
+	{:else if currentState === states[4]}
+		<div>
+			<CoordinatePicker
+				{coordinates}
+				bind:pickedCoordinates={startBusstopCoordinates}
+				bind:open={isMapOpen}
+			/>
+		</div>
+	{:else if currentState === states[5]}
+		<div>
+			<CoordinatePicker
+				{coordinates}
+				bind:pickedCoordinates={targetBusstopCoordinates}
+				bind:open={isMapOpen}
+			/>
+		</div>
+	{/if}
 {:else if currentState === 'CHOOSE_TRACE'}
 	<div class="flex flex-col">
 		<div class="flex flex-row">
 			<Button
 				type="submit"
 				onclick={() => {
-					currentState = states[1];
+					setState(1);
 				}}>Start filtern</Button
 			>
 			<Button
 				type="submit"
 				onclick={() => {
-					currentState = states[2];
+					setState(2);
 				}}>Ziel filtern</Button
 			>
 		</div>
 		<div class="flex flex-row justify-start">
 			<SortableTable
-				bind:rows
+				bind:rows={traceRows}
 				{cols}
 				getRowStyle={(_) => 'cursor-pointer '}
 				bind:selectedRow
@@ -260,7 +349,7 @@
 			{@render filterOptions()}
 		</div>
 		<div>
-			<SortableTable rows={rows2} cols={cols2} />
+			<SortableTable rows={spanRows} cols={cols2} />
 		</div>
 	</div>
 {/if}

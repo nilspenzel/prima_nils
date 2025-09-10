@@ -1,10 +1,18 @@
 <script lang="ts">
 	import maplibregl from 'maplibre-gl';
 	import Map from '$lib/map/Map.svelte';
-	import { env } from '$env/dynamic/public';
 
-	const { data } = $props(); // $lib/map/style.ts
+	let {
+		pickedCoordinates = $bindable(),
+		coordinates,
+		open = $bindable()
+	}: {
+		coordinates: maplibregl.LngLatLike[];
+		pickedCoordinates: maplibregl.LngLatLike[];
+		open: boolean;
+	} = $props();
 	import type { StyleSpecification } from 'maplibre-gl';
+	import Button from '$lib/shadcn/button/button.svelte';
 
 	export function getStyle(theme = 'light', _version = 0): StyleSpecification {
 		return {
@@ -34,47 +42,75 @@
 	}
 
 	let map = $state<maplibregl.Map>();
-
-	let init = false;
-	let coordinates: maplibregl.LngLatLike[] = $state(data.coordinates);
 	let markers: maplibregl.Marker[] = [];
-	function addMarkers(
-		markers: maplibregl.Marker[],
-		coordinates: maplibregl.LngLatLike[],
-		color: string
-	) {
+
+	function addMarkers(markers: maplibregl.Marker[], coordinates: maplibregl.LngLatLike[]) {
 		markers.forEach((marker) => marker.remove());
 		return coordinates.map((coordinate, i) => {
+			function setColor(color: string) {
+				Object.assign(el.style, {
+					backgroundColor: color,
+					color: 'black',
+					width: '24px',
+					height: '24px',
+					borderRadius: '50%',
+					textAlign: 'center',
+					lineHeight: '24px',
+					fontWeight: 'bold',
+					fontSize: '12px',
+					cursor: 'pointer'
+				});
+			}
+
 			const el = document.createElement('div');
 			el.className = 'marker-start';
 			el.innerText = `${i + 1}`;
-			Object.assign(el.style, {
-				backgroundColor: color,
-				color: 'black',
-				width: '24px',
-				height: '24px',
-				borderRadius: '50%',
-				textAlign: 'center',
-				lineHeight: '24px',
-				fontWeight: 'bold',
-				fontSize: '12px'
-			});
+			const exists = pickedCoordinates.some(
+				(c) =>
+					(c as maplibregl.LngLat).lng === (coordinate as maplibregl.LngLat).lng &&
+					(c as maplibregl.LngLat).lat === (coordinate as maplibregl.LngLat).lat
+			);
+			if (exists) {
+				setColor('red');
+			} else {
+				setColor('green');
+			}
 			const marker = new maplibregl.Marker({
 				element: el
 			})
 				.setLngLat(coordinate)
 				.addTo(map!);
+
+			el.addEventListener('click', () => {
+				const exists = pickedCoordinates.some(
+					(c) =>
+						(c as maplibregl.LngLat).lng === (coordinate as maplibregl.LngLat).lng &&
+						(c as maplibregl.LngLat).lat === (coordinate as maplibregl.LngLat).lat
+				);
+				if (!exists) {
+					pickedCoordinates.push(coordinate);
+					setColor('red');
+				} else {
+					pickedCoordinates = pickedCoordinates.filter(
+						(c) =>
+							(c as maplibregl.LngLat).lat !== (coordinate as maplibregl.LngLat).lat ||
+							(c as maplibregl.LngLat).lng !== (coordinate as maplibregl.LngLat).lng
+					);
+					setColor('green');
+				}
+			});
 			return marker;
 		});
 	}
 
 	$effect(() => {
 		if (!map) return;
-		markers = addMarkers(markers, coordinates, 'green');
+		markers = addMarkers(markers, coordinates);
 	});
 </script>
 
 <div class="flex h-full w-screen">
+	<Button onclick={() => (open = false)}>bestätigen</Button>
 	<Map
 		bind:map
 		zoom={10}

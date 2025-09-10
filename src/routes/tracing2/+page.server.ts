@@ -18,7 +18,7 @@ export const load: PageServerLoad = async () => {
 	const d: JaegerResponse = await res.json();
 	if (!d.data || d.data.length === 0) {
 		console.log('no data received.');
-		return { traces: [] };
+		return { whitelist: [], booking: [] };
 	}
 	const spans = d.data.flatMap((d) => d.spans);
 	const whitelistRootSpans = spans.filter((s) =>

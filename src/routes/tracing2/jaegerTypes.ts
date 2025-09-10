@@ -49,26 +49,52 @@ export type JaegerNode = JaegerSpan & {
 
 export function filterTree(
 	tree: JaegerNode,
-	filters: { key: string; value: string | undefined }[]
-): JaegerNode {
+	filters: { key: string; value: string | undefined }[],
+	startBusStops: number[],
+	targetBusStops: number[],
+	ret: JaegerNode[]
+): JaegerNode[] {
 	const relevantFilters = filters.filter(
 		(f) => f.value !== String(undefined) && f.value !== undefined
 	);
-	return {
-		...tree,
-		children: tree.children
-			.filter(
-				(cc) =>
-					!cc.logs.some((l) =>
-						l.fields.some((field) =>
-							relevantFilters.some(
-								(filter) => filter.key === field.key && filter.value !== String(field.value)
-							)
-						)
-					)
+	const fulfilledFilterIdxs = relevantFilters
+		.map((filter, idx) =>
+			!tree.logs.some((l) =>
+				l.fields.some((field) => filter.key === field.key && filter.value !== String(field.value))
 			)
-			.map((child) => filterTree(child, filters))
-	};
+				? idx
+				: undefined
+		)
+		.filter((i) => i !== undefined);
+	const startBusStopsFulfilled =
+		startBusStops.length === 0 ||
+		tree.logs.some((l) =>
+			l.fields.some(
+				(f) => f.key === 'busStopIdx' && startBusStops.some((b) => String(f.value) === String(b))
+			)
+		);
+	const targetBusStopsFulfilled =
+		targetBusStops.length === 0 ||
+		tree.logs.some((l) =>
+			l.fields.some(
+				(f) => f.key === 'busStopIdx' && targetBusStops.some((b) => String(f.value) === String(b))
+			)
+		);
+	const requiredChildFilters = relevantFilters
+		.filter((f, idx) => (!fulfilledFilterIdxs.some((i) => i === idx) ? f : undefined))
+		.filter((f) => f !== undefined);
+	if (
+		fulfilledFilterIdxs.length === relevantFilters.length &&
+		startBusStopsFulfilled &&
+		targetBusStopsFulfilled
+	) {
+		ret.push(tree);
+	} else {
+		tree.children.forEach((c) =>
+			filterTree(c, requiredChildFilters, startBusStopsFulfilled ? [] : startBusStops, targetBusStopsFulfilled ? [] : targetBusStops, ret)
+		);
+	}
+	return ret;
 }
 
 export function expandTree(tree: JaegerNode): JaegerNode[] {
