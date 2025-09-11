@@ -48,51 +48,58 @@ export type JaegerNode = JaegerSpan & {
 };
 
 export function filterTree(
-	tree: JaegerNode,
+	node: JaegerNode,
 	filters: { key: string; value: string | undefined }[],
 	startBusStops: number[],
 	targetBusStops: number[],
-	ret: JaegerNode[]
+	fulfilledFilters: Set<number> = new Set(),
+	fulfilledStart: boolean = false,
+	fulfilledTarget: boolean = false,
+	ret: JaegerNode[] = []
 ): JaegerNode[] {
-	const relevantFilters = filters.filter(
-		(f) => f.value !== String(undefined) && f.value !== undefined
-	);
-	const fulfilledFilterIdxs = relevantFilters
-		.map((filter, idx) =>
-			!tree.logs.some((l) =>
-				l.fields.some((field) => filter.key === field.key && filter.value !== String(field.value))
-			)
-				? idx
-				: undefined
-		)
-		.filter((i) => i !== undefined);
-	const startBusStopsFulfilled =
+  	const localFulfilled = new Set(fulfilledFilters);
+	filters.forEach((f, idx) => {
+		if (!localFulfilled.has(idx)) {
+			if (String(f.value) === 'undefined') {
+				localFulfilled.add(idx);
+				return;
+			}
+			if (
+				node.logs.some((l) =>
+					l.fields.some((field) => field.key === f.key && String(field.value) === String(f.value))
+				)
+			) {
+				localFulfilled.add(idx);
+			}
+		}
+	});
+	const startFulfilledHere =
+		fulfilledStart ||
 		startBusStops.length === 0 ||
-		tree.logs.some((l) =>
-			l.fields.some(
-				(f) => f.key === 'busStopIdx' && startBusStops.some((b) => String(f.value) === String(b))
-			)
+		node.logs.some((l) =>
+			l.fields.some((f) => f.key === 'busStopIdx' && startBusStops.includes(Number(f.value)))
 		);
-	const targetBusStopsFulfilled =
+	const targetFulfilledHere =
+		fulfilledTarget ||
 		targetBusStops.length === 0 ||
-		tree.logs.some((l) =>
-			l.fields.some(
-				(f) => f.key === 'busStopIdx' && targetBusStops.some((b) => String(f.value) === String(b))
-			)
+		node.logs.some((l) =>
+			l.fields.some((f) => f.key === 'busStopIdx' && targetBusStops.includes(Number(f.value)))
 		);
-	const requiredChildFilters = relevantFilters
-		.filter((f, idx) => (!fulfilledFilterIdxs.some((i) => i === idx) ? f : undefined))
-		.filter((f) => f !== undefined);
-	if (
-		fulfilledFilterIdxs.length === relevantFilters.length &&
-		startBusStopsFulfilled &&
-		targetBusStopsFulfilled
-	) {
-		ret.push(tree);
+	if (localFulfilled.size === filters.length && startFulfilledHere && targetFulfilledHere) {
+		ret.push(node);
 	} else {
-		tree.children.forEach((c) =>
-			filterTree(c, requiredChildFilters, startBusStopsFulfilled ? [] : startBusStops, targetBusStopsFulfilled ? [] : targetBusStops, ret)
-		);
+		node.children.forEach((child) => {
+			filterTree(
+				child,
+				filters,
+				startBusStops,
+				targetBusStops,
+				new Set(localFulfilled),
+				startFulfilledHere,
+				targetFulfilledHere,
+				ret
+			);
+		});
 	}
 	return ret;
 }
@@ -125,7 +132,6 @@ export function addCoordinates(n: JaegerNode) {
 	const targetBusStops = n.logs
 		.find((l) => l.fields.some((f) => f.key === 'targetBusStops'))
 		?.fields.find((f) => f.key === 'targetBusStops')?.value;
-	console.log({ abc: start }, { abc2: target }, { abc1: startBusStops }, { abc3: targetBusStops });
 	const ret: JaegerNode = {
 		...n,
 		startCoordinates: undefined,

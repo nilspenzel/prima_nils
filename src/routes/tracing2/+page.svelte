@@ -9,7 +9,7 @@
 		insertWhatToString
 	} from '$lib/util/booking/insertionTypes.js';
 	import { expandTree, filterTree, type JaegerNode } from './jaegerTypes.js';
-	import { cols, cols2 } from './tableData.js';
+	import { cols, cols2, getCols3 } from './tableData.js';
 	import Select from '$lib/ui/Select.svelte';
 	import { tracingOperationNames } from '$lib/util/tracingNames.js';
 	import CoordinatePicker from '$lib/ui/CoordinatePicker.svelte';
@@ -100,6 +100,16 @@
 		{ key: 'vehicle', value: vehicle }
 	]);
 
+	$effect(() => {
+		console.log("filters: ", { how },
+		{ what },
+		{ direction },
+		{ prev },
+		{ next },
+		{ startFixed },
+		{ company },
+		{ vehicle })
+	});
 	let startCoordinates = $state(new Array<maplibregl.LngLatLike>());
 	let targetCoordinates = $state(new Array<maplibregl.LngLatLike>());
 	let startBusstopCoordinates = $state(new Array<maplibregl.LngLatLike>());
@@ -158,15 +168,18 @@
 			? []
 			: (traceRows
 					?.filter((t) => selectedRow[0].traceID === t.traceID)
-					.map((t) => filterTree(t, filters, startBusIdxs, targetBusIdxs, []))
+					.map((t) => filterTree(t, filters, startBusIdxs, targetBusIdxs, new Set<number>()))
 					.flatMap((trees) => trees.flatMap((t) => expandTree(t)))
 					.filter((s) => tracingOperationNames.some((n) => n === s.operationName)) ?? [])
 	);
 
+	$effect(() => {
+		console.log("hi", spanRows.length)
+	})
+
 	function setState(idx: number) {
 		prevState = currentState;
 		currentState = states[idx];
-		console.log({ currentState });
 	}
 
 	$effect(() => {
@@ -206,7 +219,6 @@
 				coordinates = selectedRow.length === 0 ? [] : (selectedRow[0]?.targetBusStops! ?? []);
 				break;
 		}
-		console.log({ currentState }, { prevState });
 	});
 
 	$effect(() => {
@@ -214,6 +226,16 @@
 			currentState = prevState;
 		}
 	});
+
+	let cols3 = $derived(getCols3());
+	let colRows: string[] = $state([]);
+	$effect(() => {
+		const s = new Set<string>();
+		spanRows.forEach((span) => {
+			expandTree(span).forEach((span2) => span2.logs.forEach((l) => l.fields.forEach((f) => s.add(f.key))))
+		});
+		colRows = [...s];
+	})
 </script>
 
 {#snippet filterOptions()}
@@ -269,14 +291,12 @@
 		<Button
 			type="submit"
 			onclick={() => {
-				console.log('test1');
 				setState(4);
 			}}>Starthaltestellen filtern</Button
 		>
 		<Button
 			type="submit"
 			onclick={() => {
-				console.log('test2');
 				setState(5);
 			}}>Zielhaltestellen filtern</Button
 		>
@@ -350,6 +370,9 @@
 		</div>
 		<div>
 			<SortableTable rows={spanRows} cols={cols2} />
+		</div>
+		<div>
+			<SortableTable rows={colRows} cols={cols3} />
 		</div>
 	</div>
 {/if}

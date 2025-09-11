@@ -1,5 +1,5 @@
 import type { Column } from '$lib/ui/tableData';
-import type { JaegerNode } from './jaegerTypes';
+import { expandTree, type JaegerNode } from './jaegerTypes';
 
 export const cols: Column<JaegerNode>[] = [
 	{
@@ -26,6 +26,14 @@ export const cols2: Column<JaegerNode>[] = [
 	jaegerTagColumn('busStopIdx'),
 	jaegerTagColumn('startFixed')
 ];
+
+export function getCols3(): Column<string>[] {
+	return [{
+		text: ['key'],
+		sort: undefined,
+		toTableEntry: ((e: string) => e)
+	}];
+}
 
 function getLogByKey(j: JaegerNode, key: string) {
 	return j.logs.find((l) => l.fields.some((f) => f.key === key))?.fields.find((f) => f.key === key)
