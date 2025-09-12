@@ -55,7 +55,7 @@ function sortJaegerNodeByTag(a: JaegerNode, b: JaegerNode, key: string) {
 	return String(tagA).localeCompare(String(tagB));
 }
 
-function jaegerTagColumn(key: string) {
+export function jaegerTagColumn(key: string) {
 	return {
 		text: [key],
 		sort: (a: JaegerNode, b: JaegerNode) => sortJaegerNodeByTag(a, b, key),

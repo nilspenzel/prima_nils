@@ -9,12 +9,13 @@
 		insertWhatToString
 	} from '$lib/util/booking/insertionTypes.js';
 	import { expandTree, filterTree, type JaegerNode } from './jaegerTypes.js';
-	import { cols, cols2, getCols3 } from './tableData.js';
+	import { cols, cols2, getCols3, jaegerTagColumn } from './tableData.js';
 	import Select from '$lib/ui/Select.svelte';
 	import { tracingOperationNames } from '$lib/util/tracingNames.js';
 	import CoordinatePicker from '$lib/ui/CoordinatePicker.svelte';
 	import { Button } from '$lib/shadcn/button';
 	import type { LngLat } from 'maplibre-gl';
+	import type { Column } from '$lib/ui/tableData.js';
 
 	function getPossibleValues(key: string) {
 		return [
@@ -227,15 +228,20 @@
 		}
 	});
 
-	let cols3 = $derived(getCols3());
 	let colRows: string[] = $state([]);
 	$effect(() => {
-		const s = new Set<string>();
+		const keys = new Set<string>();
 		spanRows.forEach((span) => {
-			expandTree(span).forEach((span2) => span2.logs.forEach((l) => l.fields.forEach((f) => s.add(f.key))))
+			span.logs.forEach((log) => {
+		    	log.fields.forEach((f) => keys.add(f.key));
+			});
 		});
-		colRows = [...s];
-	})
+		colRows = [...keys];
+		console.log({keys})
+	});
+	let cols3: Column<JaegerNode>[] = $derived(
+  		colRows.map((key) => jaegerTagColumn(key))
+);
 </script>
 
 {#snippet filterOptions()}
@@ -369,10 +375,7 @@
 			{@render filterOptions()}
 		</div>
 		<div>
-			<SortableTable rows={spanRows} cols={cols2} />
-		</div>
-		<div>
-			<SortableTable rows={colRows} cols={cols3} />
+			<SortableTable rows={spanRows} cols={cols3} />
 		</div>
 	</div>
 {/if}
