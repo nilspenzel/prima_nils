@@ -323,6 +323,7 @@ async function bookingApiCall(
 		parameters,
 		1,
 		true,
+		true,
 		kidsZeroToTwo,
 		kidsThreeToFour,
 		kidsFiveToSix,
