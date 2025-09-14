@@ -157,3 +157,18 @@ export function addCoordinates(n: JaegerNode) {
 	}
 	return ret;
 }
+
+function flattenTree(node: JaegerNode): JaegerNode[] {
+  let result: JaegerNode[] = [node];
+
+  if (node.children && node.children.length > 0) {
+    for (const child of node.children) {
+      result = result.concat(flattenTree(child));
+    }
+  }
+  return result;
+}
+
+export function flattenForest(nodes: JaegerNode[]): JaegerNode[] {
+  return nodes.flatMap(flattenTree).filter((n) => nodes.some((s) => n.spanID === s.spanID));
+}

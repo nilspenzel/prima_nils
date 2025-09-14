@@ -8,7 +8,7 @@
 		InsertWhat,
 		insertWhatToString
 	} from '$lib/util/booking/insertionTypes.js';
-	import { expandTree, filterTree, type JaegerNode } from './jaegerTypes.js';
+	import { expandTree, filterTree, flattenForest, type JaegerNode } from './jaegerTypes.js';
 	import { cols, cols2, getCols3, jaegerTagColumn } from './tableData.js';
 	import Select from '$lib/ui/Select.svelte';
 	import { tracingOperationNames } from '$lib/util/tracingNames.js';
@@ -164,19 +164,28 @@
 		)
 	);
 
-	let spanRows: JaegerNode[] = $derived(
-		selectedRow.length === 0
-			? []
-			: (traceRows
-					?.filter((t) => selectedRow[0].traceID === t.traceID)
-					.map((t) => filterTree(t, filters, startBusIdxs, targetBusIdxs, new Set<number>()))
-					.flatMap((trees) => trees.flatMap((t) => expandTree(t)))
-					.filter((s) => tracingOperationNames.some((n) => n === s.operationName)) ?? [])
-	);
+	let selectedSpan: undefined | JaegerNode[] = $state(undefined);
+
+	let rootRow: JaegerNode | undefined = $derived(selectedRow.length !== 0 ? traceRows
+					?.filter((t) => selectedRow[0].traceID === t.traceID)[0] ?? undefined : undefined);
+
+	let filteredRows = $derived(rootRow === undefined ? [] : filterTree(rootRow, filters, startBusIdxs, targetBusIdxs).flatMap((t) => expandTree(t)));
+
+	let spanRows: JaegerNode[] = $state([]);
+	let selectedSpans: JaegerNode[] = [];
 
 	$effect(() => {
-		console.log("hi", spanRows.length)
-	})
+		if(selectedSpan === undefined || selectedSpan.length === 0) {
+			spanRows = rootRow === undefined ? [] : [rootRow];
+			return;
+		}
+		if(!selectedSpans.some((span) => span.spanID === selectedSpan![0].spanID)) {
+			selectedSpans.push(selectedSpan[0]);
+		} else {
+			selectedSpans = selectedSpans.filter((span) => span.spanID !== selectedSpan![0].spanID);
+		}
+		spanRows = new Array<JaegerNode>().concat(filteredRows.filter((filteredSpan) => selectedSpans.some((span) => span.spanID === filteredSpan.spanID)).flatMap((s) => s.children))
+	});
 
 	function setState(idx: number) {
 		prevState = currentState;
@@ -237,11 +246,16 @@
 			});
 		});
 		colRows = [...keys];
-		console.log({keys})
 	});
 	let cols3: Column<JaegerNode>[] = $derived(
-  		colRows.map((key) => jaegerTagColumn(key))
-);
+  		colRows.map((key) => jaegerTagColumn(key)));
+
+	let sortHierarchically = $state(false);
+	$effect(() => {
+		if(sortHierarchically) {
+			spanRows = flattenForest(spanRows)
+		}
+	});
 </script>
 
 {#snippet filterOptions()}
@@ -306,6 +320,12 @@
 				setState(5);
 			}}>Zielhaltestellen filtern</Button
 		>
+		<Button
+			type="submit"
+			onclick={() => {
+				sortHierarchically = true;
+			}}
+		>hierarchisch sortieren</Button>
 	</div>
 {/snippet}
 
@@ -375,7 +395,7 @@
 			{@render filterOptions()}
 		</div>
 		<div>
-			<SortableTable rows={spanRows} cols={cols3} />
+			<SortableTable rows={spanRows} cols={cols3} bind:selectedRow={selectedSpan} bindSelectedRow={true} />
 		</div>
 	</div>
 {/if}
