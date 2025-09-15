@@ -80,6 +80,7 @@ export async function bookingApi(
 	approachPlusReturnDurationDelta?: number;
 	fullyPayedDurationDelta?: number;
 	waitingTime?: number;
+	firstConnection?: BookRideResponse;
 }> {
 	console.log(
 		'BOOKING API PARAMS: ',
@@ -129,6 +130,7 @@ export async function bookingApi(
 	}
 	const possibleRequestedTimes =
 		possibleRequestedTimes1.length === 0 ? possibleRequestedTimes2 : possibleRequestedTimes1;
+	let firstConnection: undefined | BookRideResponse = undefined;
 	for (const rt of possibleRequestedTimes) {
 		if (p.connection2) {
 			p.connection2!.requestedTime = rt;
@@ -140,7 +142,7 @@ export async function bookingApi(
 				.transaction()
 				.setIsolationLevel('serializable')
 				.execute(async (trx) => {
-					let firstConnection: undefined | BookRideResponse = undefined;
+					firstConnection = undefined;
 					let secondConnection: undefined | BookRideResponse = undefined;
 					if (p.connection1 != null) {
 						firstConnection = await bookRide(p.connection1, p.capacities, trx, skipPromiseCheck);
@@ -247,6 +249,7 @@ export async function bookingApi(
 		passengerDuration,
 		waitingTime,
 		approachPlusReturnDurationDelta,
-		fullyPayedDurationDelta
+		fullyPayedDurationDelta,
+		firstConnection
 	};
 }

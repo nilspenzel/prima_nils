@@ -432,7 +432,7 @@ export function evaluateBothInsertion(
 		);
 	}
 
-	const weightedPassengerDuration =
+	let weightedPassengerDuration =
 		passengerCountNewRequest * (scheduledDropoffTimeStart - scheduledPickupTimeEnd) +
 		getWeightedPassengerDurationDelta(insertionCase, prev, next, prevShift, nextShift);
 	const departure = comesFromCompany(insertionCase)
@@ -441,7 +441,6 @@ export function evaluateBothInsertion(
 	const arrival = returnsToCompany(insertionCase)
 		? scheduledDropoffTimeStart + nextLegDuration
 		: undefined;
-
 	const taxiWaitingTime = getWaitingTimeDelta(
 		insertionCase,
 		scheduledPickupTimeEnd,
@@ -795,7 +794,8 @@ export function evaluatePairInsertions(
 	busStopEvaluations: (SingleInsertionEvaluation | undefined)[][][],
 	userChosenEvaluations: (SingleInsertionEvaluation | undefined)[],
 	required: Capacities,
-	whitelist?: boolean
+	whitelist?: boolean,
+	promisedTimes?: PromisedTimes
 ): (Insertion | undefined)[][] {
 	const bestEvaluations: (Insertion | undefined)[][] = new Array<(Insertion | undefined)[]>(
 		busStopTimes.length
@@ -862,21 +862,26 @@ export function evaluatePairInsertions(
 					const prevDropoff = events[dropoffIdx - 1];
 					const nextDropoff = events[dropoffIdx];
 					const twoAfterDropoff = events[dropoffIdx + 1];
-					const communicatedPickupTime = Math.max(
-						pickup.window.endTime - SCHEDULED_TIME_BUFFER_PICKUP,
-						pickup.window.startTime
+					const scheduledPickupTimeEnd = promisedTimes !== undefined ? promisedTimes.pickup : Math.min(
+						pickup.window.startTime + SCHEDULED_TIME_BUFFER_PICKUP,
+						pickup.window.endTime
 					);
-					const communicatedDropoffTime = Math.min(
-						dropoff.window.startTime +
-							getScheduledTimeBufferDropoff(dropoff.window.startTime - pickup.window.endTime),
-						dropoff.window.endTime
+					const scheduledPickupTimeStart = Math.max(pickup.window.startTime, scheduledPickupTimeEnd - SCHEDULED_TIME_BUFFER_PICKUP);
+					if(scheduledPickupTimeEnd < scheduledPickupTimeStart) {
+						continue;
+					}
+					const scheduledDropoffTimeStart = promisedTimes !== undefined ? promisedTimes.dropoff : Math.max(
+						dropoff.window.endTime - getScheduledTimeBufferDropoff(dropoff.window.startTime - pickup.window.endTime),
+						dropoff.window.startTime
 					);
-
+					const scheduledDropoffTimeEnd =
+						Math.min(scheduledDropoffTimeStart + getScheduledTimeBufferDropoff(dropoff.window.startTime - pickup.window.endTime),
+							dropoff.window.endTime);
 					// Verify, that the shift induced to other events by pickup and dropoff are mutually compatible
 					if (dropoffIdx < pickupIdx + 3) {
 						let availableDistance =
-							communicatedDropoffTime -
-							communicatedPickupTime -
+							scheduledDropoffTimeStart -
+							scheduledPickupTimeEnd -
 							dropoff.prevLegDuration -
 							pickup.nextLegDuration;
 						if (pickupIdx + 2 === dropoffIdx) {
@@ -890,30 +895,6 @@ export function evaluatePairInsertions(
 						}
 					}
 
-					// Determine the scheduled times for pickup and dropoff
-					const leewayBetweenPickupDropoff =
-						communicatedDropoffTime -
-						communicatedPickupTime -
-						pickup.nextLegDuration -
-						dropoff.prevLegDuration;
-					const pickupScheduledShift = Math.min(
-						pickup.window.size(),
-						SCHEDULED_TIME_BUFFER_PICKUP,
-						leewayBetweenPickupDropoff
-					);
-					const scheduledPickupTime =
-						communicatedPickupTime +
-						(pickup.case.how === InsertHow.APPEND ? 0 : pickupScheduledShift);
-					const scheduledDropoffTime =
-						communicatedDropoffTime -
-						(dropoff.case.how === InsertHow.PREPEND
-							? 0
-							: Math.min(
-									dropoff.window.size(),
-									getScheduledTimeBufferDropoff(dropoff.window.startTime - pickup.window.endTime),
-									leewayBetweenPickupDropoff - pickupScheduledShift
-								));
-
 					// Compute the delta of the taxi's time spend driving for the tour containing the new request
 					const approachPlusReturnDurationDelta =
 						pickup.approachPlusReturnDurationDelta + dropoff.approachPlusReturnDurationDelta;
@@ -924,18 +905,18 @@ export function evaluatePairInsertions(
 
 					// Compute the delta of the taxi's waiting time
 					const newDeparture = comesFromCompany(pickup.case)
-						? scheduledPickupTime - pickup.prevLegDuration
+						? scheduledPickupTimeEnd - pickup.prevLegDuration
 						: prevPickup.tourId !== twoBeforePickup?.tourId
 							? Math.min(
-									communicatedPickupTime - pickup.prevLegDuration,
+									scheduledPickupTimeStart - pickup.prevLegDuration,
 									getScheduledEventTime(prevPickup)
 								) - prevPickup.prevLegDuration
 							: prevPickup.departure;
 					const newArrival = returnsToCompany(dropoff.case)
-						? scheduledDropoffTime + dropoff.nextLegDuration
+						? scheduledDropoffTimeStart + dropoff.nextLegDuration
 						: nextDropoff.tourId !== twoAfterDropoff?.tourId
 							? Math.max(
-									communicatedDropoffTime + dropoff.nextLegDuration,
+									scheduledDropoffTimeEnd + dropoff.nextLegDuration,
 									getScheduledEventTime(nextDropoff)
 								) + nextDropoff.nextLegDuration
 							: nextDropoff.arrival;
@@ -963,35 +944,35 @@ export function evaluatePairInsertions(
 					if (!comesFromCompany(pickup.case) && prevPickup!.isPickup) {
 						prevShiftPickup = Math.max(
 							0,
-							getScheduledEventTime(prevPickup!) - communicatedPickupTime + pickup.prevLegDuration
+							getScheduledEventTime(prevPickup!) - scheduledPickupTimeEnd + pickup.prevLegDuration
 						);
 					}
 					let nextShiftPickup = 0;
 					if (!returnsToCompany(pickup.case) && !nextPickup!.isPickup) {
 						nextShiftPickup = Math.max(
 							0,
-							scheduledPickupTime + pickup.nextLegDuration - getScheduledEventTime(nextPickup!)
+							scheduledPickupTimeStart + pickup.nextLegDuration - getScheduledEventTime(nextPickup!)
 						);
 					}
 					let prevShiftDropoff = 0;
 					if (!comesFromCompany(dropoff.case) && prevDropoff!.isPickup) {
 						prevShiftDropoff = Math.max(
 							0,
-							getScheduledEventTime(prevDropoff!) - scheduledDropoffTime + dropoff.prevLegDuration
+							getScheduledEventTime(prevDropoff!) - scheduledDropoffTimeEnd + dropoff.prevLegDuration
 						);
 					}
 					let nextShiftDropoff = 0;
 					if (!returnsToCompany(dropoff.case) && !nextDropoff!.isPickup) {
 						nextShiftDropoff = Math.max(
 							0,
-							communicatedDropoffTime +
+							scheduledDropoffTimeStart +
 								dropoff.nextLegDuration -
 								getScheduledEventTime(nextDropoff!)
 						);
 					}
 
 					let weightedPassengerDuration =
-						required.passengers * (scheduledDropoffTime - scheduledPickupTime);
+						required.passengers * (scheduledDropoffTimeEnd - scheduledPickupTimeStart);
 					weightedPassengerDuration += getWeightedPassengerDurationDelta(
 						pickup.case,
 						prevPickup,
@@ -1036,12 +1017,12 @@ export function evaluatePairInsertions(
 					) {
 						const tour = events[pickupIdx].tourId;
 						bestEvaluations[busStopIdx][timeIdx] = {
-							pickupTime: communicatedPickupTime,
-							dropoffTime: communicatedDropoffTime,
-							scheduledPickupTimeEnd: scheduledPickupTime,
-							scheduledPickupTimeStart: communicatedPickupTime,
-							scheduledDropoffTimeStart: scheduledDropoffTime,
-							scheduledDropoffTimeEnd: communicatedDropoffTime,
+							pickupTime: scheduledPickupTimeEnd,
+							dropoffTime: scheduledDropoffTimeStart,
+							scheduledPickupTimeEnd,
+							scheduledPickupTimeStart,
+							scheduledDropoffTimeStart,
+							scheduledDropoffTimeEnd,
 							pickupCase: structuredClone(pickup.case),
 							dropoffCase: structuredClone(dropoff.case),
 							pickupIdx,
@@ -1055,10 +1036,10 @@ export function evaluatePairInsertions(
 							vehicle: insertionInfo.vehicle.id,
 							tour,
 							departure: comesFromCompany(pickup.case)
-								? new Date(scheduledPickupTime - pickup.prevLegDuration).getTime()
+								? new Date(scheduledPickupTimeStart - pickup.prevLegDuration).getTime()
 								: undefined,
 							arrival: returnsToCompany(dropoff.case)
-								? new Date(scheduledDropoffTime + dropoff.nextLegDuration).getTime()
+								? new Date(scheduledDropoffTimeEnd + dropoff.nextLegDuration).getTime()
 								: undefined,
 							pickupPrevLegDuration: pickup.prevLegDuration,
 							pickupNextLegDuration: pickup.nextLegDuration,

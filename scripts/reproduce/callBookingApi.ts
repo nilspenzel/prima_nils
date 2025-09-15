@@ -4,30 +4,30 @@ import 'dotenv/config';
 import { bookingApi } from '../../src/lib/server/booking/bookingApi';
 
 const parameters = {
-	capacities: {
-		passengers: 1,
-		bikes: 0,
-		luggage: 0,
-		wheelchairs: 0
-	},
-	connection1: {
-		start: {
-			lat: 51.505444,
-			lng: 14.638026999999997,
-			address: 'Weißwasser Bahnhof'
-		},
-		target: {
-			lat: 51.4417032,
-			lng: 14.6895141,
-			address: 'Körnerplatz'
-		},
-		startTime: 1754619540000,
-		targetTime: 1754621400000,
-		signature: 'cf9dcc63e0c95aacc17524783c750f35f3af63e9b607cdd3e25121d3db430632',
-		startFixed: true,
-		requestedTime: 1754609100000
-	},
-	connection2: null
+  "capacities": {
+    "passengers": 1,
+    "bikes": 0,
+    "luggage": 0,
+    "wheelchairs": 0
+  },
+  "connection1": {
+    "start": {
+      "lat": 51.5342296,
+      "lng": 14.6941141,
+      "address": "Krauschwitz / Baierweiche"
+    },
+    "target": {
+      "lat": 51.538412,
+      "lng": 14.5250691,
+      "address": "Jahnring 21"
+    },
+    "startTime": 1758643800000,
+    "targetTime": 1758645540000,
+    "signature": "0374c014a5968bedddb3abb3ddb8ac33f39c87ff1649c9bd821d7571de4f4e88",
+    "startFixed": true,
+    "requestedTime": 1758643800000
+  },
+  "connection2": null
 };
 
 const kidsThreeToFour = 0;

@@ -27,6 +27,9 @@ import { planAndSign } from '../../src/lib/planAndSign';
 import { lngLatToStr } from '../../src/lib/util/lngLatToStr';
 import { expectedConnectionFromLeg } from '../../src/lib/expectedConnectionFromLeg';
 import { rediscoverWhitelistRequestTimes } from '../../src/lib/server/util/rediscoverWhitelistRequestTimes';
+import { InsertHow, InsertWhat } from '../../src/lib/util/booking/insertionTypes';
+import { BookRideResponse } from '../../src/lib/server/booking/bookRide';
+import { InsertionType, printInsertionType } from '../../src/lib/server/booking/insertionTypes';
 
 const BACKUP_DIR = './scripts/simulation/backups/';
 
@@ -421,6 +424,10 @@ async function bookingApiCall(
 	if (doWhitelist && response.status !== 200) {
 		return true;
 	}
+	if(response.firstConnection) {
+		console.log("adding case")
+		addCase(response.firstConnection);
+	}
 	return false;
 }
 
@@ -522,6 +529,8 @@ export async function simulation(params: {
 				console.log(`Full backup successful! Backup saved to ${BACKUP_FILE_PATH}`);
 			});
 		}
+		console.log('stats', statistics.length);
+		printStatistics();
 		console.log('');
 		if (params.healthChecks && (await healthCheck())) {
 			return true;
@@ -589,6 +598,30 @@ export async function simulation(params: {
 	);
 	console.log('RANDOM API END');
 	return false;
+}
+
+type Cases = {
+	pickup: InsertionType;
+	dropoff: InsertionType;
+	counter: number;
+}
+
+const statistics = new Array<Cases>();
+
+function addCase(c: BookRideResponse) {
+	const statIdx = statistics.findIndex((s) => s.pickup.how === c.pickupCase.how && s.pickup.what === c.pickupCase.what && s.dropoff.how === c.dropoffCase.how && s.dropoff.what === c.dropoffCase.what);
+	console.log({statIdx})
+	if(statIdx === -1) {
+		statistics.push({pickup: structuredClone(c.pickupCase), dropoff: structuredClone(c.dropoffCase), counter: 1});
+	} else {
+		statistics[statIdx].counter +=1;
+	}
+}
+
+function printStatistics() {
+	for(const stat of statistics) {
+		console.log(" pickup:", printInsertionType(stat.pickup), " dropoff:", printInsertionType(stat.dropoff), " counter:", stat.counter);
+	}
 }
 
 async function main() {

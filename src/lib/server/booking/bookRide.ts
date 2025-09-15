@@ -9,7 +9,7 @@ import { evaluateRequest } from '$lib/server/booking/evaluateRequest';
 import { getDirectDurations, type DirectDrivingDurations } from './getDirectDrivingDurations';
 import { getMergeTourList } from './getMergeTourList';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
-import { printInsertionType } from './insertionTypes';
+import { printInsertionType, type InsertionType } from './insertionTypes';
 import { toInsertionWithISOStrings, type Insertion, type NeighbourIds } from './insertion';
 import { comesFromCompany, returnsToCompany } from './durations';
 import { getScheduledTimes, type ScheduledTimes } from './getScheduledTimes';
@@ -304,7 +304,9 @@ export async function bookRide(
 		nextLegDurations,
 		scheduledTimes,
 		pickupEventGroup,
-		dropoffEventGroup
+		dropoffEventGroup,
+		pickupCase: best.pickupCase,
+		dropoffCase: best.dropoffCase
 	};
 }
 
@@ -319,6 +321,8 @@ export type BookRideResponse = {
 	scheduledTimes: ScheduledTimes;
 	pickupEventGroup: number | undefined;
 	dropoffEventGroup: number | undefined;
+	pickupCase: InsertionType;
+	dropoffCase: InsertionType;
 };
 
 function belongToSameEventGroup(
