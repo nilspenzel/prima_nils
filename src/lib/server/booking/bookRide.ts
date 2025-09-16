@@ -251,11 +251,13 @@ export async function bookRide(
 			.filter((e) => e.tourId === nextDropoffEvent.tourId)
 			.sort((e1, e2) => e2.scheduledTimeStart - e1.scheduledTimeStart);
 		if (update && sameTourEvents[0].id === nextDropoffEvent.id) {
+			console.log("updatethingy")
 			best.arrival =
 				(best.arrival ?? nextDropoffEvent.arrival) +
 				(update.time - nextDropoffEvent.scheduledTimeStart);
 		}
 	}
+	console.log("blibla", new Date(best.arrival!).toISOString())
 
 	const additionalScheduledTimes = new Array<{ event_id: number; time: number; start: boolean }>();
 	scheduledTimes.updates.forEach((update) => {

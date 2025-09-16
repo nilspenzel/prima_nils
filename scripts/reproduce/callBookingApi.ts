@@ -12,20 +12,20 @@ const parameters = {
   },
   "connection1": {
     "start": {
-      "lat": 51.5342296,
-      "lng": 14.6941141,
-      "address": "Krauschwitz / Baierweiche"
+      "lat": 51.533173,
+      "lng": 14.529221,
+      "address": "Mühlroser Straße 8a"
     },
     "target": {
-      "lat": 51.538412,
-      "lng": 14.5250691,
-      "address": "Jahnring 21"
+      "lat": 51.423436,
+      "lng": 14.6559265,
+      "address": "Körnerplatz"
     },
-    "startTime": 1758643800000,
-    "targetTime": 1758645540000,
-    "signature": "0374c014a5968bedddb3abb3ddb8ac33f39c87ff1649c9bd821d7571de4f4e88",
+    "startTime": 1758196500000,
+    "targetTime": 1758198900000,
+    "signature": "2170241e4865741e06d747aec1ee1ad618bd27dbbe0d4f15937ca4346cbc5b57",
     "startFixed": true,
-    "requestedTime": 1758643800000
+    "requestedTime": 1758196500000
   },
   "connection2": null
 };

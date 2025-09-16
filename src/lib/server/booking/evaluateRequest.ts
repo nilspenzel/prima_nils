@@ -16,7 +16,6 @@ import {
 } from '$lib/constants';
 import {
 	evaluateNewTours,
-	evaluatePairInsertions,
 	evaluateSingleInsertions,
 	takeBest,
 	type Insertion
@@ -24,6 +23,7 @@ import {
 import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 import { DAY } from '$lib/util/time';
 import { routing } from './routing';
+import { evaluatePairInsertions } from './insertion4';
 
 export async function evaluateRequest(
 	companies: Company[],

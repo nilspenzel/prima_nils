@@ -11,6 +11,20 @@ import { env } from '$env/dynamic/private';
 import consoleStamp from 'console-stamp';
 import { getIp } from '$lib/server/getIp';
 consoleStamp(console);
+import fs from 'fs';
+import path from 'path';
+
+const logFile = path.join(process.cwd(), 'server22.log');
+const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+
+const originalLog = console.log;
+
+console.log = (...args: any[]) => {
+	originalLog(...args);
+	logStream.write(
+		args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ') + '\n'
+	);
+};
 
 const authHandle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get('session');

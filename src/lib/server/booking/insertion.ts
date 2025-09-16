@@ -862,21 +862,33 @@ export function evaluatePairInsertions(
 					const prevDropoff = events[dropoffIdx - 1];
 					const nextDropoff = events[dropoffIdx];
 					const twoAfterDropoff = events[dropoffIdx + 1];
-					const scheduledPickupTimeEnd = promisedTimes !== undefined ? promisedTimes.pickup : Math.min(
-						pickup.window.startTime + SCHEDULED_TIME_BUFFER_PICKUP,
-						pickup.window.endTime
+					const scheduledPickupTimeEnd =
+						promisedTimes !== undefined
+							? promisedTimes.pickup
+							: Math.min(
+									pickup.window.startTime + SCHEDULED_TIME_BUFFER_PICKUP,
+									pickup.window.endTime
+								);
+					const scheduledPickupTimeStart = Math.max(
+						pickup.window.startTime,
+						scheduledPickupTimeEnd - SCHEDULED_TIME_BUFFER_PICKUP
 					);
-					const scheduledPickupTimeStart = Math.max(pickup.window.startTime, scheduledPickupTimeEnd - SCHEDULED_TIME_BUFFER_PICKUP);
-					if(scheduledPickupTimeEnd < scheduledPickupTimeStart) {
+					if (scheduledPickupTimeEnd < scheduledPickupTimeStart) {
 						continue;
 					}
-					const scheduledDropoffTimeStart = promisedTimes !== undefined ? promisedTimes.dropoff : Math.max(
-						dropoff.window.endTime - getScheduledTimeBufferDropoff(dropoff.window.startTime - pickup.window.endTime),
-						dropoff.window.startTime
+					const scheduledDropoffTimeStart =
+						promisedTimes !== undefined
+							? promisedTimes.dropoff
+							: Math.max(
+									dropoff.window.endTime -
+										getScheduledTimeBufferDropoff(dropoff.window.startTime - pickup.window.endTime),
+									dropoff.window.startTime
+								);
+					const scheduledDropoffTimeEnd = Math.min(
+						scheduledDropoffTimeStart +
+							getScheduledTimeBufferDropoff(dropoff.window.startTime - pickup.window.endTime),
+						dropoff.window.endTime
 					);
-					const scheduledDropoffTimeEnd =
-						Math.min(scheduledDropoffTimeStart + getScheduledTimeBufferDropoff(dropoff.window.startTime - pickup.window.endTime),
-							dropoff.window.endTime);
 					// Verify, that the shift induced to other events by pickup and dropoff are mutually compatible
 					if (dropoffIdx < pickupIdx + 3) {
 						let availableDistance =
@@ -958,7 +970,9 @@ export function evaluatePairInsertions(
 					if (!comesFromCompany(dropoff.case) && prevDropoff!.isPickup) {
 						prevShiftDropoff = Math.max(
 							0,
-							getScheduledEventTime(prevDropoff!) - scheduledDropoffTimeEnd + dropoff.prevLegDuration
+							getScheduledEventTime(prevDropoff!) -
+								scheduledDropoffTimeEnd +
+								dropoff.prevLegDuration
 						);
 					}
 					let nextShiftDropoff = 0;

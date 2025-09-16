@@ -424,8 +424,8 @@ async function bookingApiCall(
 	if (doWhitelist && response.status !== 200) {
 		return true;
 	}
-	if(response.firstConnection) {
-		console.log("adding case")
+	if (response.firstConnection) {
+		console.log('adding case');
 		addCase(response.firstConnection);
 	}
 	return false;
@@ -604,23 +604,40 @@ type Cases = {
 	pickup: InsertionType;
 	dropoff: InsertionType;
 	counter: number;
-}
+};
 
 const statistics = new Array<Cases>();
 
 function addCase(c: BookRideResponse) {
-	const statIdx = statistics.findIndex((s) => s.pickup.how === c.pickupCase.how && s.pickup.what === c.pickupCase.what && s.dropoff.how === c.dropoffCase.how && s.dropoff.what === c.dropoffCase.what);
-	console.log({statIdx})
-	if(statIdx === -1) {
-		statistics.push({pickup: structuredClone(c.pickupCase), dropoff: structuredClone(c.dropoffCase), counter: 1});
+	const statIdx = statistics.findIndex(
+		(s) =>
+			s.pickup.how === c.pickupCase.how &&
+			s.pickup.what === c.pickupCase.what &&
+			s.dropoff.how === c.dropoffCase.how &&
+			s.dropoff.what === c.dropoffCase.what
+	);
+	console.log({ statIdx });
+	if (statIdx === -1) {
+		statistics.push({
+			pickup: structuredClone(c.pickupCase),
+			dropoff: structuredClone(c.dropoffCase),
+			counter: 1
+		});
 	} else {
-		statistics[statIdx].counter +=1;
+		statistics[statIdx].counter += 1;
 	}
 }
 
 function printStatistics() {
-	for(const stat of statistics) {
-		console.log(" pickup:", printInsertionType(stat.pickup), " dropoff:", printInsertionType(stat.dropoff), " counter:", stat.counter);
+	for (const stat of statistics) {
+		console.log(
+			' pickup:',
+			printInsertionType(stat.pickup),
+			' dropoff:',
+			printInsertionType(stat.dropoff),
+			' counter:',
+			stat.counter
+		);
 	}
 }
 
