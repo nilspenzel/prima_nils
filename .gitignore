@@ -38,3 +38,5 @@ db_backups
 
 # Driver app
 driver-app/app/google-services.json
+
+/scripts/lp/logs.txt
