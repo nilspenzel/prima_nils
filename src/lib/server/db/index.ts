@@ -142,8 +142,13 @@ export interface Database {
 		passengers: number;
 		luggage: number;
 		owner: number;
+<<<<<<< HEAD
 		color: string;
 		model: string;
+=======
+		color: string | null;
+		model: string | null;
+>>>>>>> 087d647 (wip)
 		smokingAllowed: boolean;
 		licensePlate: string;
 	};
