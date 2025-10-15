@@ -64,7 +64,7 @@ test.skip('verify feedback banners are correct', async ({ page }) => {
 
 	// manipulate tour to be in the past
 	await execSQL(sql`UPDATE event
-		SET communicated_time = 1
+		SET communicated_time = communicated_time - 8640000000
 		FROM request
 		INNER JOIN ride_share_tour 
 		    ON request.ride_share_tour = ride_share_tour.id
