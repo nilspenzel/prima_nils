@@ -164,6 +164,7 @@ export function getArrivalWindow(
 	nextLegDuration: number,
 	allowedTimes: Interval[]
 ): Interval | undefined {
+	const doLog = insertionCase.how === InsertHow.INSERT && insertionCase.what === InsertWhat.BOTH && busStopWindow?.toString() === "[2025-10-19T19:00:00.000Z - 2025-10-19T19:20:00.000Z]";
 	const directWindows = Interval.intersect(
 		allowedTimes,
 		windows
@@ -179,6 +180,11 @@ export function getArrivalWindow(
 			)
 		)
 		.filter((window) => window != undefined);
+	if(doLog) {
+		console.log("3arr22Found a insert case :)", arrivalWindows.map((arr) => arr.toString()), busStopWindow?.toString())
+		console.log("windwos case :)", windows.map((arr) => arr.toString()), new Date(directDuration).toISOString())
+		console.log("directwindwos case :)", directWindows.map((arr) => arr.toString()), new Date(prevLegDuration).toISOString(), new Date(nextLegDuration).toISOString())
+	}
 	if (busStopWindow != undefined) {
 		arrivalWindows = arrivalWindows
 			.map((window) => busStopWindow.intersect(window))
