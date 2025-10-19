@@ -77,14 +77,6 @@ $effect(() => {
 
 <div class="flex h-full w-screen">
   <div class="h-full w-full relative">
-    {#if isLoading}
-      <div class="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-10">
-        <div class="text-center">
-          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-          <p class="mt-4 text-gray-700">Loading coordinates...</p>
-        </div>
-      </div>
-    {/if}
     <Map
       bind:map
       transformRequest={(url, _resourceType) => {

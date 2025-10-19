@@ -119,6 +119,7 @@ async function processCoordinates(t: any): Promise<{coordinates: Coordinates[], 
            }
        }
    }
+   console.log("DONEDONEDONE")
     return {coordinates: pCoordinates, pairs: r};
 }
 
