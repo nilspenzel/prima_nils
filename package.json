@@ -41,6 +41,7 @@
 		"acceptrs": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callAcceptRideShareRequest.ts",
 		"addrs": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callAddRideShareTour.ts",
 		"bookrs": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callRideShareApi.ts",
+		"pas": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/reproduce/callPlanAndSign.ts",
 		"repeatb": "npm run rr && npm run book",
 		"repeatr": "npm run rr && npm run cancelr",
 		"repeatt": "npm run rr && npm run cancelt",
