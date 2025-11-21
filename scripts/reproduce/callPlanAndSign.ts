@@ -3,10 +3,10 @@ import { planAndSign } from '../../src/lib/planAndSign';
 
 const query = {
 	query: {
-		time: '2025-11-24T22:58:54.831Z',
+		time: '2025-12-04T13:41:27.312Z',
 		arriveBy: true,
-		fromPlace: '51.5267724,14.5193269',
-		toPlace: '51.5322939,14.5345323',
+		fromPlace: '51.5343123,14.5136158',
+		toPlace: '51.5131423,14.6354819',
 		preTransitModes: ['WALK', 'RIDE_SHARING'],
 		postTransitModes: ['WALK', 'RIDE_SHARING'],
 		directModes: ['WALK', 'RIDE_SHARING'],
