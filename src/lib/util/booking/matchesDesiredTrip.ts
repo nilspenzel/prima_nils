@@ -16,7 +16,9 @@ export function matchesDesiredTrip(
 		to !== undefined &&
 		isSamePlace(from, { lat: desiredTrip.fromLat, lng: desiredTrip.fromLng }) &&
 		isSamePlace(to, { lat: desiredTrip.toLat, lng: desiredTrip.toLng }) &&
-		startFixed === desiredTrip.startFixed && passengers === desiredTrip.passengers && luggage === desiredTrip.luggage &&
+		startFixed === desiredTrip.startFixed &&
+		passengers === desiredTrip.passengers &&
+		luggage === desiredTrip.luggage &&
 		Math.abs(time - desiredTrip.time) <= 5 * MINUTE
 	);
 }

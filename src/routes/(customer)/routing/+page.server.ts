@@ -4,7 +4,7 @@ import type { Capacities } from '$lib/util/booking/Capacities';
 import { db, type Database } from '$lib/server/db';
 import { readInt } from '$lib/server/util/readForm';
 import { msg, type Msg } from '$lib/msg';
-import { error, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { sendMail } from '$lib/server/sendMail';
 import NewRide from '$lib/server/email/NewRide.svelte';
 import NewRideSharingRequest from '$lib/server/email/NewRideSharingRequest.svelte';
@@ -19,6 +19,7 @@ import { expectedConnectionFromLeg } from '$lib/server/booking/expectedConnectio
 import { isOdmLeg } from '$lib/util/booking/checkLegType';
 import { getBlurredAddress } from '$lib/server/booking/rideShare/getRideShareToursAsItinerary';
 import { jsonObjectFrom } from 'kysely/helpers/postgres';
+import { selectDesiredTrips } from '$lib/server/booking/rideShare/selectDesiredTrips';
 
 let booking_errors: Prom.Counter | undefined;
 let booking_attempts: Prom.Counter | undefined;
@@ -347,67 +348,6 @@ export const actions = {
 				.executeTakeFirstOrThrow()
 		).id;
 		return redirect(302, `/bookings/${id}`);
-	},
-	toggleAlert: async ({ request, locals }): Promise<{ msg: Msg }> => {
-		const userId = locals.session?.userId;
-		if(userId === undefined){
-			throw error(403, 'forbidden');
-		}
-		const formData = await request.formData();
-		const fromLatString = formData.get('fromLat');
-		const fromLngString = formData.get('fromLng');
-		const toLatString = formData.get('toLat');
-		const toLngString = formData.get('toLng');
-		const timeString = formData.get('time');
-		const startFixedString = formData.get('startFixed');
-		const alertIdString = formData.get('alertId');
-		const luggageString = formData.get('luggage');
-		const passengersString = formData.get('passengers');
-		if (
-			typeof fromLatString != 'string' ||
-			typeof fromLngString != 'string' ||
-			typeof toLatString != 'string' ||
-			typeof toLngString != 'string' ||
-			typeof timeString != 'string' ||
-			typeof startFixedString != 'string' ||
-			typeof alertIdString != 'string' ||
-			typeof passengersString != 'string' ||
-			typeof luggageString != 'string'
-		) {
-			return { msg: msg('unknownError') };
-		}
-		const fromLat = parseInt(fromLatString);
-		const fromLng = parseInt(fromLngString);
-		const toLat = parseInt(toLatString);
-		const toLng = parseInt(toLngString);
-		const time = parseInt(timeString);
-		const luggage = parseInt(luggageString);
-		const passengers = parseInt(passengersString);
-		const startFixed = startFixedString === '1';
-		let alertId: null | number = alertIdString === 'null' ? null : parseInt(alertIdString);
-		if (
-			Number.isNaN(fromLat) ||
-			Number.isNaN(fromLng) ||
-			Number.isNaN(toLat) ||
-			Number.isNaN(toLng) ||
-			Number.isNaN(time) ||
-			Number.isNaN(alertId)
-		) {
-			return { msg: msg('unknownError') };
-		}
-		if(alertId === null) {
-			await db.insertInto('desiredRideShare')
-			.values({
-				interestedUser: userId,
-				fromLat,fromLng,toLat,toLng,startFixed,fromAddress:'',toAddress:'',time,luggage,passengers
-			}).execute()
-		}else{
-			await db.deleteFrom('desiredRideShare')
-			.where('desiredRideShare.id','=',alertId)
-			.where('desiredRideShare.interestedUser','=',userId)
-			.execute()
-		}
-		return { msg: msg('unknownError') };
 	}
 };
 
@@ -444,14 +384,7 @@ export const load: PageServerLoad = async (event: PageServerLoadEvent) => {
 					.innerJoin('rideShareVehicle', 'rideShareVehicle.id', 'rideShareTour.vehicle')
 					.where('rideShareVehicle.owner', '=', userId)
 					.execute();
-	const desiredTrips =
-		userId === undefined
-			? []
-			: await db
-					.selectFrom('desiredRideShare')
-					.where('desiredRideShare.interestedUser', '=', userId)
-					.selectAll()
-					.execute();
+	const desiredTrips = userId === undefined ? [] : await selectDesiredTrips(userId);
 	return {
 		areas: (await areasGeoJSON()).rows[0],
 		rideSharingBounds: (await rideShareGeoJSON()).rows[0],

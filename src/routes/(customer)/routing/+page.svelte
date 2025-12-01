@@ -226,6 +226,24 @@
 				)?.id
 	);
 
+	async function toggleAlert() {
+		const response = await fetch('/api/addOrRemoveDesiredTrip', {
+			method: 'POST',
+			body: JSON.stringify({
+				from: { lat: from.value.match!.lat, lng: from.value.match!.lon },
+				to: { lat: to.value.match!.lat, lng: to.value.match!.lon },
+				time: time.getTime(),
+				startFixed: timeType === 'arrival',
+				alertId: alertId ?? null,
+				passengers,
+				luggage: luggageToInt(luggage)
+			})
+		});
+		if(response.ok) {
+			data.user.desiredTrips = await response.json();
+		} else {'erroa'}
+	}
+
 	let loading = $state(false);
 </script>
 
@@ -443,30 +461,19 @@
 							<MapIcon class="h-[1.2rem] w-[1.2rem]" />
 						</Button>
 						{#if data.user.name !== undefined}
-							<form method="post" action="?/toggleAlert" class="flex grow">
-								<input type="hidden" name="fromLat" value={fromMatch.match!.lat} />
-								<input type="hidden" name="fromLng" value={fromMatch.match!.lon} />
-								<input type="hidden" name="toLng" value={toMatch.match!.lon} />
-								<input type="hidden" name="toLng" value={toMatch.match!.lon} />
-								<input type="hidden" name="time" value={time.getTime()} />
-								<input type="hidden" name="startFixed" value={timeType === 'arrival'} />
-								<input type="hidden" name="alertId" value={alertId} />
-								<input type="hidden" name="passengers" value={passengers} />
-								<input type="hidden" name="luggage" value={luggage} />
-								<Button
-									type="submit"
-									size="icon"
-									variant="outline"
-									class="ml-auto"
-									disabled={baseQuery === undefined}
-								>
-									{#if alertId !== undefined}
-										<BellRing class="h-[1.2rem] w-[1.2rem]" />
-									{:else}
-										<Bell class="h-[1.2rem] w-[1.2rem]" />
-									{/if}
-								</Button>
-							</form>
+							<Button
+								onclick={async () => toggleAlert()}
+								size="icon"
+								variant="outline"
+								class="ml-auto"
+								disabled={from.value.match === undefined || to.value.match === undefined}
+							>
+								{#if alertId !== undefined}
+									<BellRing class="h-[1.2rem] w-[1.2rem]" />
+								{:else}
+									<Bell class="h-[1.2rem] w-[1.2rem]" />
+								{/if}
+							</Button>
 						{/if}
 						<Button
 							size="icon"
