@@ -8,6 +8,8 @@
 	import ChevronLeft from 'lucide-svelte/icons/chevron-left';
 	import ChevronRight from 'lucide-svelte/icons/chevron-right';
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
+	import Bell from 'lucide-svelte/icons/bell';
+	import BellRing from 'lucide-svelte/icons/bell-ring';
 	import NoLuggageIcon from 'lucide-svelte/icons/circle-slash-2';
 	import LuggageIcon from 'lucide-svelte/icons/luggage';
 	import WheelchairIcon from 'lucide-svelte/icons/accessibility';
@@ -45,6 +47,7 @@
 	import logo from '$lib/assets/logo-alpha.png';
 	import Footer from '$lib/ui/Footer.svelte';
 	import { isOdmLeg, isRideShareLeg } from '$lib/util/booking/checkLegType';
+	import { matchesDesiredTrip } from '$lib/util/booking/matchesDesiredTrip';
 
 	type LuggageType = 'none' | 'light' | 'heavy';
 
@@ -202,6 +205,26 @@
 	const applyPosition = (position: { coords: { latitude: number; longitude: number } }) => {
 		from = posToLocation({ lat: position.coords.latitude, lon: position.coords.longitude }, 0);
 	};
+
+	let alertId = $derived(
+		fromMatch.match === undefined || toMatch.match === undefined
+			? undefined
+			: data.user.desiredTrips.find((t) =>
+					matchesDesiredTrip(
+						fromMatch.match === undefined
+							? undefined
+							: { lat: fromMatch.match.lat, lng: fromMatch.match.lon },
+						toMatch.match === undefined
+							? undefined
+							: { lat: toMatch.match.lat, lng: toMatch.match.lon },
+						time.getTime(),
+						timeType === 'arrival',
+						luggageToInt(luggage),
+						passengers,
+						t
+					)
+				)?.id
+	);
 
 	let loading = $state(false);
 </script>
@@ -419,6 +442,32 @@
 						>
 							<MapIcon class="h-[1.2rem] w-[1.2rem]" />
 						</Button>
+						{#if data.user.name !== undefined}
+							<form method="post" action="?/toggleAlert" class="flex grow">
+								<input type="hidden" name="fromLat" value={fromMatch.match!.lat} />
+								<input type="hidden" name="fromLng" value={fromMatch.match!.lon} />
+								<input type="hidden" name="toLng" value={toMatch.match!.lon} />
+								<input type="hidden" name="toLng" value={toMatch.match!.lon} />
+								<input type="hidden" name="time" value={time.getTime()} />
+								<input type="hidden" name="startFixed" value={timeType === 'arrival'} />
+								<input type="hidden" name="alertId" value={alertId} />
+								<input type="hidden" name="passengers" value={passengers} />
+								<input type="hidden" name="luggage" value={luggage} />
+								<Button
+									type="submit"
+									size="icon"
+									variant="outline"
+									class="ml-auto"
+									disabled={baseQuery === undefined}
+								>
+									{#if alertId !== undefined}
+										<BellRing class="h-[1.2rem] w-[1.2rem]" />
+									{:else}
+										<Bell class="h-[1.2rem] w-[1.2rem]" />
+									{/if}
+								</Button>
+							</form>
+						{/if}
 						<Button
 							size="icon"
 							variant="outline"

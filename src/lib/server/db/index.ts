@@ -163,7 +163,7 @@ export interface Database {
 		toLng: number;
 		fromAddress: string;
 		toAddress: string;
-		start_fixed: boolean;
+		startFixed: boolean;
 		time: number;
 		luggage: number;
 		passengers: number;
