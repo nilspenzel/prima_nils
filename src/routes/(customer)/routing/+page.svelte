@@ -239,9 +239,9 @@
 				luggage: luggageToInt(luggage)
 			})
 		});
-		if(response.ok) {
+		if (response.ok) {
 			data.user.desiredTrips = await response.json();
-		} else {'erroa'}
+		}
 	}
 
 	let loading = $state(false);
