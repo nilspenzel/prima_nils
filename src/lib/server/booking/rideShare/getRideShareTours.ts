@@ -8,6 +8,7 @@ function selectByRequestId(requestId: number, trx?: Transaction<Database>) {
 	return (trx ?? db)
 		.selectFrom('rideShareTour')
 		.innerJoin('rideShareVehicle', 'rideShareTour.vehicle', 'rideShareVehicle.id')
+		.where('rideShareTour.vehicle', 'is not', null)
 		.where('rideShareTour.cancelled', '=', false)
 		.where((eb) =>
 			eb.exists(
@@ -29,6 +30,7 @@ function selectWithoutRequestId(
 	return (trx ?? db)
 		.selectFrom('rideShareTour')
 		.innerJoin('rideShareVehicle', 'rideShareTour.vehicle', 'rideShareVehicle.id')
+		.where('rideShareTour.vehicle', 'is not', null)
 		.where('rideShareTour.passengers', '>=', requestCapacities.passengers)
 		.$if(tourId !== undefined, (qb) => qb.where('rideShareTour.id', '=', tourId!))
 		.where((eb) =>
@@ -131,6 +133,7 @@ async function select(query: RideShareQuery, requestId?: number) {
 		const arrival = events[events.length - 1].scheduledTimeStart;
 		return {
 			...t,
+			vehicle: t.vehicle!,
 			wheelchairs: 0,
 			bikes: 0,
 			events: events.map((e) => {

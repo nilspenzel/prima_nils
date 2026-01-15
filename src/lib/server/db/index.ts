@@ -100,7 +100,7 @@ export interface Database {
 		luggage: number;
 		tour: number | null;
 		rideShareTour: number | null;
-		customer: number;
+		customer: number | null;
 		ticketCode: string;
 		ticketChecked: boolean;
 		ticketPrice: number;
@@ -132,7 +132,7 @@ export interface Database {
 		passengers: number;
 		luggage: number;
 		cancelled: boolean;
-		vehicle: number;
+		vehicle: number | null;
 		communicatedStart: number;
 		communicatedEnd: number;
 		earliestStart: number;

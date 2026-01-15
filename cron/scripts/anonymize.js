@@ -10,16 +10,19 @@ function getTimestamp(monthOffset) {
 	return Math.floor(date.getTime());
 }
 
+const isDocker = process.env.DOCKER_ENV === 'true';
+
+const client = new Client({
+	host: isDocker ? 'pg' : 'localhost',
+	port: isDocker ? 5432 : 6500,
+	user: 'postgres',
+	password: 'pw',
+	database: 'prima'
+});
+
 async function main() {
 	const t1 = getTimestamp(-1);
 	const t2 = getTimestamp(0) - 24 * 60 * 60 * 1000;
-
-	const client = new Client({
-		host: 'pg',
-		user: 'postgres',
-		password: 'pw',
-		database: 'prima'
-	});
 
 	try {
 		await client.connect();

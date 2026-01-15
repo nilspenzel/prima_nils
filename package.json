@@ -58,7 +58,8 @@
 		"repeataddh": "npm run rr && npm run addrs && npm run healthrs",
 		"repeatbookrsh": "npm run rr && npm run bookrs && npm run healthrs",
 		"flc": "npm run format && npm run lint && npm run check",
-		"updateDurations": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/updateDatabaseDurations.ts"
+		"updateDurations": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/updateDatabaseDurations.ts",
+		"anonymize": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
