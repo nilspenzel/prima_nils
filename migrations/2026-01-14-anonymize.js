@@ -1,6 +1,25 @@
 import { sql } from 'kysely';
 
 export async function up(db) {
+    await sql`CREATE OR REPLACE FUNCTION anonymization_lat_step()
+    RETURNS numeric
+    LANGUAGE sql
+    IMMUTABLE
+    AS $$
+        SELECT 0.003;
+    $$;
+    `.execute(db);
+
+    await sql`
+    CREATE OR REPLACE FUNCTION anonymization_lng_step()
+    RETURNS numeric
+    LANGUAGE sql
+    IMMUTABLE
+    AS $$
+        SELECT 0.003;
+    $$;
+    `.execute(db);
+
     await sql`
     CREATE OR REPLACE FUNCTION round_to_step(
         value numeric,
@@ -21,18 +40,77 @@ export async function up(db) {
     `.execute(db);
 
     await sql`
-    CREATE OR REPLACE PROCEDURE anonymize(
+    CREATE OR REPLACE FUNCTION anonymize_journey_json(
+    input_json jsonb
+    )
+    RETURNS jsonb
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+        legs jsonb;
+        leg jsonb;
+        leg_index int := 0;
+        result jsonb := input_json;
+    BEGIN
+        legs := input_json->'legs';
+        FOR leg IN
+            SELECT * FROM jsonb_array_elements(legs)
+        LOOP
+            IF leg->>'mode' = 'ODM' THEN
+                result := jsonb_set(
+                    result,
+                    ARRAY['legs', leg_index::text, 'from', 'lat'],
+                    round_to_step((leg->'from'->>'lat')::numeric, anonymization_lat_step())::text::jsonb
+                );
+
+                result := jsonb_set(
+                    result,
+                    ARRAY['legs', leg_index::text, 'from', 'lon'],
+                    round_to_step((leg->'from'->>'lon')::numeric, anonymization_lng_step())::text::jsonb
+                );
+
+                result := jsonb_set(
+                    result,
+                    ARRAY['legs', leg_index::text, 'from', 'name'],
+                    '"anonymer Ort"'::jsonb
+                );
+
+                result := jsonb_set(
+                    result,
+                    ARRAY['legs', leg_index::text, 'to', 'lat'],
+                    round_to_step((leg->'to'->>'lat')::numeric, anonymization_lat_step())::text::jsonb
+                );
+
+                result := jsonb_set(
+                    result,
+                    ARRAY['legs', leg_index::text, 'to', 'lon'],
+                    round_to_step((leg->'to'->>'lon')::numeric, anonymization_lng_step())::text::jsonb
+                );
+
+                result := jsonb_set(
+                    result,
+                    ARRAY['legs', leg_index::text, 'to', 'name'],
+                    '"anonymer Ort"'::jsonb
+                );
+            END IF;
+
+            leg_index := leg_index + 1;
+        END LOOP;
+
+        RETURN result;
+    END;
+    $$ LANGUAGE plpgsql;
+    `.execute(db);
+
+
+    await sql`
+    CREATE OR REPLACE PROCEDURE anonymize_taxi(
         t1 BIGINT,
         t2 BIGINT
     )
     AS $$
     DECLARE
         j RECORD;
-        legs JSONB;
-        leg JSONB;
-        leg_index INT;
-        lat_step numeric := 0.003;
-        lng_step numeric := 0.003;
     BEGIN
         -- Anonymize request table
         UPDATE request
@@ -41,7 +119,55 @@ export async function up(db) {
         WHERE tour.id = request.tour
           AND tour.arrival > t1
           AND tour.arrival < t2;
-        
+
+        -- Anonymize event table
+        UPDATE event_group
+        SET lat = round_to_step(event_group.lat::numeric, anonymization_lat_step()),
+            lng = round_to_step(event_group.lng::numeric, anonymization_lng_step()),
+            address = 'anonymer Ort'
+        FROM event
+        INNER JOIN request ON request.id = event.request
+        INNER JOIN tour ON request.tour = tour.id
+        WHERE event.event_group_id = event_group.id
+          AND tour.arrival > t1
+          AND tour.arrival < t2;
+
+        -- Anonymize journey table
+        FOR j IN
+            SELECT journey.id, journey.json
+            FROM journey
+            LEFT JOIN request r1 ON journey.request1 = r1.id
+            LEFT JOIN request r2 ON journey.request2 = r2.id
+            LEFT JOIN tour tour1 ON r1.tour = tour1.id
+            LEFT JOIN tour tour2 ON r2.tour = tour2.id
+            WHERE
+                (tour1 is not null
+                AND tour1.arrival > t1
+                AND tour1.arrival < t2)
+                OR (tour2 is not null
+                AND tour2.arrival > t1
+                AND tour2.arrival < t2)
+        LOOP
+            UPDATE journey SET
+                "user" = NULL,
+                json = anonymize_journey_json(j.json)
+            WHERE id = j.id;
+        END LOOP;
+
+    END;
+    $$ LANGUAGE plpgsql;
+    `.execute(db);
+
+    await sql`
+    CREATE OR REPLACE PROCEDURE anonymize_rs(
+        t1 BIGINT,
+        t2 BIGINT
+    )
+    AS $$
+    DECLARE
+        j RECORD;
+    BEGIN
+        -- Anonymize request table
         UPDATE request
         SET customer = NULL
         FROM ride_share_tour
@@ -57,20 +183,15 @@ export async function up(db) {
 
         -- Anonymize event table
         UPDATE event_group
-        SET lat = round_to_step(event_group.lat::numeric, lat_step),
-            lng = round_to_step(event_group.lng::numeric, lng_step),
+        SET lat = round_to_step(event_group.lat::numeric, anonymization_lat_step()),
+            lng = round_to_step(event_group.lng::numeric, anonymization_lng_step()),
             address = 'anonymer Ort'
         FROM event
         INNER JOIN request ON request.id = event.request
-        LEFT JOIN tour ON request.tour = tour.id
-        LEFT JOIN ride_share_tour ON request.ride_share_tour = ride_share_tour.id
+        INNER JOIN ride_share_tour ON request.ride_share_tour = ride_share_tour.id
         WHERE event.event_group_id = event_group.id
-          AND ((tour is not null
-          AND tour.arrival > t1
-          AND tour.arrival < t2)
-          OR (ride_share_tour is not null
           AND ride_share_tour.latest_end > t1
-          AND ride_share_tour.latest_end < t2));
+          AND ride_share_tour.latest_end < t2;
 
         -- Anonymize journey table
         FOR j IN
@@ -78,65 +199,16 @@ export async function up(db) {
             FROM journey
             LEFT JOIN request r1 ON journey.request1 = r1.id
             LEFT JOIN request r2 ON journey.request2 = r2.id
-            LEFT JOIN tour tour1 ON r1.tour = tour1.id
-            LEFT JOIN tour tour2 ON r2.tour = tour2.id
             LEFT JOIN ride_share_tour rst1 ON r1.ride_share_tour = rst1.id
             LEFT JOIN ride_share_tour rst2 ON r2.ride_share_tour = rst2.id
             WHERE
-                (tour1 is not null
-                AND tour1.arrival > t1
-                AND tour1.arrival < t2)
-                OR (tour2 is not null
-                AND tour2.arrival > t1
-                AND tour2.arrival < t2)
-                OR (rst1 IS NOT NULL AND rst1.latest_end > t1 AND rst1.latest_end < t2)
+                (rst1 IS NOT NULL AND rst1.latest_end > t1 AND rst1.latest_end < t2)
                 OR (rst2 IS NOT NULL AND rst2.latest_end > t1 AND rst2.latest_end < t2)
         LOOP
-            UPDATE journey SET "user" = NULL WHERE id = j.id;
-
-            legs := j.json->'legs';
-            leg_index := 0;
-
-            FOR leg IN
-                SELECT * FROM jsonb_array_elements(legs) AS leg
-            LOOP
-                IF leg->>'mode' = 'ODM' THEN
-                    j.json := jsonb_set(
-                        j.json,
-                        ARRAY['legs', leg_index::text, 'from', 'lat'],
-                        round_to_step((leg->'from'->>'lat')::numeric, lat_step)::text::jsonb
-                    );
-                    j.json := jsonb_set(
-                        j.json,
-                        ARRAY['legs', leg_index::text, 'from', 'lon'],
-                        round_to_step((leg->'from'->>'lon')::numeric, lng_step)::text::jsonb
-                    );
-                    j.json := jsonb_set(
-                        j.json,
-                        ARRAY['legs', leg_index::text, 'from', 'name'],
-                        '"anonymer Ort"'::jsonb
-                    );
-                    j.json := jsonb_set(
-                        j.json,
-                        ARRAY['legs', leg_index::text, 'to', 'lat'],
-                        round_to_step((leg->'to'->>'lat')::numeric, lat_step)::text::jsonb
-                    );
-                    j.json := jsonb_set(
-                        j.json,
-                        ARRAY['legs', leg_index::text, 'to', 'lon'],
-                        round_to_step((leg->'to'->>'lon')::numeric, lng_step)::text::jsonb
-                    );
-                    j.json := jsonb_set(
-                        j.json,
-                        ARRAY['legs', leg_index::text, 'to', 'name'],
-                        '"anonymer Ort"'::jsonb
-                    );
-                END IF;
-
-                leg_index := leg_index + 1;
-            END LOOP;
-
-            UPDATE journey SET json = j.json WHERE id = j.id;
+            UPDATE journey SET
+                "user" = NULL,
+                json = anonymize_journey_json(j.json)
+            WHERE id = j.id;
         END LOOP;
     END;
     $$ LANGUAGE plpgsql;
