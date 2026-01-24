@@ -62,7 +62,8 @@
 		"anonymizeTaxi": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=taxi",
 		"anonymizeRs": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=rs",
 		"anonymizeTaxiAll": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=taxi --all",
-		"anonymizeRsAll": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=rs --all"
+		"anonymizeRsAll": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=rs --all",
+		"deleteUnused": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/deleteUnusedEventGroups.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
