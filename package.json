@@ -59,7 +59,10 @@
 		"repeatbookrsh": "npm run rr && npm run bookrs && npm run healthrs",
 		"flc": "npm run format && npm run lint && npm run check",
 		"updateDurations": "pnpx vite-node --options.transformMode.ssr='/.*/' scripts/updateDatabaseDurations.ts",
-		"anonymize": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js"
+		"anonymizeTaxi": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=taxi",
+		"anonymizeRs": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=rs",
+		"anonymizeTaxiAll": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=taxi --all",
+		"anonymizeRsAll": "pnpx vite-node --options.transformMode.ssr='/.*/' cron//scripts/anonymize.js --type=rs --all"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",

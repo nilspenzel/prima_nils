@@ -1,33 +1,32 @@
 import { sql } from 'kysely';
 
 export async function up(db) {
-    await sql`CREATE OR REPLACE FUNCTION anonymization_lat_step()
-    RETURNS numeric
-    LANGUAGE sql
-    IMMUTABLE
+await sql`
+    CREATE OR REPLACE FUNCTION anonymization_lat_step()
+    RETURNS double precision
     AS $$
-        SELECT 0.003;
-    $$;
+    BEGIN
+        RETURN 0.003;
+    END;
+    $$ LANGUAGE plpgsql;
     `.execute(db);
 
     await sql`
     CREATE OR REPLACE FUNCTION anonymization_lng_step()
-    RETURNS numeric
-    LANGUAGE sql
-    IMMUTABLE
+    RETURNS double precision
     AS $$
-        SELECT 0.003;
-    $$;
+    BEGIN
+        RETURN 0.003;
+    END;
+    $$ LANGUAGE plpgsql;
     `.execute(db);
 
     await sql`
     CREATE OR REPLACE FUNCTION round_to_step(
-        value numeric,
-        step  numeric
+        value double precision,
+        step  double precision
     )
-    RETURNS numeric
-    LANGUAGE plpgsql
-    IMMUTABLE
+    RETURNS double precision
     AS $$
     BEGIN
         IF step <= 0 THEN
@@ -36,7 +35,7 @@ export async function up(db) {
 
         RETURN ROUND(value / step) * step;
     END;
-    $$;
+    $$ LANGUAGE plpgsql;
     `.execute(db);
 
     await sql`
@@ -44,7 +43,6 @@ export async function up(db) {
     input_json jsonb
     )
     RETURNS jsonb
-    LANGUAGE plpgsql
     AS $$
     DECLARE
         legs jsonb;
@@ -60,13 +58,13 @@ export async function up(db) {
                 result := jsonb_set(
                     result,
                     ARRAY['legs', leg_index::text, 'from', 'lat'],
-                    round_to_step((leg->'from'->>'lat')::numeric, anonymization_lat_step())::text::jsonb
+                    round_to_step((leg->'from'->>'lat')::double precision, anonymization_lat_step())::text::jsonb
                 );
 
                 result := jsonb_set(
                     result,
                     ARRAY['legs', leg_index::text, 'from', 'lon'],
-                    round_to_step((leg->'from'->>'lon')::numeric, anonymization_lng_step())::text::jsonb
+                    round_to_step((leg->'from'->>'lon')::double precision, anonymization_lng_step())::text::jsonb
                 );
 
                 result := jsonb_set(
@@ -78,13 +76,13 @@ export async function up(db) {
                 result := jsonb_set(
                     result,
                     ARRAY['legs', leg_index::text, 'to', 'lat'],
-                    round_to_step((leg->'to'->>'lat')::numeric, anonymization_lat_step())::text::jsonb
+                    round_to_step((leg->'to'->>'lat')::double precision, anonymization_lat_step())::text::jsonb
                 );
 
                 result := jsonb_set(
                     result,
                     ARRAY['legs', leg_index::text, 'to', 'lon'],
-                    round_to_step((leg->'to'->>'lon')::numeric, anonymization_lng_step())::text::jsonb
+                    round_to_step((leg->'to'->>'lon')::double precision, anonymization_lng_step())::text::jsonb
                 );
 
                 result := jsonb_set(
@@ -112,23 +110,16 @@ export async function up(db) {
     DECLARE
         j RECORD;
     BEGIN
-        -- Anonymize request table
-        UPDATE request
-        SET customer = NULL
-        FROM tour
-        WHERE tour.id = request.tour
-          AND tour.arrival > t1
-          AND tour.arrival < t2;
-
         -- Anonymize event table
         UPDATE event_group
-        SET lat = round_to_step(event_group.lat::numeric, anonymization_lat_step()),
-            lng = round_to_step(event_group.lng::numeric, anonymization_lng_step()),
+        SET lat = round_to_step(event_group.lat::double precision, anonymization_lat_step()),
+            lng = round_to_step(event_group.lng::double precision, anonymization_lng_step()),
             address = 'anonymer Ort'
         FROM event
         INNER JOIN request ON request.id = event.request
         INNER JOIN tour ON request.tour = tour.id
         WHERE event.event_group_id = event_group.id
+          AND request.customer is not null
           AND tour.arrival > t1
           AND tour.arrival < t2;
 
@@ -141,10 +132,12 @@ export async function up(db) {
             LEFT JOIN tour tour1 ON r1.tour = tour1.id
             LEFT JOIN tour tour2 ON r2.tour = tour2.id
             WHERE
-                (tour1 is not null
+                (r1.customer is not null
+                AND tour1 is not null
                 AND tour1.arrival > t1
                 AND tour1.arrival < t2)
-                OR (tour2 is not null
+                OR (r2.customer is not null
+                AND tour2 is not null
                 AND tour2.arrival > t1
                 AND tour2.arrival < t2)
         LOOP
@@ -154,6 +147,14 @@ export async function up(db) {
             WHERE id = j.id;
         END LOOP;
 
+        -- Anonymize request table
+        UPDATE request
+        SET customer = NULL
+        FROM tour
+        WHERE tour.id = request.tour
+          AND tour.arrival > t1
+          AND tour.arrival < t2
+          AND customer is not null;
     END;
     $$ LANGUAGE plpgsql;
     `.execute(db);
@@ -167,29 +168,23 @@ export async function up(db) {
     DECLARE
         j RECORD;
     BEGIN
-        -- Anonymize request table
-        UPDATE request
-        SET customer = NULL
-        FROM ride_share_tour
-        WHERE ride_share_tour.id = request.ride_share_tour
-          AND ride_share_tour.latest_end > t1
-          AND ride_share_tour.latest_end < t2;
-
         -- Anonymize ride_share_tour table
         UPDATE ride_share_tour
         SET vehicle = NULL
         WHERE ride_share_tour.latest_end > t1
-          AND ride_share_tour.latest_end < t2;
+          AND ride_share_tour.latest_end < t2
+          AND vehicle is not null;
 
         -- Anonymize event table
         UPDATE event_group
-        SET lat = round_to_step(event_group.lat::numeric, anonymization_lat_step()),
-            lng = round_to_step(event_group.lng::numeric, anonymization_lng_step()),
+        SET lat = round_to_step(event_group.lat::double precision, anonymization_lat_step()),
+            lng = round_to_step(event_group.lng::double precision, anonymization_lng_step()),
             address = 'anonymer Ort'
         FROM event
         INNER JOIN request ON request.id = event.request
         INNER JOIN ride_share_tour ON request.ride_share_tour = ride_share_tour.id
         WHERE event.event_group_id = event_group.id
+          AND request.customer is not null
           AND ride_share_tour.latest_end > t1
           AND ride_share_tour.latest_end < t2;
 
@@ -202,15 +197,32 @@ export async function up(db) {
             LEFT JOIN ride_share_tour rst1 ON r1.ride_share_tour = rst1.id
             LEFT JOIN ride_share_tour rst2 ON r2.ride_share_tour = rst2.id
             WHERE
-                (rst1 IS NOT NULL AND rst1.latest_end > t1 AND rst1.latest_end < t2)
-                OR (rst2 IS NOT NULL AND rst2.latest_end > t1 AND rst2.latest_end < t2)
+                (rst1 IS NOT NULL
+                AND r1.customer is not null
+                AND rst1.latest_end > t1
+                AND rst1.latest_end < t2)
+                OR (rst2 IS NOT NULL
+                AND r2.customer is not null
+                AND rst2.latest_end > t1
+                AND rst2.latest_end < t2)
         LOOP
             UPDATE journey SET
                 "user" = NULL,
                 json = anonymize_journey_json(j.json)
             WHERE id = j.id;
         END LOOP;
+
+        -- Anonymize request table
+        UPDATE request
+        SET customer = NULL
+        FROM ride_share_tour
+        WHERE ride_share_tour.id = request.ride_share_tour
+          AND ride_share_tour.latest_end > t1
+          AND ride_share_tour.latest_end < t2
+          AND customer is not null;
     END;
     $$ LANGUAGE plpgsql;
     `.execute(db);
 }
+
+export async function down() { }

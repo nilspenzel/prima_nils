@@ -1,14 +1,42 @@
 import pg from 'pg';
-const { Client } = pg;
 import 'dotenv/config';
+
+const { Client } = pg;
+
+const day = 24 * 60 * 60 * 1000;
+const args = process.argv.slice(2);
+const typeArg = args.find((a) => a.startsWith('--type='));
+const anonymizeAll = args.find((a) => a === '--all') !== undefined;
+
+if (!typeArg) {
+	console.error('Missing --type flag (rs | taxi)');
+	process.exit(1);
+}
+
+const type = typeArg.split('=')[1];
+
+const procedureMap = {
+	rs: 'anonymize_rs',
+	taxi: 'anonymize_taxi'
+};
+
+const procedure = procedureMap[type];
+
+if (!procedure) {
+	console.error(`Invalid --type value: ${type}`);
+	process.exit(1);
+}
 
 function getTimestamp(monthOffset) {
 	const now = new Date();
 	const year = now.getFullYear();
 	const month = now.getMonth() + monthOffset;
 	const date = new Date(year, month, 1, 0, 0, 0);
-	return Math.floor(date.getTime());
+	return date.getTime();
 }
+
+const t1 = anonymizeAll ? 0 : getTimestamp(-1) - 2 * day;
+const t2 = type === 'rs' ? t1 + 7 * day : getTimestamp(0) - day;
 
 const isDocker = process.env.DOCKER_ENV === 'true';
 
@@ -21,17 +49,15 @@ const client = new Client({
 });
 
 async function main() {
-	const t1 = getTimestamp(-1);
-	const t2 = getTimestamp(0) - 24 * 60 * 60 * 1000;
-
 	try {
 		await client.connect();
-		await client.query(`CALL anonymize($1, $2)`, [t1, t2]);
+		await client.query(`CALL ${procedure}($1, $2)`, [t1, t2]);
+
 		console.log(
-			`Anonymization successful between ${new Date(t1).toISOString()} and ${new Date(t2).toISOString()}`
+			`Anonymization (${type}) successful between ${new Date(t1).toISOString()} and ${new Date(t2).toISOString()}`
 		);
-	} catch (error) {
-		console.error('Failed to run anonymization procedure:', error);
+	} catch (err) {
+		console.error(`Failed anonymization (${type}):`, err);
 		process.exit(1);
 	} finally {
 		await client.end();
