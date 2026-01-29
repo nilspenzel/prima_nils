@@ -4,6 +4,7 @@ import 'dotenv/config';
 const { Client } = pg;
 
 const day = 24 * 60 * 60 * 1000;
+const week = 7 * day;
 const args = process.argv.slice(2);
 const typeArg = args.find((a) => a.startsWith('--type='));
 const anonymizeAll = args.find((a) => a === '--all') !== undefined;
@@ -28,16 +29,20 @@ if (!procedure) {
 }
 
 function getTimestamp(monthOffset) {
-	const now = new Date();
-	const year = now.getFullYear();
-	const month = now.getMonth() + monthOffset;
+	const yesterday = new Date();
+	const year = yesterday.getFullYear();
+	const month = yesterday.getMonth() + monthOffset;
 	const date = new Date(year, month, 1, 0, 0, 0);
 	return date.getTime();
 }
 
-const t1 = anonymizeAll ? 0 : getTimestamp(-1) - 2 * day;
-const t2 = type === 'rs' ? t1 + 7 * day : getTimestamp(0) - day;
+const now = new Date(Date.now());
+const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
+const t1 = anonymizeAll ? 0 : type === 'rs' ? midnight - week * 3 : getTimestamp(-3);
+const t2 = type === 'rs' ? t1 + 2 * week : getTimestamp(-1);
+
+console.log({ t1: new Date(t1) }, { t2: new Date(t2) }, { midnight: new Date(midnight) });
 const isDocker = process.env.DOCKER_ENV === 'true';
 
 const client = new Client({
