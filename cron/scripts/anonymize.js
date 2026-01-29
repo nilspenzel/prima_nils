@@ -42,7 +42,6 @@ const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getT
 const t1 = anonymizeAll ? 0 : type === 'rs' ? midnight - week * 3 : getTimestamp(-3);
 const t2 = type === 'rs' ? t1 + 2 * week : getTimestamp(-1);
 
-console.log({ t1: new Date(t1) }, { t2: new Date(t2) }, { midnight: new Date(midnight) });
 const isDocker = process.env.DOCKER_ENV === 'true';
 
 const client = new Client({
