@@ -1,0 +1,57 @@
+Booking:
+
+{
+  "capacities": {
+    "passengers": 2,
+    "bikes": 0,
+    "luggage": 0,
+    "wheelchairs": 0
+  },
+  "connection1": {
+    "start": {
+      "lat": 51.5525502,
+      "lng": 14.7129388,
+      "address": "Köbelner Straße 19"
+    },
+    "target": {
+      "lat": 51.53425,
+      "lng": 14.663793,
+      "address": "Gablenz Feuerwehr"
+    },
+    "startTime": 1771584300000,
+    "targetTime": 1771584900000,
+    "signature": "95c96a69111f0cbc4534f7d644804e9b6b6bed5f3b002351cbda0002c1631f5b",
+    "startFixed": false,
+    "requestedTime": 1771585020000,
+    "mode": 1
+  },
+  "connection2": null
+}
+
+
+
+pas
+
+{
+  "time": "2026-02-20T05:01:26.843Z",
+  "arriveBy": false,
+  "fromPlace": "51.5525502,14.7129388",
+  "toPlace": "51.5322939,14.5345323",
+  "preTransitModes": [
+    "WALK",
+    "ODM"
+  ],
+  "postTransitModes": [
+    "WALK",
+    "ODM"
+  ],
+  "directModes": [
+    "WALK",
+    "ODM"
+  ],
+  "luggage": 0,
+  "fastestDirectFactor": 1.6,
+  "maxMatchingDistance": 250,
+  "maxTravelTime": 1440,
+  "passengers": 2
+}
