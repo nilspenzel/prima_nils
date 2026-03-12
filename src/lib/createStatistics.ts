@@ -6,24 +6,28 @@ import type { Itinerary, Leg } from '$lib/openapi';
 import { polyLineToLatLngArray } from '$lib/util/polylineToGeoJSON';
 
 export async function createStatistics() {
-	await computeAndPersistStatistics('tour');
-	await computeAndPersistStatistics('rideShareTour');
+	await computeAndPersistStatistics('tour', true);
+	await computeAndPersistStatistics('rideShareTour', true);
+	await computeAndPersistStatistics('tour', false);
+	await computeAndPersistStatistics('rideShareTour', false);
 }
 
-async function tourQuery() {
+async function tourQuery(cancelled: boolean) {
 	return await db
 		.selectFrom('tour')
 		.innerJoin('request', 'request.tour', 'tour.id')
 		.innerJoin('vehicle', 'vehicle.id', 'tour.vehicle')
 		.innerJoin('company', 'company.id', 'vehicle.company')
 		.where('tour.approachAndReturnM', 'is', null)
-		.where('tour.cancelled', '=', false)
+		.where('tour.cancelled', '=', cancelled)
 		.select((eb) => [
 			jsonArrayFrom(
 				eb
 					.selectFrom('request')
 					.innerJoin('event', 'event.request', 'request.id')
 					.innerJoin('eventGroup', 'event.eventGroupId', 'eventGroup.id')
+					.$if(cancelled, (qb) => qb.where('request.cancelledByCustomer', '=', false))
+					.$if(!cancelled, (qb) => qb.where('request.cancelled', '=', false))
 					.selectAll(['event', 'eventGroup'])
 					.select('request.passengers')
 			).as('events'),
@@ -34,7 +38,7 @@ async function tourQuery() {
 		.execute();
 }
 
-async function rideShareTourQuery() {
+async function rideShareTourQuery(cancelled: boolean) {
 	return await db
 		.selectFrom('rideShareTour as tour')
 		.innerJoin('request', 'request.rideShareTour', 'tour.id')
@@ -46,6 +50,8 @@ async function rideShareTourQuery() {
 					.selectFrom('request')
 					.innerJoin('event', 'event.request', 'request.id')
 					.innerJoin('eventGroup', 'event.eventGroupId', 'eventGroup.id')
+					.$if(cancelled, (qb) => qb.where('request.cancelledByCustomer', '=', false))
+					.$if(!cancelled, (qb) => qb.where('request.cancelled', '=', false))
 					.selectAll(['event', 'eventGroup'])
 					.select('request.passengers')
 			).as('events'),
@@ -130,8 +136,8 @@ function legsToTravelDistance(legs: Leg[] | undefined) {
 		: legs.reduce((prev, curr) => (prev += legToTravelDistance(curr)), 0);
 }
 
-async function computeAndPersistStatistics(type: 'tour' | 'rideShareTour') {
-	const tours = type === 'tour' ? await tourQuery() : await rideShareTourQuery();
+async function computeAndPersistStatistics(type: 'tour' | 'rideShareTour', cancelled: boolean) {
+	const tours = type === 'tour' ? await tourQuery(cancelled) : await rideShareTourQuery(cancelled);
 	const stats = await Promise.all(
 		tours.map(
 			async (t) =>
