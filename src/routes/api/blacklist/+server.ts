@@ -43,14 +43,14 @@ export const POST = async (event: RequestEvent) => {
 			parameters.startBusStops,
 			parameters.capacities,
 			parameters.earliest,
-			parameters.latest
+			parameters.latest,true
 		),
 		getViableBusStops(
 			parameters.target,
 			parameters.targetBusStops,
 			parameters.capacities,
 			parameters.earliest,
-			parameters.latest
+			parameters.latest,true
 		)
 	]);
 

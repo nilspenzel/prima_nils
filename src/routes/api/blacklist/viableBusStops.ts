@@ -20,10 +20,11 @@ const withBusStops = (busStops: Coordinates[]) => {
 		const busStopsSelect = busStops.map(
 			(busStop, i) =>
 				sql<string>`SELECT
-									cast(${i} as INTEGER) AS bus_stop_index,
-									cast(${busStop.lat} as decimal) AS lat,
-									cast(${busStop.lng} as decimal) AS lng`
+					cast(${i} as INTEGER) AS bus_stop_index,
+					cast(${busStop.lat} as decimal) AS lat,
+					cast(${busStop.lng} as decimal) AS lng`
 		);
+
 		return db
 			.selectFrom(
 				sql<CoordinatesTable>`(${sql.join(busStopsSelect, sql<string>` UNION ALL `)})`.as(
@@ -39,35 +40,41 @@ export const getViableBusStops = async (
 	busStops: Coordinates[],
 	capacities: Capacities,
 	earliest: UnixtimeMs,
-	latest: UnixtimeMs
+	latest: UnixtimeMs,
+	allowExpanded: boolean
 ): Promise<BlacklistingResult[]> => {
-	if (busStops.length == 0) {
+	if (busStops.length === 0) {
 		return [];
 	}
+
 	const response = (
 		await withBusStops(busStops)
 			.selectFrom('zone')
 			.where((eb) =>
-				eb.or([
-					eb.and([eb('zone.expanded', 'is not', null), coversExpanded(userChosen)]),
-					eb.and([eb('zone.expanded', 'is', null), covers(userChosen)])
-				])
+				allowExpanded
+					? eb.or([
+							eb.and([eb('zone.expanded', 'is not', null), coversExpanded(userChosen)]),
+							eb.and([eb('zone.expanded', 'is', null), covers(userChosen)])
+						])
+					: covers(userChosen)
 			)
 			.select((eb) => [
 				jsonArrayFrom(
 					eb
 						.selectFrom('busstops')
 						.where((eb) =>
-							eb.or([
-								eb.and([
-									eb('zone.expanded', 'is not', null),
-									sql<boolean>`ST_Covers(zone.expanded, ST_SetSRID(ST_MakePoint(cast(busstops.lng as float), cast(busstops.lat as float)), ${WGS84}))`
-								]),
-								eb.and([
-									eb('zone.expanded', 'is', null),
-									sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(cast(busstops.lng as float), cast(busstops.lat as float)), ${WGS84}))`
-								])
-							])
+							allowExpanded
+								? eb.or([
+										eb.and([
+											eb('zone.expanded', 'is not', null),
+											sql<boolean>`ST_Covers(zone.expanded, ST_SetSRID(ST_MakePoint(cast(busstops.lng as float), cast(busstops.lat as float)), ${WGS84}))`
+										]),
+										eb.and([
+											eb('zone.expanded', 'is', null),
+											sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(cast(busstops.lng as float), cast(busstops.lat as float)), ${WGS84}))`
+										])
+									])
+								: sql<boolean>`ST_Covers(zone.area, ST_SetSRID(ST_MakePoint(cast(busstops.lng as float), cast(busstops.lat as float)), ${WGS84}))`
 						)
 						.select((eb) => [
 							'busstops.busStopIndex',
@@ -106,16 +113,20 @@ export const getViableBusStops = async (
 			])
 			.execute()
 	).filter((r) => r.valid.length !== 0);
+
 	if (response.length === 0) {
 		return [];
 	}
+
 	const lastValidTime = 8640000000000000;
 	const afterPreptime = new Interval(Date.now() + MIN_PREP, lastValidTime);
 	const allowedTimes = Interval.intersect(
 		getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END),
 		[afterPreptime]
 	);
+
 	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
+
 	return response.flatMap((r) =>
 		r.valid.map((r) => {
 			return {
