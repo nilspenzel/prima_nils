@@ -16,6 +16,7 @@
 	import { t } from '$lib/i18n/translation';
 	import type { SignedItinerary } from '$lib/planAndSign';
 	import { getColor } from '$lib/ui/modeStyle';
+	import type { Coordinates } from '$lib/util/Coordinates';
 
 	let {
 		from = $bindable(),
@@ -23,7 +24,10 @@
 		itinerary,
 		areas = $bindable(),
 		rideSharingBounds = $bindable(),
-		intermediateStops = $bindable()
+		intermediateStops = $bindable(),
+		points,
+		a,
+		b
 	}: {
 		from?: Location | undefined;
 		to?: Location | undefined;
@@ -31,6 +35,9 @@
 		areas?: unknown;
 		rideSharingBounds?: unknown;
 		intermediateStops?: boolean;
+		points?: (Coordinates & { filtered: boolean })[];
+		a?: Coordinates;
+		b?: Coordinates;
 	} = $props();
 
 	let fromMarker = $state<maplibregl.Marker>();
@@ -220,6 +227,17 @@
 			{/each}
 		{/if}
 
+		{#if points}
+			{#each points as point, i (`${point.lat}-${point.lng}-${i}`)}
+				<Marker
+					color={point.filtered ? 'white' : 'black'}
+					draggable={false}
+					{level}
+					location={posToLocation({ lat: point.lat, lng: point.lng }, 0)}
+				/>
+			{/each}
+		{/if}
+
 		{#if from}
 			<Marker
 				color="green"
@@ -232,6 +250,24 @@
 
 		{#if to}
 			<Marker color="red" draggable={true} {level} bind:location={to} bind:marker={toMarker} />
+		{/if}
+
+		{#if a}
+			<Marker
+				color="red"
+				draggable={false}
+				{level}
+				location={posToLocation({ lat: a.lat, lng: a.lng }, 0)}
+			/>
+		{/if}
+
+		{#if b}
+			<Marker
+				color="red"
+				draggable={false}
+				{level}
+				location={posToLocation({ lat: b.lat, lng: b.lng }, 0)}
+			/>
 		{/if}
 	</Map>
 </div>

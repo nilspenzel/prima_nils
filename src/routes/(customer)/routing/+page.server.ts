@@ -18,6 +18,7 @@ import { sendBookingMails } from '$lib/util/sendBookingEmails';
 import { deduplicate, type CalibrationItinerary } from '$lib/calibration';
 import { areasGeoJSON, rideshareGeoJSON } from '$lib/util/geoJSON';
 import { selectDesiredTrips } from '$lib/server/booking/rideShare/selectDesiredTrips';
+import { simmy } from '$lib/server/booking/rideShare/ellipse';
 
 let booking_errors: Prom.Counter | undefined;
 let booking_attempts: Prom.Counter | undefined;
@@ -310,6 +311,7 @@ export const load: PageServerLoad = async (event: PageServerLoadEvent) => {
 					.where('rideShareVehicle.owner', '=', userId)
 					.execute();
 	const desiredTrips = userId === undefined ? [] : await selectDesiredTrips(userId);
+	const s = simmy();
 	return {
 		areas: (await areasGeoJSON()).rows[0],
 		rideSharingBounds: (await rideshareGeoJSON()).rows[0],
@@ -321,6 +323,9 @@ export const load: PageServerLoad = async (event: PageServerLoadEvent) => {
 			ownRideShareOfferIds,
 			desiredTrips
 		},
-		lastAvailability
+		lastAvailability,
+		ppp: s.points,
+		a: s.a,
+		b: s.b
 	};
 };
