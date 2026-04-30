@@ -318,6 +318,7 @@ export type Translations = {
 		cancelHeadline: string;
 		noCancel: string;
 		cancelDescription: string;
+		cancelCheckbox: string;
 		negotiateHere: string;
 		negotiateHeader: string;
 		negotiatePrivacy: string;

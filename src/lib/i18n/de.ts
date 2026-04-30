@@ -371,9 +371,11 @@ const translations: Translations = {
 		publish: 'Mitfahrangebot veröffentlichen',
 		cancelTrip: 'Mitfahrangebot stornieren',
 		cancelHeadline: 'Möchten Sie wirklich dieses Mitfahrangebot stornieren?',
-		noCancel: 'Nein, Fahrt nicht stornieren.',
+		noCancel: 'Nein, Mitfahrangebot nicht stornieren.',
 		cancelDescription:
 			'Sie sollten ggf. vorhandene Mitfahrer persönlich informieren, auch wenn diese per E-Mail über die Stornierung benachrichtigt werden.',
+		cancelCheckbox:
+			'Alle Mitfahrangebote löschen, die mit derselben Regel erstellt wurden. Mitfahrangebote mit bestätigten Mitfahrten werden nicht storniert.',
 		negotiateHere: 'Hier vereinbaren',
 		negotiateHeader: 'Mitfahrgelegenheit vereinbaren',
 		negotiatePrivacy:

@@ -363,6 +363,8 @@ const translations: Translations = {
 		noCancel: 'No, I do not want to cancel.',
 		cancelDescription:
 			'You should inform any people riding with you yourself, even if they will receive an email about the cancellation.',
+		cancelCheckbox:
+			'Cancel all ride offers created by the same rule. Ride offers with confirmed passengers will not be cancelled.',
 		negotiateHere: 'Negotiate here',
 		negotiateHeader: 'Negotiate the ride',
 		negotiatePrivacy:

@@ -18,7 +18,7 @@
 </script>
 
 {#snippet cancelled()}
-	<Alert class="size-4" />
+	<Alert class="size-4 shrink-0" />
 	{t.msg.cancelled}
 {/snippet}
 
@@ -60,7 +60,13 @@
 								: it.comitted
 									? comitted
 									: undefined}
-					infoVariant={it.negotiating ? 'text-warning' : it.comitted ? 'text-success' : undefined}
+					infoVariant={it.cancelled
+						? 'text-destructive'
+						: it.negotiating
+							? 'text-warning'
+							: it.comitted
+								? 'text-success'
+								: undefined}
 					showAddress={true}
 				/>
 			</a>

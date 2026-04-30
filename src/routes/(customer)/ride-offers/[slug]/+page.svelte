@@ -52,13 +52,13 @@
 							<AlertDialog.Header>
 								<AlertDialog.Title>{t.ride.cancelHeadline}</AlertDialog.Title>
 								<AlertDialog.Description>
-									<div class="flex flex-col">
-										{t.ride.cancelDescription}
+									<div class="flex flex-col gap-4">
+										<p>{t.ride.cancelDescription}</p>
 										{#if data.pattern}
-											<label class="flex items-center gap-2">
-												<input type="checkbox" bind:checked={cancelAll} />
-												<span
-													>{t.booking.cancelCheckbox}<br />
+											<label class="grid grid-cols-[auto_1fr] items-start gap-2">
+												<input class="mt-1" type="checkbox" bind:checked={cancelAll} />
+												<span>
+													{t.ride.cancelCheckbox}<br />
 													{pattern}
 												</span>
 											</label>
