@@ -77,6 +77,7 @@ export function prepareDetourEllipse(
 	const centerY = (axy.y + bxy.y) / 2;
 
 	const allowedExtraDistance = maxSpeedMps * maxDetourSeconds;
+	console.log({allowedExtraDistance}, {maxDetourSeconds}, new Date(maxDetourSeconds * SECOND))
 	const totalDistance = d + allowedExtraDistance;
 
 	const semiMajor = totalDistance / 2;
@@ -196,12 +197,11 @@ export async function simmy() {
 	//const a = { lat: 51.336284120072264, lng: 14.736317793889384 };
 	//const b = { lat: 51.22612870596649, lng: 14.917079272924951 };
 	//const maxDetourSeconds = 800;
+	//const ellipse = prepareDetourEllipse(a, b, maxDetourSeconds);
 
 	const a = await db.selectFrom('eventGroup').where('prevLegDuration','=',0).selectAll().executeTakeFirstOrThrow();
 	const b = await db.selectFrom('eventGroup').where('nextLegDuration','=',0).selectAll().executeTakeFirstOrThrow();
-	console.log("timediff", new Date(a.scheduledTimeEnd - a.scheduledTimeStart + b.scheduledTimeEnd - b.scheduledTimeStart));
-	const maxDetourSeconds = (b.scheduledTimeEnd - a.scheduledTimeStart)/SECOND;
-	const ellipse = prepareDetourEllipse(a, b, maxDetourSeconds);
+	const ellipse = await db.selectFrom('ellipse').selectAll().executeTakeFirstOrThrow();
 
 	const points = [];
 	const dist = 0.5;
