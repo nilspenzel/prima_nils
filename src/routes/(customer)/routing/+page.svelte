@@ -409,6 +409,9 @@
 			itinerary={page.state.selectedItinerary}
 			areas={data.areas}
 			rideSharingBounds={data.rideSharingBounds}
+			points={data.ppp}
+			a={data.a}
+			b={data.b}
 		/>
 	{:else if page.state.selectedItinerary}
 		<div class="flex items-center justify-between gap-4">

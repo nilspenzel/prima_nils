@@ -1,5 +1,7 @@
 import { ELLIPSE_MAX_KMH } from '$lib/constants';
+import { db } from '$lib/server/db';
 import type { Coordinates } from '$lib/util/Coordinates';
+import { SECOND } from '$lib/util/time';
 
 type PreparedDetourEllipse = {
 	originLatRad: number;
@@ -188,4 +190,37 @@ export function isPointInPreparedDetourEllipse(
 	const v = qx * ellipse.axisYx + qy * ellipse.axisYy;
 
 	return u * u * ellipse.invAaSq + v * v * ellipse.invBbSq <= 1;
+}
+
+export async function simmy() {
+	//const a = { lat: 51.336284120072264, lng: 14.736317793889384 };
+	//const b = { lat: 51.22612870596649, lng: 14.917079272924951 };
+	//const maxDetourSeconds = 800;
+
+	const a = await db.selectFrom('eventGroup').where('prevLegDuration','=',0).selectAll().executeTakeFirstOrThrow();
+	const b = await db.selectFrom('eventGroup').where('nextLegDuration','=',0).selectAll().executeTakeFirstOrThrow();
+	console.log("timediff", new Date(a.scheduledTimeEnd - a.scheduledTimeStart + b.scheduledTimeEnd - b.scheduledTimeStart));
+	const maxDetourSeconds = (b.scheduledTimeEnd - a.scheduledTimeStart)/SECOND;
+	const ellipse = prepareDetourEllipse(a, b, maxDetourSeconds);
+
+	const points = [];
+	const dist = 0.5;
+	const n = 3000;
+	for (let i = 0; i < n; ++i) {
+		const p = {
+			lat:
+				Math.random() * (Math.max(a.lat, b.lat) - Math.min(a.lat, b.lat) + dist) +
+				Math.min(a.lat, b.lat) -
+				dist / 2,
+			lng:
+				Math.random() * (Math.max(a.lng, b.lng) - Math.min(a.lng, b.lng) + dist) +
+				Math.min(a.lng, b.lng) -
+				dist / 2
+		};
+		points.push({
+			...p,
+			filtered: isPointInPreparedDetourEllipse(ellipse, p)
+		});
+	}
+	return { points, a, b };
 }
