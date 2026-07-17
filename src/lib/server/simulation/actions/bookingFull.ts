@@ -310,12 +310,11 @@ export async function bookFull(
 	mode?: string,
 	compareCosts?: boolean
 ): Promise<ActionResponse> {
-	console.log('doing1');
 	const parameters = await generateBookingParameters(coordinates, restricted);
 	const potentialKids = parameters.capacities.passengers - 1;
 	const kidsZeroToTwo = randomInt(0, potentialKids);
 	const kidsThreeToFour = randomInt(0, potentialKids - kidsZeroToTwo);
-	const kidsFiveToSix = randomInt(0, potentialKids - kidsThreeToFour);
+	const kidsFiveToSix = randomInt(0, potentialKids - kidsThreeToFour - kidsZeroToTwo);
 	console.log(
 		'SimLOGS',
 		{ fromPlace: lngLatToStr(parameters.connection1!.start) },
