@@ -17,6 +17,8 @@ const translations: Translations = {
 	},
 	msg: {
 		// Unknown error
+		error: 'Error',
+		badRequest: 'Invalid Request',
 		unknownError: 'Unknown Error',
 
 		// Account
@@ -90,6 +92,9 @@ const translations: Translations = {
 		noVehicle: 'No vehicle available.',
 		routingRequestFailed: 'Routing request failed.',
 		vehicleConflict: 'The selected vehicle is not available at at least one of the selected times.',
+		previousLegConflict: 'The new trip is not compatible with a previous ride-sharing offer.',
+		nextLegConflict: 'The new trip is not compatible with a subsequent ride-sharing offer.',
+		allowedIntervalsConflict: 'The seleceted vehicle is not available at the selected time',
 
 		// Booking
 		bookingError: 'The ride could not be booked. Please start a new search.',
@@ -126,6 +131,7 @@ const translations: Translations = {
 		name: 'Name',
 		lastName: 'Last Name',
 		firstName: 'First Name',
+		company: 'Company',
 		gender: (id: string) => {
 			return { o: 'non-binary', f: 'Ms.', m: 'Mr.', n: 'not specified' }[id]!;
 		},
@@ -442,7 +448,10 @@ const translations: Translations = {
 		howHasItBeen: 'You can rate your last ride share experience here',
 		editVehicle: 'Edit Vehicle',
 		closeTo: 'close to',
-		defaultLicensePlate: 'Default vehicle'
+		defaultLicensePlate: 'Default vehicle',
+		calculatedRoute: 'Calculated route',
+		travelTimeOnly: 'actual travel time',
+		maxTime: 'maximum if ridesharing'
 	},
 
 	calibration: {
@@ -452,6 +461,7 @@ const translations: Translations = {
 		taxiDirectPenalty: 'taxi direct penalty',
 		ptSlope: 'public transit slope',
 		taxiSlope: 'taxi slope',
+		dampingWindow: 'damping window',
 		useForCalibration: 'Use for calibration',
 		addCalibrationSet: 'Add calibration set',
 		greeter: 'Adjust the parameters of the taxi filter:',
@@ -459,11 +469,12 @@ const translations: Translations = {
 		remove: 'remove',
 		deploy: 'Deploy parameters',
 		save: 'Save classification',
-		delete: 'Remove calibration set'
+		delete: 'Remove calibration set',
+		warnUpload: 'Uploading a calibration overwrites the current calibration!'
 	},
 	availabilityPercent: 'current Coverage next two weeks',
 	availabilityPercentExplanation:
-		'This value represents the current coverage between 05:00 and 21:00 for availability in the next two weeks.',
+		'This value represents the current coverage between 05:00 and 23:00 for availability in the next two weeks.',
 
 	daily: 'daily'
 };

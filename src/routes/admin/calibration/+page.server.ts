@@ -46,7 +46,8 @@ export const actions = {
 			taxiPerMinute: readFloat(formData.get('taxiPerMinute')),
 			taxiDirectPenalty: readFloat(formData.get('taxiDirectPenalty')),
 			ptSlope: readFloat(formData.get('ptSlope')),
-			taxiSlope: readFloat(formData.get('taxiSlope'))
+			taxiSlope: readFloat(formData.get('taxiSlope')),
+			dampingWindow: readFloat(formData.get('dampingWindow'))
 		};
 
 		await db.updateTable('taxiFilter').set(updateData).execute();
@@ -79,5 +80,38 @@ export const actions = {
 		const id = readInt(formData.get('id'));
 
 		await db.deleteFrom('calibrationSets').where('calibrationSets.id', '=', id).execute();
+	},
+	import: async ({ request, locals }) => {
+		if (!locals.session?.isAdmin) {
+			return fail(403);
+		}
+
+		const formData = await request.formData();
+		const file = formData.get('importJson') as File;
+		const str = await file.text();
+
+		if (typeof str !== 'string') {
+			return fail(400);
+		}
+		const json = JSON.parse(str);
+
+		const newFilter: Record<string, number> = {
+			perTransfer: json.filterSettings.perTransfer,
+			taxiBase: json.filterSettings.taxiBase,
+			taxiPerMinute: json.filterSettings.taxiPerMinute,
+			taxiDirectPenalty: json.filterSettings.taxiDirectPenalty,
+			ptSlope: json.filterSettings.ptSlope,
+			taxiSlope: json.filterSettings.taxiSlope,
+			dampingWindow: json.filterSettings.dampingWindow
+		};
+		await db.updateTable('taxiFilter').set(newFilter).execute();
+
+		json['calibrationSets'].forEach(
+			async (e: { id: number; name: string; itineraries: Array<CalibrationItinerary> }) => {
+				const name = e.name;
+				const itinerariesJson = JSON.stringify(e.itineraries);
+				await db.insertInto('calibrationSets').values({ name, itinerariesJson }).execute();
+			}
+		);
 	}
 };

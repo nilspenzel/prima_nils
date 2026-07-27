@@ -18,6 +18,8 @@ export type Translations = {
 		calibration: string;
 	};
 	msg: {
+		error: string;
+		badRequest: string;
 		unknownError: string;
 
 		// Account
@@ -89,6 +91,9 @@ export type Translations = {
 		noVehicle: string;
 		routingRequestFailed: string;
 		vehicleConflict: string;
+		previousLegConflict: string;
+		nextLegConflict: string;
+		allowedIntervalsConflict: string;
 
 		// Booking
 		bookingError: string;
@@ -125,6 +130,7 @@ export type Translations = {
 		name: string;
 		lastName: string;
 		firstName: string;
+		company: string;
 		gender: (id: string) => string;
 		genderShort: (id: string) => string;
 		genderString: string;
@@ -384,6 +390,9 @@ export type Translations = {
 		editVehicle: string;
 		closeTo: string;
 		defaultLicensePlate: string;
+		calculatedRoute: string;
+		travelTimeOnly: string;
+		maxTime: string;
 	};
 
 	calibration: {
@@ -393,6 +402,7 @@ export type Translations = {
 		taxiDirectPenalty: string;
 		ptSlope: string;
 		taxiSlope: string;
+		dampingWindow: string;
 		useForCalibration: string;
 		addCalibrationSet: string;
 		greeter: string;
@@ -401,6 +411,7 @@ export type Translations = {
 		deploy: string;
 		save: string;
 		delete: string;
+		warnUpload: string;
 	};
 
 	availabilityPercent: string;
