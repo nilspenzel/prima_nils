@@ -8,6 +8,8 @@ import { SCHEDULED_TIME_BUFFER_PICKUP, PASSENGER_CHANGE_DURATION } from '$lib/co
 import { sortEventsByTime } from '$lib/testHelpers';
 import { reverseGeo } from '$lib/server/util/reverseGeocode';
 import { getScheduledTimeBufferDropoff } from '$lib/util/getScheduledTimeBuffer';
+import { db } from '$lib/server/db';
+import { findItineraryCycles, formatItineraryCycle } from '$lib/util/checkItineraryCycles';
 
 function validateRequestHas2Events(tours: ToursWithRequests): boolean {
 	let fail = false;
@@ -198,7 +200,7 @@ function validateEventsAreInsideTours(tours: ToursWithRequests): boolean {
 		const tourInterval = new Interval(tour.startTime, tour.endTime);
 		for (const event of tour.requests.flatMap((r) => r.events)) {
 			const eventInterval = new Interval(event.scheduledTimeStart, event.scheduledTimeEnd);
-			if (!tourInterval.overlaps(eventInterval)) {
+			if (!tourInterval.overlaps(eventInterval) && !tourInterval.touches(eventInterval)) {
 				console.log(
 					`event with id: ${event.id} is outside of its' tour. tourInterval: ${tourInterval.toString()}, eventScheduledInterval: ${eventInterval.toString()}`
 				);
@@ -444,25 +446,24 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 		if (tour.requests.length === 0) continue;
 
 		const events = sortEventsByTime([...tour.requests.flatMap((r) => r.events)]);
-		const fromCompanyFwd = await oneToMany(
-			tour.companyLat!,
-			tour.companyLng!,
-			events[0].lat,
-			events[0].lng
-		);
-		const fromCompanyBwd = await oneToMany(
-			events[0].lat,
-			events[0].lng,
-			tour.companyLat!,
-			tour.companyLng!,
-			true
-		);
+		const samePlace = isSamePlace(events[0], { lat: tour.companyLat!, lng: tour.companyLng! });
+		const fromCompanyFwd = samePlace
+			? 0
+			: await oneToMany(tour.companyLat!, tour.companyLng!, events[0].lat, events[0].lng);
+		const fromCompanyBwd = samePlace
+			? 0
+			: await oneToMany(events[0].lat, events[0].lng, tour.companyLat!, tour.companyLng!, true);
+		const firstIsSamePlace = isSamePlace(events[0], {
+			lat: tour.companyLat!,
+			lng: tour.companyLng!
+		});
 
 		if (
 			fromCompanyFwd !== null &&
 			fromCompanyBwd !== null &&
 			Math.abs(fromCompanyFwd - events[0].prevLegDuration / 1000) > 1 &&
-			Math.abs(fromCompanyBwd - events[0].prevLegDuration / 1000) > 1
+			Math.abs(fromCompanyBwd - events[0].prevLegDuration / 1000) > 1 &&
+			!firstIsSamePlace
 		) {
 			console.log(
 				`Duration from company to first event does not match in tour with id: ${tour.tourId} with first event: ${events[0].id}, duration in db: ${events[0].prevLegDuration / 1000} duration: ${fromCompanyFwd} or ${fromCompanyBwd}`
@@ -483,6 +484,10 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 			fail = true;
 		}
 
+		const lastIsSamePlace = isSamePlace(events[events.length - 1], {
+			lat: tour.companyLat!,
+			lng: tour.companyLng!
+		});
 		const toCompany = await oneToMany(
 			events[events.length - 1].lat,
 			events[events.length - 1].lng,
@@ -491,7 +496,8 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 		);
 		if (
 			toCompany !== null &&
-			Math.abs(toCompany + 60 - events[events.length - 1].nextLegDuration / 1000) > 1
+			Math.abs(toCompany + 60 - events[events.length - 1].nextLegDuration / 1000) > 1 &&
+			!lastIsSamePlace
 		) {
 			console.log(
 				`Duration to company from last event does not match in tour with id: ${tour.tourId}, last event id: ${events[events.length - 1].id} duration in db: ${events[events.length - 1].nextLegDuration / 1000} duration: ${toCompany + 60}`
@@ -513,7 +519,26 @@ async function validateAddressCoordinatesMatch(tours: ToursWithRequests) {
 	return false;
 }
 
-export async function healthCheck(vehicleId?: number, dayStart?: number) {
+async function validateStoredJourneyCycles() {
+	console.log('Validating stored journeys for cycles...');
+	const journeys = await db.selectFrom('journey').select(['id', 'json']).execute();
+	const cycles = findItineraryCycles(journeys.map((journey) => journey.json));
+	for (const cycle of cycles) {
+		const journey = journeys[cycle.itineraryIndex];
+		console.log(formatItineraryCycle(`stored journey #${journey.id}`, journey.json.legs, cycle));
+	}
+	return cycles.length !== 0;
+}
+
+type HealthCheckOptions = {
+	checkJourneyCycles?: boolean;
+};
+
+export async function healthCheck(
+	vehicleId?: number,
+	dayStart?: number,
+	options: HealthCheckOptions = {}
+) {
 	const allTours = await getToursWithRequests(
 		true,
 		undefined,
@@ -543,6 +568,9 @@ export async function healthCheck(vehicleId?: number, dayStart?: number) {
 		fail = (await validateAddressCoordinatesMatch(allTours)) ? true : fail;
 	} else {
 		console.log('No tours found or there was an error fetching the data.');
+	}
+	if (options.checkJourneyCycles) {
+		fail = (await validateStoredJourneyCycles()) ? true : fail;
 	}
 	return fail;
 }

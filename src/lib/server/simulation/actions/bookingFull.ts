@@ -13,7 +13,9 @@ import { lngLatToStr } from '$lib/util/lngLatToStr';
 import { DAY } from '$lib/util/time';
 import { generateBookingParameters } from '../generateBookingParameters';
 import { randomInt } from '../randomInt';
-import type { ActionResponse } from '../simulation';
+import type { ActionResponse, RideShareProvider, SimulationChecks } from '../simulation';
+import { findItineraryCycles, formatItineraryCycle } from '$lib/util/checkItineraryCycles';
+import { findSuboptimalEdgeOdmConnectionsInItineraries } from '../checkEdgeOdmStreetRouting';
 
 function findLastIndex<T>(
 	arr: T[],
@@ -303,9 +305,11 @@ export async function bookFull(
 	coordinates: Coordinates[],
 	restricted: Coordinates[] | undefined,
 	mode?: string,
-	compareCosts?: boolean
+	compareCosts?: boolean,
+	_doWhitelist?: boolean,
+	_rideShareProviders?: RideShareProvider[],
+	checks?: SimulationChecks
 ): Promise<ActionResponse> {
-	console.log('doing1');
 	const parameters = await generateBookingParameters(coordinates, restricted);
 	const potentialKids = parameters.capacities.passengers - 1;
 	const kidsZeroToTwo = randomInt(0, potentialKids);
@@ -349,6 +353,43 @@ export async function bookFull(
 			error: true,
 			atomicDurations
 		};
+	}
+	if (checks?.cycles) {
+		const itineraries = planResponse.itineraries ?? [];
+		const cycle = findItineraryCycles(itineraries)[0];
+		if (cycle !== undefined) {
+			console.error(
+				formatItineraryCycle(
+					`itinerary #${cycle.itineraryIndex}`,
+					itineraries[cycle.itineraryIndex].legs,
+					cycle
+				)
+			);
+			return {
+				lastActionSpecifics: null,
+				success: false,
+				error: true,
+				atomicDurations
+			};
+		}
+	}
+	if (checks?.odmStreetRouting) {
+		try {
+			const tolerance = checks.odmStreetRouting;
+			const findings = await findSuboptimalEdgeOdmConnectionsInItineraries(
+				planResponse.itineraries ?? [],
+				tolerance
+			);
+			for (const finding of findings) {
+				console.warn(
+					`Potentially suboptimal ${finding.edge} ODM in itinerary #${finding.itineraryIndex}: extending through leg #${finding.comparedLegIndex} (${finding.comparedMode}) takes ${finding.streetDurationSeconds}s instead of ${finding.odmDurationSeconds}s (${finding.savingSeconds}s / ${finding.savingPercent}% faster).`
+				);
+			}
+		} catch (error) {
+			console.warn(
+				`Unable to perform ODM street-routing check: ${error instanceof Error ? error.message : String(error)}`
+			);
+		}
 	}
 	const relevantItineraries = mode
 		? planResponse.itineraries?.filter((i) => i.legs.some((l) => l.mode === mode))

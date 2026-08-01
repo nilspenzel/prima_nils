@@ -29,6 +29,10 @@ async function main() {
 	let companies = 3;
 	let vehicles = 2;
 	let rideShareVehicles = 1;
+	let checkCycles = false;
+	let checkOdmStreetRouting = false;
+	let odmStreetMinSeconds = 60;
+	let odmStreetMinPercent = 10;
 	for (const arg of process.argv) {
 		if (arg === '--health') {
 			healthChecks = true;
@@ -47,6 +51,18 @@ async function main() {
 		}
 		if (arg === '--restrict') {
 			restrict = true;
+		}
+		if (arg === '--cycle') {
+			checkCycles = true;
+		}
+		if (arg === '--odm-street') {
+			checkOdmStreetRouting = true;
+		}
+		if (arg.startsWith('--odm-street-min-seconds')) {
+			odmStreetMinSeconds = checkIntArg(arg, 'odm-street-min-seconds');
+		}
+		if (arg.startsWith('--odm-street-min-percent')) {
+			odmStreetMinPercent = checkIntArg(arg, 'odm-street-min-percent');
 		}
 		if (arg.startsWith('--mode')) {
 			const value = arg.split('=')[1];
@@ -95,7 +111,11 @@ async function main() {
 		full,
 		companies,
 		vehiclesPerCompany: vehicles,
-		rideShareVehicles
+		rideShareVehicles,
+		checkCycles,
+		checkOdmStreetRouting,
+		odmStreetMinSeconds,
+		odmStreetMinPercent
 	});
 }
 main().catch((err) => {

@@ -1,7 +1,9 @@
 import { healthCheck } from '../src/lib/server/util/healthCheck';
 
 async function main(): Promise<void> {
-	healthCheck();
+	await healthCheck(undefined, undefined, {
+		checkJourneyCycles: process.argv.includes('--journey-cycles')
+	});
 }
 
 // Run the main function

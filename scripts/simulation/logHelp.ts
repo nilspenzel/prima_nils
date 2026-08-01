@@ -21,6 +21,18 @@ export function logHelp() {
 	console.log(
 		'--bu: The script will do backups iff this flag is set. Backups happen after each simulated action as full backups via pg_dump.'
 	);
+	console.log(
+		'--cycle: checks every returned itinerary for a leg whose target was already the target of an earlier leg, and stops on the first cycle.'
+	);
+	console.log(
+		'--odm-street: warns when extending an edge ODM leg by street would be faster than that ODM leg.'
+	);
+	console.log(
+		'--odm-street-min-seconds=x: minimum number of seconds the extended street route must save.'
+	);
+	console.log(
+		'--odm-street-min-percent=x: minimum percentage the extended street route must save.'
+	);
 	console.log('--runs=x: Sets the amount of simulation actions to perform');
 	console.log(
 		'--rsv=x: Sets the amount of ride-share provider users to create. Each provider gets one ride-share vehicle.'

@@ -56,6 +56,14 @@ export type RideShareProvider = {
 	vehicleId: number;
 };
 
+export type SimulationChecks = {
+	cycles: boolean;
+	odmStreetRouting?: {
+		minSavingSeconds: number;
+		minSavingPercent: number;
+	};
+};
+
 let customerId = -1;
 
 enum Action {
@@ -83,7 +91,8 @@ type ActionType = {
 		mode?: string,
 		compareCosts?: boolean,
 		doWhitelist?: boolean,
-		rideShareProviders?: RideShareProvider[]
+		rideShareProviders?: RideShareProvider[],
+		checks?: SimulationChecks
 	) => Promise<ActionResponse>;
 };
 
@@ -163,6 +172,10 @@ type Params = {
 	companies: number;
 	vehiclesPerCompany: number;
 	rideShareVehicles: number;
+	checkCycles?: boolean;
+	checkOdmStreetRouting?: boolean;
+	odmStreetMinSeconds?: number;
+	odmStreetMinPercent?: number;
 };
 
 async function setup(params: Params) {
@@ -310,7 +323,16 @@ export async function simulation(params: Params): Promise<boolean> {
 				mode,
 				params.cost,
 				params.whitelist,
-				rideShareProviders
+				rideShareProviders,
+				{
+					cycles: params.checkCycles ?? false,
+					odmStreetRouting: params.checkOdmStreetRouting
+						? {
+								minSavingSeconds: params.odmStreetMinSeconds ?? 60,
+								minSavingPercent: params.odmStreetMinPercent ?? 10
+							}
+						: undefined
+				}
 			);
 			const end = performance.now();
 			if (result.error === true) {
