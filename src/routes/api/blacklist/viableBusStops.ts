@@ -97,6 +97,7 @@ export const getViableBusStops = async (
 												.whereRef('tour.vehicle', '=', 'vehicle.id')
 												.where('tour.departure', '<=', latest)
 												.where('tour.arrival', '>=', earliest)
+												.where('tour.cancelled', '=', false)
 												.select(['tour.departure as startTime', 'tour.arrival as endTime'])
 										).as('tours')
 									])
