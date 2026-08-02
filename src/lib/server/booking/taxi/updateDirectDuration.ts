@@ -27,6 +27,7 @@ export async function updateDirectDurations(
 					.innerJoin('event', 'event.request', 'request.id')
 					.innerJoin('eventGroup', 'eventGroup.id', 'event.eventGroupId')
 					.whereRef('tour.vehicle', '=', 'vehicle.id')
+					.where('tour.id', '!=', tourId)
 					.where('tour.cancelled', '=', false)
 					.where('tour.departure', '<=', departure)
 					.where('request.cancelled', '=', false)
@@ -48,6 +49,7 @@ export async function updateDirectDurations(
 					.innerJoin('event', 'event.request', 'request.id')
 					.innerJoin('eventGroup', 'eventGroup.id', 'event.eventGroupId')
 					.whereRef('tour.vehicle', '=', 'vehicle.id')
+					.where('tour.id', '!=', tourId)
 					.where('tour.cancelled', '=', false)
 					.where('tour.departure', '>', departure)
 					.where('request.cancelled', '=', false)
@@ -100,7 +102,7 @@ export async function updateDirectDurations(
 	if (newVehicleId) {
 		const newVehicle = vehicles[0].id === newVehicleId ? vehicles[0] : vehicles[1];
 		const events = newVehicle.moved[0].events;
-		events.sort((e) => e.scheduledTimeStart);
+		events.sort((a, b) => a.scheduledTimeStart - b.scheduledTimeStart);
 		const routingResultPrevTour = newVehicle?.prevtour
 			? ((await oneToManyCarRouting(newVehicle.prevtour, [events[0]], false))[0] ?? null)
 			: null;
