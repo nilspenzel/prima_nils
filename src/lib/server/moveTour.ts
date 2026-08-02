@@ -85,7 +85,7 @@ export async function moveTour(
 				console.assert(
 					!movedTour.requests.some((r) => r.events.length == 0),
 					'Found a request which contains no events. requestId: ' +
-						movedTour.requests.find((r) => r.events.length === 0)?.requestId
+					movedTour.requests.find((r) => r.events.length === 0)?.requestId
 				);
 				if (vehicleId === undefined) {
 					console.log('MOVE TOUR early exit - no vehicle id was provided. tourId: ', tourId);
@@ -197,8 +197,9 @@ export async function moveTour(
 						.execute();
 				}
 				const firstEvent = movedTour.requests
-					.sort((r) => r.events[0].scheduledTimeStart)[0]
-					.events.filter((e) => e.isPickup)[0];
+					.flatMap((request) => request.events)
+					.filter((event) => event.isPickup)
+					.sort((a, b) => getScheduledEventTime(a) - getScheduledEventTime(b))[0];
 				const wheelchairs = movedTour.requests.reduce((prev, curr) => prev + curr.wheelchairs, 0);
 				await sendNotifications(companyId, {
 					tourId,
