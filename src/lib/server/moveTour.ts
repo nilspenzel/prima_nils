@@ -99,6 +99,7 @@ export async function moveTour(
 				const newVehicle = await trx
 					.selectFrom('vehicle')
 					.where('vehicle.id', '=', vehicleId)
+					.where('vehicle.company', '=', companyId)
 					.select(['vehicle.bikes', 'vehicle.luggage', 'vehicle.wheelchairs', 'vehicle.passengers'])
 					.executeTakeFirst();
 				if (!newVehicle) {
