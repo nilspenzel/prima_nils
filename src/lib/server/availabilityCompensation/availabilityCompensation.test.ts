@@ -1,4 +1,4 @@
-import { addCompany, addTaxi, clearDatabase, Zone } from '$lib/testHelpers';
+import { addCompany, addTaxi, clearDatabase, setAvailability, Zone } from '$lib/testHelpers';
 import { describe, it, beforeEach, expect, beforeAll, afterAll } from 'vitest';
 import { vi } from 'vitest';
 import { addAvailability } from '../addAvailability';
@@ -432,5 +432,24 @@ describe('capture availability state', () => {
 
 		const availabilityPercent = await getSnapshot(company);
 		expect(availabilityPercent).toBe(0);
+	});
+	it.only('does not extend availability before the alterable timeframe', async () => {
+		const mockDate = new Date('2024-01-01T10:00:00');
+		vi.setSystemTime(mockDate);
+		const availabilityStart = Date.now();
+		const availabilityEnd = Date.now() + HOUR;
+		await setAvailability(vehicle, availabilityStart, availabilityEnd);
+
+		await deleteAvailability(
+			availabilityStart,
+			availabilityStart + 2 * HOUR,
+			vehicle,
+			company
+		);
+
+		const availabilities = await db.selectFrom('availability').selectAll().execute();
+		expect(availabilities).toHaveLength(1);
+		expect(availabilities[0].startTime).toBe(availabilityStart);
+		expect(availabilities[0].endTime).toBe(availabilityEnd);
 	});
 });

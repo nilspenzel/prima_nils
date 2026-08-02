@@ -45,8 +45,8 @@ export async function deleteAvailability(
 					.where(({ eb }) =>
 						eb.and([
 							eb('availability.vehicle', '=', vehicleId),
-							eb('availability.startTime', '<', to),
-							eb('availability.endTime', '>', from),
+							eb('availability.startTime', '<', toRemove.endTime),
+							eb('availability.endTime', '>', toRemove.startTime),
 							eb.exists(
 								eb
 									.selectFrom('vehicle')
