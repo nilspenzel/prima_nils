@@ -433,7 +433,7 @@ describe('capture availability state', () => {
 		const availabilityPercent = await getSnapshot(company);
 		expect(availabilityPercent).toBe(0);
 	});
-	it.only('does not extend availability before the alterable timeframe', async () => {
+	it('does not extend availability before the alterable timeframe', async () => {
 		const mockDate = new Date('2024-01-01T10:00:00');
 		vi.setSystemTime(mockDate);
 		const availabilityStart = Date.now();
