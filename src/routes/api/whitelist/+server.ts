@@ -39,7 +39,7 @@ function toWhitelistResponseEntry(
 				fullyPayedDurationDelta: e.fullyPayedDurationDelta,
 				taxiWaitingTime: e.taxiWaitingTime,
 				approachPlusReturnDurationDelta: e.approachPlusReturnDurationDelta,
-				passengerDuration: e.taxiWaitingTime,
+				passengerDuration: e.passengerDuration,
 				cost: e.cost,
 				requestedTime,
 				pickupCase: e.pickupCase,
