@@ -246,11 +246,11 @@ export async function captureAvailabilityState(skipWriting?: boolean) {
 
 export async function getSnapshot(companyId: number): Promise<number> {
 	const snaps = await captureAvailabilityState(true);
-	const relevantSnaps = snaps.filter((s) => s.company === companyId) ?? undefined;
-	return relevantSnaps
-		? relevantSnaps.reduce(
-				(prev, curr) => prev + curr.score / MAXIMUM_AVAILABILITY_IN_CONFIRMATION_DEADLINE,
-				0
-			) / relevantSnaps.reduce((prev, curr) => prev + curr.prefactor, 0)
-		: 0;
+	const relevantSnaps = snaps.filter((snapshot) => snapshot.company === companyId);
+	if (relevantSnaps.length === 0) {
+		return 0;
+	}
+	const scoreSum = relevantSnaps.reduce((sum, snapshot) => sum + snapshot.score, 0);
+	const prefactorSum = relevantSnaps.reduce((sum, snapshot) => sum + snapshot.prefactor, 0);
+	return scoreSum / MAXIMUM_AVAILABILITY_IN_CONFIRMATION_DEADLINE / prefactorSum;
 }
