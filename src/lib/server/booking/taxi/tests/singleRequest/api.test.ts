@@ -502,7 +502,7 @@ describe('Whitelist and Booking API Tests', () => {
 		};
 		const response = await bookingApi(bookingBody, mockUserId, false, false, 0, 0, 0, 0);
 		const tours = await getTours();
-		expect(response.status === 403);
+		expect(response.status).toBe(403);
 		expect(tours.length).toBe(0);
 	}, 30000);
 });
