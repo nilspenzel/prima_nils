@@ -12,6 +12,7 @@ import { createSession } from '$lib/server/auth/session';
 import { black, inXMinutes } from '$lib/server/booking/testUtils';
 import { DAY, HOUR, SECOND } from '$lib/util/time';
 import { EARLIEST_SHIFT_START, LATEST_SHIFT_END, MIN_PREP } from '$lib/constants';
+import { db } from '$lib/server/db';
 
 let sessionToken: string;
 
@@ -172,6 +173,27 @@ describe('Blacklist Tests', () => {
 		expect(blackResponse.direct.length).toBe(1);
 		expect(blackResponse.direct[0].startTime).toBe(inXMinutes(100));
 		expect(blackResponse.direct[0].endTime).toBe(inXMinutes(200));
+	});
+	it('Blacklist ignores cancelled tours', async () => {
+		const company = await addCompany(Zone.NIESKY, inNiesky3);
+		const taxi = await addTaxi(company, { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 });
+		const tour = await setTour(taxi, inXMinutes(100), inXMinutes(150));
+		await db.updateTable('tour').set({ cancelled: true }).where('id', '=', tour!.id).execute();
+		const blackBody = JSON.stringify({
+			start: inNiesky1,
+			target: inNiesky2,
+			startBusStops: [],
+			targetBusStops: [],
+			earliest: inXMinutes(0),
+			latest: inXMinutes(500),
+			startFixed: true,
+			capacities
+		});
+
+		const blackResponse = await black(blackBody).then((r) => r.json());
+		expect(blackResponse.start.length).toBe(0);
+		expect(blackResponse.target.length).toBe(0);
+		expect(blackResponse.direct.length).toBe(0);
 	});
 	it('Blacklist merge tour and availability', async () => {
 		const company = await addCompany(Zone.NIESKY, inNiesky3);

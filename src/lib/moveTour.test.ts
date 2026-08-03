@@ -9,17 +9,22 @@ import {
 	setTour,
 	Zone
 } from '$lib/testHelpers';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSession } from './server/auth/session';
 import { oneToManyCarRouting } from './server/util/oneToManyCarRouting';
 import { PASSENGER_CHANGE_DURATION } from './constants';
 import { inXMinutes } from './server/booking/testUtils';
 import type { Coordinates } from './util/Coordinates';
+import { moveTour as moveTourInDatabase } from './server/moveTour';
+
+const { sendNotifications } = vi.hoisted(() => ({ sendNotifications: vi.fn() }));
+vi.mock('$lib/server/firebase/notifications.js', () => ({ sendNotifications }));
 
 let sessionToken: string;
 
 beforeEach(async () => {
 	await clearDatabase();
+	sendNotifications.mockClear();
 }, 5000000);
 
 const moveTour = async (tourId: number, vehicleId: number) => {
@@ -63,6 +68,63 @@ const targetNextStart = { lat: 51.294046423258095, lng: 14.820774891510126 };
 const irrelevant = { lat: 51.3, lng: 14.85 };
 
 describe('tests for moving tours', () => {
+	it('does not move a tour to another company', async () => {
+		const company = await addCompany(Zone.NIESKY);
+		const companyOwner = (await addTestUser(company)).id;
+		sessionToken = 'generateSessionToken()';
+		await createSession(sessionToken, companyOwner);
+
+		const capacities = { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 };
+		const oldVehicle = await addTaxi(company, capacities);
+		const otherCompany = await addCompany(Zone.NIESKY);
+		const otherCompanyVehicle = await addTaxi(otherCompany, capacities);
+		const movedTour = await createTour(
+			oldVehicle,
+			companyOwner,
+			inXMinutes(40),
+			inXMinutes(50),
+			movedStart,
+			movedEnd
+		);
+
+		const response = await moveTour(movedTour, otherCompanyVehicle);
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			status: 400,
+			message: 'Das Zielfahrzeug konnte nicht gefunden werden.'
+		});
+		expect((await getTours()).find((tour) => tour.id === movedTour)?.vehicle).toBe(oldVehicle);
+	});
+
+	it('uses the earliest pickup in move notifications', async () => {
+		const company = await addCompany(Zone.NIESKY);
+		const companyOwner = (await addTestUser(company)).id;
+		const capacities = { passengers: 3, bikes: 0, wheelchairs: 0, luggage: 0 };
+		const oldVehicle = await addTaxi(company, capacities);
+		const newVehicle = await addTaxi(company, capacities);
+		const movedTour = (await setTour(oldVehicle, inXMinutes(10), inXMinutes(60)))!.id;
+		const laterRequest = await setRequest(movedTour, companyOwner, '', 1);
+		await setEvent(laterRequest.id, inXMinutes(40), true, movedStart.lat, movedStart.lng);
+		await setEvent(laterRequest.id, inXMinutes(50), false, movedEnd.lat, movedEnd.lng);
+		const earlierRequest = await setRequest(movedTour, companyOwner, '', 1);
+		await setEvent(
+			earlierRequest.id,
+			inXMinutes(20),
+			true,
+			targetPreviousEnd.lat,
+			targetPreviousEnd.lng
+		);
+		await setEvent(earlierRequest.id, inXMinutes(30), false, oldNextStart.lat, oldNextStart.lng);
+
+		const result = await moveTourInDatabase(movedTour, newVehicle, company);
+
+		expect(result.status).toBe(200);
+		expect(sendNotifications).toHaveBeenCalledWith(
+			company,
+			expect.objectContaining({ pickupTime: inXMinutes(20) })
+		);
+	});
+
 	it('updates direct durations on the old and new vehicle', async () => {
 		const company = await addCompany(Zone.NIESKY);
 		const companyOwner = (await addTestUser(company)).id;

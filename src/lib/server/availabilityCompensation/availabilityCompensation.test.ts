@@ -433,6 +433,13 @@ describe('capture availability state', () => {
 		const availabilityPercent = await getSnapshot(company);
 		expect(availabilityPercent).toBe(0);
 	});
+	it('compute availability percent for company without vehicles', async () => {
+		const companyWithoutVehicles = await addCompany(Zone.WEIßWASSER, { lat: 0, lng: 0 });
+
+		const availabilityPercent = await getSnapshot(companyWithoutVehicles);
+
+		expect(availabilityPercent).toBe(0);
+	});
 	it('does not extend availability before the alterable timeframe', async () => {
 		const mockDate = new Date('2024-01-01T10:00:00');
 		vi.setSystemTime(mockDate);
@@ -440,12 +447,7 @@ describe('capture availability state', () => {
 		const availabilityEnd = Date.now() + HOUR;
 		await setAvailability(vehicle, availabilityStart, availabilityEnd);
 
-		await deleteAvailability(
-			availabilityStart,
-			availabilityStart + 2 * HOUR,
-			vehicle,
-			company
-		);
+		await deleteAvailability(availabilityStart, availabilityStart + 2 * HOUR, vehicle, company);
 
 		const availabilities = await db.selectFrom('availability').selectAll().execute();
 		expect(availabilities).toHaveLength(1);

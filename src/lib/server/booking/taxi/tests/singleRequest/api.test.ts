@@ -51,6 +51,22 @@ beforeEach(async () => {
 });
 
 describe('Whitelist and Booking API Tests', () => {
+	it('whitelist accepts bus stops without requested times', async () => {
+		const body = JSON.stringify({
+			start: inNiesky1,
+			target: inNiesky2,
+			startBusStops: [],
+			targetBusStops: [{ ...inNiesky3, times: [] }],
+			directTimes: [],
+			startFixed: true,
+			capacities
+		});
+
+		const response = await white(body);
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ start: [], target: [null], direct: [] });
+	});
+
 	it('no company', async () => {
 		const blackBody = JSON.stringify({
 			start: inNiesky1,
