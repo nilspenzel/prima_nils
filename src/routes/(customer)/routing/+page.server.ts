@@ -18,6 +18,7 @@ import { sendBookingMails } from '$lib/util/sendBookingEmails';
 import { deduplicate, removeSteps, type CalibrationItinerary } from '$lib/calibration';
 import { areasGeoJSON, rideshareGeoJSON } from '$lib/util/geoJSON';
 import { selectDesiredTrips } from '$lib/server/booking/rideShare/selectDesiredTrips';
+import { retry } from '$lib/server/db/retryQuery';
 
 let booking_errors: Prom.Counter | undefined;
 let booking_attempts: Prom.Counter | undefined;
@@ -182,26 +183,64 @@ export const actions = {
 
 		const mode = connection1 !== null ? connection1.mode : connection2?.mode;
 
-		const bookingResult =
-			mode === Mode.TAXI
-				? await bookingApi(
-						{ connection1, connection2, capacities },
-						user,
-						locals.session?.isService ?? false,
-						false,
-						kidsZeroToTwo,
-						kidsThreeToFour,
-						kidsFiveToSix,
-						kidsSevenToFourteen
-					)
-				: await rideShareApi(
-						{ connection1, connection2, capacities },
-						user,
-						locals.session?.isService ?? false,
-						kidsZeroToTwo,
-						kidsThreeToFour,
-						kidsFiveToSix
-					);
+		if (mode === Mode.TAXI) {
+			const result = await retry(() =>
+				db
+					.transaction()
+					.setIsolationLevel('serializable')
+					.execute(async (trx) => {
+						const bookingResult = await bookingApi(
+							{ connection1, connection2, capacities },
+							user,
+							locals.session?.isService ?? false,
+							false,
+							kidsZeroToTwo,
+							kidsThreeToFour,
+							kidsFiveToSix,
+							kidsSevenToFourteen,
+							undefined,
+							trx
+						);
+						if (bookingResult.status !== 200) {
+							return { bookingResult };
+						}
+
+						const request1 = bookingResult.request1Id ?? null;
+						const request2 = bookingResult.request2Id ?? null;
+						console.log('INSERTION DONE - REQUESTS:', { request1, request2 });
+						console.log('SAVING JOURNEY');
+						delete parsedJson.rideShareTourInfos;
+						const journeyId = (
+							await trx
+								.insertInto('journey')
+								.values({ user, json: parsedJson, request1, request2 })
+								.returning('id')
+								.executeTakeFirstOrThrow()
+						).id;
+						return { bookingResult, journeyId };
+					})
+			);
+
+			if (result.bookingResult.status !== 200 || result.journeyId === undefined) {
+				console.log('Booking failed: ', result.bookingResult.message, ' with: ', {
+					connection1,
+					connection2
+				});
+				booking_errors?.inc();
+				return { msg: msg('bookingError') };
+			}
+			await sendBookingMails(result.bookingResult.request1Id ?? null, mode, db, sendMail);
+			return redirect(302, `/bookings/${result.journeyId}`);
+		}
+
+		const bookingResult = await rideShareApi(
+			{ connection1, connection2, capacities },
+			user,
+			locals.session?.isService ?? false,
+			kidsZeroToTwo,
+			kidsThreeToFour,
+			kidsFiveToSix
+		);
 		if (bookingResult.status !== 200) {
 			console.log(
 				'Booking failed: ',
