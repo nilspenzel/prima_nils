@@ -291,7 +291,7 @@ export const selectEvents = async () => {
 };
 
 export function assertArraySizes<T>(
-	response: (T[]|undefined)[],
+	response: (T[] | undefined)[],
 	request: BusStop[],
 	caller: string,
 	checkForUndefined: boolean
@@ -299,19 +299,13 @@ export function assertArraySizes<T>(
 	console.assert(response.length === request.length, 'Array size mismatch in ' + caller);
 	for (let i = 0; i != response.length; ++i) {
 		const r = response[i];
-		if(!r) {
+		if (!r) {
 			continue;
 		}
-		console.assert(
-			r.length === request[i].times.length,
-			'Array size mismatch in ' + caller
-		);
+		console.assert(r.length === request[i].times.length, 'Array size mismatch in ' + caller);
 		if (checkForUndefined) {
 			for (let j = 0; j != r.length; ++j) {
-				console.assert(
-					r[j] != null && r[j] != undefined,
-					'Undefined in ' + caller
-				);
+				console.assert(r[j] != null && r[j] != undefined, 'Undefined in ' + caller);
 			}
 		}
 	}
