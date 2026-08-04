@@ -14,8 +14,7 @@ export async function moveTour(
 	companyId: number
 ): Promise<{ status: number; message?: string }> {
 	console.log('MOVE TOUR PARAMS: ', { tourId }, { vehicleId }, { companyId });
-	let result: { status: number; message?: string } | undefined = undefined;
-	await retry(() =>
+	return await retry(() =>
 		db
 			.transaction()
 			.setIsolationLevel('serializable')
@@ -74,8 +73,7 @@ export async function moveTour(
 					.executeTakeFirst();
 				if (!movedTour) {
 					console.log('MOVE TOUR early exit - cannot find the tour to move. tourId: ', tourId);
-					result = { status: 500, message: 'Die Tour konnte nicht gefunden werden.' };
-					return;
+					return { status: 500, message: 'Die Tour konnte nicht gefunden werden.' };
 				}
 				console.assert(
 					movedTour.requests.length != 0,
@@ -85,16 +83,14 @@ export async function moveTour(
 				console.assert(
 					!movedTour.requests.some((r) => r.events.length == 0),
 					'Found a request which contains no events. requestId: ' +
-					movedTour.requests.find((r) => r.events.length === 0)?.requestId
+						movedTour.requests.find((r) => r.events.length === 0)?.requestId
 				);
 				if (vehicleId === undefined) {
 					console.log('MOVE TOUR early exit - no vehicle id was provided. tourId: ', tourId);
-					result = { status: 400, message: 'Keine Fahrzeug-id angegeben' };
-					return;
+					return { status: 400, message: 'Keine Fahrzeug-id angegeben' };
 				}
 				if (vehicleId === movedTour.vehicle) {
-					result = { status: 400, message: 'Neue Fahrzeug-id stimmt mit alter überein.' };
-					return;
+					return { status: 400, message: 'Neue Fahrzeug-id stimmt mit alter überein.' };
 				}
 				const newVehicle = await trx
 					.selectFrom('vehicle')
@@ -107,8 +103,7 @@ export async function moveTour(
 						'MOVE TOUR early exit - cannot find the vehicle, the tour is supposed to be moved to, in the database. tourId: ',
 						tourId
 					);
-					result = { status: 400, message: 'Das Zielfahrzeug konnte nicht gefunden werden.' };
-					return;
+					return { status: 400, message: 'Das Zielfahrzeug konnte nicht gefunden werden.' };
 				}
 				const events = movedTour.requests.flatMap((r) =>
 					r.events.map((e) => {
@@ -139,12 +134,11 @@ export async function moveTour(
 						', vehicleId: ',
 						vehicleId
 					);
-					result = {
+					return {
 						status: 400,
 						message:
 							'Das Zielfahrzeug verfügt nicht über ausreichende Kapazität um die Tour zu fahren.'
 					};
-					return;
 				}
 
 				const firstEventTime = Math.min(...events.map((e) => getLatestEventTime(e)));
@@ -153,12 +147,11 @@ export async function moveTour(
 						'MOVE TOUR early exit - tour may not be moved since the first event is already in the past. tourId: ',
 						tourId
 					);
-					result = {
+					return {
 						status: 400,
 						message:
 							'Touren können nicht mehr auf andere Fahrzeuge verschoben werden, wenn der erste Kunde nach Zeitplan bereits eingesammelt wurde.'
 					};
-					return;
 				}
 				const collidingTours = await trx
 					.selectFrom('tour')
@@ -177,11 +170,10 @@ export async function moveTour(
 						'MOVE TOUR early exit - there is a collision with another tour of the target vehicle. tourId: ',
 						tourId
 					);
-					result = {
+					return {
 						status: 400,
 						message: 'Es gibt eine Kollision mit einer anderen Tour auf dem Zielfahrzeug.'
 					};
-					return;
 				}
 				await trx
 					.updateTable('tour')
@@ -215,7 +207,7 @@ export async function moveTour(
 					trx,
 					vehicleId
 				);
+				return { status: 200 };
 			})
 	);
-	return result ?? { status: 200 };
 }

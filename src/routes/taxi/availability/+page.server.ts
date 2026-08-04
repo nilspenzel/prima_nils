@@ -105,70 +105,68 @@ export const actions: Actions = {
 		if (isNaN(luggage) || luggage <= 0 || luggage >= 11) {
 			return fail(400, { msg: msg('invalidStorage') });
 		}
-		let success = false;
-		let duplicateLicensePlate = false;
-		let unknownError = false;
-		await retry(() =>
-			db
-				.transaction()
-				.setIsolationLevel('serializable')
-				.execute(async (trx) => {
-					const tours = await trx
-						.selectFrom('tour')
-						.where('tour.vehicle', '=', id)
-						.where('tour.arrival', '>', Date.now())
-						.where('tour.cancelled', '=', false)
-						.select((eb) => [
-							'tour.id',
-							jsonArrayFrom(
-								eb
-									.selectFrom('event')
-									.innerJoin('request', 'request.id', 'event.request')
-									.innerJoin('eventGroup', 'eventGroup.id', 'event.eventGroupId')
-									.whereRef('request.tour', '=', 'tour.id')
-									.where('request.cancelled', '=', false)
-									.select([
-										'event.isPickup',
-										'request.passengers',
-										'request.bikes',
-										'request.wheelchairs',
-										'request.luggage',
-										'request.id as requestId',
-										'event.eventGroupId',
-										'eventGroup.scheduledTimeStart'
-									])
-							).as('events')
-						])
-						.execute();
+		let result: 'success' | 'insufficientCapacities';
+		try {
+			result = await retry(() =>
+				db
+					.transaction()
+					.setIsolationLevel('serializable')
+					.execute(async (trx) => {
+						const tours = await trx
+							.selectFrom('tour')
+							.where('tour.vehicle', '=', id)
+							.where('tour.arrival', '>', Date.now())
+							.where('tour.cancelled', '=', false)
+							.select((eb) => [
+								'tour.id',
+								jsonArrayFrom(
+									eb
+										.selectFrom('event')
+										.innerJoin('request', 'request.id', 'event.request')
+										.innerJoin('eventGroup', 'eventGroup.id', 'event.eventGroupId')
+										.whereRef('request.tour', '=', 'tour.id')
+										.where('request.cancelled', '=', false)
+										.select([
+											'event.isPickup',
+											'request.passengers',
+											'request.bikes',
+											'request.wheelchairs',
+											'request.luggage',
+											'request.id as requestId',
+											'event.eventGroupId',
+											'eventGroup.scheduledTimeStart'
+										])
+								).as('events')
+							])
+							.execute();
 
-					if (
-						tours.some((t) => {
-							const possibleInsertions = getPossibleInsertions(
-								{
-									luggage,
-									wheelchairs: !wheelchair ? 0 : 1,
-									bikes: !bike ? 0 : 1,
-									passengers
-								},
-								{
-									luggage: 0,
-									bikes: 0,
-									wheelchairs: 0,
-									passengers: 0
-								},
-								t.events
-							);
-							return (
-								possibleInsertions.length != 1 ||
-								possibleInsertions[0].earliestPickup != 0 ||
-								possibleInsertions[0].latestDropoff != t.events.length
-							);
-						})
-					) {
-						return;
-					}
+						if (
+							tours.some((t) => {
+								const possibleInsertions = getPossibleInsertions(
+									{
+										luggage,
+										wheelchairs: !wheelchair ? 0 : 1,
+										bikes: !bike ? 0 : 1,
+										passengers
+									},
+									{
+										luggage: 0,
+										bikes: 0,
+										wheelchairs: 0,
+										passengers: 0
+									},
+									t.events
+								);
+								return (
+									possibleInsertions.length != 1 ||
+									possibleInsertions[0].earliestPickup != 0 ||
+									possibleInsertions[0].latestDropoff != t.events.length
+								);
+							})
+						) {
+							return 'insufficientCapacities' as const;
+						}
 
-					try {
 						await trx
 							.updateTable('vehicle')
 							.where('vehicle.id', '=', id)
@@ -180,34 +178,30 @@ export const actions: Actions = {
 								bikes: !bike ? 0 : 1
 							})
 							.execute();
-					} catch (e) {
-						// @ts-expect-error: 'e' is of type 'unknown'
-						if (e.constraint == 'vehicle_license_plate_key') {
-							duplicateLicensePlate = true;
-							return;
+						for (const tour of tours) {
+							const requestIds = tour.events.filter((e) => e.isPickup).map((r) => r.requestId);
+							if (requestIds.length !== 0) {
+								trx
+									.updateTable('request')
+									.set({ licensePlateUpdatedAt: Date.now() })
+									.where('request.id', 'in', requestIds);
+							}
 						}
-						unknownError = true;
-						return;
-					}
-					for (const tour of tours) {
-						const requestIds = tour.events.filter((e) => e.isPickup).map((r) => r.requestId);
-						if (requestIds.length !== 0) {
-							trx
-								.updateTable('request')
-								.set({ licensePlateUpdatedAt: Date.now() })
-								.where('request.id', 'in', requestIds);
-						}
-					}
-					success = true;
-				})
-		);
-		if (duplicateLicensePlate) {
-			return fail(400, { msg: msg('duplicateLicensePlate') });
-		}
-		if (unknownError) {
+						return 'success' as const;
+					})
+			);
+		} catch (e) {
+			if (
+				typeof e === 'object' &&
+				e !== null &&
+				'constraint' in e &&
+				e.constraint === 'vehicle_license_plate_key'
+			) {
+				return fail(400, { msg: msg('duplicateLicensePlate') });
+			}
 			return fail(400, { msg: msg('unknownError') });
 		}
-		return success
+		return result === 'success'
 			? { msg: msg('vehicleAlteredSuccessfully', 'success') }
 			: fail(400, { msg: msg('insufficientCapacities') });
 	}
