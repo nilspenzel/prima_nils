@@ -14,6 +14,15 @@ import type { Itinerary } from '$lib/openapi';
 import { isCarLeg } from '$lib/util/booking/checkLegType';
 import { msg, type Msg } from '$lib/msg';
 
+export type DesiredTripMailJob = {
+	start: Coordinates;
+	target: Coordinates;
+	startTime: number;
+	targetTime: number;
+	startFixed: boolean;
+	tourId: number;
+};
+
 export async function getRideShareTourCommunicatedTimes(
 	time: number,
 	startFixed: boolean,
@@ -252,7 +261,8 @@ export const addRideShareTour = async (
 	trx?: Transaction<Database>,
 	days?: number,
 	rangeStart?: string,
-	rangeEnd?: string
+	rangeEnd?: string,
+	desiredTripMailJobs?: DesiredTripMailJob[]
 ): Promise<number | undefined> => {
 	console.log(
 		'ADD RIDE SHARE TOUR PARAMS: ',
@@ -394,15 +404,27 @@ export const addRideShareTour = async (
 				eventGroupId: eventGroupDropoff
 			})
 			.execute();
-		sendDesiredTripMails(
+		const desiredTripMailJob = {
 			start,
 			target,
-			startTimeStart,
-			targetTimeEnd,
-			sendMail,
+			startTime: startTimeStart,
+			targetTime: targetTimeEnd,
 			startFixed,
 			tourId
-		).catch((err) => console.error('matchDesiredTrips failed:', err));
+		};
+		if (trx) {
+			desiredTripMailJobs?.push(desiredTripMailJob);
+		} else {
+			sendDesiredTripMails(
+				desiredTripMailJob.start,
+				desiredTripMailJob.target,
+				desiredTripMailJob.startTime,
+				desiredTripMailJob.targetTime,
+				sendMail,
+				desiredTripMailJob.startFixed,
+				desiredTripMailJob.tourId
+			).catch((err) => console.error('matchDesiredTrips failed:', err));
+		}
 		tourIds.push(tourId);
 	}
 	return tourIds.some((t) => t !== undefined) ? tourIds[0] : undefined;

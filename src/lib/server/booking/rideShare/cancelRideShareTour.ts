@@ -1,9 +1,9 @@
 import { sql } from 'kysely';
-import { sendMail } from '$lib/server/sendMail';
 import CancelNotificationCustomer from '$lib/server/email/CancelNotificationCustomer.svelte';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { db } from '$lib/server/db';
 import { retry } from '$lib/server/db/retryQuery';
+import { enqueueMail } from '$lib/server/notificationOutbox';
 
 export async function cancelRideShareTour(
 	tourId: number,
@@ -87,27 +87,18 @@ export async function cancelRideShareTour(
 						continue;
 					}
 					console.assert(request.events.length != 0, 'Found a request with no events');
-					try {
-						await sendMail(
-							CancelNotificationCustomer,
-							'Stornierte Mitfahrgelegenheit',
-							request.email,
-							{
-								start: request.events[0].address,
-								target: request.events[1].address,
-								startTime: request.events[0].communicatedTime,
-								name: request.firstName + ' ' + request.name
-							}
-						);
-					} catch {
-						console.log(
-							'Failed to send cancellation email to ride share customer with email: ',
-							request.email,
-							' tourId: ',
-							currentId
-						);
-						return {};
-					}
+					await enqueueMail(
+						trx,
+						CancelNotificationCustomer,
+						'Stornierte Mitfahrgelegenheit',
+						request.email,
+						{
+							start: request.events[0].address,
+							target: request.events[1].address,
+							startTime: request.events[0].communicatedTime,
+							name: request.firstName + ' ' + request.name
+						}
+					);
 				}
 			}
 		})

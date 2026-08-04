@@ -41,7 +41,5 @@ export async function sendNotifications(companyId: number, data: NotificationDat
 			break;
 	}
 
-	tokens.forEach((token) => {
-		sendPushNotification(token.fcmToken, title, body, data);
-	});
+	await Promise.all(tokens.map((token) => sendPushNotification(token.fcmToken, title, body, data)));
 }

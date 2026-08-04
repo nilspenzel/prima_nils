@@ -196,6 +196,7 @@ export const addTestUser = async (company?: number) => {
 };
 
 export const clearDatabase = async () => {
+	await db.deleteFrom('notificationOutbox').execute();
 	await db.deleteFrom('availability').execute();
 	await db.deleteFrom('event').execute();
 	await db.deleteFrom('journey').execute();

@@ -71,12 +71,14 @@ export async function sendPushNotification(
 						e
 					);
 				}
-			} else if (error.code !== 'messaging/registration-token-not-registered') {
-				firebase_errors?.inc();
+				return;
 			}
+			if (error.code === 'messaging/registration-token-not-registered') return;
+			firebase_errors?.inc();
 		} else {
 			console.error(error);
 			firebase_errors?.inc();
 		}
+		throw error;
 	}
 }

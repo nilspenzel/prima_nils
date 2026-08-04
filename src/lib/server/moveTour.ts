@@ -2,11 +2,11 @@ import { db } from '$lib/server/db';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { getPossibleInsertions } from '$lib/util/booking/getPossibleInsertions';
 import { getLatestEventTime } from '$lib/util/getLatestEventTime';
-import { sendNotifications } from '$lib/server/firebase/notifications.js';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { updateDirectDurations } from '$lib/server/booking/taxi/updateDirectDuration';
 import { retry } from './db/retryQuery';
+import { enqueuePushNotification } from '$lib/server/notificationOutbox';
 
 export async function moveTour(
 	tourId: number,
@@ -193,7 +193,7 @@ export async function moveTour(
 					.filter((event) => event.isPickup)
 					.sort((a, b) => getScheduledEventTime(a) - getScheduledEventTime(b))[0];
 				const wheelchairs = movedTour.requests.reduce((prev, curr) => prev + curr.wheelchairs, 0);
-				await sendNotifications(companyId, {
+				await enqueuePushNotification(trx, companyId, {
 					tourId,
 					pickupTime: getScheduledEventTime(firstEvent),
 					vehicleId,

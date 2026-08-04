@@ -222,6 +222,17 @@ export interface Database {
 		cosOriginLat: number;
 		pointOnly: boolean;
 	};
+	notificationOutbox: {
+		id: Generated<number>;
+		kind: string;
+		payload: unknown;
+		deduplicationKey: string | null;
+		createdAt: number;
+		availableAt: number;
+		processedAt: number | null;
+		attempts: Generated<number>;
+		lastError: string | null;
+	};
 }
 
 export const pool = new pg.Pool({ connectionString: env.DATABASE_URL });

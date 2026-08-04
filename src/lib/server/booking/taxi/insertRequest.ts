@@ -3,10 +3,10 @@ import type { ExpectedConnection } from '$lib/server/booking/expectedConnection'
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { type Database } from '$lib/server/db';
 import { sql, Transaction } from 'kysely';
-import { sendNotifications } from '$lib/server/firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
 import crypto from 'crypto';
 import { legOdmPrice } from '$lib/util/odmPrice';
+import { enqueuePushNotification } from '$lib/server/notificationOutbox';
 
 export async function insertRequest(
 	r: BookRideResponse,
@@ -60,7 +60,7 @@ export async function insertRequest(
 		.select(['tour.id as tourId', 'vehicle.company as companyId'])
 		.executeTakeFirst();
 
-	await sendNotifications(notificationParams!.companyId, {
+	await enqueuePushNotification(trx, notificationParams!.companyId, {
 		tourId: notificationParams!.tourId,
 		pickupTime: r.best.scheduledPickupTimeEnd,
 		wheelchairs: capacities.wheelchairs,

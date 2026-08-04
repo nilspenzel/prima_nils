@@ -1,13 +1,12 @@
 import { sql } from 'kysely';
-import { sendMail } from '$lib/server/sendMail';
 import CancelNotificationCustomer from '$lib/server/email/CancelNotificationCustomer.svelte';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
-import { sendNotifications } from '$lib/server/firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { updateDirectDurations } from '$lib/server/booking/taxi/updateDirectDuration';
 import { db } from '$lib/server/db';
 import { retry } from './db/retryQuery';
+import { enqueueMail, enqueuePushNotification } from '$lib/server/notificationOutbox';
 
 export async function cancelTour(
 	tourId: number,
@@ -77,29 +76,19 @@ export async function cancelTour(
 			console.assert(tour.requests.length != 0, 'Found a tour with no requests');
 			for (const request of tour.requests) {
 				console.assert(request.events.length != 0, 'Found a request with no events');
-				try {
-					await sendMail(CancelNotificationCustomer, 'Stornierte Buchung', request.email, {
-						start: request.events[0].address,
-						target: request.events[1].address,
-						startTime: request.events[0].communicatedTime,
-						name: request.firstName + ' ' + request.name
-					});
-				} catch {
-					console.log(
-						'Failed to send cancellation email to customer with email: ',
-						request.email,
-						' tourId: ',
-						tourId
-					);
-					return {};
-				}
+				await enqueueMail(trx, CancelNotificationCustomer, 'Stornierte Buchung', request.email, {
+					start: request.events[0].address,
+					target: request.events[1].address,
+					startTime: request.events[0].communicatedTime,
+					name: request.firstName + ' ' + request.name
+				});
 			}
 
 			const firstEvent = tour.requests
 				.flatMap((r) => r.events)
 				.sort((e) => e.scheduledTimeStart)[0];
 			const wheelchairs = tour.requests.reduce((prev, curr) => prev + curr.wheelchairs, 0);
-			await sendNotifications(company, {
+			await enqueuePushNotification(trx, company, {
 				tourId: tourId,
 				pickupTime: getScheduledEventTime(firstEvent),
 				vehicleId: tour.vehicle,

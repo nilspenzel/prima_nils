@@ -16,9 +16,10 @@ import { PASSENGER_CHANGE_DURATION } from './constants';
 import { inXMinutes } from './server/booking/testUtils';
 import type { Coordinates } from './util/Coordinates';
 import { moveTour as moveTourInDatabase } from './server/moveTour';
+import { processNotificationOutbox } from './server/notificationOutbox';
 
 const { sendNotifications } = vi.hoisted(() => ({ sendNotifications: vi.fn() }));
-vi.mock('$lib/server/firebase/notifications.js', () => ({ sendNotifications }));
+vi.mock('$lib/server/firebase/notifications', () => ({ sendNotifications }));
 
 let sessionToken: string;
 
@@ -119,6 +120,8 @@ describe('tests for moving tours', () => {
 		const result = await moveTourInDatabase(movedTour, newVehicle, company);
 
 		expect(result.status).toBe(200);
+		expect(sendNotifications).not.toHaveBeenCalled();
+		await processNotificationOutbox();
 		expect(sendNotifications).toHaveBeenCalledWith(
 			company,
 			expect.objectContaining({ pickupTime: inXMinutes(20) })

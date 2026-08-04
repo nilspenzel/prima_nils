@@ -32,26 +32,30 @@ export function generateMail(template: any, props: any): EmailContent {
 	return { html, text };
 }
 
+export async function sendOrThrow(subject: string, email: string, content: EmailContent) {
+	const transporter = nodemailer.createTransport({
+		host: env.MAIL_HOST,
+		port: 465,
+		secure: true,
+		auth: {
+			user: env.MAIL_USERNAME,
+			pass: env.MAIL_SECRET_KEY
+		}
+	});
+
+	await transporter.sendMail({
+		from: env.EMAIL_SENDER,
+		to: email,
+		subject: subject,
+		html: content.html,
+		text: content.text,
+		attachDataUrls: true
+	});
+}
+
 export async function send(subject: string, email: string, content: EmailContent) {
 	try {
-		const transporter = nodemailer.createTransport({
-			host: env.MAIL_HOST,
-			port: 465,
-			secure: true,
-			auth: {
-				user: env.MAIL_USERNAME,
-				pass: env.MAIL_SECRET_KEY
-			}
-		});
-
-		await transporter.sendMail({
-			from: env.EMAIL_SENDER,
-			to: email,
-			subject: subject,
-			html: content.html,
-			text: content.text,
-			attachDataUrls: true
-		});
+		await sendOrThrow(subject, email, content);
 	} catch (e) {
 		email_errors?.inc();
 		console.log('Error when sending Email: ', e);

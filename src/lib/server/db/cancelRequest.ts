@@ -1,9 +1,7 @@
 import { sql, Transaction } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
-import { sendMail } from '$lib/server/sendMail';
 import CancelNotificationCompany from '$lib/server/email/CancelNotificationCompany.svelte';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
-import { sendNotifications } from '../firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { updateDirectDurations } from '$lib/server/booking/taxi/updateDirectDuration';
 import { db, type Database } from '$lib/server/db';
@@ -11,6 +9,7 @@ import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
 import { retry } from './retryQuery';
 import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 import { sortEventsByTime } from '$lib/testHelpers';
+import { enqueueMail, enqueuePushNotification } from '$lib/server/notificationOutbox';
 
 export const cancelRequest = async (requestId: number, userId: number) => {
 	console.log(
@@ -148,26 +147,23 @@ export const cancelRequest = async (requestId: number, userId: number) => {
 				);
 			}
 			for (const companyOwner of tourInfo.companyOwners) {
-				try {
-					await sendMail(CancelNotificationCompany, 'Stornierte Buchung', companyOwner.email, {
+				await enqueueMail(
+					trx,
+					CancelNotificationCompany,
+					'Stornierte Buchung',
+					companyOwner.email,
+					{
 						events: tourInfo.events,
 						name: companyOwner.name
-					});
-				} catch {
-					console.log(
-						'Failed to send cancellation email to company with email: ',
-						companyOwner.email,
-						' tourId: ',
-						tourInfo.id
-					);
-				}
+					}
+				);
 			}
 			const firstEvent = tour.requests
 				.flatMap((r) => r.events)
 				.sort((e) => e.scheduledTimeStart)[0];
 			const wheelchairs = tour.requests.reduce((prev, curr) => prev + curr.wheelchairs, 0);
 			if (firstEvent.requestId === requestId && tourInfo.companyOwners.length !== 0) {
-				await sendNotifications(tourInfo.companyOwners[0].companyId, {
+				await enqueuePushNotification(trx, tourInfo.companyOwners[0].companyId, {
 					tourId: tour.tourId,
 					pickupTime: getScheduledEventTime(firstEvent),
 					vehicleId: tourInfo.vehicle,

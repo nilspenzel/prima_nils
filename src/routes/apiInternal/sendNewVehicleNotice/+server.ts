@@ -1,9 +1,9 @@
 import { db } from '$lib/server/db';
-import { sendMail } from '$lib/server/sendMail';
 import { MINUTE } from '$lib/util/time';
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import NewVehicleNotification from '$lib/server/email/NewVehicleNotification.svelte';
+import { enqueueMail } from '$lib/server/notificationOutbox';
 
 export const POST = async (_: RequestEvent) => {
 	console.log('Sending NewVechicleNotices.');
@@ -26,6 +26,7 @@ export const POST = async (_: RequestEvent) => {
 				'user.name',
 				'user.email',
 				'request.id as requestId',
+				'request.licensePlateUpdatedAt',
 				'vehicle.licensePlate',
 				'tour.id as tourId',
 				jsonArrayFrom(
@@ -38,21 +39,19 @@ export const POST = async (_: RequestEvent) => {
 			])
 			.execute();
 		for (const request of requests) {
-			try {
-				console.log('Sending NewVehicleNotification to ', request.email);
-				await sendMail(NewVehicleNotification, 'Fahrzeugwechsel', request.email, {
+			console.log('Queueing NewVehicleNotification for ', request.email);
+			await enqueueMail(
+				trx,
+				NewVehicleNotification,
+				'Fahrzeugwechsel',
+				request.email,
+				{
 					events: request.events,
 					name: request.firstName + ' ' + request.name,
 					newLicensePlate: request.licensePlate
-				});
-			} catch {
-				console.log(
-					'Failed to send NewVehicleNotification to customer with email: ',
-					request.email,
-					' tourId: ',
-					request.tourId
-				);
-			}
+				},
+				`new-vehicle:${request.requestId}:${request.licensePlateUpdatedAt}`
+			);
 		}
 		if (requests.length === 0) {
 			return;

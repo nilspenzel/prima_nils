@@ -1,12 +1,11 @@
 import { db } from '$lib/server/db';
-import { sendMail } from '$lib/server/sendMail';
 import { HOUR, MINUTE } from '$lib/util/time';
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import ReminderCompany from '$lib/server/email/ReminderCompany.svelte';
 import ReminderCustomer from '$lib/server/email/ReminderCustomer.svelte';
 import { TourChange } from '$lib/server/firebase/firebase';
-import { sendNotifications } from '$lib/server/firebase/notifications';
+import { enqueueMail, enqueuePushNotification } from '$lib/server/notificationOutbox';
 // @ts-expect-error Cannot find module 'svelte-qrcode'
 import QRCode from 'qrcode';
 
@@ -46,26 +45,28 @@ export const POST = async (_: RequestEvent) => {
 			])
 			.execute();
 		for (const tour of imminentTours) {
-			try {
-				console.log('Sending ReminderCompany to ', tour.email);
-				await sendMail(ReminderCompany, 'Bevorstehende Fahrt', tour.email, tour);
-			} catch (e) {
-				console.log(e);
-				console.log(
-					'Failed to send ReminderCompany to company with email: ',
-					tour.email,
-					' tourId: ',
-					tour.id
-				);
-			}
+			console.log('Queueing ReminderCompany for ', tour.email);
+			await enqueueMail(
+				trx,
+				ReminderCompany,
+				'Bevorstehende Fahrt',
+				tour.email,
+				tour,
+				`reminder-company-email:${tour.id}:${tour.email}:${framed_now}`
+			);
 			const firstEvent = tour.events.sort((e) => e.scheduledTimeStart)[0];
-			await sendNotifications(tour.company, {
-				tourId: tour.id,
-				pickupTime: firstEvent.scheduledTimeStart,
-				wheelchairs: 0,
-				vehicleId: tour.vehicleId,
-				change: TourChange.REMINDER
-			});
+			await enqueuePushNotification(
+				trx,
+				tour.company,
+				{
+					tourId: tour.id,
+					pickupTime: firstEvent.scheduledTimeStart,
+					wheelchairs: 0,
+					vehicleId: tour.vehicleId,
+					change: TourChange.REMINDER
+				},
+				`reminder-company-push:${tour.id}:${framed_now}`
+			);
 		}
 
 		const requests = await trx
@@ -100,9 +101,13 @@ export const POST = async (_: RequestEvent) => {
 			])
 			.execute();
 		for (const request of requests) {
-			try {
-				console.log('Sending ReminderCustomer to ', request.email);
-				await sendMail(ReminderCustomer, 'Bevorstehende Fahrt', request.email, {
+			console.log('Queueing ReminderCustomer for ', request.email);
+			await enqueueMail(
+				trx,
+				ReminderCustomer,
+				'Bevorstehende Fahrt',
+				request.email,
+				{
 					journeyId: request.journeyId,
 					events: request.events,
 					name: request.firstName + ' ' + request.name,
@@ -110,16 +115,9 @@ export const POST = async (_: RequestEvent) => {
 					ticketCode: request.ticketCode,
 					ticketCodeQr: await QRCode.toDataURL(request.ticketCode),
 					ticketPrice: request.ticketPrice
-				});
-			} catch (e) {
-				console.log(e);
-				console.log(
-					'Failed to send ReminderCustomer to customer with email: ',
-					request.email,
-					' tourId: ',
-					request.tourId
-				);
-			}
+				},
+				`reminder-customer:${request.requestId}:${framed_now}`
+			);
 		}
 		if (requests.length === 0) {
 			return;

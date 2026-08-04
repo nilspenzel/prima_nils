@@ -1,6 +1,5 @@
 import { sql, Transaction } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
-import { sendMail } from '$lib/server/sendMail';
 import CancelNotificationCompany from '$lib/server/email/CancelNotificationCompany.svelte';
 import { db, type Database } from '$lib/server/db';
 import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
@@ -8,6 +7,7 @@ import { MAX_RIDE_SHARE_TOUR_TIME, PASSENGER_CHANGE_DURATION } from '$lib/consta
 import { sortEventsByTime } from '$lib/testHelpers';
 import { retry } from '$lib/server/db/retryQuery';
 import CancelNotificationCustomer from '$lib/server/email/CancelNotificationCustomer.svelte';
+import { enqueueMail } from '$lib/server/notificationOutbox';
 
 export type CancelledBy = 'provider' | 'passenger';
 
@@ -210,19 +210,10 @@ async function cancelledByProvider(
 	if (!tourInfo.pending) {
 		await updateLegDurations(tourInfo.events, requestId, trx);
 	}
-	try {
-		await sendMail(CancelNotificationCustomer, 'Stornierte Buchung', tourInfo.email, {
-			events: tourInfo.events,
-			name: tourInfo.firstName + ' ' + tourInfo.name
-		});
-	} catch {
-		console.log(
-			'Failed to send cancellation email to customer with email: ',
-			tourInfo.email,
-			' tourId: ',
-			tourInfo.id
-		);
-	}
+	await enqueueMail(trx, CancelNotificationCustomer, 'Stornierte Buchung', tourInfo.email, {
+		events: tourInfo.events,
+		name: tourInfo.firstName + ' ' + tourInfo.name
+	});
 	console.log('Cancel Ride Share Request - success', { requestId, providerId });
 }
 
@@ -288,18 +279,9 @@ async function cancelledByCustomer(requestId: number, userId: number, trx: Trans
 	if (!tourInfo.pending) {
 		await updateLegDurations(tourInfo.events, requestId, trx);
 	}
-	try {
-		await sendMail(CancelNotificationCompany, 'Stornierte Buchung', tourInfo.email, {
-			events: tourInfo.events,
-			name: tourInfo.firstName + ' ' + tourInfo.name
-		});
-	} catch {
-		console.log(
-			'Failed to send cancellation email to company with email: ',
-			tourInfo.email,
-			' tourId: ',
-			tourInfo.id
-		);
-	}
+	await enqueueMail(trx, CancelNotificationCompany, 'Stornierte Buchung', tourInfo.email, {
+		events: tourInfo.events,
+		name: tourInfo.firstName + ' ' + tourInfo.name
+	});
 	console.log('Cancel Ride Share Request - success', { requestId, userId });
 }

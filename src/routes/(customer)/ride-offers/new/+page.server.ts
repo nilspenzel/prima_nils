@@ -1,7 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { addRideShareTour } from '$lib/server/booking/index';
+import {
+	addRideShareTour,
+	type DesiredTripMailJob
+} from '$lib/server/booking/rideShare/addRideShareTour';
 import { msg } from '$lib/msg';
 import { readFloat, readInt } from '$lib/server/util/readForm';
 import { sql } from 'kysely';
@@ -9,6 +12,8 @@ import { parseDate } from '@internationalized/date';
 import { TZ } from '$lib/constants';
 import { HOUR, MINUTE, SECOND } from '$lib/util/time';
 import { env } from '$env/dynamic/private';
+import { sendDesiredTripMails } from '$lib/server/booking/rideShare/sendDesiredTripMails';
+import { sendMail } from '$lib/server/sendMail';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const vehicles = await db
@@ -94,8 +99,9 @@ export const actions = {
 		if (days === 0) {
 			times.push(time);
 		}
-		await db.transaction().execute(async (trx) => {
-			const result = await addRideShareTour(
+		const desiredTripMailJobs: DesiredTripMailJob[] = [];
+		const result = await db.transaction().execute(async (trx) => {
+			return await addRideShareTour(
 				times,
 				startFixed,
 				passengers,
@@ -109,12 +115,24 @@ export const actions = {
 				trx,
 				days,
 				rangeStart.toString(),
-				rangeEnd.toString()
+				rangeEnd.toString(),
+				desiredTripMailJobs
 			);
-			if (result == undefined) {
-				return fail(400, { msg: msg('vehicleConflict') });
-			}
 		});
+		if (result == undefined) {
+			return fail(400, { msg: msg('vehicleConflict') });
+		}
+		for (const job of desiredTripMailJobs) {
+			sendDesiredTripMails(
+				job.start,
+				job.target,
+				job.startTime,
+				job.targetTime,
+				sendMail,
+				job.startFixed,
+				job.tourId
+			).catch((err) => console.error('matchDesiredTrips failed:', err));
+		}
 		return redirect(302, `/ride-offers`);
 	}
 };
