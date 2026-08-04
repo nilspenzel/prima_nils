@@ -233,18 +233,44 @@ export const actions = {
 			return redirect(302, `/bookings/${result.journeyId}`);
 		}
 
-		const bookingResult = await rideShareApi(
-			{ connection1, connection2, capacities },
-			user,
-			locals.session?.isService ?? false,
-			kidsZeroToTwo,
-			kidsThreeToFour,
-			kidsFiveToSix
+		const result = await retry(() =>
+			db
+				.transaction()
+				.setIsolationLevel('serializable')
+				.execute(async (trx) => {
+					const bookingResult = await rideShareApi(
+						{ connection1, connection2, capacities },
+						user,
+						locals.session?.isService ?? false,
+						kidsZeroToTwo,
+						kidsThreeToFour,
+						kidsFiveToSix,
+						undefined,
+						trx
+					);
+					if (bookingResult.status !== 200) {
+						return { bookingResult };
+					}
+
+					const request1 = bookingResult.request1Id ?? null;
+					const request2 = bookingResult.request2Id ?? null;
+					console.log('INSERTION DONE - REQUESTS:', { request1, request2 });
+					console.log('SAVING JOURNEY');
+					delete parsedJson.rideShareTourInfos;
+					const journeyId = (
+						await trx
+							.insertInto('journey')
+							.values({ user, json: parsedJson, request1, request2 })
+							.returning('id')
+							.executeTakeFirstOrThrow()
+					).id;
+					return { bookingResult, journeyId };
+				})
 		);
-		if (bookingResult.status !== 200) {
+		if (result.bookingResult.status !== 200 || result.journeyId === undefined) {
 			console.log(
 				'Booking failed: ',
-				bookingResult.message,
+				result.bookingResult.message,
 				' with: ',
 				{ connection1 },
 				{ connection2 }
@@ -252,26 +278,8 @@ export const actions = {
 			booking_errors?.inc();
 			return { msg: msg('bookingError') };
 		}
-		const request1: number | null = bookingResult.request1Id ?? null;
-		const request2: number | null = bookingResult.request2Id ?? null;
-		console.log('INSERTION DONE - REQUESTS:', { request1, request2 });
-
-		console.log('SAVING JOURNEY');
-		delete parsedJson.rideShareTourInfos;
-		const id = (
-			await db
-				.insertInto('journey')
-				.values({
-					user,
-					json: parsedJson,
-					request1,
-					request2
-				})
-				.returning('id')
-				.executeTakeFirstOrThrow()
-		).id;
-		await sendBookingMails(request1, mode, db, sendMail);
-		return redirect(302, `/bookings/${id}`);
+		await sendBookingMails(result.bookingResult.request1Id ?? null, mode, db, sendMail);
+		return redirect(302, `/bookings/${result.journeyId}`);
 	},
 	storeItineraryWithNoOdm: async ({ request, locals }): Promise<{ msg: Msg }> => {
 		const user = locals.session?.userId;

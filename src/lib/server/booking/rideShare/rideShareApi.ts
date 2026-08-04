@@ -1,4 +1,4 @@
-import { db } from '$lib/server/db';
+import { db, type Database } from '$lib/server/db';
 import type { Capacities } from '$lib/util/booking/Capacities';
 import { retry } from '$lib/server/db/retryQuery';
 import { DIRECT_FREQUENCY, DIRECT_RIDE_TIME_DIFFERENCE } from '$lib/constants';
@@ -6,12 +6,25 @@ import { bookSharedRide, type BookRideShareResponse } from './bookRide';
 import { signEntry } from '../signEntry';
 import { insertRideShareRequest } from './insertRideShareRequest';
 import type { ExpectedConnection } from '$lib/server/booking/expectedConnection';
+import type { Transaction } from 'kysely';
 
 export type BookingParameters = {
 	connection1: ExpectedConnection | null;
 	connection2: ExpectedConnection | null;
 	capacities: Capacities;
 };
+
+type BookingAttemptResult = {
+	success: boolean;
+	message: string;
+	request1Id?: number;
+	request2Id?: number;
+};
+
+const failedAttempt = (message: string): BookingAttemptResult => ({
+	success: false,
+	message
+});
 
 function isSignatureInvalid(c: ExpectedConnection | null) {
 	return (
@@ -64,7 +77,8 @@ export async function rideShareApi(
 	kidsZeroToTwo: number,
 	kidsThreeToFour: number,
 	kidsFiveToSix: number,
-	skipPromiseCheck?: boolean
+	skipPromiseCheck?: boolean,
+	transaction?: Transaction<Database>
 ): Promise<{
 	message?: string;
 	status: number;
@@ -105,12 +119,9 @@ export async function rideShareApi(
 		);
 		return { status: 403 };
 	}
-	let request1Id: number | undefined = undefined;
-	let request2Id: number | undefined = undefined;
 	let possibleRequestedTimes1: number[] = [];
 	let possibleRequestedTimes2: number[] = [];
-	let message: string | undefined = undefined;
-	let success = false;
+	let lastAttempt: BookingAttemptResult | undefined;
 	if (p.connection1) {
 		possibleRequestedTimes1 = getPossibleRequestedTimes(p.connection1.requestedTime);
 	}
@@ -120,91 +131,89 @@ export async function rideShareApi(
 	const possibleRequestedTimes =
 		possibleRequestedTimes1.length === 0 ? possibleRequestedTimes2 : possibleRequestedTimes1;
 	for (const rt of possibleRequestedTimes) {
-		if (p.connection2) {
-			p.connection2!.requestedTime = rt;
+		const connection1 = p.connection1 === null ? null : { ...p.connection1 };
+		const connection2 = p.connection2 === null ? null : { ...p.connection2 };
+		if (connection2) {
+			connection2.requestedTime = rt;
 		} else {
-			p.connection1!.requestedTime = rt;
+			connection1!.requestedTime = rt;
 		}
-		await retry(() =>
-			db
-				.transaction()
-				.setIsolationLevel('serializable')
-				.execute(async (trx) => {
-					let firstConnection: undefined | BookRideShareResponse = undefined;
-					let secondConnection: undefined | BookRideShareResponse = undefined;
-					if (p.connection1 != null) {
-						firstConnection = await bookSharedRide(
-							p.connection1,
+		const executeBooking = async (trx: Transaction<Database>): Promise<BookingAttemptResult> => {
+			let firstConnection: undefined | BookRideShareResponse = undefined;
+			let secondConnection: undefined | BookRideShareResponse = undefined;
+			if (connection1 != null) {
+				firstConnection = await bookSharedRide(connection1, p.capacities, trx, skipPromiseCheck);
+				if (firstConnection == undefined) {
+					return failedAttempt('Die Anfrage für die erste Meile kann nicht erfüllt werden.');
+				}
+			}
+			if (connection2 != null) {
+				let blockedProviderId: number | undefined = undefined;
+				if (firstConnection != undefined) {
+					blockedProviderId = firstConnection.best.tour;
+				}
+				secondConnection = await bookSharedRide(
+					connection2,
+					p.capacities,
+					trx,
+					skipPromiseCheck,
+					blockedProviderId
+				);
+				if (secondConnection == undefined) {
+					return failedAttempt('Die Anfrage für die zweite Meile kann nicht erfüllt werden.');
+				}
+			}
+			const request1Id =
+				firstConnection === undefined
+					? undefined
+					: await insertRideShareRequest(
+							firstConnection,
 							p.capacities,
-							trx,
-							skipPromiseCheck
+							connection1!,
+							customer,
+							connection1!.startFixed ? connection1!.startTime : connection1!.targetTime,
+							connection1!.requestedTime,
+							connection1!.startFixed,
+							trx
 						);
-						if (firstConnection == undefined) {
-							message = 'Die Anfrage für die erste Meile kann nicht erfüllt werden.';
-							return;
-						}
-					}
-					if (p.connection2 != null) {
-						let blockedProviderId: number | undefined = undefined;
-						if (firstConnection != undefined) {
-							blockedProviderId = firstConnection.best.tour;
-						}
-						secondConnection = await bookSharedRide(
-							p.connection2,
+			const request2Id =
+				secondConnection === undefined
+					? undefined
+					: await insertRideShareRequest(
+							secondConnection,
 							p.capacities,
-							trx,
-							skipPromiseCheck,
-							blockedProviderId
+							connection2!,
+							customer,
+							connection2!.startFixed ? connection2!.startTime : connection2!.targetTime,
+							connection2!.requestedTime,
+							connection2!.startFixed,
+							trx
 						);
-						if (secondConnection == undefined) {
-							message = 'Die Anfrage für die zweite Meile kann nicht erfüllt werden.';
-							return;
-						}
-					}
-					if (firstConnection !== null && firstConnection !== undefined) {
-						request1Id =
-							(await insertRideShareRequest(
-								firstConnection,
-								p.capacities,
-								p.connection1!,
-								customer,
-								p.connection1!.startFixed ? p.connection1!.startTime : p.connection1!.targetTime,
-								p.connection1!.requestedTime,
-								p.connection1!.startFixed,
-								trx
-							)) ?? null;
-					}
-					if (secondConnection != null && secondConnection !== undefined) {
-						request2Id =
-							(await insertRideShareRequest(
-								secondConnection,
-								p.capacities,
-								p.connection2!,
-								customer,
-								p.connection2!.startFixed ? p.connection2!.startTime : p.connection2!.targetTime,
-								p.connection2!.requestedTime,
-								p.connection2!.startFixed,
-								trx
-							)) ?? null;
-					}
-					message = 'Die Anfrage wurde erfolgreich bearbeitet.';
-					success = true;
-					return;
-				})
-		);
-		if (success) {
+			return {
+				success: true,
+				message: 'Die Anfrage wurde erfolgreich bearbeitet.',
+				request1Id,
+				request2Id
+			};
+		};
+		if (transaction) {
+			lastAttempt = await executeBooking(transaction);
+		} else {
+			lastAttempt = await retry(() =>
+				db.transaction().setIsolationLevel('serializable').execute(executeBooking)
+			);
+		}
+		if (lastAttempt.success) {
 			break;
 		}
-		request1Id = undefined;
-		request2Id = undefined;
 	}
-	if (message == undefined) {
+	if (lastAttempt === undefined) {
 		return { status: 500 };
 	}
 	return {
-		message,
-		request1Id,
-		request2Id,
-		status: success ? 200 : 400
+		message: lastAttempt.message,
+		request1Id: lastAttempt.request1Id,
+		request2Id: lastAttempt.request2Id,
+		status: lastAttempt.success ? 200 : 400
 	};
 }
