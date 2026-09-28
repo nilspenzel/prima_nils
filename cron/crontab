@@ -9,3 +9,6 @@
 
 # Cron job to store current availability states
 * * * * * /usr/local/bin/node /app/scripts/captureAvailabilityState.js >> /var/log/cron.log 2>&1
+
+# Cron job to add availabilities for all companies two weeks in the future
+2 2 * * * /usr/local/bin/node /app/scripts/addAvailability.js >> /var/log/cron.log 2>&1
