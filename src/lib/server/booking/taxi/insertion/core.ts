@@ -20,6 +20,9 @@ import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
 import { getScheduledTimeBufferDropoff } from '$lib/util/getScheduledTimeBuffer';
 import { computeCost, getWeightedPassengerDurationDelta } from './insertionMetrics';
+import { env } from '$env/dynamic/private';
+
+const debug = env.DEBUG === 'true';
 
 export type InsertionEvaluation = {
 	pickupTime: number;
@@ -346,6 +349,7 @@ export function evaluateBothInsertion(
 		nextLegDuration
 	);
 	if (arrivalWindow == undefined) {
+		if(debug){
 		console.log(
 			promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
 			'arrival window undefined',
@@ -358,6 +362,7 @@ export function evaluateBothInsertion(
 			{ prev: prev?.id },
 			{ next: next?.id }
 		);
+	}
 		return undefined;
 	}
 	if (
@@ -473,18 +478,20 @@ export function evaluateBothInsertion(
 		fullyPayedDurationDelta,
 		taxiWaitingTime
 	);
-	console.log(
-		promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
-		'valid insertion found,',
-		printInsertionType(insertionCase),
-		{ prevId: prev?.id },
-		{ nextId: next?.id },
-		{ cost },
-		{ weightedPassengerDuration },
-		{ fullyPayedDurationDelta },
-		{ approachPlusReturnDurationDelta },
-		{ taxiWaitingTime }
-	);
+	if(debug) {
+		console.log(
+			promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
+			'valid insertion found,',
+			printInsertionType(insertionCase),
+			{ prevId: prev?.id },
+			{ nextId: next?.id },
+			{ cost },
+			{ weightedPassengerDuration },
+			{ fullyPayedDurationDelta },
+			{ approachPlusReturnDurationDelta },
+			{ taxiWaitingTime }
+		);
+	}
 	return {
 		pickupTime: communicatedPickupTime,
 		dropoffTime: communicatedDropoffTime,

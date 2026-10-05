@@ -8,6 +8,9 @@ import { getAllowedTimes } from '$lib/util/getAllowedTimes';
 import type { UnixtimeMs } from '$lib/util/UnixtimeMs';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
 import { EARLIEST_SHIFT_START, LATEST_SHIFT_END, MIN_PREP, WGS84 } from '$lib/constants';
+import { env } from '$env/dynamic/private';
+
+const debug = env.DEBUG === 'true';
 
 interface CoordinatesTable {
 	busStopIndex: number;
@@ -115,7 +118,9 @@ export const getViableBusStops = async (
 		getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END),
 		[afterPreptime]
 	);
-	console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
+	if(debug) {
+		console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
+	}
 	return response.flatMap((r) =>
 		r.valid.map((r) => {
 			return {
