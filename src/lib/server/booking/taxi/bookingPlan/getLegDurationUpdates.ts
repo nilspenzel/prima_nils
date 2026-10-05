@@ -1,8 +1,7 @@
-import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 import type { Event } from '$lib/server/booking/taxi/getBookingAvailability';
 import type { Insertion } from '../insertion';
 import { InsertHow, InsertWhat } from '$lib/util/booking/insertionTypes';
-import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
+import { getTaxiConnectionDuration } from '../getTaxiConnectionDuration';
 
 export async function getLegDurationUpdates(
 	firstEvents: Event[],
@@ -17,9 +16,10 @@ export async function getLegDurationUpdates(
 ) {
 	const prevLegDurations: { event: number; duration: number | null }[] = [];
 	const nextLegDurations: { event: number; duration: number | null }[] = [];
-	const routing = firstEvents.map((e, i) => oneToManyCarRouting(lastEvents[i], [e], false));
-	const routingResults = await Promise.all(routing);
-	const durations = routingResults.map((r) => (r[0] ? r[0] + PASSENGER_CHANGE_DURATION : null));
+	const routing = firstEvents.map((e, i) =>
+		getTaxiConnectionDuration(lastEvents[i], e, false, { addPassengerChange: true })
+	);
+	const durations = (await Promise.all(routing)).map((duration) => duration ?? null);
 	durations.forEach((d, i) =>
 		prevLegDurations.push({
 			event: firstEvents[i].id,

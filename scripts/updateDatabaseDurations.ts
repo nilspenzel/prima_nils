@@ -1,7 +1,6 @@
 import { db } from '../src/lib/server/db/index.js';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
-import { oneToManyCarRouting } from '../src/lib/server/util/oneToManyCarRouting.js';
-import { PASSENGER_CHANGE_DURATION } from '../src/lib/constants.js';
+import { getTaxiConnectionDuration } from '../src/lib/server/booking/taxi/getTaxiConnectionDuration.js';
 import { groupBy } from '../src/lib/util/groupBy.js';
 
 async function updateDatabaseDurations() {
@@ -41,42 +40,51 @@ async function updateDatabaseDurations() {
 			for (let i = 1; i != tour.eventGroups.length; ++i) {
 				const earlierEventGroup = tour.eventGroups[i - 1];
 				const laterEventGroup = tour.eventGroups[i];
-				const duration = (
-					await oneToManyCarRouting(earlierEventGroup, [laterEventGroup], false)
-				)[0];
+				const duration = await getTaxiConnectionDuration(
+					earlierEventGroup,
+					laterEventGroup,
+					false,
+					{ addPassengerChange: true }
+				);
 				if (duration !== undefined) {
 					await trx
 						.updateTable('eventGroup')
-						.set({ nextLegDuration: duration + PASSENGER_CHANGE_DURATION })
+						.set({ nextLegDuration: duration })
 						.where('eventGroup.id', '=', earlierEventGroup.eventGroupId)
 						.executeTakeFirst();
 					await trx
 						.updateTable('eventGroup')
-						.set({ prevLegDuration: duration + PASSENGER_CHANGE_DURATION })
+						.set({ prevLegDuration: duration })
 						.where('eventGroup.id', '=', laterEventGroup.eventGroupId)
 						.executeTakeFirst();
 				}
 			}
 			if (tour.lat && tour.lng) {
 				const company = { lat: tour.lat!, lng: tour.lng! };
-				const durationFromCompany = (
-					await oneToManyCarRouting(company, [tour.eventGroups[0]], false)
-				)[0];
+				const durationFromCompany = await getTaxiConnectionDuration(
+					company,
+					tour.eventGroups[0],
+					false,
+					{ addPassengerChange: false }
+				);
 
-				if (durationFromCompany) {
+				if (durationFromCompany !== undefined) {
 					await trx
 						.updateTable('eventGroup')
 						.set({ prevLegDuration: durationFromCompany })
 						.where('eventGroup.id', '=', tour.eventGroups[0].eventGroupId)
 						.executeTakeFirst();
 				}
-				const durationToCompany = (
-					await oneToManyCarRouting(tour.eventGroups[tour.eventGroups.length - 1], [company], false)
-				)[0];
-				if (durationToCompany) {
+				const durationToCompany = await getTaxiConnectionDuration(
+					tour.eventGroups[tour.eventGroups.length - 1],
+					company,
+					false,
+					{ addPassengerChange: true }
+				);
+				if (durationToCompany !== undefined) {
 					await trx
 						.updateTable('eventGroup')
-						.set({ nextLegDuration: durationToCompany + PASSENGER_CHANGE_DURATION })
+						.set({ nextLegDuration: durationToCompany })
 						.where('eventGroup.id', '=', tour.eventGroups[tour.eventGroups.length - 1].eventGroupId)
 						.executeTakeFirst();
 				}
@@ -98,13 +106,16 @@ async function updateDatabaseDurations() {
 				const laterTour = toursOfVehicle[i];
 				const lastEventEarlierTour = earlierTour.eventGroups[earlierTour.eventGroups.length - 1];
 				const firstEventLaterTour = laterTour.eventGroups[0];
-				const directDuration = (
-					await oneToManyCarRouting(lastEventEarlierTour, [firstEventLaterTour], false)
-				)[0];
-				if (directDuration) {
+				const directDuration = await getTaxiConnectionDuration(
+					lastEventEarlierTour,
+					firstEventLaterTour,
+					false,
+					{ addPassengerChange: true }
+				);
+				if (directDuration !== undefined) {
 					await trx
 						.updateTable('tour')
-						.set({ directDuration: directDuration + PASSENGER_CHANGE_DURATION })
+						.set({ directDuration })
 						.where('tour.id', '=', laterTour.tourId)
 						.executeTakeFirst();
 				}

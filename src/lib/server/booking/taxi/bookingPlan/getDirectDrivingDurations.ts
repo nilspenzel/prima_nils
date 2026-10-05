@@ -3,8 +3,7 @@ import type { Insertion } from '../insertion';
 import { type Event, type VehicleWithInterval } from '../getBookingAvailability';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
 import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
-import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
-import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
+import { getTaxiConnectionDuration } from '../getTaxiConnectionDuration';
 
 export type DirectDrivingDurations = {
 	thisTour?: {
@@ -33,9 +32,11 @@ export const getDirectDurations = async (
 		(best.pickupCase.how == InsertHow.PREPEND || best.pickupCase.how == InsertHow.NEW_TOUR) &&
 		pickupPredEvent != undefined
 	) {
-		const routing = (await oneToManyCarRouting(pickupPredEvent, [c.start], false))[0];
+		const routing = await getTaxiConnectionDuration(pickupPredEvent, c.start, false, {
+			addPassengerChange: true
+		});
 		direct.thisTour = {
-			directDrivingDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION,
+			directDrivingDuration: routing ?? null,
 			tourId: tourIdPickup ?? null
 		};
 	}
@@ -44,9 +45,11 @@ export const getDirectDurations = async (
 		(best.dropoffCase.how == InsertHow.APPEND || best.dropoffCase.how == InsertHow.NEW_TOUR) &&
 		dropOffSuccEvent != undefined
 	) {
-		const routing = (await oneToManyCarRouting(c.target, [dropOffSuccEvent], false))[0];
+		const routing = await getTaxiConnectionDuration(c.target, dropOffSuccEvent, false, {
+			addPassengerChange: true
+		});
 		direct.nextTour = {
-			directDrivingDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION,
+			directDrivingDuration: routing ?? null,
 			tourId: dropOffSuccEvent.tourId
 		};
 	}
@@ -63,20 +66,26 @@ export const getDirectDurations = async (
 			(e) => getScheduledEventTime(e) < arrival
 		);
 		if (best.pickupCase.how !== InsertHow.PREPEND && lastEventBeforeDeparture !== undefined) {
-			const routing = (
-				await oneToManyCarRouting(lastEventBeforeDeparture, [firstEventAfterDeparture!], false)
-			)[0];
+			const routing = await getTaxiConnectionDuration(
+				lastEventBeforeDeparture,
+				firstEventAfterDeparture!,
+				false,
+				{ addPassengerChange: true }
+			);
 			direct.thisTour = {
-				directDrivingDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION,
+				directDrivingDuration: routing ?? null,
 				tourId: tourIdPickup ?? null
 			};
 		}
 		if (best.dropoffCase.how !== InsertHow.APPEND && firstEventAfterArrival !== undefined) {
-			const routing = (
-				await oneToManyCarRouting(lastEventBeforeArrival!, [firstEventAfterArrival], false)
-			)[0];
+			const routing = await getTaxiConnectionDuration(
+				lastEventBeforeArrival!,
+				firstEventAfterArrival,
+				false,
+				{ addPassengerChange: true }
+			);
 			direct.nextTour = {
-				directDrivingDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION,
+				directDrivingDuration: routing ?? null,
 				tourId: firstEventAfterArrival.tourId ?? null
 			};
 		}

@@ -1,8 +1,7 @@
 import type { Transaction } from 'kysely';
 import { type Database } from '$lib/server/db';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/postgres';
-import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
-import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
+import { getTaxiConnectionDuration } from '../getTaxiConnectionDuration';
 
 export async function updateDirectDurations(
 	oldVehicleId: number,
@@ -86,13 +85,13 @@ export async function updateDirectDurations(
 	const oldVehicle = vehicles[0].id === oldVehicleId ? vehicles[0] : vehicles[1];
 	if (oldVehicle.nexttour) {
 		const routingResult = oldVehicle?.prevtour
-			? ((await oneToManyCarRouting(oldVehicle.prevtour, [oldVehicle.nexttour], false))[0] ?? null)
+			? ((await getTaxiConnectionDuration(oldVehicle.prevtour, oldVehicle.nexttour, false, {
+					addPassengerChange: true
+				})) ?? null)
 			: null;
 		await trx
 			.updateTable('tour')
-			.set({
-				directDuration: routingResult === null ? null : routingResult + PASSENGER_CHANGE_DURATION
-			})
+			.set({ directDuration: routingResult })
 			.where('id', '=', oldVehicle.nexttour.tour)
 			.executeTakeFirst();
 	}
@@ -102,31 +101,24 @@ export async function updateDirectDurations(
 		const events = newVehicle.moved[0].events;
 		events.sort((e) => e.scheduledTimeStart);
 		const routingResultPrevTour = newVehicle?.prevtour
-			? ((await oneToManyCarRouting(newVehicle.prevtour, [events[0]], false))[0] ?? null)
+			? ((await getTaxiConnectionDuration(newVehicle.prevtour, events[0], false, {
+					addPassengerChange: true
+				})) ?? null)
 			: null;
 		await trx
 			.updateTable('tour')
-			.set({
-				directDuration:
-					routingResultPrevTour === null ? null : routingResultPrevTour + PASSENGER_CHANGE_DURATION
-			})
+			.set({ directDuration: routingResultPrevTour })
 			.where('id', '=', tourId)
 			.executeTakeFirst();
 
 		if (newVehicle.nexttour) {
-			const routingResultNextTour = newVehicle.nexttour
-				? ((
-						await oneToManyCarRouting(events[events.length - 1], [newVehicle.nexttour], false)
-					)[0] ?? null)
-				: null;
+			const routingResultNextTour =
+				(await getTaxiConnectionDuration(events[events.length - 1], newVehicle.nexttour, false, {
+					addPassengerChange: true
+				})) ?? null;
 			await trx
 				.updateTable('tour')
-				.set({
-					directDuration:
-						routingResultNextTour === null
-							? null
-							: routingResultNextTour + PASSENGER_CHANGE_DURATION
-				})
+				.set({ directDuration: routingResultNextTour })
 				.where('id', '=', newVehicle.nexttour.tour)
 				.executeTakeFirst();
 		}

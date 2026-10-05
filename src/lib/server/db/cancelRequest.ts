@@ -7,9 +7,9 @@ import { sendNotifications } from '../firebase/notifications';
 import { TourChange } from '$lib/server/firebase/firebase';
 import { updateDirectDurations } from '$lib/server/booking/taxi/persistence/updateDirectDuration';
 import { db, type Database } from '$lib/server/db';
-import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
+import { getTaxiConnectionDuration } from '$lib/server/booking/taxi/getTaxiConnectionDuration';
+import type { Coordinates } from '$lib/util/Coordinates';
 import { retry } from './retryQuery';
-import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 import { sortEventsByTime } from '$lib/testHelpers';
 
 export const cancelRequest = async (requestId: number, userId: number) => {
@@ -195,7 +195,7 @@ async function updateLegDurations(
 		eventid: number;
 		eventGroupId: number;
 	}[],
-	company: maplibregl.LngLatLike,
+	company: Coordinates,
 	requestId: number,
 	vehicleId: number,
 	trx: Transaction<Database>
@@ -214,13 +214,17 @@ async function updateLegDurations(
 			eventid: number;
 			eventGroupId: number;
 		}[],
-		company: maplibregl.LngLatLike,
+		company: Coordinates,
 		trx: Transaction<Database>
 	) => {
 		if (prevIdx === -1) {
 			const routingResultFirstEvent =
-				(await oneToManyCarRouting(company, [events[nextIdx]], false))[0] ??
-				(await oneToManyCarRouting(events[nextIdx], [company], true))[0];
+				(await getTaxiConnectionDuration(company, events[nextIdx], false, {
+					addPassengerChange: false
+				})) ??
+				(await getTaxiConnectionDuration(events[nextIdx], company, true, {
+					addPassengerChange: false
+				}));
 			if (routingResultFirstEvent === undefined) {
 				console.log(
 					`unable to update prevLegDuration for event ${events[nextIdx].eventid}, routing result was undefined.`
@@ -236,8 +240,12 @@ async function updateLegDurations(
 		}
 		if (nextIdx === events.length) {
 			const routingResultLastEvent =
-				(await oneToManyCarRouting(events[prevIdx], [company], false))[0] ??
-				(await oneToManyCarRouting(company, [events[prevIdx]], true))[0];
+				(await getTaxiConnectionDuration(events[prevIdx], company, false, {
+					addPassengerChange: true
+				})) ??
+				(await getTaxiConnectionDuration(company, events[prevIdx], true, {
+					addPassengerChange: true
+				}));
 			if (routingResultLastEvent === undefined) {
 				console.log(
 					`unable to update prevLegDuration for event ${events[prevIdx].eventid}, routing result was undefined.`
@@ -246,21 +254,25 @@ async function updateLegDurations(
 			}
 			await trx
 				.updateTable('eventGroup')
-				.set({ nextLegDuration: routingResultLastEvent + PASSENGER_CHANGE_DURATION })
+				.set({ nextLegDuration: routingResultLastEvent })
 				.where('eventGroup.id', '=', events[prevIdx].eventGroupId)
 				.executeTakeFirst();
 			return;
 		}
 		const routingResult =
-			(await oneToManyCarRouting(events[prevIdx], [events[nextIdx]], false))[0] ??
-			(await oneToManyCarRouting(events[nextIdx], [events[prevIdx]], true))[0];
+			(await getTaxiConnectionDuration(events[prevIdx], events[nextIdx], false, {
+				addPassengerChange: true
+			})) ??
+			(await getTaxiConnectionDuration(events[nextIdx], events[prevIdx], true, {
+				addPassengerChange: true
+			}));
 		if (routingResult === undefined) {
 			console.log(
 				`unable to update prevLegDuration for event ${events[prevIdx].eventid} and nextLegDuration for event ${events[nextIdx].eventid}, routing result was undefined.`
 			);
 			throw new Error();
 		}
-		const r = routingResult + PASSENGER_CHANGE_DURATION;
+		const r = routingResult;
 		await trx
 			.updateTable('eventGroup')
 			.set({ nextLegDuration: r })
@@ -309,13 +321,15 @@ async function updateLegDurations(
 		const firstUncancelledEvent = uncancelledEvents[cancelledIdx2 === 1 ? 2 : 1];
 		if (lastEventPrevTour) {
 			const routing =
-				(await oneToManyCarRouting(lastEventPrevTour, [firstUncancelledEvent], false))[0] ??
-				(await oneToManyCarRouting(firstUncancelledEvent, [lastEventPrevTour], true))[0];
+				(await getTaxiConnectionDuration(lastEventPrevTour, firstUncancelledEvent, false, {
+					addPassengerChange: true
+				})) ??
+				(await getTaxiConnectionDuration(firstUncancelledEvent, lastEventPrevTour, true, {
+					addPassengerChange: true
+				}));
 			await trx
 				.updateTable('tour')
-				.set({
-					directDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION
-				})
+				.set({ directDuration: routing ?? null })
 				.where('tour.id', '=', firstUncancelledEvent.tourid)
 				.execute();
 		}
@@ -355,13 +369,15 @@ async function updateLegDurations(
 			];
 		if (firstEventNextTour) {
 			const routing =
-				(await oneToManyCarRouting(lastUncancelledEvent, [firstEventNextTour], false))[0] ??
-				(await oneToManyCarRouting(firstEventNextTour, [lastUncancelledEvent], true))[0];
+				(await getTaxiConnectionDuration(lastUncancelledEvent, firstEventNextTour, false, {
+					addPassengerChange: true
+				})) ??
+				(await getTaxiConnectionDuration(firstEventNextTour, lastUncancelledEvent, true, {
+					addPassengerChange: true
+				}));
 			await trx
 				.updateTable('tour')
-				.set({
-					directDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION
-				})
+				.set({ directDuration: routing ?? null })
 				.where('tour.id', '=', firstEventNextTour.tourId)
 				.execute();
 		}
