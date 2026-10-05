@@ -198,7 +198,7 @@ function validateEventsAreInsideTours(tours: ToursWithRequests): boolean {
 		const tourInterval = new Interval(tour.startTime, tour.endTime);
 		for (const event of tour.requests.flatMap((r) => r.events)) {
 			const eventInterval = new Interval(event.scheduledTimeStart, event.scheduledTimeEnd);
-			if (!tourInterval.overlaps(eventInterval)) {
+			if (!tourInterval.noDistanceBetween(eventInterval)) {
 				console.log(
 					`event with id: ${event.id} is outside of its' tour. tourInterval: ${tourInterval.toString()}, eventScheduledInterval: ${eventInterval.toString()}`
 				);
@@ -216,6 +216,10 @@ async function oneToMany(
 	toLng: number,
 	arriveBy?: boolean
 ): Promise<number | null> {
+	if (isSamePlace({ lat: fromLat, lng: fromLng }, { lat: toLat, lng: toLng })) {
+		return 0;
+	}
+
 	const baseUrl = 'http://localhost:6499';
 	const params = new URLSearchParams({
 		arriveBy: arriveBy ? 'true' : 'false',
@@ -310,14 +314,15 @@ async function validateDirectDurations(tours: ToursWithRequests): Promise<boolea
 				const earlierTourEnd = earlierTour.endTime;
 				const laterTourStart = laterTour.startTime;
 				if (0 < laterTourStart - earlierTourEnd && laterTourStart - earlierTourEnd <= 3 * HOUR) {
+					const passengerChangeDuration = isSamePlace(e1, e2)
+						? 0
+						: PASSENGER_CHANGE_DURATION / 1000;
 					let expectedDuration = (await oneToMany(e1.lat, e1.lng, e2.lat, e2.lng)) ?? null;
 					let expectedDuration2 = (await oneToMany(e2.lat, e2.lng, e1.lat, e1.lng, true)) ?? null;
 					expectedDuration =
-						expectedDuration === null ? null : expectedDuration + PASSENGER_CHANGE_DURATION / 1000;
+						expectedDuration === null ? null : expectedDuration + passengerChangeDuration;
 					expectedDuration2 =
-						expectedDuration2 === null
-							? null
-							: expectedDuration2 + PASSENGER_CHANGE_DURATION / 1000;
+						expectedDuration2 === null ? null : expectedDuration2 + passengerChangeDuration;
 					if (
 						expectedDuration === null &&
 						expectedDuration2 === null &&
@@ -388,17 +393,17 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			}
 			const expectedDuration = expectedDurations1[i];
 			const expectedDuration2 = expectedDurations2[i];
+			const samePlace = isSamePlace(earlierEvent, laterEvent);
+			const passengerChangeDuration = samePlace ? 0 : PASSENGER_CHANGE_DURATION / 1000;
 			if (
 				expectedDuration !== null &&
-				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration + 60) >
-					earlierEvent.nextLegDuration / 1000 &&
+				expectedDuration + passengerChangeDuration > earlierEvent.nextLegDuration / 1000 &&
 				expectedDuration2 !== null &&
-				(isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration2 + 60) >
-					earlierEvent.nextLegDuration / 1000
+				expectedDuration2 + passengerChangeDuration > earlierEvent.nextLegDuration / 1000
 			) {
 				console.log(
 					`Direct duration mismatch for events ${earlierEvent.id} -> ${laterEvent.id}: \
-              Expected ${expectedDuration + 60} or ${expectedDuration2 + 60} seconds, Found ${earlierEvent.nextLegDuration / 1000} and ${laterEvent.prevLegDuration / 1000} seconds`,
+              Expected ${expectedDuration + passengerChangeDuration} or ${expectedDuration2 + passengerChangeDuration} seconds, Found ${earlierEvent.nextLegDuration / 1000} and ${laterEvent.prevLegDuration / 1000} seconds`,
 					{
 						startTimes: events.map(
 							(e) => `id: ${e.id} ${new Date(e.scheduledTimeStart).toISOString()}`
@@ -418,17 +423,15 @@ async function validateLegDurations(tours: ToursWithRequests): Promise<boolean> 
 			}
 			const earlierEventEnd = earlierEvent.scheduledTimeEnd;
 			const laterEventStart = laterEvent.scheduledTimeStart;
-			const timeDiff = isSamePlace(earlierEvent, laterEvent)
-				? 0
-				: (laterEventStart - earlierEventEnd) / 1000;
+			const timeDiff = samePlace ? 0 : (laterEventStart - earlierEventEnd) / 1000;
 			if (
 				expectedDuration !== null &&
-				timeDiff < (isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration + 60) &&
+				timeDiff < expectedDuration + passengerChangeDuration &&
 				expectedDuration2 !== null &&
-				timeDiff < (isSamePlace(earlierEvent, laterEvent) ? 0 : expectedDuration2 + 60)
+				timeDiff < expectedDuration2 + passengerChangeDuration
 			) {
 				console.log(
-					`Time difference expected duration ${expectedDuration + 60} seconds exceeds difference in event times ${timeDiff} seconds for event_id ${earlierEvent.id} and event_id ${laterEvent.id} ${new Date(earlierEvent.scheduledTimeEnd).toISOString()} to ${new Date(laterEvent.scheduledTimeStart).toISOString()}`
+					`Time difference expected duration ${expectedDuration + passengerChangeDuration} seconds exceeds difference in event times ${timeDiff} seconds for event_id ${earlierEvent.id} and event_id ${laterEvent.id} ${new Date(earlierEvent.scheduledTimeEnd).toISOString()} to ${new Date(laterEvent.scheduledTimeStart).toISOString()}`
 				);
 				fail = true;
 			}
@@ -489,12 +492,20 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 			tour.companyLat!,
 			tour.companyLng!
 		);
+		const passengerChangeDuration = isSamePlace(events[events.length - 1], {
+			lat: tour.companyLat!,
+			lng: tour.companyLng!
+		})
+			? 0
+			: PASSENGER_CHANGE_DURATION / 1000;
 		if (
 			toCompany !== null &&
-			Math.abs(toCompany + 60 - events[events.length - 1].nextLegDuration / 1000) > 1
+			Math.abs(
+				toCompany + passengerChangeDuration - events[events.length - 1].nextLegDuration / 1000
+			) > 1
 		) {
 			console.log(
-				`Duration to company from last event does not match in tour with id: ${tour.tourId}, last event id: ${events[events.length - 1].id} duration in db: ${events[events.length - 1].nextLegDuration / 1000} duration: ${toCompany + 60}`
+				`Duration to company from last event does not match in tour with id: ${tour.tourId}, last event id: ${events[events.length - 1].id} duration in db: ${events[events.length - 1].nextLegDuration / 1000} duration: ${toCompany + passengerChangeDuration}`
 			);
 			fail = true;
 		}
