@@ -25,7 +25,9 @@ const event = (values: Partial<Event>): Event =>
 
 describe('getDirectDurations', () => {
 	it('uses the event at the departure boundary as the first event of a connected tour', async () => {
-		const previousTourLastEvent = event({ id: 3716, tourId: 1126 });
+		const previousTourFirstEvent = event({ id: 3715, tourId: 1126, arrival: 900 });
+		const previousTourLastEvent = event({ id: 3716, tourId: 1126, arrival: 900 });
+		const overlappingTourEvent = event({ id: 9999, tourId: 9999, arrival: 2_000 });
 		const connectedTourFirstEvent = event({
 			id: 3997,
 			tourId: 1217,
@@ -40,7 +42,13 @@ describe('getDirectDurations', () => {
 			scheduledTimeEnd: 1_462
 		});
 		const vehicle = {
-			events: [previousTourLastEvent, connectedTourFirstEvent, connectedTourSecondEvent]
+			events: [
+				previousTourFirstEvent,
+				previousTourLastEvent,
+				overlappingTourEvent,
+				connectedTourFirstEvent,
+				connectedTourSecondEvent
+			]
 		} as unknown as VehicleWithInterval;
 		const best = {
 			pickupCase: { how: InsertHow.CONNECT },
@@ -55,7 +63,7 @@ describe('getDirectDurations', () => {
 			undefined,
 			{} as ExpectedConnection,
 			1237,
-			true,
+			[1217],
 			1_000,
 			Number.MAX_SAFE_INTEGER,
 			vehicle

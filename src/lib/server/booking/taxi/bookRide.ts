@@ -208,7 +208,7 @@ export async function bookRide(
 		nextEventInOtherTour,
 		c,
 		events[best.pickupIdx ?? -1]?.tourId,
-		mergeTourList.length !== 0,
+		mergeTourList.map((tour) => tour.tourId),
 		departure,
 		arrival,
 		vehicle

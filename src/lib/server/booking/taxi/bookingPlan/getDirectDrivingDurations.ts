@@ -23,7 +23,7 @@ export const getDirectDurations = async (
 	dropOffSuccEvent: Event | undefined,
 	c: ExpectedConnection,
 	tourIdPickup: number | undefined,
-	doesConnectTours: boolean,
+	mergeTourIds: number[],
 	departure: number,
 	arrival: number,
 	vehicle: VehicleWithInterval
@@ -50,21 +50,34 @@ export const getDirectDurations = async (
 			tourId: dropOffSuccEvent.tourId
 		};
 	}
-	if (doesConnectTours) {
-		const lastEventBeforeDeparture =
-			vehicle.events.findLast((e) => getScheduledEventTime(e) < departure) ??
-			vehicle.lastEventBefore;
-		const firstEventAtOrAfterDeparture = vehicle.events.find(
-			(e) => getScheduledEventTime(e) >= departure
+	if (mergeTourIds.length !== 0) {
+		const mergedTourIds = new Set(mergeTourIds);
+		const firstEventInMergedTours = vehicle.events.find((e) => mergedTourIds.has(e.tourId));
+		const previousTour = vehicle.events.reduce<Event | undefined>(
+			(latest, event) =>
+				!mergedTourIds.has(event.tourId) &&
+				event.arrival <= departure &&
+				(latest === undefined || event.arrival > latest.arrival)
+					? event
+					: latest,
+			undefined
 		);
+		const lastEventBeforeDeparture =
+			previousTour === undefined
+				? vehicle.lastEventBefore
+				: vehicle.events.findLast((e) => e.tourId === previousTour.tourId);
 		const firstEventAfterArrival =
 			vehicle.events.find((e) => getScheduledEventTime(e) >= arrival) ?? vehicle.firstEventAfter;
 		const lastEventBeforeArrival = vehicle.events.findLast(
 			(e) => getScheduledEventTime(e) < arrival
 		);
-		if (best.pickupCase.how !== InsertHow.PREPEND && lastEventBeforeDeparture !== undefined) {
+		if (
+			best.pickupCase.how !== InsertHow.PREPEND &&
+			lastEventBeforeDeparture !== undefined &&
+			firstEventInMergedTours !== undefined
+		) {
 			const routing = (
-				await oneToManyCarRouting(lastEventBeforeDeparture, [firstEventAtOrAfterDeparture!], false)
+				await oneToManyCarRouting(lastEventBeforeDeparture, [firstEventInMergedTours], false)
 			)[0];
 			direct.thisTour = {
 				directDrivingDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION,
