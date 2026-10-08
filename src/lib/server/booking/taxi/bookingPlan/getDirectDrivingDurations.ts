@@ -2,9 +2,14 @@ import type { ExpectedConnection } from '$lib/server/booking/expectedConnection'
 import type { Insertion } from '../insertion';
 import { type Event, type VehicleWithInterval } from '../getBookingAvailability';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
-import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { PASSENGER_CHANGE_DURATION } from '$lib/constants';
 import { oneToManyCarRouting } from '$lib/server/util/oneToManyCarRouting';
+import {
+	getFirstEventOfEarliestTourStartingAfter,
+	getFirstEventOfTours,
+	getLastEventOfLatestTourEndingBefore,
+	getLastEventOfTours
+} from './tourBoundaryEvents';
 
 export type DirectDrivingDurations = {
 	thisTour?: {
@@ -52,25 +57,14 @@ export const getDirectDurations = async (
 	}
 	if (mergeTourIds.length !== 0) {
 		const mergedTourIds = new Set(mergeTourIds);
-		const firstEventInMergedTours = vehicle.events.find((e) => mergedTourIds.has(e.tourId));
-		const previousTour = vehicle.events.reduce<Event | undefined>(
-			(latest, event) =>
-				!mergedTourIds.has(event.tourId) &&
-				event.arrival <= departure &&
-				(latest === undefined || event.arrival > latest.arrival)
-					? event
-					: latest,
-			undefined
-		);
+		const firstEventInMergedTours = getFirstEventOfTours(vehicle.events, mergedTourIds);
+		const lastEventInMergedTours = getLastEventOfTours(vehicle.events, mergedTourIds);
 		const lastEventBeforeDeparture =
-			previousTour === undefined
-				? vehicle.lastEventBefore
-				: vehicle.events.findLast((e) => e.tourId === previousTour.tourId);
+			getLastEventOfLatestTourEndingBefore(vehicle.events, departure, mergedTourIds) ??
+			vehicle.lastEventBefore;
 		const firstEventAfterArrival =
-			vehicle.events.find((e) => getScheduledEventTime(e) >= arrival) ?? vehicle.firstEventAfter;
-		const lastEventBeforeArrival = vehicle.events.findLast(
-			(e) => getScheduledEventTime(e) < arrival
-		);
+			getFirstEventOfEarliestTourStartingAfter(vehicle.events, arrival, mergedTourIds) ??
+			vehicle.firstEventAfter;
 		if (
 			best.pickupCase.how !== InsertHow.PREPEND &&
 			lastEventBeforeDeparture !== undefined &&
@@ -84,9 +78,13 @@ export const getDirectDurations = async (
 				tourId: tourIdPickup ?? null
 			};
 		}
-		if (best.dropoffCase.how !== InsertHow.APPEND && firstEventAfterArrival !== undefined) {
+		if (
+			best.dropoffCase.how !== InsertHow.APPEND &&
+			lastEventInMergedTours !== undefined &&
+			firstEventAfterArrival !== undefined
+		) {
 			const routing = (
-				await oneToManyCarRouting(lastEventBeforeArrival!, [firstEventAfterArrival], false)
+				await oneToManyCarRouting(lastEventInMergedTours, [firstEventAfterArrival], false)
 			)[0];
 			direct.nextTour = {
 				directDrivingDuration: routing === undefined ? null : routing + PASSENGER_CHANGE_DURATION,
