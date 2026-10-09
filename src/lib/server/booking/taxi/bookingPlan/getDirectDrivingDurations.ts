@@ -2,8 +2,13 @@ import type { ExpectedConnection } from '$lib/server/booking/expectedConnection'
 import type { Insertion } from '../insertion';
 import { type Event, type VehicleWithInterval } from '../getBookingAvailability';
 import { InsertHow } from '$lib/util/booking/insertionTypes';
-import { getScheduledEventTime } from '$lib/util/getScheduledEventTime';
 import { getTaxiConnectionDuration } from '../getTaxiConnectionDuration';
+import {
+	getFirstEventOfEarliestTourStartingAfter,
+	getFirstEventOfTours,
+	getLastEventOfLatestTourEndingBefore,
+	getLastEventOfTours
+} from './tourBoundaryEvents';
 
 export type DirectDrivingDurations = {
 	thisTour?: {
@@ -22,7 +27,7 @@ export const getDirectDurations = async (
 	dropOffSuccEvent: Event | undefined,
 	c: ExpectedConnection,
 	tourIdPickup: number | undefined,
-	doesConnectTours: boolean,
+	mergeTourIds: number[],
 	departure: number,
 	arrival: number,
 	vehicle: VehicleWithInterval
@@ -53,22 +58,24 @@ export const getDirectDurations = async (
 			tourId: dropOffSuccEvent.tourId
 		};
 	}
-	if (doesConnectTours) {
+	if (mergeTourIds.length !== 0) {
+		const mergedTourIds = new Set(mergeTourIds);
+		const firstEventInMergedTours = getFirstEventOfTours(vehicle.events, mergedTourIds);
+		const lastEventInMergedTours = getLastEventOfTours(vehicle.events, mergedTourIds);
 		const lastEventBeforeDeparture =
-			vehicle.events.findLast((e) => getScheduledEventTime(e) <= departure) ??
+			getLastEventOfLatestTourEndingBefore(vehicle.events, departure, mergedTourIds) ??
 			vehicle.lastEventBefore;
-		const firstEventAfterDeparture = vehicle.events.find(
-			(e) => getScheduledEventTime(e) > departure
-		);
 		const firstEventAfterArrival =
-			vehicle.events.find((e) => getScheduledEventTime(e) >= arrival) ?? vehicle.firstEventAfter;
-		const lastEventBeforeArrival = vehicle.events.findLast(
-			(e) => getScheduledEventTime(e) < arrival
-		);
-		if (best.pickupCase.how !== InsertHow.PREPEND && lastEventBeforeDeparture !== undefined) {
+			getFirstEventOfEarliestTourStartingAfter(vehicle.events, arrival, mergedTourIds) ??
+			vehicle.firstEventAfter;
+		if (
+			best.pickupCase.how !== InsertHow.PREPEND &&
+			lastEventBeforeDeparture !== undefined &&
+			firstEventInMergedTours !== undefined
+		) {
 			const routing = await getTaxiConnectionDuration(
 				lastEventBeforeDeparture,
-				firstEventAfterDeparture!,
+				firstEventInMergedTours,
 				false,
 				{ addPassengerChange: true }
 			);
@@ -77,9 +84,13 @@ export const getDirectDurations = async (
 				tourId: tourIdPickup ?? null
 			};
 		}
-		if (best.dropoffCase.how !== InsertHow.APPEND && firstEventAfterArrival !== undefined) {
+		if (
+			best.dropoffCase.how !== InsertHow.APPEND &&
+			lastEventInMergedTours !== undefined &&
+			firstEventAfterArrival !== undefined
+		) {
 			const routing = await getTaxiConnectionDuration(
-				lastEventBeforeArrival!,
+				lastEventInMergedTours,
 				firstEventAfterArrival,
 				false,
 				{ addPassengerChange: true }
