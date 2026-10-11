@@ -10,6 +10,7 @@ export async function updateDirectDurations(
 	trx: Transaction<Database>,
 	newVehicleId?: number
 ) {
+	console.log("update direct duration params", {oldVehicleId}, {tourId}, {newVehicleId})
 	const vehicleIds = [oldVehicleId];
 	if (newVehicleId) {
 		vehicleIds.push(newVehicleId);
@@ -107,6 +108,7 @@ export async function updateDirectDurations(
 					addPassengerChange: true
 				})) ?? null)
 			: null;
+			console.log("updating newvehicle", {newVehicleId},{routingResultPrevTour}, {newVehicle})
 		await trx
 			.updateTable('tour')
 			.set({ directDuration: routingResultPrevTour })

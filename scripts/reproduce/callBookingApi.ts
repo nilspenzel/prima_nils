@@ -4,31 +4,31 @@ import 'dotenv/config';
 import { bookingApi } from '../../src/lib/server/booking/taxi/bookingApi';
 
 const parameters = {
-	capacities: {
-		passengers: 2,
-		bikes: 0,
-		luggage: 0,
-		wheelchairs: 0
-	},
-	connection1: {
-		start: {
-			lat: 51.505442,
-			lng: 14.638026999999997,
-			address: 'Weißwasser Bahnhof'
-		},
-		target: {
-			lat: 51.4804411,
-			lng: 14.7708978,
-			address: 'Feuerlöschteich 4'
-		},
-		startTime: 1761456300000,
-		targetTime: 1761458160000,
-		signature: '043d3df015b5e08882f15fc83d2930582db6d51c9cc7a3544b07c38e1945dcf6',
-		startFixed: true,
-		requestedTime: 1761438000000,
-		mode: 1
-	},
-	connection2: null
+  "capacities": {
+    "passengers": 1,
+    "bikes": 0,
+    "luggage": 0,
+    "wheelchairs": 0
+  },
+  "connection1": {
+    "start": {
+      "lat": 51.5405733,
+      "lng": 14.520827,
+      "address": "Thälmann-Siedlung 25"
+    },
+    "target": {
+      "lat": 51.5342296,
+      "lng": 14.6941141,
+      "address": "Krauschwitz / Baierweiche"
+    },
+    "startTime": 1792381187000,
+    "targetTime": 1792383034399,
+    "signature": "36aa227802e5962ee7d07348e70b0563c06abcdac5d7f1a4a7ee630c95749ed7",
+    "startFixed": false,
+    "requestedTime": 1792383600000,
+    "mode": 1
+  },
+  "connection2": null
 };
 
 const kidsThreeToFour = 0;
@@ -39,7 +39,7 @@ const finalFlag = false;
 async function main() {
 	const response = await bookingApi(
 		parameters,
-		1,
+		13,
 		false,
 		true,
 		kidsThreeToFour,

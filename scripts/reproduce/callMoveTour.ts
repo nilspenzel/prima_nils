@@ -4,9 +4,9 @@ import 'dotenv/config';
 import { moveTour } from '../../src/lib/server/moveTour';
 
 const parameters = {
-	tourId: 151,
-	vehicleId: 1,
-	companyId: 32
+	tourId: 42,
+	vehicleId: 28,
+	companyId: 14
 };
 
 async function main() {

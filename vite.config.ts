@@ -4,6 +4,15 @@ import { sveltekit } from '@sveltejs/kit/vite';
 export default defineConfig({
 	plugins: [sveltekit()],
 
+	server: {
+		watch: {
+			ignored:
+				process.env.SIMULATION === 'true'
+					? ['**/*']
+					: []
+		}
+	},
+
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}'],
 		testTimeout: 70_000,
@@ -12,6 +21,6 @@ export default defineConfig({
 				maxThreads: 1,
 				minThreads: 1
 			}
-		} // Disable parallel threads
+		}
 	}
 });
