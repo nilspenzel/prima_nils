@@ -447,65 +447,67 @@ async function validateCompanyDurations(tours: ToursWithRequests): Promise<boole
 		if (tour.requests.length === 0) continue;
 
 		const events = sortEventsByTime([...tour.requests.flatMap((r) => r.events)]);
+		const firstEvent = events[0];
+		const lastEvent = events[events.length - 1];
 		const fromCompanyFwd = await oneToMany(
 			tour.companyLat!,
 			tour.companyLng!,
-			events[0].lat,
-			events[0].lng
+			firstEvent.lat,
+			firstEvent.lng
 		);
 		const fromCompanyBwd = await oneToMany(
-			events[0].lat,
-			events[0].lng,
+			firstEvent.lat,
+			firstEvent.lng,
 			tour.companyLat!,
 			tour.companyLng!,
 			true
 		);
-
-		if (
-			fromCompanyFwd !== null &&
-			fromCompanyBwd !== null &&
-			Math.abs(fromCompanyFwd - events[0].prevLegDuration / 1000) > 1 &&
-			Math.abs(fromCompanyBwd - events[0].prevLegDuration / 1000) > 1
-		) {
-			console.log(
-				`Duration from company to first event does not match in tour with id: ${tour.tourId} with first event: ${events[0].id}, duration in db: ${events[0].prevLegDuration / 1000} duration: ${fromCompanyFwd} or ${fromCompanyBwd}`
-			);
-			fail = true;
+		if (isSamePlace(firstEvent, { lat: tour.companyLat!, lng: tour.companyLng! })) {
+			if (firstEvent.nextLegDuration !== 0) {
+				console.log(
+					`Duration from company to first event is not zero, but they are considered the same place in tour with id: ${tour.tourId}, first event id: ${firstEvent.id} duration in db: ${events[events.length - 1].nextLegDuration / 1000}`
+				);
+				fail = true;
+			}
+		} else {
+			if (
+				fromCompanyFwd !== null &&
+				fromCompanyBwd !== null &&
+				Math.abs(fromCompanyFwd - firstEvent.prevLegDuration / 1000) > 1 &&
+				Math.abs(fromCompanyBwd - firstEvent.prevLegDuration / 1000) > 1
+			) {
+				console.log(
+					`Duration from company to first event does not match in tour with id: ${tour.tourId} with first event: ${firstEvent.id}, duration in db: ${firstEvent.prevLegDuration / 1000} duration: ${fromCompanyFwd} or ${fromCompanyBwd}`
+				);
+				fail = true;
+			}
 		}
-		if (events[0].scheduledTimeEnd - events[0].prevLegDuration - tour.startTime !== 0) {
+		if (firstEvent.scheduledTimeEnd - firstEvent.prevLegDuration - tour.startTime !== 0) {
 			console.log(`Unnecessary wait time after departure in tour with id: ${tour.tourId}`);
 			fail = true;
 		}
-		if (
-			tour.endTime -
-				events[events.length - 1].scheduledTimeStart -
-				events[events.length - 1].nextLegDuration !==
-			0
-		) {
+		if (tour.endTime - lastEvent.scheduledTimeStart - lastEvent.nextLegDuration !== 0) {
 			console.log(`Unnecessary wait time after arrival in tour with id: ${tour.tourId}`);
 			fail = true;
 		}
-
 		const toCompany = await oneToMany(
-			events[events.length - 1].lat,
-			events[events.length - 1].lng,
+			lastEvent.lat,
+			lastEvent.lng,
 			tour.companyLat!,
 			tour.companyLng!
 		);
-		const passengerChangeDuration = isSamePlace(events[events.length - 1], {
-			lat: tour.companyLat!,
-			lng: tour.companyLng!
-		})
-			? 0
-			: PASSENGER_CHANGE_DURATION / 1000;
-		if (
-			toCompany !== null &&
-			Math.abs(
-				toCompany + passengerChangeDuration - events[events.length - 1].nextLegDuration / 1000
-			) > 1
-		) {
+		if (isSamePlace(lastEvent, { lat: tour.companyLat!, lng: tour.companyLng! })) {
+			if (lastEvent.nextLegDuration !== 0) {
+				console.log(
+					`Duration to company from last event is not zero, but they are considered the same place in tour with id: ${tour.tourId}, last event id: ${lastEvent.id} duration in db: ${events[events.length - 1].nextLegDuration / 1000}`
+				);
+				fail = true;
+			}
+			continue;
+		}
+		if (toCompany !== null && Math.abs(toCompany + 60 - lastEvent.nextLegDuration / 1000) > 1) {
 			console.log(
-				`Duration to company from last event does not match in tour with id: ${tour.tourId}, last event id: ${events[events.length - 1].id} duration in db: ${events[events.length - 1].nextLegDuration / 1000} duration: ${toCompany + passengerChangeDuration}`
+				`Duration to company from last event does not match in tour with id: ${tour.tourId}, last event id: ${lastEvent.id} duration in db: ${events[events.length - 1].nextLegDuration / 1000} duration: ${toCompany + 60}`
 			);
 			fail = true;
 		}
