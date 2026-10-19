@@ -5,7 +5,11 @@ import { describe, expect, it } from 'vitest';
 import { InsertDirection, InsertWhere } from '../../insertionTypes';
 import type { Company, Event } from '../getBookingAvailability';
 import type { RoutingResults } from '../routing';
-import { SingleInsertionEvaluations, type SingleInsertionEvaluation } from './core';
+import {
+	evaluateBothInsertion,
+	SingleInsertionEvaluations,
+	type SingleInsertionEvaluation
+} from './core';
 import { evaluatePairInsertions } from './evaluatePairInsertions';
 import { evaluateSingleInsertions } from './evaluateSingleInsertions';
 
@@ -26,6 +30,125 @@ const event = (values: Partial<Event>): Event =>
 	}) as unknown as Event;
 
 describe('taxi pair insertion timing regressions', () => {
+	it('includes the shift of an existing dropoff sharing the new pickup event group', () => {
+		const previousDropoff = event({
+			id: 2,
+			isPickup: false,
+			passengers: 2,
+			scheduledTimeStart: 0,
+			scheduledTimeEnd: 485_099,
+			nextLegDuration: 1_669_000,
+			arrival: 1_669_000,
+			time: new Interval(0, 485_099)
+		});
+		const vehicle = {
+			id: 1,
+			events: [previousDropoff]
+		} as unknown as Company['vehicles'][0];
+		const insertionCase = {
+			how: InsertHow.APPEND,
+			where: InsertWhere.BETWEEN_TOURS,
+			what: InsertWhat.BOTH,
+			direction: InsertDirection.BUS_STOP_PICKUP
+		};
+		const routing: RoutingResults = {
+			busStops: {
+				toBusStop: [{ company: [], event: [0] }],
+				fromBusStop: [{ company: [], event: [] }]
+			},
+			userChosen: {
+				toUserChosen: { company: [], event: [] },
+				fromUserChosen: { company: [637_000], event: [] }
+			}
+		};
+
+		const result = evaluateBothInsertion(
+			insertionCase,
+			[new Interval(0, 2_154_099)],
+			1_160_000,
+			new Interval(239_598, 357_099),
+			routing,
+			{
+				companyIdx: 0,
+				vehicle,
+				idxInVehicleEvents: 1,
+				insertionIdx: 0,
+				currentRange: { earliestPickup: 0, latestDropoff: 1 }
+			},
+			0,
+			previousDropoff,
+			undefined,
+			2
+		);
+
+		expect(result).toBeDefined();
+		expect(result!.scheduledPickupTimeStart).toBe(239_598);
+		expect(result!.passengerDuration).toBe(2_799_196);
+	});
+
+	it('includes narrowed neighboring event windows in insertion costs', () => {
+		const previousEvent = event({
+			id: 1,
+			isPickup: true,
+			scheduledTimeStart: 0,
+			scheduledTimeEnd: 100_000,
+			nextLegDuration: 1_834_000,
+			time: new Interval(0, 100_000)
+		});
+		const nextEvent = event({
+			id: 2,
+			isPickup: false,
+			scheduledTimeStart: 1_800_000,
+			scheduledTimeEnd: 2_200_000,
+			prevLegDuration: 1_834_000,
+			time: new Interval(1_800_000, 2_200_000)
+		});
+		const vehicle = {
+			id: 1,
+			events: [previousEvent, nextEvent]
+		} as unknown as Company['vehicles'][0];
+		const insertionCase = {
+			how: InsertHow.INSERT,
+			where: InsertWhere.BETWEEN_EVENTS,
+			what: InsertWhat.BOTH,
+			direction: InsertDirection.BUS_STOP_PICKUP
+		};
+		const routing: RoutingResults = {
+			busStops: {
+				toBusStop: [{ company: [], event: [0, 491_000] }],
+				fromBusStop: [{ company: [], event: [] }]
+			},
+			userChosen: {
+				toUserChosen: { company: [], event: [] },
+				fromUserChosen: { company: [], event: [0, 253_000] }
+			}
+		};
+
+		const result = evaluateBothInsertion(
+			insertionCase,
+			[new Interval(0, 2_200_000)],
+			1_090_000,
+			new Interval(491_000, 857_000),
+			routing,
+			{
+				companyIdx: 0,
+				vehicle,
+				idxInVehicleEvents: 1,
+				insertionIdx: 1,
+				currentRange: { earliestPickup: 0, latestDropoff: 1 }
+			},
+			0,
+			previousEvent,
+			nextEvent,
+			2
+		);
+
+		expect(result).toBeDefined();
+		expect(result!.fullyPayedDurationDelta).toBe(0);
+		expect(result!.taxiWaitingTime).toBe(500_000);
+		expect(result!.passengerDuration).toBe(2_680_000);
+	});
+
 	it('does not create an inverted dropoff interval when pair insertion windows overlap', () => {
 		const existingEvent = event({
 			scheduledTimeStart: 90_000,
