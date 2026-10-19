@@ -5,27 +5,27 @@ import { bookingApi } from '../../src/lib/server/booking/taxi/bookingApi';
 
 const parameters = {
   "capacities": {
-    "passengers": 1,
+    "passengers": 2,
     "bikes": 0,
     "luggage": 0,
     "wheelchairs": 0
   },
   "connection1": {
     "start": {
-      "lat": 51.5405733,
-      "lng": 14.520827,
-      "address": "Thälmann-Siedlung 25"
+      "lat": 51.5446031,
+      "lng": 14.5355952,
+      "address": "Schleife - Slepo"
     },
     "target": {
-      "lat": 51.5342296,
-      "lng": 14.6941141,
-      "address": "Krauschwitz / Baierweiche"
+      "lat": 51.5162944,
+      "lng": 14.7396133,
+      "address": "Skerbersdorfer Straße 14"
     },
-    "startTime": 1792381187000,
-    "targetTime": 1792383034399,
-    "signature": "36aa227802e5962ee7d07348e70b0563c06abcdac5d7f1a4a7ee630c95749ed7",
-    "startFixed": false,
-    "requestedTime": 1792383600000,
+    "startTime": 1792905300000,
+    "targetTime": 1792906577501,
+    "signature": "2b9bbdb4af1f2800f5b3787c4688a7ec94e85e8dd52d18c17b96e1b66dbfaf6b",
+    "startFixed": true,
+    "requestedTime": 1792905300000,
     "mode": 1
   },
   "connection2": null
