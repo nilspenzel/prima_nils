@@ -176,5 +176,7 @@ export const POST = async (event: RequestEvent) => {
 	if (timer) {
 		timer();
 	}
+	const abc = result.itineraries.map((iti) => iti.legs.map((l) => l.tripId))
+	console.log("jakka", JSON.stringify(abc,null,2));
 	return json(result);
 };

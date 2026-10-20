@@ -30,5 +30,6 @@ export async function planAndSign(
 	if (!result.ok && result.status != 400 && result.status != 500) {
 		return undefined;
 	}
-	return await result.json();
+	const r = await result.json();
+	return r;
 }

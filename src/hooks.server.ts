@@ -11,6 +11,9 @@ import { getIp } from '$lib/server/getIp';
 
 import consoleStamp from 'console-stamp';
 consoleStamp(console);
+const originalDateNow = Date.now;
+
+Date.now = () => new Date('2026-10-16T00:08:00Z').getTime();
 
 const authHandle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get('session');

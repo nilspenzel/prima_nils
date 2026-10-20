@@ -7,25 +7,25 @@ const parameters = {
   "capacities": {
     "passengers": 1,
     "bikes": 0,
-    "luggage": 0,
+    "luggage": 1,
     "wheelchairs": 0
   },
   "connection1": {
     "start": {
-      "lat": 51.5405733,
-      "lng": 14.520827,
-      "address": "Thälmann-Siedlung 25"
+      "lat": 51.5003717,
+      "lng": 14.8341397,
+      "address": "Mosty (Wendisch Musta)"
     },
     "target": {
-      "lat": 51.5342296,
-      "lng": 14.6941141,
-      "address": "Krauschwitz / Baierweiche"
+      "lat": 51.505444,
+      "lng": 14.638026999999997,
+      "address": "Weißwasser Bahnhof"
     },
-    "startTime": 1792381187000,
-    "targetTime": 1792383034399,
-    "signature": "36aa227802e5962ee7d07348e70b0563c06abcdac5d7f1a4a7ee630c95749ed7",
+    "startTime": 1792398819867,
+    "targetTime": 1792401300000,
+    "signature": "aae6064e87f6d63b8009aab546dfa7bdbecba0659ed7048ba79d0e4f746580dd",
     "startFixed": false,
-    "requestedTime": 1792383600000,
+    "requestedTime": 1792401300000,
     "mode": 1
   },
   "connection2": null

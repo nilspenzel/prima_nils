@@ -25,6 +25,14 @@ export type WhitelistResponseEntry = {
 	cost: number;
 	pickupCase: InsertionType;
 	dropoffCase: InsertionType;
+	scheduledPickupTimeStart: number;
+	scheduledPickupTimeEnd: number;
+	scheduledDropoffTimeStart: number;
+	scheduledDropoffTimeEnd: number;
+	prevPickupId?: number;
+	nextPickupId?: number;
+	prevDropoffId?: number;
+	nextDropoffId?: number;
 };
 
 function toWhitelistResponseEntry(
@@ -43,7 +51,15 @@ function toWhitelistResponseEntry(
 				cost: e.cost,
 				requestedTime,
 				pickupCase: e.pickupCase,
-				dropoffCase: e.dropoffCase
+				dropoffCase: e.dropoffCase,
+				scheduledPickupTimeStart: e.scheduledPickupTimeStart,
+				scheduledPickupTimeEnd: e.scheduledPickupTimeEnd,
+				scheduledDropoffTimeStart: e.scheduledDropoffTimeStart,
+				scheduledDropoffTimeEnd: e.scheduledDropoffTimeEnd,
+				prevPickupId: e.prevPickupId,
+				nextPickupId: e.nextPickupId,
+				prevDropoffId: e.prevDropoffId,
+				nextDropoffId: e.nextDropoffId
 			};
 }
 

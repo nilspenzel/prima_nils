@@ -1,21 +1,33 @@
 import { PlanData } from '../../src/lib/openapi';
 import { planAndSign } from '../../src/lib/planAndSign';
+const originalDateNow = Date.now;
+
+Date.now = () => new Date('2026-10-16T00:05:00Z').getTime();
 
 const query = {
 	query: {
-		time: '2025-11-24T22:58:54.831Z',
-		arriveBy: true,
-		fromPlace: '51.5267724,14.5193269',
-		toPlace: '51.5322939,14.5345323',
-		preTransitModes: ['WALK', 'RIDE_SHARING'],
-		postTransitModes: ['WALK', 'RIDE_SHARING'],
-		directModes: ['WALK', 'RIDE_SHARING'],
-		luggage: 0,
-		fastestDirectFactor: 1.6,
-		maxMatchingDistance: 250,
-		maxTravelTime: 1440,
-		passengers: 2
-	}
+  "time": "2026-10-18T23:27:08.753Z",
+  "arriveBy": false,
+  "fromPlace": "51.5003717,14.8341397",
+  "toPlace": "51.535357,14.5350536",
+  "preTransitModes": [
+    "WALK",
+    "ODM"
+  ],
+  "postTransitModes": [
+    "WALK",
+    "ODM"
+  ],
+  "directModes": [
+    "WALK",
+    "ODM"
+  ],
+  "luggage": 1,
+  "fastestDirectFactor": 1.6,
+  "maxMatchingDistance": 250,
+  "maxTravelTime": 1440,
+  "passengers": 1
+}
 } as PlanData;
 const baseUrl = 'http://localhost:5173';
 
