@@ -180,6 +180,14 @@ export function getArrivalWindow(
 		)
 		.filter((window) => window != undefined);
 	if (busStopWindow != undefined) {
+		if(insertionCase.how === InsertHow.NEW_TOUR) {
+			//console.log("initial", arrivalWindows.map((a) =>a.toString()))
+		}
+		const first = arrivalWindows[0];
+		if(first === undefined) {
+			return undefined;
+		}
+		console.log("buswind", first.toString(), busStopWindow.toString())
 		arrivalWindows = arrivalWindows
 			.map((window) => busStopWindow.intersect(window))
 			.filter((window) => window != undefined);

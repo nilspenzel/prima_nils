@@ -45,8 +45,10 @@ export function evaluateNewTours(
 		nextMonday.setSeconds(0);
 		prepTime = nextMonday.getTime();
 	}
-
+	console.log("companiesss: ", companies.length)
+	console.log("bussss", busStopTimes.reduce((prev,curr) => prev += curr.length,0))
 	companies.forEach((company, companyIdx) => {
+			console.log("vehiclesss:", company.vehicles.length)
 		company.vehicles.forEach((vehicle) => {
 			const insertionInfo: InsertionInfo = {
 				companyIdx,
@@ -55,6 +57,7 @@ export function evaluateNewTours(
 				currentRange: { earliestPickup: 0, latestDropoff: 0 },
 				insertionIdx: -1
 			};
+			console.log("howoften")
 			console.assert(isValid(vehicle, required), 'vehicle does not have capacity');
 			const windows = getAllowedOperationTimes(
 				insertionCase,
@@ -67,6 +70,7 @@ export function evaluateNewTours(
 			);
 			for (let busStopIdx = 0; busStopIdx != busStopTimes.length; ++busStopIdx) {
 				for (let busTimeIdx = 0; busTimeIdx != busStopTimes[busStopIdx].length; ++busTimeIdx) {
+					console.log("howdyoften", new Date(promisedTimes?.pickup ?? 0), new Date(promisedTimes?.dropoff ?? 0))
 					const resultNewTour = evaluateBothInsertion(
 						insertionCase,
 						windows,
@@ -104,5 +108,6 @@ export function evaluateNewTours(
 			}
 		});
 	});
+	console.log("jappa")
 	return bestEvaluations;
 }

@@ -5,33 +5,33 @@ import { bookingApi } from '../../src/lib/server/booking/taxi/bookingApi';
 
 const parameters = {
   "capacities": {
-    "passengers": 1,
+    "passengers": 2,
     "bikes": 0,
-    "luggage": 1,
+    "luggage": 0,
     "wheelchairs": 0
   },
   "connection1": {
     "start": {
-      "lat": 51.5003717,
-      "lng": 14.8341397,
-      "address": "Mosty (Wendisch Musta)"
-    },
-    "target": {
       "lat": 51.505444,
       "lng": 14.638026999999997,
       "address": "Weißwasser Bahnhof"
     },
-    "startTime": 1792398819867,
-    "targetTime": 1792401300000,
-    "signature": "aae6064e87f6d63b8009aab546dfa7bdbecba0659ed7048ba79d0e4f746580dd",
-    "startFixed": false,
-    "requestedTime": 1792401300000,
+    "target": {
+      "lat": 51.4651482,
+      "lng": 14.769476,
+      "address": "Friedhof Brand"
+    },
+    "startTime": 1792499294000,
+    "targetTime": 1792500606800,
+    "signature": "508d27fc579571fbf7c710a65975d3fc89d205d6963539c2c9e9623e8461f912",
+    "startFixed": true,
+    "requestedTime": 1792498800000,
     "mode": 1
   },
   "connection2": null
 };
 
-const kidsThreeToFour = 0;
+const kidsThreeToFour = 1;
 const kidsZeroToTwo = 0;
 const kidsFiveToSix = 0;
 const kidsSevenToFourteen = 0;

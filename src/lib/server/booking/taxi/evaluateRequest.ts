@@ -44,6 +44,7 @@ export async function evaluateRequest(
 		{ startFixed },
 		{ promisedTimes }
 	);
+	console.log("klaxxa", busStops.reduce((prev,curr) => prev+= curr.times.length,0))
 	if (companies.length == 0) {
 		return busStops.map((bs) => bs.times.map((_) => undefined));
 	}

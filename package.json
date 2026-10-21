@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"kysely": "kysely",
-		"dev": "vite dev 2>&1 | tee -a logs2.log",
+		"dev": "vite dev 2>&1 | tee -a logs3.log",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
@@ -43,7 +43,7 @@
 		"acceptrs": "pnpm exec vite-node --options.server.watch.ignored='**/*' --options.transformMode.ssr='/.*/' scripts/reproduce/callAcceptRideShareRequest.ts",
 		"addrs": "pnpm exec vite-node --options.server.watch.ignored='**/*' --options.transformMode.ssr='/.*/' scripts/reproduce/callAddRideShareTour.ts",
 		"bookrs": "pnpm exec vite-node --options.server.watch.ignored='**/*' --options.transformMode.ssr='/.*/' scripts/reproduce/callRideShareApi.ts",
-		"pas": "pnpm exec vite-node --options.server.watch.ignored='**/*' --options.transformMode.ssr='/.*/' scripts/reproduce/callPlanAndSign.ts 2>&1 | tee -a logs2.log",
+		"pas": "pnpm exec vite-node --options.server.watch.ignored='**/*' --options.transformMode.ssr='/.*/' scripts/reproduce/callPlanAndSign.ts 2>&1 | tee -a logs4.log",
 		"repeatb": "npm run rr && npm run book",
 		"repeatr": "npm run rr && npm run cancelr",
 		"repeatt": "npm run rr && npm run cancelt",
