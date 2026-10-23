@@ -65,12 +65,20 @@ export function getAllowedOperationTimes(
 	next: RideShareEvent,
 	prepTime: UnixtimeMs
 ): Interval[] {
+	console.log("Date.now: ", Date.now());
+	console.log("new Date: ", new Date());
+	console.log("new Date(Date.now()): ", new Date(Date.now()));
+	console.log("windowEndTime", new Date(next.scheduledTimeEnd));
+	console.log("windowStartTime", new Date(prev.scheduledTimeStart));
+	console.log("prepTime: ", new Date(prepTime));
 	const windowEndTime = next.scheduledTimeEnd;
 	if (windowEndTime < prepTime) {
 		return [];
 	}
 	let windowStartTime = prev.scheduledTimeStart;
 	windowStartTime = Math.max(windowStartTime, prepTime);
+	console.log("updatedwindowEndTime", new Date(windowEndTime));
+	console.log("updatedwindowStartTime", new Date(windowStartTime));
 	return [new Interval(windowStartTime, windowEndTime)];
 }
 
