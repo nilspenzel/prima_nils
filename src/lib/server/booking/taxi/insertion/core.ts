@@ -349,20 +349,20 @@ export function evaluateBothInsertion(
 		nextLegDuration
 	);
 	if (arrivalWindow == undefined) {
-		if(debug){
-		console.log(
-			promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
-			'arrival window undefined',
-			printInsertionType(insertionCase),
-			{ windows: windows.toString() },
-			{ passengerDuration: passengerDuration.toString() },
-			{ busStopWindow: busStopWindow?.toString() },
-			{ prevLegDuration: prevLegDuration.toString() },
-			{ nextLegDuration: nextLegDuration.toString() },
-			{ prev: prev?.id },
-			{ next: next?.id }
-		);
-	}
+		if (debug) {
+			console.log(
+				promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
+				'arrival window undefined',
+				printInsertionType(insertionCase),
+				{ windows: windows.toString() },
+				{ passengerDuration: passengerDuration.toString() },
+				{ busStopWindow: busStopWindow?.toString() },
+				{ prevLegDuration: prevLegDuration.toString() },
+				{ nextLegDuration: nextLegDuration.toString() },
+				{ prev: prev?.id },
+				{ next: next?.id }
+			);
+		}
 		return undefined;
 	}
 	if (
@@ -418,15 +418,11 @@ export function evaluateBothInsertion(
 	const pickupSharesEventGroupWithPrev =
 		prev !== undefined &&
 		prevLegDuration === 0 &&
-		prev.time.noDistanceBetween(
-			new Interval(scheduledPickupTimeStart, scheduledPickupTimeEnd)
-		);
+		prev.time.noDistanceBetween(new Interval(scheduledPickupTimeStart, scheduledPickupTimeEnd));
 	const dropoffSharesEventGroupWithNext =
 		next !== undefined &&
 		nextLegDuration === 0 &&
-		next.time.noDistanceBetween(
-			new Interval(scheduledDropoffTimeStart, scheduledDropoffTimeEnd)
-		);
+		next.time.noDistanceBetween(new Interval(scheduledDropoffTimeStart, scheduledDropoffTimeEnd));
 	// Compute shifts of scheduled time intervals of previous and next event
 	let prevShift = 0;
 	if (!comesFromCompany(insertionCase) && prev!.isPickup) {
@@ -502,7 +498,7 @@ export function evaluateBothInsertion(
 		fullyPayedDurationDelta,
 		taxiWaitingTime
 	);
-	if(debug) {
+	if (debug) {
 		console.log(
 			promisedTimes === undefined ? 'WHITELIST' : 'BOOKING API',
 			'valid insertion found,',
