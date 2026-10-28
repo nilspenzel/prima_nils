@@ -6,10 +6,7 @@ export default defineConfig({
 
 	server: {
 		watch: {
-			ignored:
-				process.env.SIMULATION === 'true'
-					? ['**/*']
-					: []
+			ignored: process.env.SIMULATION === 'true' ? ['**/*'] : []
 		}
 	},
 

@@ -118,7 +118,7 @@ export const getViableBusStops = async (
 		getAllowedTimes(earliest, latest, EARLIEST_SHIFT_START, LATEST_SHIFT_END),
 		[afterPreptime]
 	);
-	if(debug) {
+	if (debug) {
 		console.log('BLACKLIST QUERY RESULT: ', JSON.stringify(response, null, '\t'));
 	}
 	return response.flatMap((r) =>

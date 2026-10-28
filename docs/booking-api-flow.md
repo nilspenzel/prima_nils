@@ -35,4 +35,3 @@ flowchart TD
 
     bookingFailed --> badRequest([Return 400])
 ```
-

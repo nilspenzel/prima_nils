@@ -16,7 +16,7 @@ export async function whitelist(
 	required: Capacities,
 	startFixed: boolean
 ): Promise<Array<(Insertion | undefined)[]>> {
-	if(debug) {
+	if (debug) {
 		console.log(
 			'Whitelist Request: ',
 			JSON.stringify(
@@ -50,7 +50,7 @@ export async function whitelist(
 		}
 	}
 
-	if(debug) {
+	if (debug) {
 		console.log('BUS STOPS', JSON.stringify(busStops));
 		console.log(
 			'INTERVAL',
@@ -70,7 +70,7 @@ export async function whitelist(
 		searchInterval,
 		busStops
 	);
-	if(debug) {
+	if (debug) {
 		console.log(
 			'Whitelist Request: getBookingAvailability results\n',
 			JSON.stringify(
@@ -108,7 +108,7 @@ export async function whitelist(
 			ret[i] = bestEvals[filteredBusStops[i]!];
 		}
 	}
-	if(debug) {
+	if (debug) {
 		console.log(
 			'WHITELIST RESULT: ',
 			JSON.stringify(

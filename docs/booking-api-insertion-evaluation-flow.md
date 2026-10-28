@@ -58,4 +58,3 @@ flowchart TD
     candidates --> moreCandidates
     finish([Return feasible candidates to best-insertion selection])
 ```
-
