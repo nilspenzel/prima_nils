@@ -63,6 +63,10 @@ export default defineConfig({
 		{
 			name: 'driver app',
 			testMatch: 'driver.test.ts'
+		},
+		{
+			name: 'routing',
+			testMatch: 'routing.test.ts'
 		}
 	]
 });
